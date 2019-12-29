@@ -1,1 +1,0 @@
-shtool_export_lib ../obj

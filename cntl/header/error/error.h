@@ -1,13 +1,13 @@
+/**
+ * creat: Yangyao CHEN, 2019/12/28
+ * The total header file composed of all headers in this 'error' module.
+ */ 
+
 #ifndef _HIPPCNTL_ERROR_H_
 #define _HIPPCNTL_ERROR_H_
-#include "error_application.h"
-#include "error_class.h"
-#include "error_type.h"
-
-#include "error_macro.h"
 
 /**
- * exception class layers
+ * exception class layers.
  * 
  * std::exception
  *         |- ErrApp: application oriented error
@@ -31,8 +31,10 @@
  * 
  * Each class in the layers has a what() virtual method reporting the error in the current class,
  * and a whats() virtual method reporint the full error information along the derivation chain.
+ * std::exception has only what().
  * 
- * Examples:
+ * Examples
+ * ----------
  *  try{
  *      void *p = aligned_alloc(...);
  *      if( !p )
@@ -42,7 +44,18 @@
  *  }catch( std::exception &e ){
  *      cout << e.what() << endl;
  *  }
- */ 
+ * 
+ * The hierarchy structure of exceptions is defined in the following headers.
+ */
+#include "error_application.h"
+#include "error_class.h"
+#include "error_type.h" 
+
+
+/**
+ * useful macros for reporting exceptions.
+ */
+#include "error_macro.h"
 
 
 #endif	//_HIPPCNTL_ERROR_H_

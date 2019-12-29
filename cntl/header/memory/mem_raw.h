@@ -29,6 +29,7 @@ public:
 
     /**
      * allocate page-aligned size bytes
+     * Equavalent to aligned_alloc( getpagesize(), size ).
      */
     static void *page( size_t size );
 

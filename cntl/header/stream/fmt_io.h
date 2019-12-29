@@ -1,3 +1,9 @@
+/**
+ * creat: Yangyao CHEN, 2019/12/28
+ *      [write   ] prt, prt_f, str, str_f - formatted writes
+ *                  and string constructors.
+ */ 
+
 #ifndef _HIPPCNTL_FMT_IO_H_
 #define _HIPPCNTL_FMT_IO_H_
 #include "../incl/incl.h"

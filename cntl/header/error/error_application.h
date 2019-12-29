@@ -1,8 +1,17 @@
+/**
+ * creat: Yangyao CHEN, 2019/12/28
+ *      [write   ] ErrApp - parent class for error-number based exceptions.
+ */ 
+
 #ifndef _HIPPCNTL_ERROR_APPLICATION_H_
 #define _HIPPCNTL_ERROR_APPLICATION_H_
 #include "../incl/incl.h"
 namespace HIPP{
 
+/**
+ * parent class for error-number based exceptions.
+ * Should not be used directly.
+ */
 class ErrApp: virtual public std::exception {
 public:
     typedef std::uint16_t errno_t;

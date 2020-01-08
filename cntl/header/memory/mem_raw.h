@@ -46,8 +46,10 @@ public:
     static void *calloc_e( size_t nmemb, size_t size, Args && ...args );
     template<typename... Args>
     static void *realloc_e( void *ptr, size_t size, Args && ...args );
+    /*
     template<typename... Args>
     static void *reallocarray_e( void *ptr, size_t nmemb, size_t size, Args && ...args );
+    */
     template<typename... Args>
     static void *aligned_alloc_e( size_t alignment, size_t size, Args && ...args );
     template<typename T>
@@ -105,6 +107,7 @@ void *MemRaw::realloc_e( void *ptr, size_t size, Args && ...args ){
         throw ErrSystem( errno );
     }
 }
+/*
 template<typename... Args>
 void *MemRaw::reallocarray_e( void *ptr, size_t nmemb, size_t size, Args && ...args ){
     void *ptr_re = reallocarray(ptr, nmemb, size);
@@ -113,7 +116,7 @@ void *MemRaw::reallocarray_e( void *ptr, size_t nmemb, size_t size, Args && ...a
         throw ErrSystem( errno );
     }
     return ptr;
-}
+}*/
 template<typename... Args>
 void *MemRaw::aligned_alloc_e( size_t alignment, size_t size, Args && ...args ){
     void *ptr = aligned_alloc(alignment, size);

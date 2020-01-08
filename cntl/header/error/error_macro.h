@@ -13,25 +13,30 @@
  *      FLF:    file name, line number and function name.
  *      FPF:    file and 'pretty' version of function name.
  *      FLPF:   file name, line number and 'pretty' version of function name.
- * 
+ *      FLPFB:  same as FLPF, but print a end-line character after each name
+ *              so the information printed looks more coarse.
  * Examples
  * ----------
- *  // print current source file name and function name to the `cout`
+ *  // print current source file name and function name to the `cout`:
  *  prt( cout, emFF );
- *  // This expands by pre-processor as: 
+ *  // This expanded by pre-processor as: 
  *  //      prt( cout, "[ file ] ", __FILE__, ", [ function ] ", __func__ );
  *  // In the following pre-processor steps, __FILE__ and __func__ are expanded
- *  // further into the filename and function name
+ *  // further into the filename and function name.
  */
 #define emFF "[ file ] ", __FILE__, \
-    ", [ function ] ", __func__
+    ", [ function ] ", __func__, ' '
 #define emFLF "[ file ] ", __FILE__, \
     ", [ line ] ", __LINE__, \
-    ", [ function ] ", __func__
+    ", [ function ] ", __func__, ' '
 #define emFPF "[ file ] ", __FILE__, \
-    ", [ function ] ", __PRETTY_FUNCTION__
+    ", [ function ] ", __PRETTY_FUNCTION__, ' '
 #define emFLPF "[ file ] ", __FILE__, \
     ", [ line ] ", __LINE__, \
-    ", [ function ] ", __PRETTY_FUNCTION__
+    ", [ function ] ", __PRETTY_FUNCTION__, ' '
+
+#define emFLPFB "[ file ] ", __FILE__, \
+    "\n[ line ] ", __LINE__, \
+    "\n[ function ] ", __PRETTY_FUNCTION__, '\n'
 
 #endif	//_HIPPCNTL_ERROR_MACRO_H_

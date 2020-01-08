@@ -11,6 +11,10 @@ namespace HIPP{
 /**
  * parent class for error-number based exceptions.
  * Should not be used directly.
+ * 
+ * Application-level exceptions: a 16-bit short integer type numbers the
+ * error. The first bit reserved for future usage, while the remaining 15
+ * bits are used for error coding.
  */
 class ErrApp: virtual public std::exception {
 public:

@@ -1,6 +1,8 @@
 #include "error/error_type.h"
 
 namespace HIPP{
+
+
 const char * ErrSystem::_errmsgs[] = {
     /* 0 */ "",
     /* 1 */ "EPERM", "ENOENT", "ESRCH", "EINTR", "EIO", "ENXIO", "E2BIG",
@@ -35,6 +37,12 @@ const char * ErrSystem::_errmsgs[] = {
 const char *ErrRuntime::_errmsgs[] = {
     /* 0 */ "",
     /* 1 */ "eDEFAULT", "eOVERFLOW", "eUNDERFLOW", "eRANGE", "eSTRCONSTRUCT"
+    /* 6 */ "invalid error no"
+};
+
+const char *ErrLogic::_errmsgs[] = {
+    /* 0 */ "",
+    /* 1 */ "eDEFAULT", "eDOMAIN", "eINVALIDARG", "eOUTOFRANGE", "eLENGTH"
     /* 6 */ "invalid error no"
 };
 

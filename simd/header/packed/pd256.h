@@ -4,19 +4,29 @@
 #include "../opcode/opcode.h"
 namespace HIPP{
 namespace SIMD{
+
 #ifdef __AVX__
-template<> class Packed<double, 4>{
+
+namespace _pd256_helper{
+class Packd4Base{
 public:
     typedef double scal_t;
     typedef __m256d vec_t;
-
-    typedef __m128d hvec_t;
-    typedef __m128 svec_t;
-
-    typedef __m256i epi_t;
-    typedef __m128i epi32v_t;
-    
     enum: size_t { NPACK=4, NBIT=256, VECSIZE=sizeof(vec_t), SCALSIZE=sizeof(scal_t) };
+
+    typedef typename TypeCvt<vec_t, -1, 0, 1>::ret vec_hc_t;
+    typedef typename TypeCvt<vec_t, 0, -1, 1>::ret vec_hp_t;
+
+    typedef typename TypeCvt<vec_t, 0, 0, 0>::ret ivec_t;
+    typedef ivec_t mask_t;
+    typedef ivec_t index_t;
+    typedef typename TypeCvt<vec_t, 0, -1, 0>::ret ivec_hp_t;    
+};
+} // namespace _pd256_helper
+
+template<> 
+class Packed<double, 4>: public _pd256_helper::Packd4Base{
+public:
     /**
      * LOAD instrinsics
      * maskload     - elements are zeroed out when the highest bit of corresponding element in mask
@@ -29,32 +39,37 @@ public:
      */
     static vec_t load( const scal_t *mem_addr ) noexcept;
     static vec_t loadu( const scal_t *mem_addr ) noexcept;
-    static vec_t maskload( const scal_t *mem_addr, epi_t mask ) noexcept;
+    static vec_t loadm( const scal_t *mem_addr, mask_t mask ) noexcept;
+    static vec_t load1( const scal_t *mem_addr ) noexcept;
     static vec_t bcast( const scal_t *mem_addr ) noexcept;
-    static vec_t bcast( const hvec_t *mem_addr ) noexcept;
+    static vec_t bcast( const vec_hc_t *mem_addr ) noexcept;
 #ifdef __AVX2__
-    static vec_t bcasts( hvec_t a ) noexcept;
-    static vec_t gather( const scal_t *base_addr, epi_t vindex, const int scale=8 ) noexcept;
-    static vec_t maskgather( vec_t src, const scal_t *base_addr, epi_t vindex, vec_t mask, const int scale=8 ) noexcept;
+    static vec_t gather( const scal_t *base_addr, 
+        index_t vindex, const int scale=SCALSIZE ) noexcept;
+    static vec_t gatherm( vec_t src, const scal_t *base_addr, 
+        index_t vindex, vec_t mask, const int scale=SCALSIZE ) noexcept;
 #endif
     static void store( scal_t *mem_addr, vec_t a ) noexcept;
-    static void maskstore( scal_t *mem_addr, epi_t mask, vec_t a ) noexcept;
+    static void storem( scal_t *mem_addr, mask_t mask, vec_t a ) noexcept;
     static void storeu( scal_t *mem_addr, vec_t a ) noexcept;
     static void stream( scal_t *mem_addr, vec_t a ) noexcept;
 
-    static vec_t from_epi( epi32v_t a ) noexcept;
-    static epi32v_t cvt_epi( vec_t a ) noexcept;
-    static epi32v_t cvtt_epi( vec_t a ) noexcept;
-    static vec_t from_ps( svec_t a ) noexcept;
-    static svec_t cvt_ps( vec_t a ) noexcept;
+    static vec_t from_ivec_hp( ivec_hp_t a ) noexcept;
+    static ivec_hp_t to_ivec_hp( vec_t a ) noexcept;
+    static ivec_hp_t tot_ivec_hp( vec_t a ) noexcept;
+    static vec_t from_vec_hp( vec_hp_t a ) noexcept;
+    static vec_hp_t to_vec_hp( vec_t a ) noexcept;
 #ifdef __AVX2__
-    static scal_t cvt_scal( vec_t a ) noexcept;
+    static scal_t to_scal( vec_t a ) noexcept;
 #endif
     static int movemask( vec_t a ) noexcept;
     static vec_t movehdup( vec_t a ) noexcept;
     static vec_t moveldup( vec_t a ) noexcept;
     static vec_t set( scal_t e3, scal_t e2, scal_t e1, scal_t e0 ) noexcept;
-    static vec_t set( scal_t a ) noexcept;
+    static vec_t set1( scal_t a ) noexcept;
+#ifdef __AVX2__
+    static vec_t set1( vec_hc_t a ) noexcept;
+#endif
     static vec_t set() noexcept;
     static vec_t setzero() noexcept;
     static vec_t undefined() noexcept;
@@ -97,27 +112,23 @@ inline Packed<double,4>::vec_t Packed<double,4>::load( const scal_t *mem_addr ) 
 inline Packed<double,4>::vec_t Packed<double,4>::loadu( const scal_t *mem_addr ) noexcept{
     return _mm256_loadu_pd(mem_addr);
 }
-inline Packed<double,4>::vec_t Packed<double,4>::maskload( const scal_t *mem_addr, epi_t mask ) noexcept{
+inline Packed<double,4>::vec_t Packed<double,4>::loadm( const scal_t *mem_addr, mask_t mask ) noexcept{
     return _mm256_maskload_pd( mem_addr, mask );
+}
+inline Packed<double,4>::vec_t Packed<double,4>::load1( const scal_t *mem_addr ) noexcept{
+    return bcast(mem_addr);
 }
 inline Packed<double,4>::vec_t Packed<double,4>::bcast( const scal_t *mem_addr ) noexcept{
     return _mm256_broadcast_sd(mem_addr);
 }
-inline Packed<double,4>::vec_t Packed<double,4>::bcast( const hvec_t *mem_addr ) noexcept{
+inline Packed<double,4>::vec_t Packed<double,4>::bcast( const vec_hc_t *mem_addr ) noexcept{
     return _mm256_broadcast_pd(mem_addr);
 }
 #ifdef __AVX2__
-inline Packed<double,4>::vec_t Packed<double,4>::bcasts( hvec_t a ) noexcept{
-    return _mm256_broadcastsd_pd( a );
-}
-#endif
-#ifdef __AVX2__
-inline Packed<double,4>::vec_t Packed<double,4>::gather( const scal_t *base_addr, epi_t vindex, const int scale ) noexcept{
+inline Packed<double,4>::vec_t Packed<double,4>::gather( const scal_t *base_addr, index_t vindex, const int scale ) noexcept{
     return _mm256_i64gather_pd(base_addr, vindex, scale);
 }
-#endif
-#ifdef __AVX2__
-inline Packed<double,4>::vec_t Packed<double,4>::maskgather( vec_t src, const scal_t *base_addr, epi_t vindex, vec_t mask, const int scale ) noexcept{
+inline Packed<double,4>::vec_t Packed<double,4>::gatherm( vec_t src, const scal_t *base_addr, index_t vindex, vec_t mask, const int scale ) noexcept{
     return _mm256_mask_i64gather_pd(src, base_addr, vindex, mask, scale);
 }
 #endif
@@ -125,7 +136,7 @@ inline Packed<double,4>::vec_t Packed<double,4>::maskgather( vec_t src, const sc
 inline void Packed<double,4>::store( scal_t *mem_addr, vec_t a ) noexcept{
     _mm256_store_pd(mem_addr, a);
 }
-inline void Packed<double,4>::maskstore( scal_t *mem_addr, epi_t mask, vec_t a ) noexcept{
+inline void Packed<double,4>::storem( scal_t *mem_addr, mask_t mask, vec_t a ) noexcept{
     _mm256_maskstore_pd(mem_addr, mask, a);
 }
 inline void Packed<double,4>::storeu( scal_t *mem_addr, vec_t a ) noexcept{
@@ -134,23 +145,23 @@ inline void Packed<double,4>::storeu( scal_t *mem_addr, vec_t a ) noexcept{
 inline void Packed<double,4>::stream( scal_t *mem_addr, vec_t a ) noexcept{
     _mm256_stream_pd(mem_addr, a);
 }
-inline Packed<double,4>::vec_t Packed<double,4>::from_epi( epi32v_t a ) noexcept{
+inline Packed<double,4>::vec_t Packed<double,4>::from_ivec_hp( ivec_hp_t a ) noexcept{
     return _mm256_cvtepi32_pd( a );
 }
-inline Packed<double,4>::epi32v_t Packed<double,4>::cvt_epi( vec_t a ) noexcept{
+inline Packed<double,4>::ivec_hp_t Packed<double,4>::to_ivec_hp( vec_t a ) noexcept{
     return _mm256_cvtpd_epi32(a);
 }
-inline Packed<double,4>::epi32v_t Packed<double,4>::cvtt_epi( vec_t a ) noexcept{
+inline Packed<double,4>::ivec_hp_t Packed<double,4>::tot_ivec_hp( vec_t a ) noexcept{
     return _mm256_cvttpd_epi32(a);
 }
-inline Packed<double,4>::vec_t Packed<double,4>::from_ps( svec_t a ) noexcept{
+inline Packed<double,4>::vec_t Packed<double,4>::from_vec_hp( vec_hp_t a ) noexcept{
     return _mm256_cvtps_pd( a );
 }
-inline Packed<double,4>::svec_t Packed<double,4>::cvt_ps( vec_t a ) noexcept{
+inline Packed<double,4>::vec_hp_t Packed<double,4>::to_vec_hp( vec_t a ) noexcept{
     return _mm256_cvtpd_ps(a);
 }
 #ifdef __AVX2__
-inline Packed<double,4>::scal_t Packed<double,4>::cvt_scal( vec_t a ) noexcept{
+inline Packed<double,4>::scal_t Packed<double,4>::to_scal( vec_t a ) noexcept{
     return _mm256_cvtsd_f64( a );
 }
 #endif
@@ -163,9 +174,14 @@ inline Packed<double,4>::vec_t Packed<double,4>::moveldup( vec_t a ) noexcept{
 inline Packed<double,4>::vec_t Packed<double,4>::set( scal_t e3, scal_t e2, scal_t e1, scal_t e0 ) noexcept{
     return _mm256_set_pd( e3, e2, e1, e0 );
 }
-inline Packed<double,4>::vec_t Packed<double,4>::set( scal_t a ) noexcept{
+inline Packed<double,4>::vec_t Packed<double,4>::set1( scal_t a ) noexcept{
     return _mm256_set1_pd(a);
 }
+#ifdef __AVX2__
+inline Packed<double,4>::vec_t Packed<double,4>::set1( vec_hc_t a ) noexcept{
+    return _mm256_broadcastsd_pd( a );
+}
+#endif
 inline Packed<double,4>::vec_t Packed<double,4>::set() noexcept{
     return _mm256_setzero_pd();
 }
@@ -253,6 +269,7 @@ inline Packed<double,4>::vec_t Packed<double,4>::max( vec_t a, vec_t b ) noexcep
 inline Packed<double,4>::vec_t Packed<double,4>::min( vec_t a, vec_t b ) noexcept{
     return _mm256_min_pd(a,b);
 }
+
 #endif
 
 } // namespace SIMD

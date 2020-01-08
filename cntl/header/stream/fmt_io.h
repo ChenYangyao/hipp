@@ -23,7 +23,8 @@ namespace HIPP{
  *  const char *cstr = "world!";
  *  prt( cout, str, ", ", cstr );
  */
-template<typename Arg> ostream & prt( ostream &os, Arg &&arg ){ return os << std::forward<Arg>(arg); }
+template<typename Arg> ostream & prt( ostream &os, Arg &&arg )
+    { return os << std::forward<Arg>(arg); }
 template<typename Arg, typename ...Args>
 ostream & prt( ostream &os, Arg &&arg, Args &&...args ){
     os  << std::forward<Arg>(arg);
@@ -43,12 +44,14 @@ inline ostream & prt( ostream &os )noexcept{ return os; }
 template<typename ...Args>
 ostream & prt_f( ostream &os, const char *fmt, Args && ...args ){
     vector<char> buff(256);
-    auto ret = std::snprintf( buff.data(), buff.size(), fmt, std::forward<Args>(args)... );
+    auto ret = std::snprintf( buff.data(), buff.size(), 
+        fmt, std::forward<Args>(args)... );
     if( ret < 0 )
         throw ErrRuntime( ErrRuntime::eSTRCONSTRUCT );
     if( ret >= decltype(ret)( buff.size() ) ){
         buff.resize( ret+1 );
-        ret = std::snprintf( buff.data(), buff.size(), fmt, std::forward<Args>(args)... );
+        ret = std::snprintf( buff.data(), buff.size(), 
+            fmt, std::forward<Args>(args)... );
         if( ret < 0 || ret >= decltype(ret)( buff.size() ) )
             throw ErrRuntime( ErrRuntime::eSTRCONSTRUCT );
     }
@@ -58,7 +61,8 @@ ostream & prt_f( ostream &os, const char *fmt, Args && ...args ){
 /**
  * str() and str_f() - string constructors
  * 
- * Similar to prt() and prt_f(), but return a string instead of printing to stream.
+ * Similar to prt() and prt_f(), but return a string instead of printing to 
+ * stream.
  */
 template<typename ...Args>
 string str( Args && ...args ){

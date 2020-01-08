@@ -26,7 +26,6 @@ public:
     static void *reallocarray( void *ptr, size_t nmemb, size_t size );
     static void *aligned_alloc( size_t alignment, size_t size );
     static void free( void *ptr );
-
     /**
      * allocate page-aligned size bytes
      * Equavalent to aligned_alloc( getpagesize(), size ).

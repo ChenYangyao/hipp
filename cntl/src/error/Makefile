@@ -4,7 +4,7 @@ OBJS := $(patsubst %.cpp, $(TARGET_DIR)/%.o, $(wildcard *.cpp))
 all: $(OBJS)
 
 CXX = g++
-CXXFLAGS = -std=c++11 -O3 -Wall -I../../header
+CXXFLAGS = -std=c++11 -O3 -Wall -fPIC -I../../header
 
 $(TARGET_DIR)/%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<

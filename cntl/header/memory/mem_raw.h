@@ -23,7 +23,9 @@ public:
     static void *malloc( size_t size );
     static void *calloc( size_t nmemb, size_t size );
     static void *realloc( void *ptr, size_t size );
+    /*
     static void *reallocarray( void *ptr, size_t nmemb, size_t size );
+    */
     static void *aligned_alloc( size_t alignment, size_t size );
     static void free( void *ptr );
     /**
@@ -64,9 +66,10 @@ inline void *MemRaw::calloc( size_t nmemb, size_t size ){
 inline void *MemRaw::realloc( void *ptr, size_t size ){
     return ::realloc(ptr, size);
 }
+/*
 inline void *MemRaw::reallocarray( void *ptr, size_t nmemb, size_t size ){
     return ::reallocarray(ptr, nmemb, size);
-}
+}*/
 inline void *MemRaw::aligned_alloc( size_t alignment, size_t size ){
     return ::aligned_alloc( alignment, size );
 }

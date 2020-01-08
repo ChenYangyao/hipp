@@ -4,7 +4,8 @@ all:
 
 .PNOHY: all 
 clean:
-	rm obj/*.so
+	rm -f obj/*.so
 tidy:
-	rm obj/*.so
-	rm obj/*.o
+	rm -f obj/*.o
+	rm -f obj/*.so
+	

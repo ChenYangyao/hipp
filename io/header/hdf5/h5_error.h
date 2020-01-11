@@ -1,3 +1,10 @@
+/**
+ * creat: Yangyao CHEN, 2020/01/11
+ *      [write   ] 
+ *          ErrH5 - the HDF5 wrapped high-level interface exception 
+ *                  class.
+ */ 
+
 #ifndef _HIPPIO_H5_ERROR_H_
 #define _HIPPIO_H5_ERROR_H_
 #include "h5_base.h"

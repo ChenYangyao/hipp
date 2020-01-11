@@ -1,7 +1,6 @@
 all: build
 .PHONY: all build install tidy clean
 
-
 build: 
 	make -C cntl
 	make -C io

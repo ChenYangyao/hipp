@@ -1,7 +1,16 @@
+/**
+ * creat: Yangyao CHEN, 2020/01/11
+ *      [write   ] 
+ *          _H5Obj, _H5Dataspace, _H5Datatype, _H5Attr, _H5Dataset, _H5File
+ *              HDF5 intermediate-level object. 
+ *          _H5EStackTempOff - temporarily turn off the error reporting system.
+ */ 
+
 #ifndef _HIPPIO_H5_OBJ_RAW_H_
 #define _HIPPIO_H5_OBJ_RAW_H_
 #include "h5_base.h"
 #include "h5_error.h"
+#include <cstring>
 namespace HIPP{
 namespace IO{
 
@@ -61,6 +70,16 @@ public:
         if( size == 0 ) ErrH5::throw_( size, emFLPFB );
         return size;
     }
+
+    static id_t copy( id_t dtype ){
+        id_t ret = H5Tcopy( dtype );
+        ErrH5::check( ret, emFLPFB );
+        return ret;
+    }
+    void set_size( size_t size ){
+        ErrH5::check( H5Tset_size( _obj, size ), emFLPFB );
+    }
+
     ~_H5Datatype( ){ ErrH5::check(H5Tclose( _obj ), emFLPFB); }
 };
 
@@ -73,6 +92,21 @@ public:
         ErrH5::check(
             _obj = H5Acreate( loc, name, datatype, dataspace, cprop, aprop )
             , emFLPFB );
+    }
+    static id_t create( id_t loc, const char *name, id_t datatype, 
+        id_t dataspace, id_t cprop=H5P_DEFAULT, id_t aprop=H5P_DEFAULT )
+    {
+        id_t attr = H5Acreate( loc, name, datatype, dataspace, cprop, aprop );
+        ErrH5::check(
+            attr, emFLPFB, "  ... cannot create attribute named ", 
+            name, "\n");
+        return attr;
+    }
+    static id_t open( id_t loc, const char *name, id_t aprop=H5P_DEFAULT ){
+        id_t attr = H5Aopen( loc, name, aprop );
+        ErrH5::check(
+            attr, emFLPFB, "  ... cannot open attribute named ", name, "\n");
+        return attr;
     }
     id_t get_space() const{
         id_t dspace = H5Aget_space( _obj );
@@ -107,9 +141,24 @@ public:
         id_t lcprop = H5P_DEFAULT, id_t dcprop = H5P_DEFAULT, 
         id_t aprop = H5P_DEFAULT )
     {
-        ErrH5::check(
-            _obj = H5Dcreate( loc, name, datatype, dataspace, lcprop, 
-            dcprop, aprop ), emFLPFB);
+        _obj = create( loc, name, datatype, dataspace, lcprop, dcprop, aprop );
+    }
+    static id_t create(id_t loc, const char *name, id_t datatype, 
+        id_t dataspace, id_t lcprop = H5P_DEFAULT, 
+        id_t dcprop = H5P_DEFAULT, 
+        id_t aprop = H5P_DEFAULT)
+    {
+        id_t dset = H5Dcreate( loc, name, datatype, dataspace, lcprop, 
+            dcprop, aprop );
+        ErrH5::check( dset, 
+            emFLPFB, "  ... cannot create dataset named ", name, "\n" );
+        return dset;
+    }
+    static id_t open(id_t loc, const char *name, id_t aprop = H5P_DEFAULT){
+        id_t dset = H5Dopen( loc, name, aprop );
+        ErrH5::check( dset, emFLPFB, "  ... cannot open dataset named ", 
+            name, "\n" );
+        return dset;
     }
     id_t get_space() const{
         id_t dspace = H5Dget_space( _obj );
@@ -128,10 +177,18 @@ public:
             tprop, buff ), emFLPFB );
     }
     void read( id_t memtype, id_t memspace, id_t filespace, 
-        id_t tprop, void *buff )
+        id_t tprop, void *buff )const
     {
         ErrH5::check( H5Dread( _obj, memtype, memspace, filespace, 
             tprop, buff ), emFLPFB );
+    }
+    id_t create_attr( const char *name, id_t datatype, id_t dataspace, 
+        id_t cprop = H5P_DEFAULT, id_t aprop=H5P_DEFAULT )
+    {
+        return _H5Attr::create(_obj, name, datatype, dataspace, cprop, aprop);
+    }    
+    id_t open_attr( const char *name, id_t aprop=H5P_DEFAULT){
+        return _H5Attr::open(_obj, name, aprop);
     }
     tri_t exist_attr( const char *name )const {
         return _H5Attr::exists( _obj, name );
@@ -172,15 +229,11 @@ public:
         id_t lcprop = H5P_DEFAULT, id_t dcprop = H5P_DEFAULT, 
         id_t aprop = H5P_DEFAULT )
     {
-        id_t dset = H5Dcreate( _obj, name, datatype, dataspace, lcprop, 
+        return _H5Dataset::create(_obj, name, datatype, dataspace, lcprop, 
             dcprop, aprop );
-        ErrH5::check( dset, emFLPFB );
-        return dset;
     }
     id_t open_dataset( const char *name, id_t aprop = H5P_DEFAULT ){
-        id_t dset = H5Dopen( _obj, name, aprop );
-        ErrH5::check( dset, emFLPFB );
-        return dset;
+        return _H5Dataset::open( _obj, name, aprop );
     }
     ~_H5File( ){ ErrH5::check(H5Fclose( _obj ), emFLPFB); }
 };
@@ -203,6 +256,7 @@ private:
     void *_old_edata = NULL;
     ErrH5::flag_t _old_flag = 0;
 };
+
 
 } // namespace IO
 } // namespace HIPP

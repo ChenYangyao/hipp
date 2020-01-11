@@ -4,7 +4,7 @@ all: libhippio.so
 CXX = g++
 CXXFLAGS = -std=c++11 -O3 -Wall
 LDFLAGS = -fPIC -shared
-LDLIBS =
+LDLIBS = ../../cntl/obj/libhippcntl.so
 
 OBJS := $(wildcard *.o)
 %.so: $(OBJS)

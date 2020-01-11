@@ -1,3 +1,8 @@
+/**
+ * creat: Yangyao CHEN, 2020/01/11
+ * HD5 interfaces.
+ */ 
+
 #ifndef _HIPPIO_H5_H_
 #define _HIPPIO_H5_H_
 
@@ -9,6 +14,7 @@
 
 /**
  * intermediate interface, semi-OOP wrapper of original HDF5 interface.
+ * Users are strongly recommended to use only the high-level interface below.
  */
 #include "h5_obj_raw.h"
 #include "h5_type_raw.h"

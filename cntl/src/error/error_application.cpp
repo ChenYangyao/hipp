@@ -1,4 +1,4 @@
-#include "error/error_application.h"
+#include "error_application.h"
 
 namespace HIPP{
 const char * ErrApp::_errmsgs[] = {

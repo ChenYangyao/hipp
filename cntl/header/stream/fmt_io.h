@@ -8,6 +8,13 @@
 #define _HIPPCNTL_FMT_IO_H_
 #include "../incl/incl.h"
 #include "../error/error.h"
+
+#define HIPPCNTL_CLASS_INFO(class_name) \
+    #class_name " instance [loc=", (void *)this, ", size=", sizeof(class_name),\
+    ", align=", alignof(class_name), "]\n----------\n"
+#define HIPPCNTL_CLASS_INFO_INLINE(class_name) \
+    #class_name " instance [", (void *)this, "] "
+
 namespace HIPP{
 
 /**

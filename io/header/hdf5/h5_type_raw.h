@@ -42,51 +42,47 @@ template<typename T> using H5TypeStd = H5Type<T, H5TypeClass::STD>;
 template<typename T> using H5TypeCompound = H5Type<T, H5TypeClass::COMPOUND>;
 using H5TypeStr = H5TypeCompound<char *>;
 
-#define _HIPPIO_H5_TYPENATIVE_DEF( native, id ) \
+#define _HIPPIO_H5_TYPENATIVE_DEF( native ) \
 template<>\
 class H5Type<native, H5TypeClass::NATIVE> { \
 public: \
     typedef native native_t; \
     static const hid_t h5_id;\
     static const char *const h5_name;\
-};\
-const hid_t H5Type<native, H5TypeClass::NATIVE>::h5_id = id;\
-const char *const H5Type<native, H5TypeClass::NATIVE>::h5_name = #id;\
+};
 
-_HIPPIO_H5_TYPENATIVE_DEF(double, H5T_NATIVE_DOUBLE)
-_HIPPIO_H5_TYPENATIVE_DEF(float, H5T_NATIVE_FLOAT)
-_HIPPIO_H5_TYPENATIVE_DEF(long double, H5T_NATIVE_LDOUBLE)
-_HIPPIO_H5_TYPENATIVE_DEF(char, H5T_NATIVE_CHAR)
-_HIPPIO_H5_TYPENATIVE_DEF(short, H5T_NATIVE_SHORT)
-_HIPPIO_H5_TYPENATIVE_DEF(int, H5T_NATIVE_INT)
-_HIPPIO_H5_TYPENATIVE_DEF(long, H5T_NATIVE_LONG)
-_HIPPIO_H5_TYPENATIVE_DEF(unsigned short, H5T_NATIVE_USHORT)
-_HIPPIO_H5_TYPENATIVE_DEF(unsigned int, H5T_NATIVE_UINT)
-_HIPPIO_H5_TYPENATIVE_DEF(unsigned long, H5T_NATIVE_ULONG)
+_HIPPIO_H5_TYPENATIVE_DEF(double)
+_HIPPIO_H5_TYPENATIVE_DEF(float)
+_HIPPIO_H5_TYPENATIVE_DEF(long double)
+_HIPPIO_H5_TYPENATIVE_DEF(char)
+_HIPPIO_H5_TYPENATIVE_DEF(short)
+_HIPPIO_H5_TYPENATIVE_DEF(int)
+_HIPPIO_H5_TYPENATIVE_DEF(long)
+_HIPPIO_H5_TYPENATIVE_DEF(unsigned short)
+_HIPPIO_H5_TYPENATIVE_DEF(unsigned int)
+_HIPPIO_H5_TYPENATIVE_DEF(unsigned long)
 
 #undef _HIPPIO_H5_TYPENATIVE_DEF
 
-#define _HIPPIO_H5_TYPESTD_DEF( native, id ) \
+#define _HIPPIO_H5_TYPESTD_DEF( native ) \
 template<>\
 class H5Type<native, H5TypeClass::STD> { \
 public: \
     typedef native native_t; \
     static const hid_t h5_id;\
     static const char *const h5_name;\
-};\
-const hid_t H5Type<native, H5TypeClass::STD>::h5_id = id;\
-const char *const H5Type<native, H5TypeClass::STD>::h5_name = #id;\
+};
 
-_HIPPIO_H5_TYPESTD_DEF(double, H5T_IEEE_F64LE)
-_HIPPIO_H5_TYPESTD_DEF(float, H5T_IEEE_F32LE)
-_HIPPIO_H5_TYPESTD_DEF(long double, H5T_IEEE_F64LE)
-_HIPPIO_H5_TYPESTD_DEF(char, H5T_STD_I8LE)
-_HIPPIO_H5_TYPESTD_DEF(short, H5T_STD_I16LE)
-_HIPPIO_H5_TYPESTD_DEF(int, H5T_STD_I32LE)
-_HIPPIO_H5_TYPESTD_DEF(long, H5T_STD_I64LE)
-_HIPPIO_H5_TYPESTD_DEF(unsigned short, H5T_STD_U16LE)
-_HIPPIO_H5_TYPESTD_DEF(unsigned int, H5T_STD_U32LE)
-_HIPPIO_H5_TYPESTD_DEF(unsigned long, H5T_STD_U64LE)
+_HIPPIO_H5_TYPESTD_DEF(double)
+_HIPPIO_H5_TYPESTD_DEF(float)
+_HIPPIO_H5_TYPESTD_DEF(long double)
+_HIPPIO_H5_TYPESTD_DEF(char)
+_HIPPIO_H5_TYPESTD_DEF(short)
+_HIPPIO_H5_TYPESTD_DEF(int)
+_HIPPIO_H5_TYPESTD_DEF(long)
+_HIPPIO_H5_TYPESTD_DEF(unsigned short)
+_HIPPIO_H5_TYPESTD_DEF(unsigned int)
+_HIPPIO_H5_TYPESTD_DEF(unsigned long)
 
 #undef _HIPPIO_H5_TYPESTD_DEF
 
@@ -112,7 +108,7 @@ public:
         auto _shape = shape( strs );
         vector<char> ret( _shape[0]*_shape[1], '\0' );
         for(hsize_t i=0; i<_shape[0]; ++i){
-            std::strcpy( ret.data()+i*_shape[1], strs[i].c_str() );
+            strcpy( ret.data()+i*_shape[1], strs[i].c_str() );
         }
         return ret;
     }
@@ -130,8 +126,7 @@ public:
         return ret;
     }
 };
-const hid_t H5Type<char *, H5TypeClass::COMPOUND>::h5_id = H5T_C_S1;
-const char *const H5Type<char *, H5TypeClass::COMPOUND>::h5_name = "H5T_C_S1";
+
 
 } // namespace IO
 } // namespace HIPP

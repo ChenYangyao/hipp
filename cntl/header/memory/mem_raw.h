@@ -16,23 +16,23 @@ namespace HIPP{
  */
 class MemRaw {
 public:
+    typedef std::size_t size_t;
+    typedef void *ptr_t;
     /**
      * C-style raw (un-constructed) memory managements.
      * One-to-one corresponds to GNU-C library functions.
      */
-    static void *malloc( size_t size );
-    static void *calloc( size_t nmemb, size_t size );
-    static void *realloc( void *ptr, size_t size );
-    /*
-    static void *reallocarray( void *ptr, size_t nmemb, size_t size );
-    */
-    static void *aligned_alloc( size_t alignment, size_t size );
-    static void free( void *ptr );
+    static ptr_t malloc( size_t size );
+    static ptr_t calloc( size_t nmemb, size_t size );
+    static ptr_t realloc( ptr_t ptr, size_t size );
+    static ptr_t aligned_alloc( size_t alignment, size_t size );
+    static void free( ptr_t ptr );
     /**
-     * allocate page-aligned size bytes
-     * Equavalent to aligned_alloc( getpagesize(), size ).
+     * allocate n page
+     * Equavalent to aligned_alloc( getpagesize(), n*getpagesize() ).
      */
-    static void *page( size_t size );
+    static ptr_t page( size_t n );
+    static size_t pagesize() noexcept;
 
     /**
      * error-safe versions.
@@ -41,88 +41,73 @@ public:
      * free_e() is the same as free(), but set the entry ptr to nullptr.
      */
     template<typename... Args>
-    static void *malloc_e( size_t size, Args && ...args );
+    static ptr_t malloc_e( size_t size, Args && ...args );
     template<typename... Args>
-    static void *calloc_e( size_t nmemb, size_t size, Args && ...args );
+    static ptr_t calloc_e( size_t nmemb, size_t size, Args && ...args );
     template<typename... Args>
-    static void *realloc_e( void *ptr, size_t size, Args && ...args );
-    /*
+    static ptr_t realloc_e( ptr_t ptr, size_t size, Args && ...args );
     template<typename... Args>
-    static void *reallocarray_e( void *ptr, size_t nmemb, size_t size, Args && ...args );
-    */
-    template<typename... Args>
-    static void *aligned_alloc_e( size_t alignment, size_t size, Args && ...args );
+    static ptr_t aligned_alloc_e( 
+        size_t alignment, size_t size, Args && ...args );
     template<typename T>
     static void free_e( T* &ptr );
     template<typename... Args>
-    static void *page_e( size_t size, Args && ...args );
+    static ptr_t page_e( size_t n, Args && ...args );
 };
     
 
-inline void *MemRaw::malloc( size_t size ){
+inline MemRaw::ptr_t MemRaw::malloc( size_t size ){
     return ::malloc( size );
 }
-inline void *MemRaw::calloc( size_t nmemb, size_t size ){
+inline MemRaw::ptr_t MemRaw::calloc( size_t nmemb, size_t size ){
     return ::calloc(nmemb, size);
 }
-inline void *MemRaw::realloc( void *ptr, size_t size ){
+inline MemRaw::ptr_t MemRaw::realloc( ptr_t ptr, size_t size ){
     return ::realloc(ptr, size);
 }
-/*
-inline void *MemRaw::reallocarray( void *ptr, size_t nmemb, size_t size ){
-    return ::reallocarray(ptr, nmemb, size);
-}*/
-inline void *MemRaw::aligned_alloc( size_t alignment, size_t size ){
+inline MemRaw::ptr_t MemRaw::aligned_alloc( size_t alignment, size_t size ){
     return ::aligned_alloc( alignment, size );
 }
-inline void MemRaw::free( void *ptr ){
+inline void MemRaw::free( ptr_t ptr ){
     ::free(ptr);
 }
-inline void *MemRaw::page( size_t size ){
-    return aligned_alloc( getpagesize(), size );
+inline MemRaw::ptr_t MemRaw::page( size_t n ){
+    size_t _pagesize = pagesize();
+    return aligned_alloc( _pagesize, n*_pagesize );
+}
+inline MemRaw::size_t MemRaw::pagesize() noexcept{
+    return static_cast<size_t>( getpagesize() );
 }
 template<typename... Args>
-void *MemRaw::malloc_e( size_t size, Args && ...args ){
-    void *ptr = malloc( size );
-    if( !ptr && size ){
-        prt( cerr, std::forward<Args>(args)... ) << endl;
-        throw ErrSystem( errno );
-    }
+MemRaw::ptr_t MemRaw::malloc_e( size_t size, Args && ...args ){
+    ptr_t ptr = malloc( size );
+    if( !ptr && size )
+        ErrSystem::throw_( errno, std::forward<Args>(args)... );
     return ptr;
 }
 template<typename... Args>
-void *MemRaw::calloc_e( size_t nmemb, size_t size, Args && ...args ){
-    void *ptr = calloc(nmemb,size);
+MemRaw::ptr_t MemRaw::calloc_e( size_t nmemb, size_t size, Args && ...args ){
+    ptr_t ptr = calloc(nmemb,size);
     if( !ptr && size && nmemb ){
-        prt( cerr, std::forward<Args>(args)... ) << endl;
-        throw ErrSystem( errno );
+        ErrSystem::throw_( errno, std::forward<Args>(args)... );
     }
     return ptr;
 }
 template<typename... Args>
-void *MemRaw::realloc_e( void *ptr, size_t size, Args && ...args ){
-    void *ptr_re = realloc(ptr, size);
+MemRaw::ptr_t MemRaw::realloc_e( ptr_t ptr, size_t size, Args && ...args ){
+    ptr_t ptr_re = realloc(ptr, size);
     if( !ptr_re && size ){
-        prt( cerr, std::forward<Args>(args)... ) << endl;
-        throw ErrSystem( errno );
+        ErrSystem::throw_( errno, std::forward<Args>(args)... );
     }
+    return ptr_re;
 }
-/*
 template<typename... Args>
-void *MemRaw::reallocarray_e( void *ptr, size_t nmemb, size_t size, Args && ...args ){
-    void *ptr_re = reallocarray(ptr, nmemb, size);
-    if( !ptr_re && size && nmemb ){
-        prt( cerr, std::forward<Args>(args)... ) << endl;
-        throw ErrSystem( errno );
-    }
-    return ptr;
-}*/
-template<typename... Args>
-void *MemRaw::aligned_alloc_e( size_t alignment, size_t size, Args && ...args ){
-    void *ptr = aligned_alloc(alignment, size);
+MemRaw::ptr_t MemRaw::aligned_alloc_e( size_t alignment, size_t size, 
+    Args && ...args )
+{
+    ptr_t ptr = aligned_alloc(alignment, size);
     if( !ptr && size ){
-        prt( cerr, std::forward<Args>(args)... ) << endl;
-        throw ErrSystem( errno );
+        ErrSystem::throw_( errno, std::forward<Args>(args)... );
     }
     return ptr;
 }
@@ -132,8 +117,10 @@ void MemRaw::free_e( T* &ptr ){
     ptr = nullptr;
 }
 template<typename... Args>
-void *MemRaw::page_e( size_t size, Args && ...args ){
-    return aligned_alloc_e( getpagesize(), size, std::forward<Args>(args)... );
+MemRaw::ptr_t MemRaw::page_e( size_t n, Args && ...args ){
+    size_t _pagesize = pagesize();
+    return aligned_alloc_e( _pagesize, _pagesize*n, 
+        std::forward<Args>(args)... );
 }
 
 

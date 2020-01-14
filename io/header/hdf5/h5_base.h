@@ -1,6 +1,6 @@
 /**
  * creat: Yangyao CHEN, 2020/01/11
- * Base class for including in all file in the hdf5 module.
+ * Base file for including in all file in the hdf5 module.
  */ 
 
 

@@ -34,7 +34,6 @@ int main(int argc, char const *argv[]){
      * HIPP::MPI::Comm instance [loc=0x7fff32b9fc70, size=16, align=8]
      * ----------
      * Size info (size=2, rank=1)
-     * 
      */
     sleep( world.rank()+1 );
     comm.info();

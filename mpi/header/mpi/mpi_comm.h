@@ -4,28 +4,10 @@
 #include "mpi_raw_comm.h"
 #include "mpi_group.h"
 #include "mpi_datapacket.h"
+#include "mpi_status.h"
 namespace HIPP{
 namespace MPI{
 
-class Status{
-public:
-    typedef MPI_Status mpi_t;
-    Status( mpi_t status): _status( status ){ }
-
-    int source() const noexcept { return _status.MPI_SOURCE; }
-    int tag() const noexcept { return _status.MPI_TAG; }
-    int count( const Datatype &dtype ) const { return _count(dtype.raw()); }
-    int count( const string &dtype ) const 
-        { return _count( _typecvt[dtype]->raw() ); }
-protected:
-    mpi_t _status;
-    int _count( Datatype::mpi_t dtype ) const {
-        int cnt;
-        ErrMPI::check( MPI_Get_count( &_status, dtype, &cnt ), emFLPFB );
-        return cnt;
-    }
-};
-    
 class Comm: public MPIObj<_Comm> {
 public:
     typedef MPIObj<_Comm> _obj_base_t;

@@ -10,11 +10,11 @@ public:
     typedef MPI_Datatype mpi_t;
     enum : int { stFREE=0x1, stCOMMIT=0x2 };
 
-    _Datatype( mpi_t val, int state ) : _val(val), _state(state){
+    _Datatype( mpi_t val, int state ) noexcept : _val(val), _state(state){
         if( state & stCOMMIT )
             commit( _val );
     }
-    ~_Datatype(){
+    ~_Datatype() noexcept { 
         if( bool(_state & stFREE) && !is_null() ){
             if( MPI_Type_free( &_val ) != MPI_SUCCESS )
                 ErrMPI::abort( 1, emFLPFB );

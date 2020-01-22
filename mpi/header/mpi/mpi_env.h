@@ -1,3 +1,8 @@
+/**
+ * creat: Yangyao CHEN, 2020/01/21
+ *      [write   ] Env - the MPI environment inquiry and management class.
+ */ 
+
 #ifndef _HIPPMPI_MPI_ENV_H_
 #define _HIPPMPI_MPI_ENV_H_
 #include "mpi_base.h"
@@ -11,6 +16,9 @@
 namespace HIPP{
 namespace MPI{
 
+/**
+ * the MPI environment inquiry and management class.
+ */
 class Env{
 public:
     Env();
@@ -18,6 +26,8 @@ public:
     Env(int &argc, char **&argv, int required, int &provided );
     ~Env() noexcept;
 
+    /**
+     */
     ostream & info( ostream &os = cout, int fmt_cntl = 1 ) const;
     friend ostream & operator<<( ostream &os, const Env &);
     

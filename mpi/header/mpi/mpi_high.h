@@ -1,3 +1,8 @@
+/**
+ * creat: Yangyao CHEN, 2020/01/21
+ * The MPI high-level interfaces.
+ */ 
+
 #ifndef _HIPPMPI_MPI_HIGH_H_
 #define _HIPPMPI_MPI_HIGH_H_
 #include "mpi_obj_base.h"
@@ -6,4 +11,7 @@
 #include "mpi_group.h"
 #include "mpi_datatype.h"
 #include "mpi_datapacket.h"
+#include "mpi_status.h"
+#include "mpi_requests.h"
+#include "mpi_op.h"
 #endif	//_HIPPMPI_MPI_HIGH_H_

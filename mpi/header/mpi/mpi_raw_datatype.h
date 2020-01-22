@@ -1,3 +1,7 @@
+/**
+ * creat: Yangyao CHEN, 2020/01/21
+ *      [write   ] _Datatype - the intermediate-level MPI datatype interface.
+ */
 #ifndef _HIPPMPI_MPI_RAW_DATATYPE_H_
 #define _HIPPMPI_MPI_RAW_DATATYPE_H_
 #include "mpi_base.h"
@@ -5,6 +9,12 @@
 namespace HIPP{
 namespace MPI{
 
+/**
+ * the intermediate-level MPI datatype interface.
+ * 
+ * _Datatype should not be constructed by users directly. The life time of it is 
+ * handled by the high-level interfaces.
+ */
 class _Datatype{
 public:
     typedef MPI_Datatype mpi_t;

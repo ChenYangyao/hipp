@@ -1,3 +1,8 @@
+/**
+ * creat: Yangyao CHEN, 2020/01/21
+ *      [write   ] _Comm - the intermediate-level MPI communicator interface.
+ */
+
 #ifndef _HIPPMPI_MPI_RAW_COMM_H_
 #define _HIPPMPI_MPI_RAW_COMM_H_
 #include "mpi_base.h"
@@ -5,15 +10,25 @@
 namespace HIPP{
 namespace MPI{
 
+/**
+ * the intermediate-level MPI communicator interface.
+ * 
+ * _Comm should not be constructed by users directly. The life time of it is 
+ * handled by the high-level interfaces.
+ */
 class _Comm {
 public:
     typedef MPI_Comm mpi_t;
 
     /**
-     * val is the actual internal MPI_Comm variable, state indicates how its 
-     * life time is controlled.
-     * @state:  0 if the life time is system-managed, that is, not handled by
-     *          this instance. Otherwise val is freed when deconstructing.
+     * intermediate-level communicator constructors.
+     * @val:    the actual original MPI_Comm variable.
+     * @state:  indicates how the life time of communicator is controlled.
+     *          If the life time is system-managed, that is, not handled by
+     *          this instance, set state to 0.
+     *          Otherwise set state to 1, and the communicator is freed when 
+     *          deconstructing.
+     * For the null-communicator, it is safe to set state 0 or 1.
      */
     _Comm( mpi_t val, int state ) noexcept: _val(val), _state( state ){ }
     ~_Comm() noexcept{
@@ -25,6 +40,7 @@ public:
     static void free( mpi_t &comm ){
         ErrMPI::check(  MPI_Comm_free(&comm), emFLPFB );
     }
+
     int size() const{
         int _size;
         ErrMPI::check( MPI_Comm_size(_val, &_size), emFLPFB);
@@ -37,7 +53,17 @@ public:
     }
     mpi_t raw() const noexcept { return _val; }
     bool is_null() const noexcept { return _val == nullval(); }
-
+    
+    bool is_inter() const {
+        int _flag;
+        ErrMPI::check( MPI_Comm_test_inter(_val, &_flag), emFLPFB );
+        return bool(_flag);
+    }
+    int remote_size() const {
+        int _size;
+        ErrMPI::check( MPI_Comm_remote_size(_val, &_size), emFLPFB );
+        return _size;
+    }
 
     mpi_t split( int color, int key = 0 )const{
         mpi_t newcomm;
@@ -64,16 +90,332 @@ public:
         ErrMPI::check( MPI_Comm_group(_val, &obj), emFLPFB );
         return obj;
     }
-
+    MPI_Group remote_group() const{
+        MPI_Group obj;
+        ErrMPI::check( MPI_Comm_remote_group(_val, &obj), emFLPFB );
+        return obj;
+    }
     void send( const void *buff, int count, MPI_Datatype dtype, 
         int dest, int tag ) const{
-        ErrMPI::check( MPI_Send(buff, count, dtype, dest, tag, _val) );
+        ErrMPI::check( MPI_Send(buff, count, dtype, dest, tag, _val), 
+            emFLPFB );
     }
+
+    /**
+     * wrappers of MPI point-to-point communication.
+     */
     MPI_Status recv( void *buff, int count, MPI_Datatype dtype, 
         int src, int tag ) const{
         MPI_Status st;
-        ErrMPI::check( MPI_Recv(buff, count, dtype, src, tag, _val, &st) );
+        ErrMPI::check( MPI_Recv(buff, count, dtype, src, tag, _val, &st), 
+            emFLPFB );
         return st;
+    }
+    MPI_Request isend( const void *buff, int count, MPI_Datatype dtype, 
+        int dest, int tag ) const{
+        MPI_Request rq;
+        ErrMPI::check( MPI_Isend(buff, count, dtype, dest, tag, _val, &rq), 
+            emFLPFB );
+        return rq;
+    }
+    MPI_Request ibsend( const void *buff, int count, MPI_Datatype dtype, 
+        int dest, int tag ) const{
+        MPI_Request rq;
+        ErrMPI::check( MPI_Ibsend(buff, count, dtype, dest, tag, _val, &rq), 
+            emFLPFB );
+        return rq;
+    }
+    MPI_Request issend( const void *buff, int count, MPI_Datatype dtype, 
+        int dest, int tag ) const{
+        MPI_Request rq;
+        ErrMPI::check( MPI_Issend(buff, count, dtype, dest, tag, _val, &rq), 
+            emFLPFB );
+        return rq;
+    }
+    MPI_Request irsend( const void *buff, int count, MPI_Datatype dtype, 
+        int dest, int tag ) const{
+        MPI_Request rq;
+        ErrMPI::check( MPI_Irsend(buff, count, dtype, dest, tag, _val, &rq), 
+            emFLPFB );
+        return rq;
+    }
+    MPI_Request irecv( void *buff, int count, MPI_Datatype dtype, 
+        int src, int tag ) const{
+        MPI_Request rq;
+        ErrMPI::check( MPI_Irecv(buff, count, dtype, src, tag, _val, &rq) );
+        return rq;
+    }
+
+    /**
+     * wrappers of MPI original blocking/non-blocking collective communication
+     * (data transfer and computation).
+     */
+    void barrier() const{
+        ErrMPI::check( 
+            MPI_Barrier(_val), emFLPFB );
+    }
+    void bcast( void *buf, int count, MPI_Datatype dtype, int root ) const{
+        ErrMPI::check( 
+            MPI_Bcast(buf, count, dtype, root, _val), emFLPFB );
+    }
+    void gather( const void *sendbuf, int sendcount, MPI_Datatype sendtype, 
+        void *recvbuf, int recvcount, MPI_Datatype recvtype, int root ) const{
+        ErrMPI::check( 
+            MPI_Gather(sendbuf, sendcount, sendtype, 
+                recvbuf, recvcount, recvtype, root, _val), emFLPFB );
+    }
+    void gatherv(
+        const void *sendbuf, int sendcount, MPI_Datatype sendtype, 
+        void *recvbuf, const int recvcounts[], const int displs[],
+        MPI_Datatype recvtype, int root ) const{
+        ErrMPI::check( 
+            MPI_Gatherv(sendbuf, sendcount, sendtype, 
+                recvbuf, recvcounts, displs, recvtype, root, _val), emFLPFB );
+    }
+    void scatter(
+        const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+        void *recvbuf, int recvcount, MPI_Datatype recvtype, int root ) const{
+        ErrMPI::check( 
+            MPI_Scatter(sendbuf, sendcount, sendtype, 
+                recvbuf, recvcount, recvtype, root, _val), emFLPFB );
+    }
+    void scatterv(
+        const void *sendbuf, const int sendcounts[], const int displs[], 
+        MPI_Datatype sendtype,
+        void *recvbuf, int recvcount, MPI_Datatype recvtype, int root) const{
+        ErrMPI::check( 
+            MPI_Scatterv(sendbuf, sendcounts, displs, sendtype, 
+                recvbuf, recvcount, recvtype, root, _val), emFLPFB );
+    }
+    void allgather( const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+        void *recvbuf, int recvcount, MPI_Datatype recvtype ) const{
+    ErrMPI::check( 
+        MPI_Allgather(sendbuf, sendcount, sendtype, 
+            recvbuf, recvcount, recvtype, _val), emFLPFB );
+    }
+    void allgatherv(
+        const void *sendbuf, int sendcount, MPI_Datatype sendtype, 
+        void *recvbuf, const int recvcounts[], const int displs[],
+        MPI_Datatype recvtype ) const{
+        ErrMPI::check( 
+            MPI_Allgatherv(sendbuf, sendcount, sendtype, 
+                recvbuf, recvcounts, displs, recvtype, _val), emFLPFB );
+    }
+    void alltoall( const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+        void *recvbuf, int recvcount, MPI_Datatype recvtype ) const{
+        ErrMPI::check( 
+            MPI_Alltoall(sendbuf, sendcount, sendtype, 
+                recvbuf, recvcount, recvtype,_val), emFLPFB );
+    }
+    void alltoallv( const void *sendbuf, const int sendcounts[], 
+        const int senddispls[], MPI_Datatype sendtype,
+        void *recvbuf, const int recvcounts[], const int recvdispls[], 
+        MPI_Datatype recvtype ) const{
+        ErrMPI::check( 
+            MPI_Alltoallv(sendbuf, sendcounts, senddispls, sendtype, 
+                recvbuf, recvcounts, recvdispls, recvtype, _val), emFLPFB );
+    }
+    void alltoallw( const void *sendbuf, const int sendcounts[], 
+        const int senddispls[], const MPI_Datatype sendtypes[],
+        void *recvbuf, const int recvcounts[], const int recvdispls[], 
+        const MPI_Datatype recvtypes[] ) const{
+        ErrMPI::check( 
+            MPI_Alltoallw(sendbuf, sendcounts, senddispls, sendtypes, 
+                recvbuf, recvcounts, recvdispls, recvtypes, _val), emFLPFB );
+    }
+    void reduce( const void *sendbuf, void *recvbuf, int count, 
+        MPI_Datatype dtype, MPI_Op op, int root ) const{
+        ErrMPI::check(
+            MPI_Reduce( sendbuf, recvbuf, count, dtype, 
+                op, root, _val ), emFLPFB);
+    }
+    void allreduce( const void *sendbuf, void *recvbuf, int count, 
+        MPI_Datatype dtype, MPI_Op op ) const{
+        ErrMPI::check(
+            MPI_Allreduce( sendbuf, recvbuf, count, dtype, 
+                op, _val ), emFLPFB);
+    }
+    static void reduce_local( const void *inbuf, void *inoutbuf, int count, 
+        MPI_Datatype dtype, MPI_Op op ){
+        ErrMPI::check(
+            MPI_Reduce_local( inbuf, inoutbuf, count, dtype, op ), emFLPFB);
+    }
+    void reduce_scatter_block( const void *sendbuf, void *recvbuf, 
+        int recvcount, MPI_Datatype dtype, MPI_Op op ) const{
+        ErrMPI::check(
+            MPI_Reduce_scatter_block( sendbuf, recvbuf, recvcount, dtype, 
+                op, _val ), emFLPFB);
+    }
+    void reduce_scatter( const void *sendbuf, void *recvbuf, 
+        const int recvcounts[], MPI_Datatype dtype, MPI_Op op ) const{
+        ErrMPI::check(
+            MPI_Reduce_scatter(sendbuf, recvbuf, recvcounts,
+                dtype, op, _val), emFLPFB);
+    }
+    void scan( const void *sendbuf, void *recvbuf, 
+        int count, MPI_Datatype dtype, MPI_Op op ) const{
+        ErrMPI::check(
+            MPI_Scan(sendbuf, recvbuf, count, dtype, op, _val), emFLPFB );
+    }
+    void exscan( const void *sendbuf, void *recvbuf, 
+        int count, MPI_Datatype dtype, MPI_Op op ) const{
+        ErrMPI::check(
+            MPI_Exscan( sendbuf, recvbuf, count, dtype, op, _val ), emFLPFB );
+    }
+    MPI_Request ibarrier() const{
+        MPI_Request req;
+        ErrMPI::check(
+            MPI_Ibarrier(_val, &req), emFLPFB );
+        return req;
+    }
+    MPI_Request ibcast( 
+        void *buf, int count, MPI_Datatype dtype, int root ) const{
+        MPI_Request req;
+        ErrMPI::check(
+            MPI_Ibcast( buf, count, dtype, root, _val, &req ), emFLPFB );
+        return req;
+    }
+    MPI_Request igather( 
+        const void *sendbuf, int sendcount, MPI_Datatype sendtype, 
+        void *recvbuf, int recvcount, MPI_Datatype recvtype, int root ) const{
+        MPI_Request req;
+        ErrMPI::check(
+            MPI_Igather( sendbuf, sendcount, sendtype, 
+                recvbuf, recvcount, recvtype, root, _val, &req ), emFLPFB );
+        return req;
+    }
+    MPI_Request igatherv(
+        const void *sendbuf, int sendcount, MPI_Datatype sendtype, 
+        void *recvbuf, const int recvcounts[], const int displs[],
+        MPI_Datatype recvtype, int root ) const{
+        MPI_Request req;
+        ErrMPI::check(
+            MPI_Igatherv( sendbuf, sendcount, sendtype, 
+                recvbuf, recvcounts, displs, recvtype, root, 
+                _val, &req ), emFLPFB );
+        return req;
+    }
+    MPI_Request iscatter(
+        const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+        void *recvbuf, int recvcount, MPI_Datatype recvtype, int root ) const{
+        MPI_Request req;
+        ErrMPI::check(
+            MPI_Iscatter( sendbuf, sendcount, sendtype, 
+            recvbuf, recvcount, recvtype, root, _val, &req ), emFLPFB
+        );
+        return req;
+    }
+    MPI_Request iscatterv(
+        const void *sendbuf, const int sendcounts[], const int displs[], 
+        MPI_Datatype sendtype,
+        void *recvbuf, int recvcount, MPI_Datatype recvtype, int root) const{
+        MPI_Request req;
+        ErrMPI::check(
+            MPI_Iscatterv( sendbuf, sendcounts, displs, sendtype, 
+            recvbuf, recvcount, recvtype, root, _val, &req ), emFLPFB );
+        return req;
+    }
+    MPI_Request iallgather( 
+        const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+        void *recvbuf, int recvcount, MPI_Datatype recvtype ) const{
+        MPI_Request req;
+        ErrMPI::check(
+            MPI_Iallgather( sendbuf, sendcount, sendtype,
+                recvbuf, recvcount, recvtype, _val, &req ), emFLPFB );
+        return req;
+    }
+    MPI_Request iallgatherv(
+        const void *sendbuf, int sendcount, MPI_Datatype sendtype, 
+        void *recvbuf, const int recvcounts[], const int displs[],
+        MPI_Datatype recvtype ) const{
+        MPI_Request req;
+        ErrMPI::check(
+            MPI_Iallgatherv( sendbuf, sendcount, sendtype,
+                recvbuf, recvcounts, displs, recvtype, _val, &req ), emFLPFB );
+        return req;
+    }
+    MPI_Request ialltoall( 
+        const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+        void *recvbuf, int recvcount, MPI_Datatype recvtype ) const {
+        MPI_Request req;
+        ErrMPI::check(
+            MPI_Ialltoall( sendbuf, sendcount, sendtype,
+                recvbuf, recvcount, recvtype, _val, &req ), emFLPFB );
+        return req;
+    }
+    MPI_Request ialltoallv( const void *sendbuf, const int sendcounts[], 
+        const int senddispls[], MPI_Datatype sendtype,
+        void *recvbuf, const int recvcounts[], const int recvdispls[], 
+        MPI_Datatype recvtype ) const{
+        MPI_Request req;
+        ErrMPI::check(
+            MPI_Ialltoallv( sendbuf, sendcounts, senddispls, sendtype,
+                recvbuf, recvcounts, recvdispls, recvtype, _val, &req ), 
+                emFLPFB );
+        return req;
+    }
+    MPI_Request ialltoallw( const void *sendbuf, const int sendcounts[], 
+        const int senddispls[], const MPI_Datatype sendtypes[],
+        void *recvbuf, const int recvcounts[], const int recvdispls[], 
+        const MPI_Datatype recvtypes[] ) const{
+        MPI_Request req;
+        ErrMPI::check(
+            MPI_Ialltoallw( sendbuf, sendcounts, senddispls, sendtypes,
+                recvbuf, recvcounts, recvdispls, recvtypes, _val, &req ), 
+                emFLPFB );
+        return req;
+    }
+    MPI_Request ireduce( const void *sendbuf, void *recvbuf, int count, 
+        MPI_Datatype dtype, MPI_Op op, int root ) const{
+        MPI_Request req;
+        ErrMPI::check(
+            MPI_Ireduce( sendbuf, recvbuf, count, dtype, op, root, _val, &req ), 
+                emFLPFB );
+        return req;
+    }
+    MPI_Request iallreduce( const void *sendbuf, void *recvbuf, int count, 
+        MPI_Datatype dtype, MPI_Op op ) const{
+        MPI_Request req;
+        ErrMPI::check(
+            MPI_Iallreduce( sendbuf, recvbuf, count, dtype, op, _val, &req ), 
+                emFLPFB );
+        return req;
+    }
+    MPI_Request ireduce_scatter_block( const void *sendbuf, void *recvbuf, 
+        int recvcount, MPI_Datatype dtype, MPI_Op op ) const{
+        MPI_Request req;
+        ErrMPI::check(
+            MPI_Ireduce_scatter_block( 
+                sendbuf, recvbuf, recvcount, dtype, op, _val, &req ), 
+                emFLPFB );
+        return req;
+    }
+    MPI_Request ireduce_scatter( const void *sendbuf, void *recvbuf, 
+        const int recvcounts[], MPI_Datatype dtype, MPI_Op op ) const{
+        MPI_Request req;
+        ErrMPI::check(
+            MPI_Ireduce_scatter( 
+                sendbuf, recvbuf, recvcounts, dtype, op, _val, &req ), 
+                emFLPFB );
+        return req;   
+    }
+    MPI_Request iscan( const void *sendbuf, void *recvbuf, 
+        int count, MPI_Datatype dtype, MPI_Op op ) const{
+        MPI_Request req;
+        ErrMPI::check(
+            MPI_Iscan( 
+                sendbuf, recvbuf, count, dtype, op, _val, &req ), 
+                emFLPFB );
+        return req;
+    }
+    MPI_Request iexscan( const void *sendbuf, void *recvbuf, 
+        int count, MPI_Datatype dtype, MPI_Op op ) const{
+        MPI_Request req;
+        ErrMPI::check(
+            MPI_Iexscan( 
+                sendbuf, recvbuf, count, dtype, op, _val, &req ), 
+                emFLPFB );
+        return req;
     }
 protected:
     mpi_t _val;

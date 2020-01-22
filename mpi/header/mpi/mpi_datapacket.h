@@ -36,9 +36,9 @@ public:
      */
     Datapacket( const void *buff, int size, Datatype dtype ) noexcept;
     Datapacket( const void *buff, int size, const string &dtype );
-    Datapacket( const string &buff ) noexcept;
+    explicit Datapacket( const string &buff ) noexcept;
     template<typename T, typename A>
-    Datapacket( const vector<T,A> &buff ) noexcept;
+    explicit Datapacket( const vector<T,A> &buff ) noexcept;
 
     Datapacket(const Datapacket &) noexcept;
     Datapacket(Datapacket &&) noexcept;

@@ -1,16 +1,15 @@
-#include <hippcntl.h>
 #include <hippmpi.h>
-#include <unistd.h>
+#include <unistd.h>         // sleep() system call
 
 int main(int argc, char const *argv[]){
     /**
-     * init the MPI environment, and get the communicator world.
+     * Init the MPI environment, and get the communication world.
      */
     HIPP::MPI::Env env;
     auto world = env.world();
     
     /**
-     * split the world into two disjoint communicator.
+     * Split the world into two disjoint communicator.
      * The processes with odd ranks in the communicator world is grouped into
      * one communicator, those with even ranks into another.
      * This is equivalent to call MPI_Comm_split().
@@ -18,7 +17,7 @@ int main(int argc, char const *argv[]){
     auto comm = world.split( world.rank() % 2 );
 
     /**
-     * print the infomation of the new communicator into std::cout.
+     * Print the infomation of the new communicator into std::cout.
      * sleep() avoids the printing entangled among processes. 
      * 
      * If invoked as `mpiexec -n 4`, the result is like:

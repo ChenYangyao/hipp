@@ -16,12 +16,12 @@ ostream & Datatype::info( ostream &os, int fmt_cntl ) const{
     }
     if(fmt_cntl >= 1){
         prt( os, HIPPCNTL_CLASS_INFO(HIPP::MPI::Datatype) );
-        if( is_null() ) prt(os, "Null") << endl;
+        if( is_null() ) prt(os, "  Null") << endl;
         else{
             int _size = size();
             aint_t lb, ext, tlb, text;
             extent( lb, ext ); true_extent(tlb, text);
-            prt( os, "Size info (size=", _size, 
+            prt( os, "  Size info (size=", _size, 
                 ", lower bound/true lower bound=", lb, "/", tlb, 
                 ", extent/true extent=", ext, "/", text, ")" ) << endl;
         }
@@ -147,7 +147,7 @@ Datatype Datatype::subarray( const std::vector<int> &sizes,
 
 
 #define _HIPPMPI_MPI_PRETYPE(name, mpiname) \
-    Datatype name{ std::make_shared<_Datatype>(mpiname, 0) };
+    const Datatype name{ std::make_shared<_Datatype>(mpiname, 0) };
 
 _HIPPMPI_MPI_PRETYPE(BYTE, MPI_BYTE)
 _HIPPMPI_MPI_PRETYPE(CHAR, MPI_CHAR)
@@ -174,7 +174,7 @@ _HIPPMPI_MPI_TYPECVT(double, DOUBLE, MPI_DOUBLE)
 
 #undef _HIPPMPI_MPI_TYPECVT
 
-std::unordered_map<string, const Datatype *> _typecvt = {
+const std::unordered_map<string, const Datatype *> _typecvt = {
     {"byte", &BYTE},
     {"char", &CHAR},
     {"short", &SHORT},

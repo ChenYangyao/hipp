@@ -28,16 +28,21 @@ public:
     
     /**
      * query the message properties, rank of srouce process, tag of the matched
-     * message and count of the items.
-     * @dtype:  pre-defined or derived datatype. Should match the datatype used
-     *          in the communication that returns this status.
+     * message, error code, and count of the items.
+     * 
+     * The error code is set only when the multiple completion call failed and
+     * an ERR_IN_STATUS is returned.
+     * 
+     * @dtype:  pre-defined or derived datatype. Should be exactly the same 
+     *          datatype used in the communication that returns this status.
      *          Only pre-defined datatypes support the string version.
      */
     int source() const noexcept { return _status.MPI_SOURCE; }
     int tag() const noexcept { return _status.MPI_TAG; }
+    int error() const noexcept { return _status.MPI_ERROR; }
     int count( const Datatype &dtype ) const { return _count(dtype.raw()); }
-
     int count( const string &dtype ) const;
+protected:
     mpi_t _status;
     int _count( Datatype::mpi_t dtype ) const {
         int cnt;

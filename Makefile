@@ -2,8 +2,8 @@ all: build
 .PHONY: all build install tidy clean
 
 build: 
-	make -C cntl
-	make -C io
+	$(MAKE) -C cntl
+	$(MAKE) -C io
 
 install:
 	if [ -e 'include' ]; then rm include/*; else mkdir include; fi
@@ -11,15 +11,17 @@ install:
 	cp -r cntl/obj/*.so io/obj/*.so lib/
 	cp -r cntl/header/* io/header/* include/
 
+uninstall:
+	rm -rf include
+	rm -rf lib
+
 clean:
-	make -C cntl clean 
-	make -C io clean
-	rm -r include
-	rm -r lib
+	$(MAKE) -C cntl clean 
+	$(MAKE) -C io clean
+	$(MAKE) uninstall
 
 tidy:
-	make -C cntl tidy
-	make -C io tidy
-	rm -r include
-	rm -r lib
+	$(MAKE) -C cntl tidy
+	$(MAKE) -C io tidy
+	$(MAKE) uninstall
 

@@ -1,4 +1,4 @@
 all: 
-	make -C error
+	$(MAKE) -C error
 
 .PHONY: all 

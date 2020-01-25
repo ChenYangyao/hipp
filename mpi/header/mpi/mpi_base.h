@@ -14,6 +14,7 @@ namespace MPI{
 
 const int 
     UNDEFINED = MPI_UNDEFINED,
+    ERR_IN_STATUS = MPI_ERR_IN_STATUS,
     
     /**
      * returns of object comparisons

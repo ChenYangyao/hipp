@@ -95,15 +95,29 @@ public:
         ErrMPI::check( MPI_Comm_remote_group(_val, &obj), emFLPFB );
         return obj;
     }
+    /**
+     * wrappers of MPI point-to-point communication.
+     */
     void send( const void *buff, int count, MPI_Datatype dtype, 
         int dest, int tag ) const{
         ErrMPI::check( MPI_Send(buff, count, dtype, dest, tag, _val), 
             emFLPFB );
     }
-
-    /**
-     * wrappers of MPI point-to-point communication.
-     */
+    void bsend(const void *buff, int count, MPI_Datatype dtype, 
+        int dest, int tag ) const {
+        ErrMPI::check( MPI_Bsend(buff, count, dtype, dest, tag, _val),
+            emFLPFB );
+    }
+    void ssend(const void *buff, int count, MPI_Datatype dtype, 
+        int dest, int tag ) const {
+        ErrMPI::check( MPI_Ssend(buff, count, dtype, dest, tag, _val),
+            emFLPFB );
+    }
+    void rsend(const void *buff, int count, MPI_Datatype dtype, 
+        int dest, int tag ) const {
+        ErrMPI::check( MPI_Rsend(buff, count, dtype, dest, tag, _val),
+            emFLPFB );
+    }
     MPI_Status recv( void *buff, int count, MPI_Datatype dtype, 
         int src, int tag ) const{
         MPI_Status st;

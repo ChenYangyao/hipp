@@ -125,17 +125,11 @@ void Comm::alltoallv( const void *sendbuf, const int sendcounts[],
     recvbuf, recvcounts, recvdispls, recvtype.raw());
 }
 void Comm::alltoallw( const void *sendbuf, const int sendcounts[], 
-    const int senddispls[], const Datatype sendtypes[],
+    const int senddispls[], const Datatype::mpi_t sendtypes[],
     void *recvbuf, const int recvcounts[], const int recvdispls[], 
-    const Datatype recvtypes[] ) const{
-    int commsize = is_inter() ? remote_size() : size();
-    vector<Datatype::mpi_t> _st(commsize), _rt(commsize);
-    for(int i=0; i<commsize; ++i){
-        _st[i] = sendtypes[i].raw();
-        _rt[i] = recvtypes[i].raw();
-    }
-    _obj_ptr->alltoallw(sendbuf, sendcounts, senddispls, _st.data(), 
-        recvbuf, recvcounts, recvdispls, _rt.data());
+    const Datatype::mpi_t recvtypes[] ) const{
+    _obj_ptr->alltoallw(sendbuf, sendcounts, senddispls, sendtypes, 
+        recvbuf, recvcounts, recvdispls, recvtypes);
 }
 void Comm::reduce( const void *sendbuf, void *recvbuf, int count, 
     const Datatype &dtype, const Oppacket &op, int root ) const{
@@ -237,18 +231,12 @@ Requests Comm::ialltoallv( const void *sendbuf, const int sendcounts[],
         recvbuf, recvcounts, recvdispls, recvtype.raw()), 0);
 }
 Requests Comm::ialltoallw( const void *sendbuf, const int sendcounts[], 
-    const int senddispls[], const Datatype sendtypes[],
+    const int senddispls[], const Datatype::mpi_t sendtypes[],
     void *recvbuf, const int recvcounts[], const int recvdispls[], 
-    const Datatype recvtypes[] ) const{
-    int commsize = is_inter() ? remote_size() : size();
-    vector<Datatype::mpi_t> _st(commsize), _rt(commsize);
-    for(int i=0; i<commsize; ++i){
-        _st[i] = sendtypes[i].raw();
-        _rt[i] = recvtypes[i].raw();
-    }
+    const Datatype::mpi_t recvtypes[] ) const{
     return Requests::_from_raw( _obj_ptr->ialltoallw(sendbuf, sendcounts, 
-        senddispls, _st.data(), 
-        recvbuf, recvcounts, recvdispls, _rt.data()), 0);
+        senddispls, sendtypes, 
+        recvbuf, recvcounts, recvdispls, recvtypes), 0);
 }
 Requests Comm::ireduce( const void *sendbuf, void *recvbuf, int count, 
     const Datatype &dtype, const Oppacket &op, int root ) const{

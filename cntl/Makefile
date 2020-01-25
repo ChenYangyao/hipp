@@ -1,6 +1,6 @@
 all: 
-	make -C src
-	make -C obj
+	$(MAKE) -C src
+	$(MAKE) -C obj
 
 .PNOHY: all 
 clean:

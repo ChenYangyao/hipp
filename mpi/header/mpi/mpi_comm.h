@@ -106,6 +106,12 @@ public:
     template<typename ...Args>
     void send( int dest, int tag, Args && ...args );
     template<typename ...Args>
+    void bsend( int dest, int tag, Args && ...args );
+    template<typename ...Args>
+    void ssend( int dest, int tag, Args && ...args );
+    template<typename ...Args>
+    void rsend( int dest, int tag, Args && ...args );
+    template<typename ...Args>
     Status recv( int src, int tag, Args && ...args );
 
     template<typename ...Args>
@@ -133,7 +139,12 @@ public:
      * completion.
      * In all cases, the datatype argument mush be exactly a Datatype object or
      * array of Datatype objects. This is different from the point-to-point
-     * communication, where you can pass a string to indicate a basic type.
+     * communication, where you can pass a string to indicate a basic type. One
+     * exception is alltoallw() and ialltoallw(), in which the datatype 
+     * arguments is an array of original MPI datatype (This design avoid the 
+     * problem when using non-blocking collective operation, and also avoid 
+     * overhead in converting the datatype from high-level instance to MPI 
+     * original one).
      */
     void barrier() const;
     void bcast( void *buf, int count, const Datatype &dtype, int root) const;
@@ -164,9 +175,9 @@ public:
         void *recvbuf, const int recvcounts[], const int recvdispls[], 
         const Datatype &recvtype ) const;
     void alltoallw( const void *sendbuf, const int sendcounts[], 
-        const int senddispls[], const Datatype sendtypes[],
+        const int senddispls[], const Datatype::mpi_t sendtypes[],
         void *recvbuf, const int recvcounts[], const int recvdispls[], 
-        const Datatype recvtypes[] ) const;
+        const Datatype::mpi_t recvtypes[] ) const;
     void reduce( const void *sendbuf, void *recvbuf, int count, 
         const Datatype &dtype, const Oppacket &op, int root ) const;
     void allreduce( const void *sendbuf, void *recvbuf, int count, 
@@ -184,8 +195,10 @@ public:
         int count, const Datatype &dtype, const Oppacket &op ) const;
 
     Requests ibarrier() const;
-    Requests ibcast( void *buf, int count, const Datatype &dtype, int root) const;
-    Requests igather( const void *sendbuf, int sendcount, const Datatype &sendtype, 
+    Requests ibcast( 
+        void *buf, int count, const Datatype &dtype, int root) const;
+    Requests igather( 
+        const void *sendbuf, int sendcount, const Datatype &sendtype, 
         void *recvbuf, int recvcount, const Datatype &recvtype, int root) const;
     Requests igatherv(
         const void *sendbuf, int sendcount, const Datatype &sendtype, 
@@ -213,9 +226,9 @@ public:
         void *recvbuf, const int recvcounts[], const int recvdispls[], 
         const Datatype &recvtype ) const;
     Requests ialltoallw( const void *sendbuf, const int sendcounts[], 
-        const int senddispls[], const Datatype sendtypes[],
+        const int senddispls[], const Datatype::mpi_t sendtypes[],
         void *recvbuf, const int recvcounts[], const int recvdispls[], 
-        const Datatype recvtypes[] ) const;
+        const Datatype::mpi_t recvtypes[] ) const;
     Requests ireduce( const void *sendbuf, void *recvbuf, int count, 
         const Datatype &dtype, const Oppacket &op, int root ) const;
     Requests iallreduce( const void *sendbuf, void *recvbuf, int count, 
@@ -235,6 +248,7 @@ protected:
 
 inline ostream & operator<<( ostream &os, const Comm &comm )
     { return comm.info(os); }
+
 inline Comm Comm::_from_raw(mpi_t obj, int state) noexcept{
     return Comm( std::make_shared<_obj_raw_t>(obj, state) );
 }
@@ -243,6 +257,24 @@ template<typename ...Args>
 void Comm::send( int dest, int tag, Args && ...args ){
     Datapacket dp( std::forward<Args>(args)... );
     _obj_ptr->send( dp._buff, dp._size, dp._dtype.raw(), dest, tag );
+}
+
+template<typename ...Args>
+void Comm::bsend( int dest, int tag, Args && ...args ){
+    Datapacket dp( std::forward<Args>(args)... );
+    _obj_ptr->bsend( dp._buff, dp._size, dp._dtype.raw(), dest, tag );
+}
+
+template<typename ...Args>
+void Comm::ssend( int dest, int tag, Args && ...args ){
+    Datapacket dp( std::forward<Args>(args)... );
+    _obj_ptr->ssend( dp._buff, dp._size, dp._dtype.raw(), dest, tag );
+}
+
+template<typename ...Args>
+void Comm::rsend( int dest, int tag, Args && ...args ){
+    Datapacket dp( std::forward<Args>(args)... );
+    _obj_ptr->rsend( dp._buff, dp._size, dp._dtype.raw(), dest, tag );
 }
 
 template<typename ...Args>
@@ -257,24 +289,31 @@ Requests Comm::isend( int dest, int tag, Args && ...args ){
     auto rq = _obj_ptr->isend( dp._buff, dp._size, dp._dtype.raw(), dest, tag );
     return Requests::_from_raw( rq, 0 );
 }
+
 template<typename ...Args>
 Requests Comm::ibsend( int dest, int tag, Args && ...args ){
     Datapacket dp( std::forward<Args>(args)... );
-    auto rq = _obj_ptr->ibsend( dp._buff, dp._size, dp._dtype.raw(), dest, tag );
+    auto rq = _obj_ptr->ibsend( dp._buff, dp._size, dp._dtype.raw(), 
+        dest, tag );
     return Requests::_from_raw( rq, 0 );
 }
+
 template<typename ...Args>
 Requests Comm::issend( int dest, int tag, Args && ...args ){
     Datapacket dp( std::forward<Args>(args)... );
-    auto rq = _obj_ptr->issend( dp._buff, dp._size, dp._dtype.raw(), dest, tag );
+    auto rq = _obj_ptr->issend( dp._buff, dp._size, dp._dtype.raw(), 
+        dest, tag );
     return Requests::_from_raw( rq, 0 );
 }
+
 template<typename ...Args>
 Requests Comm::irsend( int dest, int tag, Args && ...args ){
     Datapacket dp( std::forward<Args>(args)... );
-    auto rq = _obj_ptr->irsend( dp._buff, dp._size, dp._dtype.raw(), dest, tag );
+    auto rq = _obj_ptr->irsend( dp._buff, dp._size, dp._dtype.raw(), 
+        dest, tag );
     return Requests::_from_raw( rq, 0 );
 }
+
 template<typename ...Args>
 Requests Comm::irecv( int src, int tag, Args && ...args ){
     Datapacket dp( std::forward<Args>(args)... );

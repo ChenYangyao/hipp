@@ -1,4 +1,4 @@
 all:
-	make -C mpi
+	$(MAKE) -C mpi
 
 .PHONY: all

@@ -1,7 +1,7 @@
 CXX = mpicxx
-CXXFLAGS = -std=c++11 -O2 -Wall -I../header -I../../cntl/header -Wno-noexcept-type
+CXXFLAGS = -std=c++11 -O2 -Wall
 LDFLAGS = 
-LDLIBS = -lmymathCC -L../../cntl/obj -lhippcntl -L../obj -lhippmpi
+LDLIBS = -lhippmpi -lhippcntl
 
 %.out: %.cpp
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $< $(LDLIBS)

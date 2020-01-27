@@ -15,16 +15,16 @@ The followings are optional.
 ### Install
 
 #### Quick Install
-Enter the root directory of this repository. Then excute
+Enter the root directory of this repository. Then execute
 ```bash
-cmake ./ -D CMAKE_INSTALL_PREFIX=./
+cmake ./ -Dprefix=./
 make
 make install
 ```
-If successful, the two folders named `lib`, `include` appear in the current directory, which are the libraries and header files. You can now modify the environment lists (e.g. `LIBRARY_PATH`, `LD_LIBRARY_PATH` and `CPLUS_INCLUDE_PATH`) to allow the compiler system searching the installed package.
+This configure, build and install HIPP in the current directory. If successful, two folders named `lib`, `include` appear, which include the libraries and header files, respectively. You can now modify the environment lists (e.g. `LIBRARY_PATH`, `LD_LIBRARY_PATH` and `CPLUS_INCLUDE_PATH`) to allow the compiler system searching the installed package.
 
 ## Other Issues
 
 ### License
 
-HIPP is distributed under GPL version 3. See the LICENSE fild for the detail license terms.
+HIPP is distributed under GPL version 3. See the LICENSE file for the detail license terms.

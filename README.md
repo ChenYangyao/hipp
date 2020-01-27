@@ -1,4 +1,4 @@
-# HIPP - the HIPParcos HIgh-Performance computation Package
+# HIPParcos - HIgh Performance computation Package for Cosmological Simulations
 
 ## Get Started
 

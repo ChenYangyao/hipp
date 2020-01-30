@@ -95,6 +95,7 @@ extern const Datatype UNSIGNED_LONG;
 extern const Datatype UNSIGNED_LLONG;
 
 extern const Datatype FLOAT;
+extern const Datatype DOUBLE;
 extern const Datatype LDOUBLE;
 
 extern const Datatype C_BOOL;

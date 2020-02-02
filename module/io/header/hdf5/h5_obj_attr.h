@@ -14,6 +14,9 @@ namespace IO{
 /**
  * HDF5 attribute high-level object.
  */
+class H5File;
+class H5Group;
+class H5Dataset;
 class H5Attr: public H5Obj<_H5Attr>{
 public:
     typedef H5Obj<_H5Attr> _obj_base_t;
@@ -56,6 +59,15 @@ public:
     void read( vector<T, A> &buff ) const;
     template<typename T>
     void read( T*buff ) const;
+protected:
+    friend class H5File;
+    friend class H5Group;
+    friend class H5Dataset;
+
+    template<typename T>
+    static H5Attr create( id_t loc, const string &name, const vector<size_t> &dims, 
+        const string &flag);
+    static H5Attr open( id_t loc, const string &name );
 };
 
 inline H5Dataspace 
@@ -132,6 +144,63 @@ void H5Attr::read( T*buff ) const{
     _obj_ptr->read( memtype, buff );
 }
 
+template<typename T>
+H5Attr H5Attr::create( id_t loc, const string &name, const vector<size_t> &dims, 
+    const string &flag){
+    H5Attr attr(NULL);
+    int rank = dims.size();
+    _H5Dataspace dspace( rank, dims.data() );
+    try{
+        _H5EStackTempOff estk(H5E_DEFAULT);
+        auto ptr = std::make_shared<_obj_raw_t>( 
+            loc, name.c_str(), H5TypeNative<T>::h5_id, dspace.raw() );
+        attr = H5Attr( ptr );
+    }catch( const ErrH5 &e ){
+        if( flag == "trunc" ){
+            attr = open(loc, name);
+        }else if( flag == "excl" ){
+            ErrH5::throw_(-1, emFLPFB, "  ... attribute ", name, " exists\n");
+        }else{
+            ErrLogic::throw_(ErrLogic::eINVALIDARG, 
+                emFLPFB,
+                "  ... invalid flag ", flag, '\n');
+        }
+    }
+    return attr;
+}
+template<>
+H5Attr H5Attr::create<string>( 
+    id_t loc, const string &name, const vector<size_t> &dims, 
+    const string &flag){
+
+    H5Attr attr(NULL);
+    typedef H5TypeStr str_t;
+    _H5Datatype dtype( _H5Datatype::copy( str_t::h5_id ) );
+    dtype.set_size( dims[1] );
+    _H5Dataspace dspace( 1, &dims[0] );
+    try{
+        _H5EStackTempOff estk(H5E_DEFAULT);
+        auto ptr = std::make_shared<_obj_raw_t>( loc, name.c_str(), 
+            dtype.raw(), dspace.raw() );
+        attr = H5Attr(ptr);
+    }catch( const ErrH5 &e ){
+        if( flag == "trunc" ){
+            attr = open(loc, name);
+        }else if( flag == "excl" ){
+            ErrH5::throw_(-1, emFLPFB, "  ... attribute ", name, " exists\n");
+        }else{
+            ErrLogic::throw_(ErrLogic::eINVALIDARG, emFLPFB, 
+                "  ... invalid flag ", flag, '\n');
+        }
+    }
+    return attr;
+
+}
+inline H5Attr H5Attr::open( id_t loc, const string &name ){
+    auto ptr = std::make_shared<_obj_raw_t>( 
+        _obj_raw_t::open( loc, name.c_str() ));
+    return H5Attr( ptr );
+}
 
 } // namespace IO
 } // namespace HIPP

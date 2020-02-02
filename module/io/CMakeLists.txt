@@ -5,6 +5,8 @@ message(STATUS "Module: ${_projectid}${_modid}")
 message("   Source at: ${_moddir}")
 
 add_subdirectory(src)
+
+
 set(_libname "${_projectid}${_modid}")
 add_library(${_libname}
     SHARED 

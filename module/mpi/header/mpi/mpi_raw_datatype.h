@@ -49,6 +49,14 @@ public:
         ErrMPI::check( MPI_Type_size(_val, &_size), emFLPFB );
         return _size;
     }
+    static void get_envelope(mpi_t dtype, int &num_ints, int &num_addrs, 
+        int &num_dtypes, int &combiner){
+        ErrMPI::check( 
+            MPI_Type_get_envelope( 
+                dtype, &num_ints, &num_addrs, &num_dtypes, &combiner ), 
+                emFLPFB );
+    }
+
     mpi_t dup()const {
         mpi_t newtype;
         ErrMPI::check( MPI_Type_dup( _val, &newtype ), emFLPFB );

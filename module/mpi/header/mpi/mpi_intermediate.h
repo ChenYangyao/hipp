@@ -10,4 +10,6 @@
 #include "mpi_raw_datatype.h"
 #include "mpi_raw_requests.h"
 #include "mpi_raw_op.h"
+#include "mpi_raw_info.h"
+#include "mpi_raw_file.h"
 #endif	//_HIPPMPI_MPI_INTERMEDIATE_H_

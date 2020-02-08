@@ -9,15 +9,16 @@ namespace MPI{
 class File: public MPIObj<_File>{
 public:
     enum: int {
-        SEEK_SET=MPI_SEEK_SET,
-        SEEK_CUR=MPI_SEEK_CUR,
-        SEEK_END=MPI_SEEK_END };
+        sSET=MPI_SEEK_SET,
+        sCUR=MPI_SEEK_CUR,
+        sEND=MPI_SEEK_END };
 
     typedef MPIObj<_File> _obj_base_t;
     using _obj_base_t::_obj_base_t;
 
     File( const Comm &comm, const string &name, 
         const string &amode, const Info &info = Info::nullval() );
+    ~File(){}
 
     ostream &info( ostream &os = cout, int fmt_cntl = 1 ) const;
     friend ostream & operator<<( ostream &os, const File &file );

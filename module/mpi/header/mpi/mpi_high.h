@@ -15,4 +15,5 @@
 #include "mpi_requests.h"
 #include "mpi_op.h"
 #include "mpi_info.h"
+#include "mpi_file.h"
 #endif	//_HIPPMPI_MPI_HIGH_H_

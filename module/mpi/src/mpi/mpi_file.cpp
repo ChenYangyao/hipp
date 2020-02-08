@@ -37,10 +37,10 @@ ostream &File::info( ostream &os, int fmt_cntl ) const{
                 "\n    no. of participant processes = ", group.size(), 
                 "\n    access mode = ", amode, 
                 "\n    info object = "); _info.info(os, 0);
-            prt(os, "\n  atomicity = ", ( atom ? "true" : "false" ), 
+            prt(os, "\n    atomicity = ", ( atom ? "true" : "false" ), 
                 "\n    indivisual pointer = ", get_position(), 
                 ", shared pointer = ", get_position_shared(), '\n');
-            prt(os, "View",
+            prt(os, "  View",
                 "\n    displacement = ", disp,
                 "\n    element datatype = "); et.info(os, 0);
             prt(os, "\n    file datatype = ");  ft.info(os, 0);
@@ -99,8 +99,15 @@ void File::get_view( offset_t &disp, Datatype &etype, Datatype &filetype,
     string &datarep )const{
     Datatype::mpi_t _etype, _filetype;
     _obj_ptr->get_view( disp, _etype, _filetype, datarep );
-    etype = Datatype::_from_raw( _etype, 1 );
-    filetype = Datatype::_from_raw( _filetype, 1 );
+
+    int c1,c2,c3,combiner;
+    Datatype::_obj_raw_t::get_envelope( _etype, c1, c2, c3, combiner );
+    bool etype_tofree = combiner != MPI_COMBINER_NAMED;
+    Datatype::_obj_raw_t::get_envelope( _filetype, c1, c2, c3, combiner );
+    bool filetype_tofree = combiner != MPI_COMBINER_NAMED;
+    
+    etype = Datatype::_from_raw( _etype, etype_tofree );
+    filetype = Datatype::_from_raw( _filetype, filetype_tofree );
 }
 
 aint_t File::get_type_extent(const Datatype &dtype)const{
@@ -166,11 +173,11 @@ int File::_from_whencestr( const string &whence ){
     int _whence;
     if( whence == "b" || whence == "beg" 
         || whence == "begin" || whence == "set" ) 
-        _whence = SEEK_SET;
+        _whence = sSET;
     else if( whence == "e" || whence == "end" )
-        _whence = SEEK_END;
+        _whence = sEND;
     else if( whence == "cur" || whence == "current" )
-        _whence = SEEK_CUR;
+        _whence = sCUR;
     else 
         ErrLogic::throw_(ErrLogic::eDOMAIN, emFLPFB,
             "  ... seek (whence=", whence, ") not allowed\n");

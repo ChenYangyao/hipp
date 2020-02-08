@@ -11,6 +11,7 @@ namespace HIPP{
 namespace MPI{
 
 class Comm;
+class File;
 
 /**
  * a datapacked is defined, in the high-level interface, as a triplet 
@@ -50,6 +51,7 @@ protected:
     int _size;
     Datatype _dtype;
     friend class Comm;
+    friend class File;
 };
 
 template<typename T, typename A>

@@ -38,7 +38,8 @@ public:
         mpi_t fh;
         ErrMPI::check(
             MPI_File_open( comm, name, amode, info, &fh ), emFLPFB, 
-                "  ... open file ", name, " failed\n");
+                "  ... open file ", name, 
+                " with access mode ", amode, " failed\n");
         return fh;
     }
     static void close( mpi_t &fh ){
@@ -375,7 +376,6 @@ public:
             buf, '/', count, '\n' );
         return status;
     }
-
     void read_ordered_begin( void *buf, int count, 
         MPI_Datatype datatype ){
         ErrMPI::check( MPI_File_read_ordered_begin( _val, buf, count, 

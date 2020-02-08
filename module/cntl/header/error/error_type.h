@@ -28,7 +28,7 @@ public:
         : _errno( new_errno ) { }
 
     virtual const char *what() const noexcept override { return ""; }
-    virtual string whats() const 
+    virtual string whats() const override 
         { return ErrAppT::whats() + " | " + ErrClassT::whats(); }
 
     errno_t get_errno() const noexcept 
@@ -98,7 +98,7 @@ public:
     virtual const char *what() const noexcept override
         { return ( (_errno > _errmsg_maxno) | (_errno < 0) ) ? 
             _errmsgs[_errmsg_maxno+1] : _errmsgs[_errno]; }
-    virtual string whats() const
+    virtual string whats() const override
         { return err_type_t::whats() + " | Type: " + what(); }
 
     static size_t errmsg_maxsize() noexcept 
@@ -156,7 +156,7 @@ public:
     virtual const char *what() const noexcept override
         { return ( (_errno > _errmsg_maxno) | (_errno < 0) ) ? 
             _errmsgs[_errmsg_maxno+1] : _errmsgs[_errno]; }
-    virtual string whats() const
+    virtual string whats() const override
         { return err_type_t::whats() + " | Type: " + what(); }
 
     static size_t errmsg_maxsize() noexcept { return _errmsg_maxsize; }
@@ -207,7 +207,7 @@ public:
     virtual const char *what() const noexcept override
         { return ( (_errno > _errmsg_maxno) | (_errno < 0) ) ? 
             _errmsgs[_errmsg_maxno+1] : _errmsgs[_errno]; }
-    virtual string whats() const
+    virtual string whats() const override
         { return err_type_t::whats() + " | Type: " + what(); }
 
     static size_t errmsg_maxsize() noexcept { return _errmsg_maxsize; }

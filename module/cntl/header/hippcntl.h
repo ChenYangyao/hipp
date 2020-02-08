@@ -8,5 +8,6 @@
 #include "./incl/incl.h"
 #include "./error/error.h"
 #include "./memory/mem.h"
+#include "./stream/stream.h"
 
 #endif	//_HIPPCNTL_H_

@@ -6,7 +6,10 @@ set(_src
     mpi_env.cpp 
     mpi_group.cpp
     mpi_op.cpp 
-    mpi_requests.cpp    
+    mpi_requests.cpp
+    mpi_info.cpp
+    mpi_raw_file.cpp 
+    mpi_file.cpp
 )
 set(_libname "${_projectid}${_modid}${_submodid}")
 

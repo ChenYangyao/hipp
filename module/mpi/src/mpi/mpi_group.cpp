@@ -14,7 +14,7 @@ ostream &Group::info( ostream &os, int fmt_cntl ) const{
     }
     if( fmt_cntl >= 1 ){
         prt(os, HIPPCNTL_CLASS_INFO(HIPP::MPI::Group));
-        if( is_null() ) prt(os, "Null") << endl;
+        if( is_null() ) prt(os, "  Null") << endl;
         else{
             int _rank = rank();
             prt(os, "  Size info (size=", size(), ", rank=", 

@@ -4,13 +4,13 @@ namespace HIPP{
 namespace MPI{
 ostream & Comm::info( ostream &os, int fmt_cntl ) const{
     if( fmt_cntl == 0 ){
-        prt(os, HIPPCNTL_CLASS_INFO_INLINE(HIPP::MPI:Comm));
+        prt(os, HIPPCNTL_CLASS_INFO_INLINE(HIPP::MPI::Comm));
         if( is_null() ) prt(os, "Null");
         else prt(os, "size: ", size(), ", rank: ", rank());
     }
     if( fmt_cntl >= 1 ){
         prt(os, HIPPCNTL_CLASS_INFO(HIPP::MPI::Comm));
-        if( is_null() ) prt(os, "Null") << endl;
+        if( is_null() ) prt(os, "  Null") << endl;
         else 
             prt(os, "  Size info (size=", size(), 
                 ", rank=", rank(), ")") << endl;

@@ -2,6 +2,9 @@
 namespace HIPP{
 namespace MPI{
 
+Datatype::Datatype() noexcept: 
+    _obj_base_t( std::make_shared<_obj_raw_t>(_obj_raw_t::nullval(), 0) ){ }
+
 ostream & Datatype::info( ostream &os, int fmt_cntl ) const{
     if(fmt_cntl == 0 ){
         prt( os, HIPPCNTL_CLASS_INFO_INLINE(HIPP::MPI::Datatype) );

@@ -18,10 +18,13 @@ namespace MPI{
  * with automatically managed life time. For any datatype, you may ( but
  * not necessary ) call free() manually so that you can free it in advance.
  */
+class File;
 class Datatype: public MPIObj<_Datatype> {
 public:
     typedef MPIObj<_Datatype> _obj_base_t;
     using _obj_base_t::_obj_base_t;
+    Datatype() noexcept;
+
     ostream &info( ostream &os = cout, int fmt_cntl = 1 ) const;
     friend ostream & operator<<( ostream &os, const Datatype &dtype );
 
@@ -69,6 +72,7 @@ public:
         const std::vector<int> &subsizes, 
         const std::vector<int> &starts, int order = ORDER_C )const;
 protected:
+    friend class File;
     static Datatype _from_raw( mpi_t dtype, int state ) noexcept;
 };
 
@@ -113,7 +117,6 @@ extern const Datatype C_LDOUBLE_COMPLEX;
 
 extern const Datatype BYTE;
 extern const Datatype PACKED;
-
 
 
 template<typename NativeT>

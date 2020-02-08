@@ -15,7 +15,7 @@ class ErrClass: virtual public std::exception {
 public:
     typedef std::uint16_t errno_t;
 
-    ErrClass( error_t new_errno = 1 ) noexcept
+    ErrClass( errno_t new_errno = 1 ) noexcept
         : _errno(new_errno){ }
     virtual const char *what()const noexcept override 
         { return _what(); }
@@ -30,7 +30,7 @@ public:
     void set_errno( errno_t new_errno ) noexcept 
         { _errno = new_errno; }  
 protected:
-    error_t _errno;
+    errno_t _errno;
 
     static const size_t _errmsg_maxsize = 32;
     static const errno_t _errmsg_maxno = 7;

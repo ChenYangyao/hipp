@@ -4,8 +4,8 @@
  *                  and string constructors.
  */ 
 
-#ifndef _HIPPCNTL_FMT_IO_H_
-#define _HIPPCNTL_FMT_IO_H_
+#ifndef _HIPPCNTL_STREAM_FMT_IO_H_
+#define _HIPPCNTL_STREAM_FMT_IO_H_
 #include "../incl/incl.h"
 #include "../error/error.h"
 
@@ -40,7 +40,7 @@ ostream & prt( ostream &os, Arg &&arg, Args &&...args ){
 inline ostream & prt( ostream &os )noexcept{ return os; }
 
 /**
- * formatted print
+ * formatted print.
  * Similar to prt, but use c-style `fmt` and `args ...` to control format.
  * 
  * Examples
@@ -66,7 +66,7 @@ ostream & prt_f( ostream &os, const char *fmt, Args && ...args ){
 }
 
 /**
- * str() and str_f() - string constructors
+ * str() and str_f() - string constructors.
  * 
  * Similar to prt() and prt_f(), but return a string instead of printing to 
  * stream.
@@ -83,6 +83,7 @@ string str_f( const char *fmt, Args && ...args ){
     prt_f( oss, fmt, std::forward<Args>(args)... );
     return oss.str();
 }
+
     
 } // namespace HIPP
-#endif	//_HIPPCNTL_FMT_IO_H_
+#endif	//_HIPPCNTL_STREAM_FMT_IO_H_

@@ -26,6 +26,7 @@ namespace MPI{
  * necessary to manually control it. However, you may call free() to free the 
  * group instance in advance.
  */
+class File;
 class Group: public MPIObj<_Group> {
 public:
     typedef MPIObj<_Group> _obj_base_t;
@@ -90,6 +91,7 @@ public:
     static Group emptyval() noexcept;
     static Group nullval() noexcept;
 protected:
+    friend class File;
     static Group _from_raw( mpi_t obj, int state );
 };
 

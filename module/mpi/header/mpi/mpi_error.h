@@ -22,6 +22,7 @@ public:
     typedef ErrType<ErrAppMPI, ErrClassDefault> err_type_t;
     using err_type_t::ErrType;
 
+
     /**
      * report the detail exception
      * what():  only roughly indicating the error at application level.

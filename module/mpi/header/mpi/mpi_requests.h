@@ -11,6 +11,7 @@ namespace HIPP{
 namespace MPI{
     
 class Comm;
+class File;
 
 /**
  * the high-level MPI requests interface.
@@ -110,6 +111,7 @@ public:
 protected:
     static Requests _from_raw(mpi_t rq, int state);
     friend class Comm;
+    friend class File;
 };
 
 inline ostream & operator<<( ostream &os, const Requests &rqs ){

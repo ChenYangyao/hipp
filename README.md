@@ -28,9 +28,9 @@ make
 make install
 ```
 
-These configure, build and install HIPP in the current directory. If successful, two folders named `lib`, `include` appear, which include the libraries and header files, respectively. You can now modify the environment lists \(e.g., `LIBRARY_PATH`, `LD_LIBRARY_PATH` and `CPLUS_INCLUDE_PATH`\) to allow the compiler system searching the installed package, e.g.
+These configure, build and install HIPP in the current directory. If successful, two folders named `lib`, `include` appear, which include the libraries and header files, respectively. You can now modify the environment lists \(e.g., `LIBRARY_PATH`, `LD_LIBRARY_PATH` and `CPLUS_INCLUDE_PATH`\) to allow the compiler system searching the installed package, e.g.,
 
-```text
+```bash
 export CPLUS_INCLUDE_PATH="/path/to/repo/include:${CPLUS_INCLUDE_PATH}"
 export LIBRARY_PATH="/path/to/repo/lib:${LIBRARY_PATH}"
 export LD_LIBRARY_PATH="/path/to/repo/lib:${LD_LIBRARY_PATH}"

@@ -35,7 +35,14 @@ const int
      * store order of high-dim arrays
      */
     ORDER_C = MPI_ORDER_C,
-    ORDER_FORTRAN = MPI_ORDER_FORTRAN;
+    ORDER_FORTRAN = MPI_ORDER_FORTRAN,
+
+    /**
+     * topology status
+     */
+    GRAPH = MPI_GRAPH, 
+    CART = MPI_CART,
+    DIST_GRAPH = MPI_DIST_GRAPH;
 
 /**
  * special memory buffer location specifier

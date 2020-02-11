@@ -7,4 +7,5 @@
 #define _HIPPCNTL_STREAM_H_
 #include "stream_fmt_io.h"
 #include "stream_str.h"
+#include "stream_array.h"
 #endif	//_HIPPCNTL_STREAM_H_

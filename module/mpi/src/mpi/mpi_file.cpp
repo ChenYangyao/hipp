@@ -21,6 +21,7 @@ ostream &File::info( ostream &os, int fmt_cntl ) const{
         }
     }
     if( fmt_cntl >= 1 ){
+        prt(os, HIPPCNTL_CLASS_INFO(HIPP::MPI::File));
         if( is_null() ) prt(os, " Null");
         else{
             auto size = get_size();
@@ -32,19 +33,23 @@ ostream &File::info( ostream &os, int fmt_cntl ) const{
             string datarep;
             get_view(disp, et, ft, datarep);
             int atom = get_atomicity();
-            prt(os, "  Size = ", size,
+            prt(os, "  File info" 
+                "\n    size:                         ", size,
                 "\n  Access info",
-                "\n    no. of participant processes = ", group.size(), 
-                "\n    access mode = ", amode, 
-                "\n    info object = "); _info.info(os, 0);
-            prt(os, "\n    atomicity = ", ( atom ? "true" : "false" ), 
-                "\n    indivisual pointer = ", get_position(), 
-                ", shared pointer = ", get_position_shared(), '\n');
+                "\n    no. of participant processes: ", group.size(), 
+                "\n    access mode:                  ", amode, 
+                "\n    info object:                  "); _info.info(os, 0);
+            prt(os, 
+                "\n    atomicity:                    ", ( atom ? "true" : "false" ), 
+                "\n    indivisual pointer:           ", get_position(), 
+                "\n    shared pointer:               ", get_position_shared(), '\n');
             prt(os, "  View",
-                "\n    displacement = ", disp,
-                "\n    element datatype = "); et.info(os, 0);
-            prt(os, "\n    file datatype = ");  ft.info(os, 0);
-            prt(os, "\n    data representation = ", datarep) << endl;
+                "\n    displacement:                 ", disp,
+                "\n    element datatype:             "); et.info(os, 0);
+            prt(os, 
+                "\n    file datatype:                ");  ft.info(os, 0);
+            prt(os, 
+                "\n    data representation:          ", datarep) << endl;
         }
     }
     return os;

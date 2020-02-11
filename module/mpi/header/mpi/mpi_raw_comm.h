@@ -95,6 +95,60 @@ public:
         ErrMPI::check( MPI_Comm_remote_group(_val, &obj), emFLPFB );
         return obj;
     }
+
+    /**
+     * virtual topology functions
+     */
+    mpi_t cart_create( int ndims, const int dims[], const int periods[], 
+        int reorder )const{
+        mpi_t comm_cart;
+        ErrMPI::check( MPI_Cart_create( _val, ndims, dims, periods, reorder, 
+            &comm_cart ), emFLPFB, "  ... ndims=", ndims, '\n' );
+        return comm_cart;
+    }
+    static void dims_create( int nnodes, int ndims, int dims[] ){
+        ErrMPI::check(
+            MPI_Dims_create(nnodes, ndims, dims), emFLPFB, 
+                "  ... nnodes=", nnodes, ", ndims=", ndims, '\n');
+    }
+
+    int topo_test()const{
+        int status;
+        ErrMPI::check( MPI_Topo_test(_val, &status), emFLPFB );
+        return status;
+    }
+    int cartdim_get()const{
+        int ndims;
+        ErrMPI::check( MPI_Cartdim_get(_val,&ndims), emFLPFB );
+        return ndims;
+    }
+    void cart_get( int maxdims, int dims[], int periods[], int coords[] )const{
+        ErrMPI::check(
+            MPI_Cart_get(_val, maxdims, dims, periods, coords), emFLPFB, 
+            "  ... maxdims=", maxdims, '\n');
+    }
+    int cart_rank( const int coords[] )const{
+        int rank;
+        ErrMPI::check(
+            MPI_Cart_rank(_val, coords, &rank), emFLPFB);
+        return rank;
+    }
+    void cart_coords( int rank, int maxdims, int coords[] )const{
+        ErrMPI::check( MPI_Cart_coords(_val, rank, maxdims, coords), 
+            emFLPFB, "  ... rank=", rank, ", maxdims=", maxdims );
+    }
+    void cart_shift( int direction, int disp, int *rank_src, 
+        int *rank_dest )const{
+        ErrMPI::check( MPI_Cart_shift(_val, direction, disp, 
+            rank_src, rank_dest), emFLPFB, "  ... direction=", direction,
+            ", disp=", disp, '\n' );
+    }
+    mpi_t cart_sub( const int remain_dims[] )const{
+        mpi_t newcomm;
+        ErrMPI::check(
+            MPI_Cart_sub( _val, remain_dims, &newcomm ), emFLPFB);
+        return newcomm;
+    }
     /**
      * wrappers of MPI point-to-point communication.
      */

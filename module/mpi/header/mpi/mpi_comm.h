@@ -90,11 +90,28 @@ public:
     Group remote_group();
 
     /**
+     * virtual topology functions
+     */
+    Comm cart_create( const vector<int> &dims, 
+        const vector<int> &periods, int reorder = 1 )const;
+    static void dims_create( int nnodes, int ndims, vector<int> &dims );
+    int topo_test()const;
+    int cartdim_get()const;
+    void cart_get( vector<int> &dims, vector<int> &periods, 
+        vector<int> &coords )const;
+    int cart_rank( const vector<int> &coords )const;
+    vector<int> cart_coords( int rank )const;
+    void cart_shift( int direction, int disp, 
+        int &rank_src, int &rank_dest )const;
+    Comm cart_sub( const vector<int> &remain_dims );
+
+
+    /**
      * point-to-point communication
      * 
      * In the following send/recv operations, `args` are data buffer to be 
      * sent from/received into. Any arguments that can be used to construct
-     * a Datapacket type is a valid way of specifying the data buffer.
+     * a `Datapacket` type is a valid way of specifying the data buffer.
      * 
      * According to MPI standard, the non-blocking version is started with an 
      * `i`. Both blocking and non-blocking versions provide four send modes: 
@@ -244,6 +261,8 @@ public:
         int count, const Datatype &dtype, const Oppacket &op ) const;
 protected:
     static Comm _from_raw(mpi_t obj, int state) noexcept;
+
+    static string _topostr( int topo );
 };
 
 inline ostream & operator<<( ostream &os, const Comm &comm )

@@ -6,14 +6,34 @@ ostream & Comm::info( ostream &os, int fmt_cntl ) const{
     if( fmt_cntl == 0 ){
         prt(os, HIPPCNTL_CLASS_INFO_INLINE(HIPP::MPI::Comm));
         if( is_null() ) prt(os, "Null");
-        else prt(os, "size: ", size(), ", rank: ", rank());
+        else{
+            prt(os, "size: ", size(), ", rank: ", rank(), 
+                ", topology: ", _topostr( topo_test() ));
+        } 
     }
     if( fmt_cntl >= 1 ){
         prt(os, HIPPCNTL_CLASS_INFO(HIPP::MPI::Comm));
         if( is_null() ) prt(os, "  Null") << endl;
-        else 
-            prt(os, "  Size info (size=", size(), 
-                ", rank=", rank(), ")") << endl;
+        else{
+            prt(os, "  Process group",
+                "\n    rank/size:        ", rank(), '/', size(), 
+                "\n  Topology: ", _topostr( topo_test() ));
+            int topo = topo_test();
+            if( topo == CART ){
+                vector<int> dims, periods, coords;
+                cart_get( dims, periods, coords );
+                prt(os, "\n    ndims:            ", dims.size());
+                if( dims.size() > 0 ){
+                    prt(os, "\n    dims:             (");
+                    prt_a(os, dims) << ')';
+                    prt(os,  "\n    periods:          (");
+                    prt_a(os, periods) << ')';
+                    prt(os,  "\n    coords:           (");
+                    prt_a(os, coords) << ')';
+                }
+            }
+            os << endl;
+        } 
     }
     return os;
 }
@@ -67,6 +87,44 @@ Group Comm::remote_group(){
     auto obj = _obj_ptr->remote_group();
     return Group( std::make_shared<Group::_obj_raw_t>(obj, 1) );
 }
+
+Comm Comm::cart_create( const vector<int> &dims, 
+    const vector<int> &periods, int reorder )const{
+    return _from_raw( _obj_ptr->cart_create( dims.size(), 
+        dims.data(), periods.data(), reorder ), 1 );
+}
+void Comm::dims_create( int nnodes, int ndims, vector<int> &dims ){
+    _obj_raw_t::dims_create(nnodes, ndims, dims.data());
+}
+int Comm::topo_test()const{
+    return _obj_ptr->topo_test();
+}
+int Comm::cartdim_get()const{
+    return _obj_ptr->cartdim_get();
+}
+void Comm::cart_get( vector<int> &dims, vector<int> &periods, 
+    vector<int> &coords )const{
+    int ndims = cartdim_get();
+    dims.resize( ndims ); periods.resize( ndims ); coords.resize( ndims );
+    _obj_ptr->cart_get( ndims, dims.data(), periods.data(), coords.data() );
+}
+int Comm::cart_rank( const vector<int> &coords )const{
+    return _obj_ptr->cart_rank( coords.data() );
+}
+vector<int> Comm::cart_coords( int rank )const{
+    int ndims = cartdim_get();
+    vector<int> coords( ndims );
+    _obj_ptr->cart_coords( rank, ndims, coords.data() );
+    return coords;
+}
+void Comm::cart_shift( int direction, int disp, 
+    int &rank_src, int &rank_dest )const{
+    _obj_ptr->cart_shift( direction, disp, &rank_src, &rank_dest );
+}
+Comm Comm::cart_sub( const vector<int> &remain_dims ){
+    return _from_raw( _obj_ptr->cart_sub( remain_dims.data() ), 1 );
+}
+
 void Comm::barrier() const{
     _obj_ptr->barrier();
 }
@@ -270,6 +328,26 @@ Requests Comm::iexscan( const void *sendbuf, void *recvbuf,
     int count, const Datatype &dtype, const Oppacket &op ) const{
     return Requests::_from_raw( _obj_ptr->iexscan(
         sendbuf, recvbuf, count, dtype.raw(), op._op.raw()), 0);
+}
+
+string Comm::_topostr( int topo ){
+    string ret;
+    switch (topo){
+    case UNDEFINED:
+        ret = "undefined"; break;
+    case CART:
+        ret = "cartesian"; break;
+    case GRAPH:
+        ret = "graph"; break;
+    case DIST_GRAPH:
+        ret = "distributed graph"; break;
+    default:
+        ErrLogic::throw_(ErrLogic::eDOMAIN, emFLPFB, "  ... topology ", topo, 
+            " wrong. Possible values are ", UNDEFINED, ", ", CART, ", ", GRAPH,
+            ", ", DIST_GRAPH, '\n');
+        break;
+    }
+    return ret;
 }
 
 } // namespace MPI

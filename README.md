@@ -1,5 +1,5 @@
 ---
-description: Under developed
+description: Under Development
 ---
 
 # HIPParcos - HIgh Performance computation Package for cosmological simulations

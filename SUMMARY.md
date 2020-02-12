@@ -4,7 +4,9 @@
 
 ## Documentation
 
-* [Tutorial](documentation/tutorial.md)
+* [Tutorial](documentation/tutorial/README.md)
+  * [Begin with HIPP MPI](documentation/tutorial/begin-with-hipp-mpi.md)
+  * [Code Examples](documentation/tutorial/code-examples.md)
 * [User's Guide](documentation/users-guide.md)
 * [Interfaces by Modules](documentation/interfaces-by-modules/README.md)
   * [The CNTL Module](documentation/interfaces-by-modules/the-cntl-module/README.md)

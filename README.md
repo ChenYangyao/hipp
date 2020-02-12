@@ -60,7 +60,7 @@ which means the install is successful. Enjoy using HIPP!
 
 The documentation of HIPP is organized into three layers, with increasing depth.  
 
-* The [Tutorial](documentation/tutorial.md) provides a basic guide of how to use HIPP to perform basic enhancement of C++ language, perform parallel computation with OOP style MPI interface,  or doing I/O with the IO interface. 
+* The [Tutorial](documentation/tutorial/) provides a basic guide of how to use HIPP to perform basic enhancement of C++ language, perform parallel computation with OOP style MPI interface,  or doing I/O with the IO interface. 
 * The [User's Guide](documentation/users-guide.md) gives a more deep description about the design, the structure and implementation detail of HIPP.
 * The [Interfaces by Modules](documentation/interfaces-by-modules/) provides a introduction of HIPP categorized by Modules and Submodules.
 

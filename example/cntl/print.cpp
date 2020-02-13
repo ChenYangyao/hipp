@@ -1,5 +1,5 @@
 /**
- * Example: print.cpp
+ * Example:
  * This small example demonstrates the printing functions provided by HIPP basic
  * module.
  */

@@ -1,7 +1,7 @@
 #ifndef _HIPPSIMD_PD128_H_
 #define _HIPPSIMD_PD128_H_
 #include "packedbase.h"
-#include "../opcode/opcode.h"
+#include "../simdopcode/opcode.h"
 namespace HIPP{
 namespace SIMD{    
 template<> class Packed<double, 2>{

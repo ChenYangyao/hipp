@@ -5,6 +5,9 @@
 namespace HIPP{
 namespace SIMD{
 template<typename ScaleT, size_t NPack> class Packed {};
+
+typedef std::size_t size_t;
+
 } // namespace SIMD
 } // namespace HIPP
 #endif	//_HIPPSIMD_PACKEDBASE_H_

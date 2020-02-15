@@ -1,7 +1,7 @@
 #ifndef _HIPPSIMD_PS128_H_
 #define _HIPPSIMD_PS128_H_
 #include "packedbase.h"
-#include "../opcode/opcode.h"
+#include "../simdopcode/opcode.h"
 namespace HIPP{
 namespace SIMD{    
 template<> class Packed<float, 4>{
@@ -262,7 +262,6 @@ inline Packed<float, 4>::vec_t Packed<float, 4>::set1( scal_t a ) noexcept{ retu
 inline Packed<float, 4>::vec_t Packed<float, 4>::set1( vec_t a ) noexcept{ return _mm_broadcastss_ps(a); }
 inline Packed<float, 4>::vec_t Packed<float, 4>::set() noexcept{ return _mm_setzero_ps(); }
 inline Packed<float, 4>::vec_t Packed<float, 4>::setzero() noexcept{ return set(); }
-
 inline Packed<float, 4>::vec_t Packed<float, 4>::shuffle( vec_t a, vec_t b, imm_t imm8) noexcept{ return _mm_shuffle_ps(a,b,imm8); }
 inline Packed<float, 4>::vec_t Packed<float, 4>::unpackhi( vec_t a, vec_t b) noexcept{ return _mm_unpackhi_ps(a,b); }
 inline Packed<float, 4>::vec_t Packed<float, 4>::unpacklo( vec_t a, vec_t b) noexcept{ return _mm_unpacklo_ps(a,b); }

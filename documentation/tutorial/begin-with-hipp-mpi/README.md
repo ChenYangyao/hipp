@@ -1,9 +1,22 @@
 # Begin with HIPP MPI Module
 
+## What is HIPP MPI ?
+
+HIPP has a MPI module that provides the high-level OOP wrappers of standard MPI C library. The characteristics of HIPP MPI are
+
+* Built with abstract layers: One of the most powerful idea in computer science is the abstraction. Complicated systems are often designed to have multiple layers. The high-level layers hidding their interaction with low-level layers and providing convinient interface to users that do not care about the implementation detail. The low-level layers allow advanced users to deal with more subtle cases.  HIPP MPI is designed to have four layers. We will introduce this design at [The User's Guide](../../users-guide.md) in detail.
+
+![The Abstract Layers of HIPP MPI](../../../.gitbook/assets/hippmpi_abstract_layers.png)
+
+* Pure OOP interface: Only by using OOP programming you can build safe program. Also, the OOP style allows you write your program faster, without much care about the memory leak. See the [Fun With Data Type](fun-with-data-types.md) for an example of OOP-style data types creation.
+* Maximum flexibility: Thanks for the C++ meta-programmings, HIPP MPI is very flexible. For one thing HIPP MPI may provide many different ways of achieving the same goal. You may always use the standard-MPI-like way of making message passing \(which allows a MPI user easily switch to HIPP MPI\), and you may also sometimes use the non-standard way for clarity. See the [Basic Point-to-point Communication](basic-point-to-point-communication.md) for an example.
+* Common case simpler: HIPP tries to make the common case user-friend, suitable for the majority of workds. The full interfaces are also provided to deal with the un-common case. 
+* Complete Implementation: Some high-level wrapper libraries cannot implement the full MPI library since their design drawbacks. HIPP MPI is designed to be capable for wrapping all MPI subroutines.
+
 ## The 'Hello World' Example
 
 {% hint style="info" %}
-**Caution:** In the following we assume you have already known the basic ideas of MPI, such as the initialization of MPI environment, the basic point-to-point communication. If you a new to MPI, this tutorial is not suitable for you. We recommend you to learn at least the basic ideas of how to use MPI. Some tutorial material can be found at the [MPI Tutorial](https://mpitutorial.com/tutorials/).
+**Caution:** In the following we assume you have already known the basic ideas of standard MPI interface, such as the initialization and finalization of MPI environment \( MPI\_Init\(\) and MPI\_Finalize\(\) \), the basic point-to-point communication \( MPI\_Send\(\) and MPI\_Recv\(\) \). If you a new to MPI, this tutorial is not suitable for you. We recommend you to learn at least the basic ideas of how to use standard MPI. Some tutorial material can be found at the [MPI Tutorial](https://mpitutorial.com/tutorials/).
 
 We also assume that you have already install successfully the HIPP with MPI library enabled. If  not, please see the the [home page](../../../) for how to install HIPP with MPI option.
 {% endhint %}
@@ -52,6 +65,7 @@ The exact result depends on which platform you run, and the result output from d
 The Env class API and Comm class API that have been used can be summarize as follows:
 
 ```cpp
+// hippmpi.h
 class Env{
 public:
     /**

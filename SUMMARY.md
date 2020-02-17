@@ -8,6 +8,7 @@
   * [Begin with HIPP CNTL Module](documentation/tutorial/begin-with-hipp-cntl-module.md)
   * [Begin with HIPP MPI Module](documentation/tutorial/begin-with-hipp-mpi/README.md)
     * [Basic Point-to-point Communication](documentation/tutorial/begin-with-hipp-mpi/basic-point-to-point-communication.md)
+    * [Fun with Data Types](documentation/tutorial/begin-with-hipp-mpi/fun-with-data-types.md)
 * [User's Guide](documentation/users-guide.md)
 * [Interfaces by Modules](documentation/interfaces-by-modules/README.md)
   * [The CNTL Module](documentation/interfaces-by-modules/the-cntl-module/README.md)

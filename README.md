@@ -58,13 +58,19 @@ which means the install is successful. Enjoy using HIPP!
 
 #### Building and Installation Options
 
-To change the installation directory, use
+To change the build direcoty, first create a new directory, enter it, and invokde cmake with `/path/to/repository`.  This will use the repository '/path/to/repository' to configure the build system in the current directory. Then you may use `make; make install` to finish the build and installation. 
+
+To change installation directory, use `-Dprefix`.  By default, if you do not specify `prefix`,  HIPP will installed into the system directory, e.g. /usr/local. 
+
+To speed up the building with multiple processors, use `make -j num_of_processes`.
 
 ```bash
-cmake ./ -Dprefix=/path/to/install
+cmake /path/to/repository -Dprefix=/path/to/install
+make -j N
+make install
 ```
 
-This installs HIPP into the path '/path/to/install'. By default, if you do not specify `prefix`,  HIPP will installed into the system directory, e.g. /usr/local.
+The above commands configure and build HIPP in the current directory, use the source code in the /path/to/repository, with N processes, and install HIPP into the path '/path/to/install'. 
 
 The -D option is additive. You may specify multiple -D options.
 
@@ -75,7 +81,7 @@ HIPP provides some optional functions. If your system has the depencency it need
 | -Denable-mpi=ON | MPI \(&gt;=3.0\) | The HIPP MPI Module |
 | -Denable-hdf5=ON | HDF5 \(&gt;=1.8.0\) | The HIPP IO Module |
 | -Denable-simd=ON | Intel x86 architecture | The HIPP SIMD Module |
-| -Dcxx=/c++compiler | Any C++ compiler \(&gt;=11\) | Use other C++ compiler instead  of the default |
+| -Dcxx=any\_compiler | Any C++ compiler \(&gt;=11\) | Use other C++ compiler instead  of the default |
 
 ## Documentation
 

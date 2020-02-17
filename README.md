@@ -6,6 +6,8 @@ description: Under Development
 
 ## Get Started
 
+The documentation now available at [Gitbook](https://hipp.gitbook.io/hipparcos/).
+
 ### Requirements
 
 * GNU compatible C++ compiler \(standard &gt;= 11\)

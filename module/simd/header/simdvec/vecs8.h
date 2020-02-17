@@ -223,7 +223,9 @@ inline Vec<float,8> & Vec<float,8>::gather( const scal_t *base_addr,
 #ifdef __AVX2__
     _val = pack_t::gather(base_addr, vindex, scale);
 #else
+#ifdef _HIPPSIMD_WSEQ
 #warning AVX2 not enabled. HIPP::SIMD::Vec<float,8>::gather is implemented sequentially
+#endif
     _u_vs_t val;
     const _u_ivs_t idx = { vindex };
     for (size_t i = 0; i < NPACK; i++){
@@ -238,7 +240,9 @@ inline Vec<float,8> & Vec<float,8>::gatherm( vec_t src, const scal_t *base_addr,
 #ifdef __AVX2__
     _val = pack_t::gatherm(src, base_addr, vindex, mask, scale);
 #else
+#ifdef _HIPPSIMD_WSEQ
 #warning AVX2 not enabled. HIPP::SIMD::Vec<float,8>::gatherm is implemented sequentially
+#endif
     _u_vs_t val;
     const _u_vs_t _src = { src };
     const _u_ivs_t idx = { vindex };
@@ -297,7 +301,9 @@ inline const Vec<float,8> & Vec<float,8>::scatter(void *base_addr, ivec_t vindex
 #if defined(__AVX512F__) && defined(__AVX512VL__)
     pack_t::scatter( base_addr, vindex, _val, scale );
 #else
+#ifdef _HIPPSIMD_WSEQ
 #warning AVX512F + AVX512VL not enabled. HIPP::SIMD::Vec<float,8>::scatter is implemented sequentially
+#endif
     const _u_vs_t val = {_val};
     const _u_ivs_t idx = {vindex};
     for(size_t i=0; i<NPACK; ++i){
@@ -312,7 +318,9 @@ Vec<float,8>::scatterm(void *base_addr, mask8_t k, ivec_t vindex,
 #if defined(__AVX512F__) && defined(__AVX512VL__)
     pack_t::scatterm( base_addr, k, vindex, _val, scale );
 #else
+#ifdef _HIPPSIMD_WSEQ
 #warning AVX512F + AVX512VL not enabled. HIPP::SIMD::Vec<float,8>::scatterm is implemented sequentially
+#endif
     const _u_vs_t val = {_val};
     const _u_ivs_t idx = {vindex};
     for(size_t i=0; i<NPACK; ++i){
@@ -357,10 +365,14 @@ inline Vec<float, 8> & Vec<float, 8>::set1( vec_hc_t a ) noexcept{
 #if defined (__AVX2__)
     _val = pack_t::set1(a);
 #elif defined (__SSE__)
+#ifdef _HIPPSIMD_WSEQ
 #warning AVX2 not enabled. HIPP::SIMD::Vec<float,8>::set1(vec_hc_t) is implemented by SSE
+#endif
     set1( _mm_cvtss_f32(a) );
 #else 
+#ifdef _HIPPSIMD_WSEQ
 #warning AVX2 or SSE not enabled. HIPP::SIMD::Vec<float,8>::set1(vec_hc_t) is implemented sequentially
+#endif
     union { vec_hc_t f; scal_t s[NPACK/2]; } val = {a};
     set1( val.s[0] );
 #endif
@@ -549,7 +561,7 @@ inline Vec<float,8> Vec<float,8>::pow2_fast() const noexcept{
     Vec ans = (clipp + Vec(121.2740575f) + Vec(27.7280233f) / 
                 (Vec(4.84252568f) - z) - Vec(1.49012907f) * z) *
                 Vec(float(1 << 23));
-    _u_ivv_t v = { pack_t::to_ivec( ans._val ) };
+    _u_ivv_t v = { pack_t::tot_ivec( ans._val ) };
     return v.f;
 }
 inline Vec<float,8> Vec<float,8>::exp_fast() const noexcept{
@@ -563,7 +575,7 @@ inline Vec<float,8> Vec<float,8>::pow2_faster() const noexcept{
         is_clipp = (*this) < v126,
         clipp = blend( v126._val, is_clipp._val );
     Vec ans = Vec(float(1 << 23)) * (clipp + Vec(126.94269504f));
-    _u_ivv_t v = { pack_t::to_ivec( ans._val ) };
+    _u_ivv_t v = { pack_t::tot_ivec( ans._val ) };
     return v.f;
 }
 inline Vec<float,8> Vec<float,8>::exp_faster() const noexcept{

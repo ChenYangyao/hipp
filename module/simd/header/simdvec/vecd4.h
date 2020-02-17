@@ -141,6 +141,23 @@ public:
     Vec log() const noexcept;
     Vec exp() const noexcept;
     Vec pow( const Vec &a ) const noexcept;
+
+    /**
+     * implement after Vec<s,4>
+    Vec log2_fast() const noexcept;
+    Vec log_fast() const noexcept;
+    Vec log10_fast() const noexcept;
+    Vec log2_faster() const noexcept;
+    Vec log_faster() const noexcept;
+    Vec log10_faster() const noexcept;
+
+    Vec pow2_fast() const noexcept;
+    Vec exp_fast() const noexcept;
+    Vec pow10_fast() const noexcept;
+    Vec pow2_faster() const noexcept;
+    Vec exp_faster() const noexcept;
+    Vec pow10_faster() const noexcept;
+    */
 protected:
     vec_t _val;
     union _u_ivv_t{ ivec_t i; vec_t f; };
@@ -219,7 +236,9 @@ Vec<double,4>::gather( const scal_t *base_addr,
 #ifdef __AVX2__
     _val = pack_t::gather(base_addr, vindex, scale);
 #else
+#ifdef _HIPPSIMD_WSEQ
 #warning AVX2 not enabled. HIPP::SIMD::Vec<double,4>::gather is implemented sequentially
+#endif
     _u_vs_t val;
     const _u_ivs_t idx = {vindex};
     for(size_t i=0; i<NPACK; ++i){
@@ -236,7 +255,9 @@ Vec<double,4>::gatherm( vec_t src, const scal_t *base_addr,
 #ifdef __AVX2__
     _val = pack_t::gatherm(src, base_addr, vindex, mask, scale); 
 #else
+#ifdef _HIPPSIMD_WSEQ
 #warning AVX2 not enabled. HIPP::SIMD::Vec<double,4>::gatherm is implemented sequentially
+#endif
     _u_vs_t val;
     const _u_vs_t _src = {src};
     const _u_ivs_t idx = {vindex};
@@ -257,7 +278,9 @@ inline Vec<double,4> & Vec<double,4>::gather_idxhp(
 #ifdef __AVX2__
     _val = pack_t::gather_idxhp( base_addr, vindex, scale );
 #else
+#ifdef _HIPPSIMD_WSEQ
 #warning AVX2 not enabled. HIPP::SIMD::Vec<double,4>::gather_idxhp is implemented sequentially
+#endif
     _u_vs_t val;
     union { ivec_hp_t i; iscal_hp_t s[NPACK]; } const idx = {vindex};
     for(size_t i=0; i<NPACK; ++i){
@@ -273,7 +296,9 @@ inline Vec<double,4> & Vec<double,4>::gatherm_idxhp( vec_t src,
 #ifdef __AVX2__
     _val = pack_t::gatherm_idxhp(src, base_addr, vindex, mask, scale); 
 #else
+#ifdef _HIPPSIMD_WSEQ
 #warning AVX2 not enabled. HIPP::SIMD::Vec<double,4>::gatherm_idxhp is implemented sequentially
+#endif
     _u_vs_t val;
     const _u_vs_t _src = {src};
     union { ivec_hp_t i; iscal_hp_t s[NPACK]; } const idx = {vindex};
@@ -325,7 +350,9 @@ Vec<double,4>::scatter( void *base_addr,
 #if defined(__AVX512F__) && defined(__AVX512VL__)
     pack_t::scatter( base_addr, vindex, _val, scale );
 #else
+#ifdef _HIPPSIMD_WSEQ
 #warning HAVX512F + AVX512VL not enabled. PP::SIMD::Vec<double,4>::scatter is implemented sequentially
+#endif
     const _u_vs_t val = {_val};
     const _u_ivs_t idx = {vindex};
     for(size_t i=0; i<NPACK; ++i){
@@ -341,7 +368,9 @@ Vec<double,4>::scatterm( void *base_addr, mask8_t k,
 #if defined(__AVX512F__) && defined(__AVX512VL__)
     pack_t::scatterm( base_addr, k, vindex, _val, scale );
 #else
+#ifdef _HIPPSIMD_WSEQ
 #warning AVX512F + AVX512VL not enabled. HIPP::SIMD::Vec<double,4>::scatterm is implemented sequentially
+#endif
     const _u_vs_t val = {_val};
     const _u_ivs_t idx = {vindex};
     for(size_t i=0; i<NPACK; ++i)
@@ -357,7 +386,9 @@ Vec<double,4>::scatter_idxhp( void *base_addr,
 #if defined(__AVX512F__) && defined(__AVX512VL__)
     pack_t::scatter_idxhp( base_addr, vindex, _val, scale );
 #else
+#ifdef _HIPPSIMD_WSEQ
 #warning AVX512F + AVX512VL not enabled. HIPP::SIMD::Vec<double,4>::scatter_idxhp is implemented sequentially
+#endif
     const _u_vs_t val = {_val};
     union { ivec_hp_t i; iscal_hp_t s[NPACK]; } const idx = {vindex};
     for(size_t i=0; i<NPACK; ++i)
@@ -372,7 +403,9 @@ Vec<double,4>::scatterm_idxhp( void *base_addr, mask8_t k,
 #if defined(__AVX512F__) && defined(__AVX512VL__)
     pack_t::scatterm_idxhp( base_addr, k, vindex, _val, scale );
 #else
+#ifdef _HIPPSIMD_WSEQ
 #warning AVX512F + AVX512VL not enabled. HIPP::SIMD::Vec<double,4>::scatterm_idxhp is implemented sequentially
+#endif
     const _u_vs_t val = {_val};
     union { ivec_hp_t i; iscal_hp_t s[NPACK]; } const idx = {vindex};
     for(size_t i=0; i<NPACK; ++i)
@@ -412,7 +445,9 @@ Vec<double,4>::to_scal( )const noexcept{
 #ifdef __AVX2__
     return pack_t::to_scal(_val);
 #else 
+#ifdef _HIPPSIMD_WSEQ
 #warning AVX2 not enabled. HIPP::SIMD::Vec<double,4>::to_scal is implemented sequentially
+#endif
     const _u_vs_t val = {_val};
     return val.s[0];
 #endif
@@ -440,10 +475,14 @@ Vec<double,4>::set1( vec_hc_t a ) noexcept {
 #if defined (__AVX2__)
     _val = pack_t::set1(a); 
 #elif defined (__SSE2__)
+#ifdef _HIPPSIMD_WSEQ
 #warning AVX2 not enabled. HIPP::SIMD::Vec<double,4>::set1(vec_hc_t) is implemented by SSE2
+#endif
     set1( _mm_cvtsd_f64(a) )
 #else
+#ifdef _HIPPSIMD_WSEQ
 #warning AVX2 or SSE2 not enabled. HIPP::SIMD::Vec<double,4>::set1(vec_hc_t) is implemented sequentially
+#endif
     union { vec_hc_t f; scal_t s[NPACK/2] s; } val = {a};
     set1( val.s[0] );    
 #endif
@@ -607,35 +646,45 @@ Vec<double,4>::min( const Vec &a ) const noexcept
 inline Vec<double,4>  
 Vec<double,4>::sin( ) const noexcept{
 #ifndef __FAST_MATH__
+#ifdef _HIPPSIMD_WSEQ
 #warning FAST_MATH not enabled. HIPP::SIMD::Vec<double,4>::sin may be not vectorized.
+#endif
 #endif
     _HIPPSIMD_ARITH_OP_BIN(sin)
 }
 inline Vec<double,4>  
 Vec<double,4>::cos( ) const noexcept{
 #ifndef __FAST_MATH__
+#ifdef _HIPPSIMD_WSEQ
 #warning FAST_MATH not enabled. HIPP::SIMD::Vec<double,4>::cos may be not vectorized.
+#endif
 #endif
     _HIPPSIMD_ARITH_OP_BIN(cos)
 }
 inline Vec<double,4>  
 Vec<double,4>::log( ) const noexcept{
 #ifndef __FAST_MATH__
+#ifdef _HIPPSIMD_WSEQ
 #warning FAST_MATH not enabled. HIPP::SIMD::Vec<double,4>::log may be not vectorized.
+#endif
 #endif
     _HIPPSIMD_ARITH_OP_BIN(log)
 }
 inline Vec<double,4>  
 Vec<double,4>::exp( ) const noexcept{
 #ifndef __FAST_MATH__
+#ifdef _HIPPSIMD_WSEQ
 #warning FAST_MATH not enabled. HIPP::SIMD::Vec<double,4>::exp may be not vectorized.
+#endif
 #endif
     _HIPPSIMD_ARITH_OP_BIN(exp)
 }
 inline Vec<double,4>  
 Vec<double,4>::pow( const Vec &a ) const noexcept{
 #ifndef __FAST_MATH__
+#ifdef _HIPPSIMD_WSEQ
 #warning FAST_MATH not enabled. HIPP::SIMD::Vec<double,4>::pow may be not vectorized.
+#endif
 #endif
     vec_t ans;
     const scal_t *src = (const scal_t *)&_val, *ind = (const scal_t *)&a._val;
@@ -645,7 +694,6 @@ Vec<double,4>::pow( const Vec &a ) const noexcept{
     }
     return ans;
 }
-
 #undef _HIPPSIMD_ARITH_OP_BIN
 
 #endif //__AVX__

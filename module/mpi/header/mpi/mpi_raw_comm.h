@@ -53,7 +53,6 @@ public:
     }
     mpi_t raw() const noexcept { return _val; }
     bool is_null() const noexcept { return _val == nullval(); }
-    
     bool is_inter() const {
         int _flag;
         ErrMPI::check( MPI_Comm_test_inter(_val, &_flag), emFLPFB );
@@ -64,7 +63,10 @@ public:
         ErrMPI::check( MPI_Comm_remote_size(_val, &_size), emFLPFB );
         return _size;
     }
-
+    
+    /**
+     * new communicator constructors
+     */
     mpi_t split( int color, int key = 0 )const{
         mpi_t newcomm;
         ErrMPI::check( 
@@ -85,6 +87,22 @@ public:
     static mpi_t selfval() noexcept { return MPI_COMM_SELF; }
     static mpi_t world() noexcept { return MPI_COMM_WORLD; }
 
+    static mpi_t create_inter( mpi_t local_comm, int local_leader, 
+        mpi_t peer_comm, int remote_leader, int tag ){
+        mpi_t newcomm;
+        ErrMPI::check( MPI_Intercomm_create( local_comm, local_leader, 
+            peer_comm, remote_leader, tag, &newcomm), emFLPFB );
+        return newcomm;
+    }
+    static mpi_t merge_inter( mpi_t intercomm, int high ){
+        mpi_t newcomm;
+        ErrMPI::check( MPI_Intercomm_merge( intercomm, high, &newcomm ),
+            emFLPFB );
+        return newcomm;
+    }
+    /**
+     * access the group content
+     */
     MPI_Group group() const{
         MPI_Group obj;
         ErrMPI::check( MPI_Comm_group(_val, &obj), emFLPFB );

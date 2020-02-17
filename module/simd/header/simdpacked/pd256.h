@@ -71,6 +71,10 @@ public:
     static void scatterm_idxhp(void *base_addr, mask8_t k, ivec_hp_t vindex, 
         vec_t a, const int scale=SCALSIZE) noexcept;
 #endif
+    /**
+     * The to_ivec_xx() use NEAR mode for conversion. While the tot_ivec_xx()
+     * does the truncation.
+     */
     static vec_t from_ivec_hp( ivec_hp_t a ) noexcept;
     static ivec_hp_t to_ivec_hp( vec_t a ) noexcept;
     static ivec_hp_t tot_ivec_hp( vec_t a ) noexcept;

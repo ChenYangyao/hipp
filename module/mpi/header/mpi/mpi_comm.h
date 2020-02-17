@@ -73,6 +73,13 @@ public:
      * 
      * world(), selfval() and nullval() return the predefined communicators. 
      * These calls are local.
+     * 
+     * create_inter() - create a new inter-communicater.
+     * This must be called by two groups of processes, both provide the local
+     * leader. The local leader must specify the peer_comm that contains self
+     * and the remote leader.
+     * 
+     * merge_inter()  - merge the inter-communicator into a intra one.
      */
     Comm split( int color, int key = 0 )const;
     Comm dup();
@@ -80,6 +87,9 @@ public:
     static Comm world() noexcept;
     static Comm selfval() noexcept;
     static Comm nullval() noexcept;
+    Comm create_inter( int local_leader, const Comm &peer_comm, 
+        int remote_leader, int tag );
+    Comm merge_inter( int high );
 
     /**
      * access the group of processes in the communicator.

@@ -3,7 +3,7 @@
 #include "packedbase.h"
 #include "../simdopcode/opcode.h"
 namespace HIPP{
-namespace SIMD{    
+namespace SIMD{
 template<> class Packed<float, 4>{
     typedef float scal_t;
     typedef __m128 vec_t;

@@ -7,8 +7,9 @@ ostream & Comm::info( ostream &os, int fmt_cntl ) const{
         prt(os, HIPPCNTL_CLASS_INFO_INLINE(HIPP::MPI::Comm));
         if( is_null() ) prt(os, "Null");
         else{
-            prt(os, "size: ", size(), ", rank: ", rank(), 
-                ", topology: ", _topostr( topo_test() ));
+            prt(os, "size: ", size(), ", rank: ", rank());
+            if( is_inter() ) prt(os, ", remote size: ", remote_size());
+            prt(os, ", topology: ", _topostr( topo_test() ));
         } 
     }
     if( fmt_cntl >= 1 ){
@@ -16,8 +17,10 @@ ostream & Comm::info( ostream &os, int fmt_cntl ) const{
         if( is_null() ) prt(os, "  Null") << endl;
         else{
             prt(os, "  Process group",
-                "\n    rank/size:        ", rank(), '/', size(), 
-                "\n  Topology: ", _topostr( topo_test() ));
+                "\n    rank/size:        ", rank(), '/', size());
+            if( is_inter() )
+                prt(os, "\n    remote size:      ", remote_size());
+            prt(os, "\n  Topology: ", _topostr( topo_test() ));
             int topo = topo_test();
             if( topo == CART ){
                 vector<int> dims, periods, coords;
@@ -72,7 +75,17 @@ Comm Comm::selfval() noexcept{
 }
 Comm Comm::nullval() noexcept{
     return _from_raw( _obj_raw_t::nullval(), 0 );
-}  
+}
+Comm Comm::create_inter( int local_leader, const Comm &peer_comm, 
+    int remote_leader, int tag ){
+    return _from_raw(
+        _obj_raw_t::create_inter( raw(), local_leader, 
+            peer_comm.raw(), remote_leader, tag ), 1
+    );
+}
+Comm Comm::merge_inter( int high ){
+    return _from_raw( _obj_raw_t::merge_inter( raw(), high ), 1 );
+}
 const Group Comm::group() const{
     return const_cast<Comm*>(this)->group();
 }

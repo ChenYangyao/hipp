@@ -169,7 +169,7 @@ int main(int argc, char const *argv[]){
 }
 ```
 
-At \[1.1\] and \[1.2\], process 0 sends a vector of 10 intergers to process 1, using the data buffer specification with only a vector type. At \[2\], process 0 sends a integer to each other process with triplet specification &lt;buff, count, dtype&gt; where dtype is a string specifiction. At \[3\] each other process receive  the integer also using the triplet &lt;buff, count, dtype&gt; where dtype is a Datatype object, which is the standard-MPI-way. At \[4.1\] and \[4.2\] process 0 sends a string to process 1.
+At \[1.1\] and \[1.2\], process 0 sends a vector of 10 intergers to process 1, using the data buffer specification with only a vector type. At \[2\], process 0 sends a integer to each other process with triplet specification &lt;buff, count, dtype&gt; where dtype is a string specifiction. At \[3\] each other process receive  the integer also using the triplet &lt;buff, count, dtype&gt; where dtype is a Datatype object, which is the standard-MPI-way. At \[4.1\] and \[4.2\] process 0 sends a string to process 1. The barrier operation `world.barrier()` synchronize all the processes in the communication world, so that the message output will not be entangled.
 
 The output on the screen \(run with 4 proesses\) is
 

@@ -10,7 +10,7 @@ HIPP has a MPI module that provides the high-level OOP wrappers of standard MPI 
 
 * Pure OOP interface: Only by using OOP programming you can build safe program. Also, the OOP style allows you write your program faster, without much care about the memory leak. See the [Fun With Data Type](fun-with-data-types.md) for an example of OOP-style data types creation.
 * Maximum flexibility: Thanks for the C++ meta-programmings, HIPP MPI is very flexible. For one thing HIPP MPI may provide many different ways of achieving the same goal. You may always use the standard-MPI-like way of making message passing \(which allows a MPI user easily switches to HIPP MPI\), and you may also sometimes use the non-standard way for clarity. See the [Basic Point-to-point Communication](basic-point-to-point-communication.md) for an example.
-* Common case simpler: HIPP tries to make the common case user-friend, suitable for the majority of workds. The full interfaces are also provided to deal with the un-common case. 
+* Common case simpler: HIPP tries to make the common case user-friend, suitable for the majority of works. The full interfaces are also provided to deal with the un-common case. 
 * Complete Implementation: Some high-level wrapper libraries cannot implement the full MPI library since their design drawbacks. HIPP MPI is designed to be capable for wrapping all MPI subroutines.
 
 ## The 'Hello World' Example

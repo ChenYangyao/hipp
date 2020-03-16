@@ -43,7 +43,7 @@ inline H5Proplist H5Proplist::_from_raw( id_t plist) noexcept{
     return H5Proplist( std::make_shared<_obj_raw_t>( plist ) );
 }
 
-H5Proplist & H5Proplist::set_layout( const string &layout ){
+inline H5Proplist & H5Proplist::set_layout( const string &layout ){
     _obj_raw_t::layout_t _layout = H5D_CONTIGUOUS;
     if( layout == "contiguous" )
         _layout = H5D_CONTIGUOUS;
@@ -59,7 +59,7 @@ H5Proplist & H5Proplist::set_layout( const string &layout ){
     _obj_ptr->set_layout( _layout );
     return *this;
 }
-string H5Proplist::layout() const{
+inline string H5Proplist::layout() const{
     _obj_raw_t::layout_t _layout = _obj_ptr->get_layout();
     string ans;
     switch (_layout){
@@ -78,33 +78,33 @@ string H5Proplist::layout() const{
     return ans;
 }
 
-H5Proplist & H5Proplist::set_chunk( vector<size_t> dims ){
+inline H5Proplist & H5Proplist::set_chunk( vector<size_t> dims ){
     _obj_ptr->set_chunk( dims.size(), dims.data() );
     return *this;
 }
-int H5Proplist::chunk_ndims()const{
+inline int H5Proplist::chunk_ndims()const{
     return _obj_ptr->get_chunk_ndims();
 }
-vector<H5Proplist::size_t> H5Proplist::chunk() const{
+inline vector<H5Proplist::size_t> H5Proplist::chunk() const{
     return _obj_ptr->get_chunk();
 }
 
-H5Proplist & H5Proplist::set_chunk_cache( 
+inline H5Proplist & H5Proplist::set_chunk_cache( 
     std::size_t nslot, std::size_t nbytes, double w0 ){
     _obj_ptr->set_chunk_cache( nslot, nbytes, w0 );
     return *this;
 }
-void H5Proplist::chunk_cache( std::size_t &nslot, 
+inline void H5Proplist::chunk_cache( std::size_t &nslot, 
     std::size_t &nbytes, double &w0 ) const{
     _obj_ptr->get_chunk_cache( &nslot, &nbytes, &w0 );
 }
 
-H5Proplist & H5Proplist::set_cache( std::size_t nslot, 
+inline H5Proplist & H5Proplist::set_cache( std::size_t nslot, 
     std::size_t nbytes, double w0 ){
     _obj_ptr->set_cache( 0, nslot, nbytes, w0 );
     return *this;
 }
-void H5Proplist::cache( std::size_t &nslot, 
+inline void H5Proplist::cache( std::size_t &nslot, 
     std::size_t &nbytes, double &w0 ) const{
     _obj_ptr->get_cache( NULL, &nslot, &nbytes, &w0 );
 }

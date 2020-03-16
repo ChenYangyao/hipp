@@ -48,6 +48,17 @@ public:
         const H5Proplist &lcprop = H5Proplist::defaultval,
         const H5Proplist &cprop = H5Proplist::defaultval,
         const H5Proplist &aprop = H5Proplist::defaultval );
+    template<typename T>
+    H5Dataset create_dataset_scalar( const string &name,
+        const string &flag="trunc", 
+        const H5Proplist &lcprop = H5Proplist::defaultval,
+        const H5Proplist &cprop = H5Proplist::defaultval,
+        const H5Proplist &aprop = H5Proplist::defaultval );
+    H5Dataset create_dataset_str( const string &name, size_t len,
+        const string &flag="trunc", 
+        const H5Proplist &lcprop = H5Proplist::defaultval,
+        const H5Proplist &cprop = H5Proplist::defaultval,
+        const H5Proplist &aprop = H5Proplist::defaultval );
     /**
      * open an existing dataset of name `name`.
      * If not existing, throw an error `ErrH5`.
@@ -63,6 +74,12 @@ public:
     H5Attr create_attr(
         const string &name, const vector<size_t> &dims, 
         const string &flag="trunc");
+    template<typename T>
+    H5Attr create_attr_scalar(
+        const string &name, const string &flag="trunc");
+    H5Attr create_attr_str(
+        const string &name, size_t len, const string &flag="trunc");
+        
     H5Attr open_attr(const string &name);
     bool attr_exists(const string &name) const;
 
@@ -82,6 +99,22 @@ H5Dataset H5File::create_dataset(
     return H5Dataset::create<T>( 
             raw(), name, dims, flag, lcprop, cprop, aprop );
 }
+
+template<typename T>
+H5Dataset H5File::create_dataset_scalar( const string &name,
+    const string &flag, const H5Proplist &lcprop,
+    const H5Proplist &cprop,const H5Proplist &aprop ){
+    return H5Dataset::create_scalar<T>( raw(), name, flag, 
+        lcprop, cprop, aprop );
+}
+
+inline H5Dataset H5File::create_dataset_str( const string &name, size_t len,
+    const string &flag, const H5Proplist &lcprop, 
+    const H5Proplist &cprop, const H5Proplist &aprop ){
+    return H5Dataset::create_str( raw(), name, len, flag, lcprop, 
+        cprop, aprop );
+}
+
 inline H5Dataset
 H5File::open_dataset( const string &name, const H5Proplist &aprop ){
     return H5Dataset::open(raw(), name, aprop);
@@ -97,6 +130,17 @@ H5Attr H5File::create_attr(
     const string &flag)
 {
     return H5Attr::create<T>( raw(), name, dims, flag );
+}
+
+template<typename T>
+H5Attr H5File::create_attr_scalar(
+    const string &name, const string &flag){
+    return H5Attr::create_scalar<T>(raw(), name, flag);
+}
+
+inline H5Attr H5File::create_attr_str(
+    const string &name, size_t len, const string &flag){
+    return H5Attr::create_str( raw(), name, len, flag );
 }
 
 inline H5Attr 

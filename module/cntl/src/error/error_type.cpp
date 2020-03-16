@@ -2,7 +2,6 @@
 
 namespace HIPP{
 
-
 const char * ErrSystem::_errmsgs[] = {
     /* 0 */ "",
     /* 1 */ "EPERM", "ENOENT", "ESRCH", "EINTR", "EIO", "ENXIO", "E2BIG",
@@ -42,8 +41,9 @@ const char *ErrRuntime::_errmsgs[] = {
 
 const char *ErrLogic::_errmsgs[] = {
     /* 0 */ "",
-    /* 1 */ "eDEFAULT", "eDOMAIN", "eINVALIDARG", "eOUTOFRANGE", "eLENGTH"
-    /* 6 */ "invalid error no"
+    /* 1 */ "eDEFAULT", "eDOMAIN", "eINVALIDARG", "eOUTOFRANGE", "eLENGTH",
+    /* 6 */ "eRECIPE_INCOMPLETE", "eRECIPE_INCONSISTENT",
+    /* 8 */ "invalid error no"
 };
 
 

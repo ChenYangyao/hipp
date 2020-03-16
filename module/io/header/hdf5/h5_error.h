@@ -11,8 +11,6 @@
 namespace HIPP{
 namespace IO{
 
-class ErrAppH5: public ErrApp { public: ErrAppH5() noexcept: ErrApp(6){ } };
-
 /**
  * the HDF5 wrapped high-level interface exception class.
  */

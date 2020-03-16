@@ -14,7 +14,13 @@ namespace MPI{
 
 const int 
     UNDEFINED = MPI_UNDEFINED,
+    PROC_NULL = MPI_PROC_NULL,
+    ANY_SOURCE = MPI_ANY_SOURCE,
+    ANY_TAG = MPI_ANY_TAG,
+    
     ERR_IN_STATUS = MPI_ERR_IN_STATUS,
+
+    KEYVAL_INVALID = MPI_KEYVAL_INVALID,
     
     /**
      * returns of object comparisons

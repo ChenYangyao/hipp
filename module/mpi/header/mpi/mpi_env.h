@@ -16,6 +16,27 @@
 namespace HIPP{
 namespace MPI{
 
+namespace _mpi_env_helper{
+struct comm_intern_priv_attr_t{
+    Comm comm_dup;
+    int prev, next;
+
+    comm_intern_priv_attr_t();
+    ~comm_intern_priv_attr_t() noexcept;
+
+    bool has_comm_dup() const;
+    comm_intern_priv_attr_t &set_comm_dup( const Comm &comm );
+    comm_intern_priv_attr_t &del_comm_dup();
+    
+    static void del_attr_fn( Comm &comm, int keyval, void *attr_val, 
+        void *extra_state );
+
+    static const int tag_seqblock = 1;
+};
+} // namespace _mpi_env_helper
+class SeqBlock;
+
+
 /**
  * the MPI environment inquiry and management class.
  */
@@ -53,8 +74,15 @@ public:
 
     static Comm world() noexcept { return Comm::world(); }
 protected:
+    friend class SeqBlock;
+
+    typedef _mpi_env_helper::comm_intern_priv_attr_t _comm_intern_priv_attr_t;
+    static int _comm_intern_priv_keyval;
+
     MPI_Comm _comm;
     int _get_attr( int keyval, int &attrval ) const noexcept;
+    void _init_comm_intern_attr();
+    void _free_comm_intern_attr();
 };
 
 inline ostream & operator<<( ostream &os, const Env &env){ 

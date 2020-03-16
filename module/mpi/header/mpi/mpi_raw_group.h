@@ -10,7 +10,6 @@
 namespace HIPP{
 namespace MPI{
 
-
 /**
  * the intermediate-level MPI process group interface.
  * 

@@ -83,6 +83,8 @@ public:
         const H5Dataspace &memspace = H5Dataspace::allval, 
         const H5Dataspace &filespace=H5Dataspace::allval,
         const H5Proplist &xprop=H5Proplist::defaultval );
+    void write( const string &buff, 
+        const H5Proplist &xprop=H5Proplist::defaultval );
 
     /**
      * read data in the dataset into buff.
@@ -103,6 +105,8 @@ public:
         const H5Dataspace &memspace = H5Dataspace::allval, 
         const H5Dataspace &filespace=H5Dataspace::allval,
         const H5Proplist &xprop=H5Proplist::defaultval ) const;
+    void read( string &buff, 
+        const H5Proplist &xprop=H5Proplist::defaultval ) const;
 
     static H5Proplist create_proplist( const string &cls );
     H5Proplist proplist(const string &cls) const;
@@ -117,6 +121,26 @@ protected:
         const H5Proplist &lcprop = H5Proplist::defaultval,
         const H5Proplist &cprop = H5Proplist::defaultval,
         const H5Proplist &aprop = H5Proplist::defaultval );
+    template<typename T>
+    static H5Dataset create_scalar( 
+        id_t loc, const string &name, const string &flag,
+        const H5Proplist &lcprop = H5Proplist::defaultval,
+        const H5Proplist &cprop = H5Proplist::defaultval,
+        const H5Proplist &aprop = H5Proplist::defaultval );
+    static H5Dataset create_str( 
+        id_t loc, const string &name, size_t len, const string &flag,
+        const H5Proplist &lcprop = H5Proplist::defaultval,
+        const H5Proplist &cprop = H5Proplist::defaultval,
+        const H5Proplist &aprop = H5Proplist::defaultval );
+
+    static H5Dataset create( 
+        id_t loc, const string &name, 
+        const _H5Datatype &dtype, const _H5Dataspace &dspace, 
+        const string &flag,
+        const H5Proplist &lcprop = H5Proplist::defaultval,
+        const H5Proplist &cprop = H5Proplist::defaultval,
+        const H5Proplist &aprop = H5Proplist::defaultval );
+
     static H5Dataset open( id_t loc, const string &name,
         const H5Proplist &aprop = H5Proplist::defaultval );
     static bool exists( id_t loc, const string &name );
@@ -183,6 +207,14 @@ void H5Dataset::write( const T *buff,
     _obj_ptr->write( memtype, memspace.raw(), filespace.raw(), 
         xprop.raw(), buff );
 }
+inline void H5Dataset::write( const string &buff, 
+    const H5Proplist &xprop ){
+    typedef H5TypeStr str_t;
+    _H5Datatype dtype( _H5Datatype::copy( str_t::h5_id ) );
+    dtype.set_size( buff.size()+1 );    
+    _obj_ptr->write( dtype.raw(), H5S_ALL, H5S_ALL, xprop.raw(), buff.c_str() );
+}
+
 template<typename T, typename A>
 void H5Dataset::read( vector<T, A> &buff, 
     const H5Dataspace & memspace, const H5Dataspace & filespace,
@@ -214,20 +246,79 @@ void H5Dataset::read( T *buff,
     _obj_ptr->read( memtype, memspace.raw(), filespace.raw(), xprop.raw(), buff );
 }
 
+inline void H5Dataset::read( string &buff, 
+    const H5Proplist &xprop ) const{
+    auto filetype = datatype();
+    auto len = filetype.size();
+    vector<char> _cbuf(len);
+    _obj_ptr->read( filetype.raw(), H5S_ALL, H5S_ALL, xprop.raw(), 
+        _cbuf.data() );
+    buff.assign( (const char *)_cbuf.data() );
+}
+
 template<typename T>
 H5Dataset H5Dataset::create( id_t loc, const string &name, 
     const vector<size_t> &dims, 
     const string &flag, const H5Proplist &lcprop, const H5Proplist &cprop,
     const H5Proplist &aprop )
 {
+    int rank = dims.size();
+    _H5Dataspace dspace( rank, dims.data() );
+    _H5Datatype dtype( H5TypeNative<T>::h5_id, 0 );
+    return create( loc, name, dtype, dspace, flag, lcprop, cprop, aprop );
+}
+template<>
+H5Dataset H5Dataset::create<string>( id_t loc, const string &name, 
+    const vector<size_t> &dims, 
+    const string &flag,
+    const H5Proplist &lcprop, const H5Proplist &cprop,
+    const H5Proplist &aprop ){
+    typedef H5TypeStr str_t;
+    _H5Datatype dtype( _H5Datatype::copy( str_t::h5_id ) );
+    dtype.set_size( dims[1] );    
+    _H5Dataspace dspace( 1, &dims[0] );
+    return create( loc, name, dtype, dspace, flag, lcprop, cprop, aprop );
+}
+
+template<typename T>
+H5Dataset H5Dataset::create_scalar( 
+    id_t loc, const string &name, const string &flag,
+    const H5Proplist &lcprop,
+    const H5Proplist &cprop,
+    const H5Proplist &aprop )
+{
+    _H5Datatype dtype( H5TypeNative<T>::h5_id, 0 );
+    return create( loc, name, dtype, H5Dataspace::scalarval.obj_raw(), flag, 
+        lcprop, cprop, aprop );
+}
+
+inline H5Dataset H5Dataset::create_str( 
+    id_t loc, const string &name, size_t len, const string &flag,
+    const H5Proplist &lcprop,
+    const H5Proplist &cprop,
+    const H5Proplist &aprop ){
+    typedef H5TypeStr str_t;
+    _H5Datatype dtype( _H5Datatype::copy( str_t::h5_id ) );
+    dtype.set_size( len );    
+    return create( loc, name, dtype, H5Dataspace::scalarval.obj_raw(), 
+        flag, lcprop, cprop, aprop );
+}
+
+inline H5Dataset 
+H5Dataset::create( 
+    id_t loc, const string &name, 
+    const _H5Datatype &dtype, const _H5Dataspace &dspace, 
+    const string &flag,
+    const H5Proplist &lcprop,
+    const H5Proplist &cprop,
+    const H5Proplist &aprop )
+{
     H5Dataset dset(NULL);
     try{
         _H5EStackTempOff estk(H5E_DEFAULT);
-        int rank = dims.size();
-        _H5Dataspace dspace( rank, dims.data() );
         dset = H5Dataset(
             std::make_shared<_obj_raw_t>( loc, name.c_str(), 
-                H5TypeNative<T>::h5_id, dspace.raw(), lcprop.raw(), 
+                dtype.raw(), dspace.raw(), lcprop.raw(), 
                 cprop.raw(), aprop.raw() ));
     }catch( const ErrH5 &e ){
         if( flag == "trunc" ){
@@ -239,38 +330,10 @@ H5Dataset H5Dataset::create( id_t loc, const string &name,
                 "  ... invalid flag ", flag, '\n');
         }
     }
-    return dset;
+    return dset;   
 }
-template<>
-H5Dataset H5Dataset::create<string>( id_t loc, const string &name, 
-    const vector<size_t> &dims, 
-    const string &flag,
-    const H5Proplist &lcprop, const H5Proplist &cprop,
-    const H5Proplist &aprop ){
-    H5Dataset dset(NULL);
-    typedef H5TypeStr str_t;
-    _H5Datatype dtype( _H5Datatype::copy( str_t::h5_id ) );
-    dtype.set_size( dims[1] );
-    _H5Dataspace dspace( 1, &dims[0] );
-    try{
-        _H5EStackTempOff estk(H5E_DEFAULT);
-        dset = H5Dataset(
-            std::make_shared<H5Dataset::_obj_raw_t>( loc, name.c_str(), 
-                dtype.raw(), dspace.raw(), 
-                lcprop.raw(), cprop.raw(), aprop.raw() ));
-    }catch( const ErrH5 &e ){
-        if( flag == "trunc" ){
-            dset = open( loc, name, aprop );
-        }else if( flag == "excl" ){
-            ErrH5::throw_( -1, emFLPFB, "  ... dataset ", name, " exists\n" );
-        }else{
-            ErrLogic::throw_(ErrLogic::eINVALIDARG, emFLPFB, 
-                "  ... invalid flag ", flag, '\n');
-        }
-    }
-    return dset;
-    
-}
+
+
 inline H5Dataset H5Dataset::open( id_t loc, const string &name,
     const H5Proplist &aprop )
 {
@@ -297,7 +360,7 @@ H5Dataset::create_proplist( const string &cls ){
     else if( cls == "a" || cls == "access" )
         _cls = H5P_DATASET_ACCESS;
     else if( cls == "x" || cls == "xfer" || cls == "transfer" )
-        _cls == H5P_DATASET_XFER;
+        _cls = H5P_DATASET_XFER;
     else
         ErrLogic::throw_( ErrLogic::eDOMAIN, emFLPFB, 
             "   ... dataset property list class ", cls, " invalid "  );

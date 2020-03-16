@@ -17,7 +17,7 @@ int main(int argc, char const *argv[]){
      * The barrier ensures the output is not entangled.
      */
     if( world.rank() == 0 ){
-        vector<int> sendbuf(10, 100);
+        vector<int> sendbuf(10, 100.0);
         HIPP::prt( cout, 
             "sent: 0 -> 1, data = 10 integers") << endl;
         world.send( 1, 0, sendbuf );

@@ -42,9 +42,9 @@ public:
     template<typename ...Args>
     void construct_n( ptr_t ptr, size_t n, Args && ...args );
     template<typename InputIt>
-    void copy( InputIt b, InputIt e, ptr_t ptr );
+    static void copy( InputIt b, InputIt e, ptr_t ptr );
     template<typename InputIt>
-    void copy_n( InputIt b, size_t n, ptr_t ptr);
+    static void copy_n( InputIt b, size_t n, ptr_t ptr);
 
     void destroy( ptr_t ptr );
     void destroy_n( ptr_t ptr, size_t n );

@@ -31,6 +31,14 @@ class Comm: public MPIObj<_Comm> {
 public:
     typedef MPIObj<_Comm> _obj_base_t;
     using _obj_base_t::_obj_base_t;
+    typedef std::function< bool(Comm &oldcomm, 
+        int keyval, void *extra_state, void *attr_val, void *&attr_val_out) > 
+        copy_attr_fn_t;
+    typedef std::function< void(Comm &comm, 
+        int keyval, void *attr_val, void *extra_state)>
+        del_attr_fn_t;
+    static const copy_attr_fn_t NULL_COPY_FN, DUP_FN;
+    static const del_attr_fn_t NULL_DEL_FN;
 
     /**
      * display some basic information of the communicator to `os`
@@ -63,6 +71,26 @@ public:
     int remote_size() const;
 
     /**
+     * attribute caching
+     * In the template version, the cached attribute must be a pointer to
+     * `AttrT` which is dynamically allocated with new operator.
+     * The template create_keyval() uses the copy constructor and deconstructor
+     * of `AttrT` to make new heap object and delete existing object, and set
+     * extra_state = nullptr.
+     */
+    static int create_keyval( copy_attr_fn_t copy_attr_fn = NULL_COPY_FN,
+        del_attr_fn_t del_attr_fn = NULL_DEL_FN, void *extra_state = nullptr );
+    static void free_keyval( int &keyval );
+    Comm & set_attr( int keyval, void *attr_val );
+    bool get_attr( int keyval, void * &attr_val ) const;
+    Comm & del_attr( int keyval );
+
+    template<typename AttrT>
+    static int create_keyval();
+    template<typename AttrT>
+    bool get_attr( int keyval, AttrT * &attr_val ) const;
+
+    /**
      * communicator management
      * 
      * split() - split the communicator into several ones.
@@ -82,8 +110,8 @@ public:
      * merge_inter()  - merge the inter-communicator into a intra one.
      */
     Comm split( int color, int key = 0 )const;
-    Comm dup();
-    Comm create( const Group &group);
+    Comm dup() const;
+    Comm create( const Group &group) const;
     static Comm world() noexcept;
     static Comm selfval() noexcept;
     static Comm nullval() noexcept;
@@ -131,26 +159,26 @@ public:
      * completion/testing of the communication.
      */
     template<typename ...Args>
-    void send( int dest, int tag, Args && ...args );
+    void send( int dest, int tag, Args && ...args ) const;
     template<typename ...Args>
-    void bsend( int dest, int tag, Args && ...args );
+    void bsend( int dest, int tag, Args && ...args ) const;
     template<typename ...Args>
-    void ssend( int dest, int tag, Args && ...args );
+    void ssend( int dest, int tag, Args && ...args ) const;
     template<typename ...Args>
-    void rsend( int dest, int tag, Args && ...args );
+    void rsend( int dest, int tag, Args && ...args ) const;
     template<typename ...Args>
-    Status recv( int src, int tag, Args && ...args );
+    Status recv( int src, int tag, Args && ...args ) const;
 
     template<typename ...Args>
-    Requests isend( int dest, int tag, Args && ...args );
+    Requests isend( int dest, int tag, Args && ...args ) const;
     template<typename ...Args>
-    Requests ibsend( int dest, int tag, Args && ...args );
+    Requests ibsend( int dest, int tag, Args && ...args ) const;
     template<typename ...Args>
-    Requests issend( int dest, int tag, Args && ...args );
+    Requests issend( int dest, int tag, Args && ...args ) const;
     template<typename ...Args>
-    Requests irsend( int dest, int tag, Args && ...args );
+    Requests irsend( int dest, int tag, Args && ...args ) const;
     template<typename ...Args>
-    Requests irecv( int src, int tag, Args && ...args );
+    Requests irecv( int src, int tag, Args && ...args ) const;
 
     /**
      * collective communication
@@ -271,8 +299,31 @@ public:
         int count, const Datatype &dtype, const Oppacket &op ) const;
 protected:
     static Comm _from_raw(mpi_t obj, int state) noexcept;
-
     static string _topostr( int topo );
+
+    static bool _null_copy_fn( Comm &oldcomm, int keyval, 
+        void *extra_state, void *attr_val, void *&attr_val_out) noexcept;
+    static bool _dup_fn( Comm &oldcomm, int keyval, 
+        void *extra_state, void *attr_val, void *&attr_val_out) noexcept;
+    static void _null_del_fn( Comm &comm, int keyval, 
+        void *attr_val, void *extra_state ) noexcept;
+
+    struct _attr_extra_state_t{
+        copy_attr_fn_t copy_attr_fn;
+        del_attr_fn_t del_attr_fn;
+        void *extra_state;
+        _attr_extra_state_t( 
+            copy_attr_fn_t _copy_attr_fn = _null_copy_fn, 
+            del_attr_fn_t _del_attr_fn = _null_del_fn, 
+            void *_extra_state = nullptr):
+            copy_attr_fn( _copy_attr_fn ), del_attr_fn( _del_attr_fn ),
+            extra_state(_extra_state) { }
+    };
+    static std::unordered_map<int, _attr_extra_state_t *> _attr_extra_state;
+    static int _copy_attr_fn( mpi_t oldcomm, int keyval, void *extra_state, 
+        void *attr_val, void *attr_val_out, int *flag );
+    static int _del_attr_fn( mpi_t comm, int keyval,
+        void *attr_val, void *extra_state );
 };
 
 inline ostream & operator<<( ostream &os, const Comm &comm )
@@ -282,45 +333,74 @@ inline Comm Comm::_from_raw(mpi_t obj, int state) noexcept{
     return Comm( std::make_shared<_obj_raw_t>(obj, state) );
 }
 
+template<typename AttrT>
+int Comm::create_keyval(){
+    auto copy_attr_fn = []( Comm &oldcomm, int keyval, 
+        void *extra_state, void *attr_val, void *&attr_val_out )->bool{
+            try{
+                attr_val_out = attr_val ? 
+                    new AttrT( *(AttrT *)attr_val ) : NULL;
+            }catch( ... ){
+                ErrMPI::throw_(1, emFLPFB);
+            }
+            return true;
+        };
+    auto del_attr_fn = []( Comm &comm, int keyval, 
+        void *attr_val, void *extra_state ){
+            try{
+                if( attr_val ) delete (AttrT *)attr_val;
+            }catch( ... ){
+                ErrMPI::throw_(1, emFLPFB);
+            } 
+        };
+    return create_keyval( copy_attr_fn, del_attr_fn );
+}
+template<typename AttrT>
+bool Comm::get_attr( int keyval, AttrT * &attr_val ) const{
+    void *ptr;
+    auto flag = get_attr(keyval, ptr);
+    attr_val = (AttrT *)ptr;
+    return flag;
+}
 template<typename ...Args>
-void Comm::send( int dest, int tag, Args && ...args ){
+void Comm::send( int dest, int tag, Args && ...args ) const{
     Datapacket dp( std::forward<Args>(args)... );
     _obj_ptr->send( dp._buff, dp._size, dp._dtype.raw(), dest, tag );
 }
 
 template<typename ...Args>
-void Comm::bsend( int dest, int tag, Args && ...args ){
+void Comm::bsend( int dest, int tag, Args && ...args ) const{
     Datapacket dp( std::forward<Args>(args)... );
     _obj_ptr->bsend( dp._buff, dp._size, dp._dtype.raw(), dest, tag );
 }
 
 template<typename ...Args>
-void Comm::ssend( int dest, int tag, Args && ...args ){
+void Comm::ssend( int dest, int tag, Args && ...args ) const{
     Datapacket dp( std::forward<Args>(args)... );
     _obj_ptr->ssend( dp._buff, dp._size, dp._dtype.raw(), dest, tag );
 }
 
 template<typename ...Args>
-void Comm::rsend( int dest, int tag, Args && ...args ){
+void Comm::rsend( int dest, int tag, Args && ...args ) const{
     Datapacket dp( std::forward<Args>(args)... );
     _obj_ptr->rsend( dp._buff, dp._size, dp._dtype.raw(), dest, tag );
 }
 
 template<typename ...Args>
-Status Comm::recv( int src, int tag, Args && ...args ){
+Status Comm::recv( int src, int tag, Args && ...args ) const{
     Datapacket dp( std::forward<Args>(args)... );
     return _obj_ptr->recv( dp._buff, dp._size, dp._dtype.raw(), src, tag );
 }
 
 template<typename ...Args>
-Requests Comm::isend( int dest, int tag, Args && ...args ){
+Requests Comm::isend( int dest, int tag, Args && ...args ) const{
     Datapacket dp( std::forward<Args>(args)... );
     auto rq = _obj_ptr->isend( dp._buff, dp._size, dp._dtype.raw(), dest, tag );
     return Requests::_from_raw( rq, 0 );
 }
 
 template<typename ...Args>
-Requests Comm::ibsend( int dest, int tag, Args && ...args ){
+Requests Comm::ibsend( int dest, int tag, Args && ...args ) const{
     Datapacket dp( std::forward<Args>(args)... );
     auto rq = _obj_ptr->ibsend( dp._buff, dp._size, dp._dtype.raw(), 
         dest, tag );
@@ -328,7 +408,7 @@ Requests Comm::ibsend( int dest, int tag, Args && ...args ){
 }
 
 template<typename ...Args>
-Requests Comm::issend( int dest, int tag, Args && ...args ){
+Requests Comm::issend( int dest, int tag, Args && ...args ) const{
     Datapacket dp( std::forward<Args>(args)... );
     auto rq = _obj_ptr->issend( dp._buff, dp._size, dp._dtype.raw(), 
         dest, tag );
@@ -336,7 +416,7 @@ Requests Comm::issend( int dest, int tag, Args && ...args ){
 }
 
 template<typename ...Args>
-Requests Comm::irsend( int dest, int tag, Args && ...args ){
+Requests Comm::irsend( int dest, int tag, Args && ...args ) const{
     Datapacket dp( std::forward<Args>(args)... );
     auto rq = _obj_ptr->irsend( dp._buff, dp._size, dp._dtype.raw(), 
         dest, tag );
@@ -344,7 +424,7 @@ Requests Comm::irsend( int dest, int tag, Args && ...args ){
 }
 
 template<typename ...Args>
-Requests Comm::irecv( int src, int tag, Args && ...args ){
+Requests Comm::irecv( int src, int tag, Args && ...args ) const{
     Datapacket dp( std::forward<Args>(args)... );
     auto rq = _obj_ptr->irecv( dp._buff, dp._size, dp._dtype.raw(), src, tag );
     return Requests::_from_raw( rq, 0 );

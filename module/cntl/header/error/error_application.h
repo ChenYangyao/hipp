@@ -50,6 +50,8 @@ class ErrAppUnknown: public ErrApp { public: ErrAppUnknown() noexcept: ErrApp(2)
 class ErrAppSystem: public ErrApp { public: ErrAppSystem() noexcept: ErrApp(3){ } };
 class ErrAppMPI: public ErrApp { public: ErrAppMPI() noexcept: ErrApp(4){ } };
 class ErrAppOpenMP: public ErrApp { public: ErrAppOpenMP() noexcept: ErrApp(5){ } };
+class ErrAppH5: public ErrApp { public: ErrAppH5() noexcept: ErrApp(6){ } };
+class ErrAppGSL: public ErrApp { public: ErrAppGSL() noexcept: ErrApp(7){ } };
 
 } // namespace HIPP
 #endif	//_HIPPCNTL_ERROR_APPLICATION_H_

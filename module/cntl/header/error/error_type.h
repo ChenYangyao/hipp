@@ -122,6 +122,11 @@ public:
             prints( std::forward<Args>(args)... );
         throw ErrSystem( new_errno ); 
     }
+    template<typename ...Args>
+    static void abort( errno_t e, Args &&... args ){
+        prints( std::forward<Args>(args)... );
+        exit( e );
+    }
 private:
     static const size_t _errmsg_maxsize = 32;
     static const errno_t _errmsg_maxno = 132;
@@ -168,7 +173,11 @@ public:
             prints( std::forward<Args>(args)... );
         throw ErrRuntime( new_errno ); 
     }
-
+    template<typename ...Args>
+    static void abort( errno_t e, Args &&... args ){
+        prints( std::forward<Args>(args)... );
+        exit( e );
+    }
     enum ERRNOS: errno_t {
         eDEFAULT=1, eOVERFLOW=2, eUNDERFLOW=3, eRANGE=4, eSTRCONSTRUCT=5
     };
@@ -219,13 +228,18 @@ public:
             prints( std::forward<Args>(args)... );
         throw ErrLogic( new_errno ); 
     }
-
+    template<typename ...Args>
+    static void abort( errno_t e, Args &&... args ){
+        prints( std::forward<Args>(args)... );
+        exit( e );
+    }
     enum ERRNOS: errno_t {
-        eDEFAULT=1, eDOMAIN=2, eINVALIDARG=3, eOUTOFRANGE=4, eLENGTH=5
+        eDEFAULT=1, eDOMAIN=2, eINVALIDARG=3, eOUTOFRANGE=4, eLENGTH=5,
+        eRECIPE_INCOMPLETE=6, eRECIPE_INCONSISTENT=7
     };
 private:
     static const size_t _errmsg_maxsize = 32;
-    static const errno_t _errmsg_maxno = 5;
+    static const errno_t _errmsg_maxno = 7;
     static const char * _errmsgs[];
 };
 

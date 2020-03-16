@@ -2,6 +2,14 @@
 
 namespace HIPP{
 namespace MPI{
+
+const Comm::copy_attr_fn_t 
+    Comm::NULL_COPY_FN = Comm::_null_copy_fn,
+    Comm::DUP_FN = Comm::_dup_fn;
+const Comm::del_attr_fn_t Comm::NULL_DEL_FN = Comm::_null_del_fn;
+
+std::unordered_map<int, Comm::_attr_extra_state_t *> Comm::_attr_extra_state; 
+
 ostream & Comm::info( ostream &os, int fmt_cntl ) const{
     if( fmt_cntl == 0 ){
         prt(os, HIPPCNTL_CLASS_INFO_INLINE(HIPP::MPI::Comm));
@@ -52,17 +60,56 @@ bool Comm::is_inter() const{
 int Comm::remote_size() const{
     return _obj_ptr->remote_size();
 }
+int Comm::create_keyval( copy_attr_fn_t copy_attr_fn,
+    del_attr_fn_t del_attr_fn, void *extra_state){
+    typedef MemObj<_attr_extra_state_t> mem_t;
+    auto *ptr = mem_t::alloc( 1, emFLPFB );
+    mem_t().construct( ptr, copy_attr_fn, del_attr_fn, extra_state );
+    int keyval = KEYVAL_INVALID;
+    try{
+        keyval = 
+            _obj_raw_t::create_keyval( &_copy_attr_fn, &_del_attr_fn, ptr );
+        _attr_extra_state.emplace( keyval, ptr );
+    }catch( const ErrMPI &e ){ 
+        mem_t::dealloc( ptr ); throw; 
+    }catch( ... ){
+        ErrMPI::abort( 1, emFLPFB, "  ... run out of memory\n" );
+    }
+    return keyval;
+}
+void Comm::free_keyval( int &keyval ){
+    auto it = _attr_extra_state.find( keyval );
+    if( it == _attr_extra_state.end() )
+        ErrLogic::throw_( ErrLogic::eDOMAIN, emFLPFB, 
+            "  ... key value ", keyval, " dose not exist\n" );
+    auto *ptr = it->second;
+    MemObj<_attr_extra_state_t>::dealloc( ptr );
+    _attr_extra_state.erase(it);
+    _obj_raw_t::free_keyval(&keyval);
+}
+Comm & Comm::set_attr( int keyval, void *attr_val ){
+    _obj_ptr->set_attr( keyval, attr_val );
+    return *this;
+}
+bool Comm::get_attr( int keyval, void * &attr_val ) const{
+    return _obj_ptr->get_attr(keyval, &attr_val);
+}
+Comm & Comm::del_attr( int keyval ){
+    _obj_ptr->del_attr(keyval);
+    return *this;
+}
+
 Comm Comm::split( int color, int key )const{
     mpi_t newcomm = _obj_ptr->split(color, key);
     int state = (newcomm == _obj_raw_t::nullval())?0:1;
     return _from_raw(newcomm, state );
 }
-Comm Comm::dup(){
+Comm Comm::dup() const{
     mpi_t newcomm = _obj_ptr->dup();
     int state = (newcomm == _obj_raw_t::nullval())?0:1;
     return _from_raw( newcomm, state );
 }
-Comm Comm::create( const Group &group ){
+Comm Comm::create( const Group &group ) const{
     mpi_t newcomm = _obj_raw_t::create( raw(), group.raw() );
     int state = (newcomm == _obj_raw_t::nullval())?0:1;
     return _from_raw(newcomm, state);
@@ -359,6 +406,49 @@ string Comm::_topostr( int topo ){
             " wrong. Possible values are ", UNDEFINED, ", ", CART, ", ", GRAPH,
             ", ", DIST_GRAPH, '\n');
         break;
+    }
+    return ret;
+}
+
+bool Comm::_null_copy_fn( Comm &oldcomm, int keyval, 
+    void *extra_state, void *attr_val, void *&attr_val_out) noexcept{
+    return false;
+}
+
+bool Comm::_dup_fn( Comm &oldcomm, int keyval, 
+    void *extra_state, void *attr_val, void *&attr_val_out) noexcept{
+    attr_val_out = attr_val;
+    return true;
+}
+
+void Comm::_null_del_fn( Comm &comm, int keyval, 
+    void *attr_val, void *extra_state ) noexcept{}
+
+int Comm::_copy_attr_fn( mpi_t oldcomm, int keyval, void *extra_state, 
+    void *attr_val, void *attr_val_out, int *flag ){
+    int ret = MPI_SUCCESS;
+    try{
+        auto &_es = *(_attr_extra_state_t *) extra_state;
+        Comm tempcomm = _from_raw( oldcomm, 0 );
+        *flag = _es.copy_attr_fn( tempcomm, keyval, _es.extra_state, attr_val,
+            *(void **)attr_val_out );
+    }catch( const ErrMPI &e ){
+        *flag = 0; 
+        *(void **)attr_val_out = nullptr;
+        ret = e.get_errno();
+    }
+    return ret;
+}
+
+int Comm::_del_attr_fn( mpi_t comm, int keyval,
+    void *attr_val, void *extra_state ){
+    int ret = MPI_SUCCESS;
+    try{
+        auto &_es = *(_attr_extra_state_t *) extra_state;
+        Comm tempcomm = _from_raw( comm, 0 );
+        _es.del_attr_fn( tempcomm, keyval, attr_val, _es.extra_state );
+    }catch( const ErrMPI &e ){
+        ret = e.get_errno();
     }
     return ret;
 }

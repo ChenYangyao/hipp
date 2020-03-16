@@ -28,7 +28,8 @@ void Requests::clear(){
 Requests::mpi_t Requests::raw(int i)const { return _obj_ptr->raw(i); }
 bool Requests::is_null() const { return _obj_ptr->is_null(); }
 bool Requests::is_null(int i) const { return _obj_ptr->is_null(i); }
-Requests Requests::nullval() noexcept { return _from_raw( _obj_raw_t::nullval(), 0 ); }
+Requests Requests::nullval() noexcept 
+{ return _from_raw( _obj_raw_t::nullval(), 0 ); }
 int Requests::size() const { return _obj_ptr->size(); }
 bool Requests::empty() const { return _obj_ptr->empty(); }
 
@@ -50,14 +51,22 @@ Requests Requests::get( int b, int e ){
     return Requests(ptr);
 }
 
-Status Requests::wait(){ return Status(_obj_ptr->wait()); }
-Status Requests::wait(int i){ return Status(_obj_ptr->wait(i)); }
-Status Requests::test(int &flag){ return Status(_obj_ptr->test(flag)); }
-Status Requests::test(int i, int &flag){ return Status(_obj_ptr->test(i, flag)); }
-Status Requests::status(int &flag)const{ return Status(_obj_ptr->status(flag)); }
-Status Requests::status(int i, int &flag)const{ return Status(_obj_ptr->status(i, flag)); }
-Status Requests::waitany(int &index){ return Status(_obj_ptr->waitany(index)); }
-Status Requests::testany(int &index, int &flag){ return Status(_obj_ptr->testany(index, flag)); }
+Status Requests::wait()
+{ return Status(_obj_ptr->wait()); }
+Status Requests::wait(int i)
+{ return Status(_obj_ptr->wait(i)); }
+Status Requests::test(int &flag)
+{ return Status(_obj_ptr->test(flag)); }
+Status Requests::test(int i, int &flag)
+{ return Status(_obj_ptr->test(i, flag)); }
+Status Requests::status(int &flag)const
+{ return Status(_obj_ptr->status(flag)); }
+Status Requests::status(int i, int &flag)const
+{ return Status(_obj_ptr->status(i, flag)); }
+Status Requests::waitany(int &index)
+{ return Status(_obj_ptr->waitany(index)); }
+Status Requests::testany(int &index, int &flag)
+{ return Status(_obj_ptr->testany(index, flag)); }
 void Requests::waitall(vector<Status> &statuses){
     statuses.resize( size() );
     _obj_ptr->waitall( (Status::mpi_t *)statuses.data() );
@@ -66,15 +75,19 @@ void Requests::testall(int &flag, vector<Status> &statuses){
     statuses.resize( size() );
     _obj_ptr->testall( flag, (Status::mpi_t *)statuses.data() );
 }
-void Requests::waitsome( int &count, vector<int> &indices, vector<Status> &statuses){
+void Requests::waitsome( 
+    int &count, vector<int> &indices, vector<Status> &statuses){
     indices.resize( size() );
     statuses.resize( size() );
-    _obj_ptr->waitsome( count, indices.data(), (Status::mpi_t *)statuses.data() );
+    _obj_ptr->waitsome( count, 
+        indices.data(), (Status::mpi_t *)statuses.data() );
 }
-void Requests::testsome( int &count, vector<int> &indices, vector<Status> &statuses){
+void Requests::testsome( int &count, 
+    vector<int> &indices, vector<Status> &statuses){
     indices.resize( size() );
     statuses.resize( size() );
-    _obj_ptr->testsome( count, indices.data(), (Status::mpi_t *)statuses.data() );
+    _obj_ptr->testsome( count, 
+        indices.data(), (Status::mpi_t *)statuses.data() );
 }
 
 

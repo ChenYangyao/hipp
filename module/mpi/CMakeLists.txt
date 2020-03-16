@@ -10,6 +10,7 @@ set(_libname "${_projectid}${_modid}")
 add_library(${_libname}
     SHARED 
         "$<TARGET_OBJECTS:${_libname}mpi>"
+        "$<TARGET_OBJECTS:${_libname}mpe>"
 )
 set_target_properties(${_libname}
     PROPERTIES
@@ -30,6 +31,7 @@ install(TARGETS ${_libname}
 )
 install(DIRECTORY 
         "${_moddir}/header/mpi"
+        "${_moddir}/header/mpe"
     DESTINATION include
 )
 install(FILES

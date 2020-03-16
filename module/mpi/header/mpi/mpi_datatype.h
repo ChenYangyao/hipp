@@ -8,6 +8,8 @@
 #define _HIPPMPI_MPI_DATATYPE_H_
 #include "mpi_obj_base.h"
 #include "mpi_raw_datatype.h"
+#include <cstdint>
+#include <complex>
 namespace HIPP{
 namespace MPI{
     
@@ -51,8 +53,15 @@ public:
      */
     Datatype dup() const;
     static Datatype nullval() noexcept;
+    /**
+     * reset the lower bound `lb` and extent `ext` of the datatype.
+     */
     Datatype resized( aint_t lb, aint_t ext ) const;
     Datatype contiguous( int count ) const;
+    /**
+     * create a vector datatype, consisting of `count` blocks, each with
+     * `blklen` contiguous elements, with stride `stride`.
+     */
     Datatype vector( int count, int blklen, int stride ) const;
     Datatype hvector( int count, int blklen, aint_t stride ) const;
     Datatype indexed_block( int blklen, const std::vector<int> &displs ) const;
@@ -111,12 +120,25 @@ extern const Datatype UINT8;
 extern const Datatype UINT16;
 extern const Datatype UINT32;
 extern const Datatype UINT64;
+extern const Datatype C_COMPLEX;
 extern const Datatype C_FLOAT_COMPLEX;
 extern const Datatype C_DOUBLE_COMPLEX;
 extern const Datatype C_LDOUBLE_COMPLEX;
 
 extern const Datatype BYTE;
 extern const Datatype PACKED;
+
+extern const Datatype BOOL;
+extern const Datatype FLOAT_COMPLEX;
+extern const Datatype DOUBLE_COMPLEX;
+extern const Datatype LDOUBLE_COMPLEX;
+
+extern const Datatype FLOAT_INT;
+extern const Datatype DOUBLE_INT;
+extern const Datatype LONG_DOUBLE_INT;
+extern const Datatype SHORT_INT;
+extern const Datatype INT_INT;
+extern const Datatype LONG_INT;
 
 
 template<typename NativeT>
@@ -132,12 +154,23 @@ public: \
 };
 
 _HIPPMPI_MPI_TYPECVT(char)
-_HIPPMPI_MPI_TYPECVT(short)
-_HIPPMPI_MPI_TYPECVT(int)
-_HIPPMPI_MPI_TYPECVT(long)
+_HIPPMPI_MPI_TYPECVT(int8_t)
+_HIPPMPI_MPI_TYPECVT(int16_t)
+_HIPPMPI_MPI_TYPECVT(int32_t)
+_HIPPMPI_MPI_TYPECVT(int64_t)
+_HIPPMPI_MPI_TYPECVT(uint8_t)
+_HIPPMPI_MPI_TYPECVT(uint16_t)
+_HIPPMPI_MPI_TYPECVT(uint32_t)
+_HIPPMPI_MPI_TYPECVT(uint64_t)
 _HIPPMPI_MPI_TYPECVT(long long)
+_HIPPMPI_MPI_TYPECVT(unsigned long long)
 _HIPPMPI_MPI_TYPECVT(float)
 _HIPPMPI_MPI_TYPECVT(double)
+_HIPPMPI_MPI_TYPECVT(long double)
+_HIPPMPI_MPI_TYPECVT(bool)
+_HIPPMPI_MPI_TYPECVT(std::complex<float>)
+_HIPPMPI_MPI_TYPECVT(std::complex<double>)
+_HIPPMPI_MPI_TYPECVT(std::complex<long double>)
 
 #undef _HIPPMPI_MPI_TYPECVT
 

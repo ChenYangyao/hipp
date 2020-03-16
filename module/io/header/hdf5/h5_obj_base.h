@@ -48,6 +48,8 @@ public:
      * return the original HDF5 object handler (type hid_t).
      */
     id_t raw() const noexcept { return _obj_ptr->raw(); }
+    _obj_raw_t & obj_raw() noexcept { return *_obj_ptr; }
+    const _obj_raw_t & obj_raw() const noexcept { return *_obj_ptr; }
 protected:
     _obj_ptr_t _obj_ptr;
 };

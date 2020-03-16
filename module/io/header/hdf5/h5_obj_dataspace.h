@@ -21,6 +21,9 @@ public:
     using _obj_base_t::_obj_base_t;
     H5Dataspace( const vector<size_t> &dims );
     H5Dataspace( const vector<size_t> &dims, const vector<size_t> &maxdims );
+    static H5Dataspace create_null();
+    static H5Dataspace create_scalar();
+    static H5Dataspace create_simple();
 
     int ndims( )const;
     vector<size_t> dims( )const;
@@ -33,7 +36,7 @@ public:
         const size_t *stride = NULL, const size_t *block = NULL );
     size_t get_select_npoint()const;
 
-    static const H5Dataspace allval;
+    static const H5Dataspace allval, nullval, scalarval;
 protected:
     static H5Dataspace _from_raw( id_t dspace ) noexcept;
 };
@@ -44,6 +47,16 @@ inline H5Dataspace::H5Dataspace( const vector<size_t> &dims,
     const vector<size_t> &maxdims )
     :_obj_base_t( std::make_shared<_obj_raw_t>( 
         dims.size(), dims.data(), maxdims.data() ) ){}
+
+inline H5Dataspace H5Dataspace::create_null(){
+    return _from_raw( _obj_raw_t::create( H5S_NULL ) );
+}
+inline H5Dataspace H5Dataspace::create_scalar(){
+    return _from_raw( _obj_raw_t::create( H5S_SCALAR ) );
+}
+inline H5Dataspace H5Dataspace::create_simple(){
+    return _from_raw( _obj_raw_t::create( H5S_SIMPLE ) );
+}
 
 inline int H5Dataspace::ndims( )const{
     return _obj_ptr->get_simple_extent_ndims();

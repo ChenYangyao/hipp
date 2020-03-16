@@ -19,6 +19,10 @@ namespace MPI{
 class _Comm {
 public:
     typedef MPI_Comm mpi_t;
+    typedef MPI_Comm_copy_attr_function copy_attr_fn_t;
+    typedef MPI_Comm_delete_attr_function del_attr_fn_t;
+    static const copy_attr_fn_t *const NULL_COPY_FN, * const DUP_FN;
+    static const del_attr_fn_t *const NULL_DEL_FN;
 
     /**
      * intermediate-level communicator constructors.
@@ -62,6 +66,34 @@ public:
         int _size;
         ErrMPI::check( MPI_Comm_remote_size(_val, &_size), emFLPFB );
         return _size;
+    }
+
+    /**
+     * attribute caching
+     */
+    static int create_keyval( copy_attr_fn_t *copy_attr_fn, 
+        del_attr_fn_t *delete_attr_fn, void *extra_state ){
+        int keyval;
+        ErrMPI::check( 
+            MPI_Comm_create_keyval( 
+                copy_attr_fn, delete_attr_fn, &keyval, extra_state ), emFLPFB );
+        return keyval;
+    }
+    static void free_keyval( int *comm_keyval ) {
+        ErrMPI::check( MPI_Comm_free_keyval( comm_keyval ), emFLPFB );
+    }
+    void set_attr( int keyval, void *attr_val ) {
+        ErrMPI::check( MPI_Comm_set_attr(_val, keyval, attr_val), emFLPFB );
+    }
+    bool get_attr( int keyval, void *attr_val ) const {
+        int flag;
+        ErrMPI::check( 
+            MPI_Comm_get_attr(_val, keyval, attr_val, &flag), emFLPFB );
+        return bool(flag);
+    }
+    void del_attr( int keyval ) {
+        ErrMPI::check( MPI_Comm_delete_attr(_val, keyval), emFLPFB, 
+            "  ... keyval=", keyval, '\n' );
     }
     
     /**

@@ -7,6 +7,7 @@ namespace IO{
 class _H5Dataspace: public _H5Obj {
 public:
     typedef H5S_seloper_t seloper_t;
+    typedef H5S_class_t class_t;
 
     explicit _H5Dataspace( id_t dataspace, int state=1 ) 
         noexcept: _H5Obj( dataspace, state ){ }
@@ -33,6 +34,12 @@ public:
         ErrH5::check( npoints, emFLPFB );
         return size_t(npoints);
     }
+    static id_t create( class_t type ) {
+        id_t dspace = H5Screate(type);
+        ErrH5::check( dspace, emFLPFB );
+        return dspace;
+    }
+
     ~_H5Dataspace( ){ if(_state) ErrH5::check(H5Sclose( _obj ), emFLPFB); }
 };
 

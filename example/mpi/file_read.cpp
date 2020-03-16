@@ -1,6 +1,6 @@
 /**
  * Example: file_read.cpp
- * This example demonstrates how to used the file interface of HIPP MPI to 
+ * This example demonstrates how to use the file interface of HIPP MPI to 
  * perform basic reading.
  */
 #include <hippmpi.h>

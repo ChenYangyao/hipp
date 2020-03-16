@@ -20,7 +20,6 @@ else()
     message(STATUS "Use default CXX compiler ${BoldBlue}${CMAKE_CXX_COMPILER}${ColourReset}")
 endif()
 
-
 set(_projectid hipp)
 set(_projectdir ${CMAKE_CURRENT_SOURCE_DIR})
 add_subdirectory(module)

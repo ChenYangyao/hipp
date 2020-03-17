@@ -119,7 +119,7 @@ void H5Attr::write( const vector<T, A> &buff ){
     write<T>( buff.data() );
 }
 template<>
-void H5Attr::write( const vector<string> &buff ){
+inline void H5Attr::write( const vector<string> &buff ){
     auto size = dataspace().size(), len=datatype().size();
     size_t realsize=buff.size(), reallen = H5TypeStr::shape(buff)[1];
     if( size != realsize )
@@ -154,7 +154,7 @@ void H5Attr::read( vector<T, A> &buff ) const{
     read<T>( buff.data() );
 }
 template<>
-void H5Attr::read( vector<string> &buff ) const{
+inline void H5Attr::read( vector<string> &buff ) const{
     auto size = dataspace().size(), len = datatype().size();
     vector<char> _buff( size*len, '\0' );
     _obj_ptr->read( datatype().raw(), _buff.data());
@@ -182,7 +182,7 @@ H5Attr H5Attr::create( id_t loc, const string &name, const vector<size_t> &dims,
     return create(loc, name, dtype, dspace, flag );
 }
 template<>
-H5Attr H5Attr::create<string>( 
+inline H5Attr H5Attr::create<string>( 
     id_t loc, const string &name, const vector<size_t> &dims, 
     const string &flag){
     typedef H5TypeStr str_t;

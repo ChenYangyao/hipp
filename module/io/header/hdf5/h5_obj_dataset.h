@@ -71,7 +71,9 @@ public:
      * Vector version: check the size of `buff`. If not compatible an ErrLogic
      * is thrown.
      * Pointer version, no check is performed.
-     * @T:  Type of element. Must be a numeric type of std::string.
+     * @T:  Type of element. Must be a numeric type.
+     * 
+     * For the vector version, vector<string> is allowed.
      */
     template<typename T, typename A>
     void write( const vector<T, A> &buff, 
@@ -93,7 +95,9 @@ public:
      * Vector version: size of buff is automatically resized to the dataset 
      * size.
      * Pointer version: no resize is performed.
-     * @T:  Type of element. Must be a numeric type of std::string.
+     * @T:  Type of element. Must be a numeric type.
+     * 
+     * For the vector version, vector<string> is allowed.
      */
     template<typename T, typename A>
     void read( vector<T, A> &buff,
@@ -192,7 +196,7 @@ void H5Dataset::write( const vector<T, A> &buff,
     write<T>( buff.data(), memspace, filespace, xprop );
 }
 template<>
-void H5Dataset::write( const vector<string> &buff,
+inline void H5Dataset::write( const vector<string> &buff,
     const H5Dataspace & memspace, const H5Dataspace & filespace,
     const H5Proplist &xprop ){
     auto data = H5TypeStr::serialize( buff );
@@ -229,7 +233,7 @@ void H5Dataset::read( vector<T, A> &buff,
     read<T>(buff.data(), memspace, filespace, xprop);
 }
 template<>
-void H5Dataset::read( vector<string> &buff, 
+inline void H5Dataset::read( vector<string> &buff, 
     const H5Dataspace & memspace, const H5Dataspace & filespace,
     const H5Proplist &xprop ) const{
     auto size = dataspace().size(), len = datatype().size();
@@ -245,6 +249,7 @@ void H5Dataset::read( T *buff,
     id_t memtype = H5TypeNative<T>::h5_id;
     _obj_ptr->read( memtype, memspace.raw(), filespace.raw(), xprop.raw(), buff );
 }
+
 
 inline void H5Dataset::read( string &buff, 
     const H5Proplist &xprop ) const{
@@ -268,7 +273,7 @@ H5Dataset H5Dataset::create( id_t loc, const string &name,
     return create( loc, name, dtype, dspace, flag, lcprop, cprop, aprop );
 }
 template<>
-H5Dataset H5Dataset::create<string>( id_t loc, const string &name, 
+inline H5Dataset H5Dataset::create<string>( id_t loc, const string &name, 
     const vector<size_t> &dims, 
     const string &flag,
     const H5Proplist &lcprop, const H5Proplist &cprop,

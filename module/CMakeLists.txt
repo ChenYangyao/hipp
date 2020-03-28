@@ -1,5 +1,7 @@
 add_subdirectory(cntl)
 
+add_subdirectory(algorithm)
+
 option(enable-mpi "install mpi component?" OFF)
 if(enable-mpi)
     message(STATUS "${BoldGreen}MPI enabled${ColourReset}")

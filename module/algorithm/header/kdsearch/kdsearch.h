@@ -1,0 +1,4 @@
+#ifndef _HIPPALGORITHM_KDSEARCH_H_
+#define _HIPPALGORITHM_KDSEARCH_H_
+#include "kd_tree.h"
+#endif	//_HIPPALGORITHM_KDSEARCH_H_

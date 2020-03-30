@@ -54,9 +54,27 @@ public:
 
     bool is_master();
     bool is_slave();
+    /**
+     * for slave, call this to get a counter value.
+     * If returning true, value is written a counter value. If returning false,
+     * value is unchanged.
+     */
     bool get( value_t &value );
 
+    /**
+     * change the max no. of count. 
+     * This can be called only after the the counting process is finished - 
+     * for slave, receiving the stop signal, or for master, exit the initializer
+     * or re_count().
+     * This call is collective. All involved processes must call it and with
+     * same value of max_count.
+     */
     Counter & set_max_count( value_t max_count ) noexcept;
+    /**
+     * restart the counting process.
+     * This can be called only after the counting process is finished.
+     * Barrier between two counting process is not necessary.
+     */
     void re_count();
 protected:
     static const Datatype & _value_mpi_t;

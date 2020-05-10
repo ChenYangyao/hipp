@@ -52,7 +52,7 @@ class ErrAppMPI: public ErrApp { public: ErrAppMPI() noexcept: ErrApp(4){ } };
 class ErrAppOpenMP: public ErrApp { public: ErrAppOpenMP() noexcept: ErrApp(5){ } };
 class ErrAppH5: public ErrApp { public: ErrAppH5() noexcept: ErrApp(6){ } };
 class ErrAppGSL: public ErrApp { public: ErrAppGSL() noexcept: ErrApp(7){ } };
-class ErrAppPY: public ErrApp { public: ErrAppPY() noexcept: ErrApp(8){ } };
+class ErrAppPy: public ErrApp { public: ErrAppPy() noexcept: ErrApp(8){ } };
 
 } // namespace HIPP
 #endif	//_HIPPCNTL_ERROR_APPLICATION_H_

@@ -58,12 +58,12 @@ public:
 
     template<typename ...Args> 
     Requests iread_at( offset_t offset, Args && ...args );
-    template<typename ...Args> 
-    Requests iread_at_all( offset_t offset, Args && ...args );
+    /*template<typename ...Args> 
+    Requests iread_at_all( offset_t offset, Args && ...args );*/
     template<typename ...Args> 
     Requests iwrite_at( offset_t offset, Args && ...args );
-    template<typename ...Args> 
-    Requests iwrite_at_all( offset_t offset, Args && ...args );
+    /*template<typename ...Args> 
+    Requests iwrite_at_all( offset_t offset, Args && ...args );*/
 
     template<typename ...Args> 
     void read_at_all_begin( offset_t offset, Args && ...args );
@@ -87,12 +87,12 @@ public:
 
     template<typename ...Args> 
     Requests iread( Args && ...args );
-    template<typename ...Args> 
-    Requests iread_all( Args && ...args );
+    /*template<typename ...Args> 
+    Requests iread_all( Args && ...args );*/
     template<typename ...Args> 
     Requests iwrite( Args && ...args );
-    template<typename ...Args> 
-    Requests iwrite_all( Args && ...args );
+    /*template<typename ...Args> 
+    Requests iwrite_all( Args && ...args );*/
 
     template<typename ...Args> 
     void read_all_begin( Args && ...args );
@@ -162,25 +162,25 @@ Requests File::iread_at( offset_t offset, Args && ...args ){
     return Requests::_from_raw(
         _obj_ptr->iread_at(offset, dp._buff, dp._size, dp._dtype.raw()), 0);
 }
-template<typename ...Args> 
+/*template<typename ...Args> 
 Requests File::iread_at_all( offset_t offset, Args && ...args ){
     Datapacket dp( std::forward<Args>(args)... );
     return Requests::_from_raw(
         _obj_ptr->iread_at_all(offset, dp._buff, dp._size, dp._dtype.raw()), 0);
-}
+}*/
 template<typename ...Args> 
 Requests File::iwrite_at( offset_t offset, Args && ...args ){
     Datapacket dp( std::forward<Args>(args)... );
     return Requests::_from_raw(
         _obj_ptr->iwrite_at(offset, dp._buff, dp._size, dp._dtype.raw()), 0);
 }
-template<typename ...Args> 
+/*template<typename ...Args> 
 Requests File::iwrite_at_all( offset_t offset, Args && ...args ){
     Datapacket dp( std::forward<Args>(args)... );
     return Requests::_from_raw(
         _obj_ptr->iwrite_at_all(offset, dp._buff, dp._size, dp._dtype.raw()), 
         0);
-}
+}*/
 
 template<typename ...Args> 
 void File::read_at_all_begin( offset_t offset, Args && ...args ){
@@ -239,13 +239,13 @@ Requests File::iread( Args && ...args ){
         _obj_ptr->iread(dp._buff, dp._size, dp._dtype.raw()), 
         0);
 }
-template<typename ...Args> 
+/*template<typename ...Args> 
 Requests File::iread_all( Args && ...args ){
     Datapacket dp( std::forward<Args>(args)... );
     return Requests::_from_raw(
         _obj_ptr->iread_all(dp._buff, dp._size, dp._dtype.raw()), 
         0);
-}
+}*/
 template<typename ...Args> 
 Requests File::iwrite( Args && ...args ){
     Datapacket dp( std::forward<Args>(args)... );
@@ -253,13 +253,13 @@ Requests File::iwrite( Args && ...args ){
         _obj_ptr->iwrite(dp._buff, dp._size, dp._dtype.raw()), 
         0);
 }
-template<typename ...Args> 
+/*template<typename ...Args> 
 Requests File::iwrite_all( Args && ...args ){
     Datapacket dp( std::forward<Args>(args)... );
     return Requests::_from_raw(
         _obj_ptr->iwrite_all(dp._buff, dp._size, dp._dtype.raw()), 
         0);
-}
+}*/
 
 template<typename ...Args> 
 void File::read_all_begin( Args && ...args ){

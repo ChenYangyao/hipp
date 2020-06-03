@@ -162,6 +162,7 @@ public:
             offset, '/' ,buf, '/', count, '\n' );
         return rq;
     }
+    /*
     MPI_Request iread_at_all( offset_t offset, void *buf, int count, 
         MPI_Datatype datatype ){
         MPI_Request rq;
@@ -170,7 +171,7 @@ public:
             "  ... offset/buf/count=", 
             offset, '/' ,buf, '/', count, '\n' );
         return rq;
-    }
+    }*/
     MPI_Request iwrite_at( offset_t offset, const void *buf, int count, 
         MPI_Datatype datatype ){
         MPI_Request rq;
@@ -179,7 +180,7 @@ public:
             "  ... offset/buf/count=", 
             offset, '/' ,buf, '/', count, '\n' );
         return rq;
-    }
+    }/*
     MPI_Request iwrite_at_all( offset_t offset, const void *buf, int count, 
         MPI_Datatype datatype ){
         MPI_Request rq;
@@ -188,7 +189,7 @@ public:
             "  ... offset/buf/count=", 
             offset, '/' ,buf, '/', count, '\n' );
         return rq;
-    }
+    }*/
     void read_at_all_begin( offset_t offset, void *buf, int count, 
         MPI_Datatype datatype ){
         ErrMPI::check( MPI_File_read_at_all_begin( _val, offset, buf, count, 
@@ -269,27 +270,28 @@ public:
             buf, '/', count, '\n' );
         return rq;
     }
+    /*
     MPI_Request iread_all( void *buf, int count, MPI_Datatype datatype ){
         MPI_Request rq;
         ErrMPI::check( MPI_File_iread_all( _val, buf, count, datatype, &rq ),
             emFLPFB, "  ... buf/count=", 
             buf, '/', count, '\n' );
         return rq;
-    }
+    }*/
     MPI_Request iwrite( const void *buf, int count, MPI_Datatype datatype ){
         MPI_Request rq;
         ErrMPI::check( MPI_File_iwrite( _val, buf, count, datatype, &rq ),
             emFLPFB, "  ... buf/count=", 
             buf, '/', count, '\n' );
         return rq;
-    }
+    }/*
     MPI_Request iwrite_all( const void *buf, int count, MPI_Datatype datatype ){
         MPI_Request rq;
         ErrMPI::check( MPI_File_iwrite_all( _val, buf, count, datatype, &rq ),
             emFLPFB, "  ... buf/count=", 
             buf, '/', count, '\n' );
         return rq;
-    }
+    }*/
     void read_all_begin( void *buf, int count, 
         MPI_Datatype datatype ){
         ErrMPI::check( MPI_File_read_all_begin( _val, buf, count, 

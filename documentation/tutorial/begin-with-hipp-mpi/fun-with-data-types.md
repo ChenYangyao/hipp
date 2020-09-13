@@ -2,7 +2,7 @@
 
 MPI Standard provides user-defined datatypes to allow both convinience and possibly communication performance. In this tutorial we introduce the `vector` datatype, and demonstrate the power of derived datatype with a matrix-transpose example. HIPP MPI defined all MPI standard datatype operations. A complete list can be found at the [User's Guide](../../users-guide.md).
 
-## Vector Datatype
+## The Vector Datatype
 
 Vector datatype is used to represent equal-length, regular-stride, non-contigous blocks of some primary datatype. For example, if we define a C-style 2-dimensional array, such as `double a[6][4]`, the vector datatype may be used to represent a block of it.
 
@@ -52,7 +52,7 @@ Here what you did is putting the derived datatype \(from HIPP::MPI::DOUBLE\) at 
 
 ## Example: Matrix Transposition
 
-As a demonstration of the power of derived datatype, we give a complete example as follow. We defined a 4x5 matrix, and want to use derived datatype to transpose it. In the process 0, it first initialize the the matrix content, and then define a column `col_type`. This data type represents a column of the matrix. 
+As a demonstration of the power of derived datatype, we give a complete example as follow. We defined a 4x5 matrix, and want to use derived datatype to transpose it. In the process 0, it first initialize the the matrix conten \(the content at i-th row is just i\), and then define a column `col_type`. This data type represents a column of the matrix. 
 
 However, in the MPI standard, the extent of a vector datatype is from its first element to its last element, so in this case it is 3x5+1=16. If you want to send multiple columns at one send call, the offset between adjacent vector datatype needs to be adjusted to 1, so that the starting point of the next column is 1-element offset, horizontally from the previous column. These can be done through the `resized` operation.
 
@@ -100,7 +100,7 @@ int main(int argc, char const *argv[]){
 
 ```
 
-Now we print the data and you may find it is already transposed. The output is
+Now we print the data and you may find it is already transposed. The output is shown below. You may find the 4x5 matrix now is transposed into a 5x4 matrix, and the content at j-th column is j.
 
 ```cpp
 0.000000        1.000000        2.000000        3.000000
@@ -110,7 +110,7 @@ Now we print the data and you may find it is already transposed. The output is
 0.000000        1.000000        2.000000        3.000000
 ```
 
-The interfaces we have used can be summarized as follows
+The interfaces we have used can be summarized as follows. The Datatype::vector method creates and new vector datatype instance with the element datatype being the current instance. The Datatype::resized method creates a new datatype with given lower bound and extent.
 
 ```cpp
 // hippmpi.h

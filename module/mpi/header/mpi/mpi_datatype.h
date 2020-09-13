@@ -59,8 +59,9 @@ public:
     Datatype resized( aint_t lb, aint_t ext ) const;
     Datatype contiguous( int count ) const;
     /**
-     * create a vector datatype, consisting of `count` blocks, each with
-     * `blklen` contiguous elements, with stride `stride`.
+     * vector: create a vector datatype, consisting of `count` blocks, each with
+     * `blklen` contiguous elements, separated with stride `stride` (in the 
+     * unit of base datatype).
      */
     Datatype vector( int count, int blklen, int stride ) const;
     Datatype hvector( int count, int blklen, aint_t stride ) const;
@@ -154,16 +155,27 @@ public: \
 };
 
 _HIPPMPI_MPI_TYPECVT(char)
+/*
 _HIPPMPI_MPI_TYPECVT(int8_t)
 _HIPPMPI_MPI_TYPECVT(int16_t)
 _HIPPMPI_MPI_TYPECVT(int32_t)
-_HIPPMPI_MPI_TYPECVT(int64_t)
+_HIPPMPI_MPI_TYPECVT(int64_t) 
 _HIPPMPI_MPI_TYPECVT(uint8_t)
 _HIPPMPI_MPI_TYPECVT(uint16_t)
 _HIPPMPI_MPI_TYPECVT(uint32_t)
-_HIPPMPI_MPI_TYPECVT(uint64_t)
+_HIPPMPI_MPI_TYPECVT(uint64_t) */
+
+_HIPPMPI_MPI_TYPECVT(signed char)
+_HIPPMPI_MPI_TYPECVT(short)
+_HIPPMPI_MPI_TYPECVT(int)
+_HIPPMPI_MPI_TYPECVT(long)
 _HIPPMPI_MPI_TYPECVT(long long)
+_HIPPMPI_MPI_TYPECVT(unsigned char)
+_HIPPMPI_MPI_TYPECVT(unsigned short)
+_HIPPMPI_MPI_TYPECVT(unsigned int)
+_HIPPMPI_MPI_TYPECVT(unsigned long)
 _HIPPMPI_MPI_TYPECVT(unsigned long long)
+
 _HIPPMPI_MPI_TYPECVT(float)
 _HIPPMPI_MPI_TYPECVT(double)
 _HIPPMPI_MPI_TYPECVT(long double)

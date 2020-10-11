@@ -184,7 +184,29 @@ void Comm::cart_shift( int direction, int disp,
 Comm Comm::cart_sub( const vector<int> &remain_dims ){
     return _from_raw( _obj_ptr->cart_sub( remain_dims.data() ), 1 );
 }
-
+Win Comm::win_create(void *base, aint_t size, int disp_unit, 
+const Info &info) const {
+    auto win = Win::_obj_raw_t::create(base, size, disp_unit, 
+        info.raw(), raw());
+    return Win::_from_raw(win, Win::_obj_raw_t::stFREE);
+}
+Win Comm::win_create_dynamic(const Info &info) const {
+    auto win = Win::_obj_raw_t::create_dynamic(info.raw(), raw());
+    return Win::_from_raw(win, Win::_obj_raw_t::stFREE);
+}
+Win Comm::win_allocate(void *&base_ptr, aint_t size, int disp_unit, 
+    const Info &info ) const {
+    auto win = Win::_obj_raw_t::allocate(size, disp_unit, info.raw(), raw(), 
+        &base_ptr);
+    return Win::_from_raw(win, Win::_obj_raw_t::stFREE);
+}
+Win Comm::win_allocate_shared(void *&base_ptr, 
+    aint_t size, int disp_unit, const Info &info) const
+{
+    auto win = Win::_obj_raw_t::allocate_shared(size, disp_unit, info.raw(),
+        raw(), &base_ptr);
+    return Win::_from_raw(win, Win::_obj_raw_t::stFREE);
+}
 void Comm::barrier() const{
     _obj_ptr->barrier();
 }

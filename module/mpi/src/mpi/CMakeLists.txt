@@ -8,6 +8,7 @@ set(_src
     mpi_group.cpp
     mpi_info.cpp
     mpi_op.cpp 
+    mpi_win.cpp
     mpi_raw_comm.cpp 
     mpi_raw_file.cpp
     mpi_requests.cpp

@@ -14,6 +14,9 @@ namespace MPI{
  * master process and other slave processes. The master preserves a counter
  * ranging from [0, max_count). The slave process each can query the current 
  * value of the counter and then the counter is increased. 
+ * 
+ * ValueT: type of the counted number. Can be any integer or unsigned interger
+ * types, e.g., int, unsigned int.
  */
 template<typename ValueT = int>
 class Counter{
@@ -47,8 +50,8 @@ public:
         int master_rank=0, int start=1 );
     ~Counter() noexcept;
     Counter( const Counter & ) = delete;
-    Counter( Counter && );
     Counter & operator=( const Counter & ) = delete;
+    Counter( Counter && );
     Counter & operator=( Counter && );
 
 

@@ -5,4 +5,5 @@
 
 #include "./mpe/mpe_sync.h"
 #include "./mpe/mpe_masterslave.h"
+#include "./mpe/mpe_symm.h"
 #endif	//_HIPPMPI_H_

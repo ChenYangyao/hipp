@@ -61,6 +61,7 @@ _HIPPMPI_MPI_PREOP(LXOR, MPI_LXOR)
 _HIPPMPI_MPI_PREOP(BXOR, MPI_BXOR)
 _HIPPMPI_MPI_PREOP(MAXLOC, MPI_MAXLOC)
 _HIPPMPI_MPI_PREOP(MINLOC, MPI_MINLOC)
+_HIPPMPI_MPI_PREOP(REPLACE, MPI_REPLACE)
 
 #undef _HIPPMPI_MPI_PREOP
 
@@ -76,7 +77,8 @@ std::unordered_map<string, const Op *> _opcvt = {
     {"lxor", &LXOR},
     {"bxor", &BXOR}, {"^", &BXOR},
     {"maxloc", &MAXLOC},
-    {"minloc", &MINLOC}
+    {"minloc", &MINLOC},
+    {"replace", &REPLACE}, {"=", &REPLACE}
 };
 
 Oppacket::Oppacket( const string &op ): _op(NULL){

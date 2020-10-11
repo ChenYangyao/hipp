@@ -16,4 +16,6 @@
 #include "mpi_op.h"
 #include "mpi_info.h"
 #include "mpi_file.h"
+#include "mpi_win.h"
+#include "mpi_memory.h"
 #endif	//_HIPPMPI_MPI_HIGH_H_

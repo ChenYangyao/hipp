@@ -164,7 +164,6 @@ _HIPPMPI_MPI_TYPECVT(uint8_t)
 _HIPPMPI_MPI_TYPECVT(uint16_t)
 _HIPPMPI_MPI_TYPECVT(uint32_t)
 _HIPPMPI_MPI_TYPECVT(uint64_t) */
-
 _HIPPMPI_MPI_TYPECVT(signed char)
 _HIPPMPI_MPI_TYPECVT(short)
 _HIPPMPI_MPI_TYPECVT(int)
@@ -186,6 +185,16 @@ _HIPPMPI_MPI_TYPECVT(std::complex<long double>)
 
 #undef _HIPPMPI_MPI_TYPECVT
 
+/**
+ * Map string to Datatype instance.
+ * string could be 
+ * (1) "byte", "char"; 
+ * (2) "X", "signed X", "unsigned X" where X is one of the followings:
+ *      char, short, int, long, long long;
+ * (3) "intX_t", "uintX_t" where X can be one of the followings:
+ *      8, 16, 32, 64
+ * (4) "float", "double", "long double", "bool"     
+ */
 extern const std::unordered_map<string, const Datatype *> _typecvt;
 
 

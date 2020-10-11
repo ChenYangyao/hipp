@@ -1,6 +1,7 @@
 set(_submodid mpe)
 set(_src 
     mpe_sync_seqblock.cpp
+    mpe_sync_lock.cpp
 )
 set(_libname "${_projectid}${_modid}${_submodid}")
 

@@ -11,6 +11,7 @@ namespace HIPP{
 namespace MPI{
 
 class File;
+class Win;
 
 /**
  * the high-level info object of MPI.
@@ -109,6 +110,7 @@ public:
     static Info nullval() noexcept;
 protected:
     friend class File;
+    friend class Win;
     static Info _from_raw( mpi_t info, int state ) noexcept;
 };
 

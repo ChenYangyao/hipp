@@ -12,6 +12,7 @@ namespace MPI{
 
 class Comm;
 class File;
+class Win;
 
 /**
  * a datapacked is defined, in the high-level interface, as a triplet 
@@ -35,11 +36,22 @@ public:
      * A data packed can be copied-construncted, copied-assigned, move-
      * constructed or move-assigned.
      */
-    Datapacket( const void *buff, int size, Datatype dtype ) noexcept;
-    Datapacket( const void *buff, int size, const string &dtype );
-    explicit Datapacket( const string &buff ) noexcept;
+    Datapacket(const void *buff, int size, Datatype dtype) noexcept;
+    Datapacket(const void *buff, int size, const string &dtype);
+    Datapacket( const string &buff ) noexcept;
     template<typename T, typename A>
-    explicit Datapacket( const vector<T,A> &buff ) noexcept;
+    Datapacket( const vector<T,A> &buff ) noexcept;
+
+    /**
+     * Sometimes, triplet is used to specify a memory segement relative to 
+     * a base address (e.g., in RMA operations). In such cases, the first 
+     * element is a displacement relative to the base address. 
+     * 
+     * The Datapacket type can represent such triplets, too. Internally, the
+     * displacement is stored by casting into a (void *).
+     */
+    Datapacket(aint_t disp, int size, Datatype dtype) noexcept;
+    Datapacket(aint_t disp, int size, const string &dtype);
 
     Datapacket(const Datapacket &) noexcept;
     Datapacket(Datapacket &&) noexcept;
@@ -52,6 +64,7 @@ protected:
     Datatype _dtype;
     friend class Comm;
     friend class File;
+    friend class Win;
 };
 
 template<typename T, typename A>

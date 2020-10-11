@@ -12,6 +12,7 @@
 #include "mpi_op.h"
 #include "mpi_status.h"
 #include "mpi_requests.h"
+#include "mpi_win.h"
 namespace HIPP{
 namespace MPI{
 
@@ -143,6 +144,24 @@ public:
         int &rank_src, int &rank_dest )const;
     Comm cart_sub( const vector<int> &remain_dims );
 
+    /**
+     * remote memory access subroutines
+     */
+    Win win_create(void *base, aint_t size, int disp_unit, 
+        const Info &info=Info::nullval()) const;
+    Win win_create_dynamic(const Info &info=Info::nullval()) const ;
+    
+    Win win_allocate(void *&base_ptr, 
+        aint_t size, int disp_unit, const Info &info=Info::nullval()) const;
+    template<typename T>
+    std::pair<Win, T*> win_allocate(size_t n, int disp_unit=sizeof(T), 
+        const Info &info=Info::nullval()) const;
+    
+    Win win_allocate_shared(void *&base_ptr, 
+        aint_t size, int disp_unit, const Info &info=Info::nullval()) const;
+    template<typename T>
+    std::pair<Win, T*> win_allocate_shared(size_t n, int disp_unit=sizeof(T), 
+        const Info &info=Info::nullval()) const;
 
     /**
      * point-to-point communication
@@ -361,6 +380,23 @@ bool Comm::get_attr( int keyval, AttrT * &attr_val ) const{
     auto flag = get_attr(keyval, ptr);
     attr_val = (AttrT *)ptr;
     return flag;
+}
+
+template<typename T>
+std::pair<Win, T*> Comm::win_allocate(size_t n, int disp_unit, 
+    const Info &info) const 
+{
+    void *base_ptr=nullptr;
+    auto win = win_allocate(base_ptr, n*sizeof(T), disp_unit, info);
+    return {std::move(win), static_cast<T*>(base_ptr)};
+}
+template<typename T>
+std::pair<Win, T*> Comm::win_allocate_shared(size_t n, int disp_unit, 
+    const Info &info) const
+{
+    void *base_ptr=nullptr;
+    auto win = win_allocate_shared(base_ptr, n*sizeof(T), disp_unit, info);
+    return {std::move(win), static_cast<T*>(base_ptr)};
 }
 template<typename ...Args>
 void Comm::send( int dest, int tag, Args && ...args ) const{

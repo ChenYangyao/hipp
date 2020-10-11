@@ -95,12 +95,14 @@ _HIPPMPI_MPI_PREOP(LXOR)
 _HIPPMPI_MPI_PREOP(BXOR)
 _HIPPMPI_MPI_PREOP(MAXLOC)
 _HIPPMPI_MPI_PREOP(MINLOC)
+_HIPPMPI_MPI_PREOP(REPLACE)
 
 #undef _HIPPMPI_MPI_PREOP
 
 extern std::unordered_map<string, const Op *> _opcvt;
 
 class Comm;
+class Win;
 class Oppacket{
 public:
     Oppacket( const Op &op ): _op(op){ }
@@ -117,6 +119,7 @@ public:
 protected:
     Op _op;
     friend class Comm;
+    friend class Win;
 };
 
 } // namespace MPI

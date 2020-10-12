@@ -2,12 +2,14 @@
 description: Under Development
 ---
 
-# HIPParcos - HIgh Performance computation Package for cosmological simulations
+# HIPParcos - A C++ HIgh Performance scientific computation Package
+
+HIPParcos (HIPP) is a C++ pacakge for scientific computation. It provides high-level OOP APIs for basic libraries, such as MPI, HDF5, SIMD, GSL. Enhanced features developed bsed on the basic libraries are also provided, such as the master-slave models and locks which are not standard part of MPI but very useful in some cases.
 
 ## What can you find in HIPParcos?
 
 ### MPI Interface
-OOP library for the Message Passing Interface (MPI) with enhanced tools (e.g., slave-master model, mutex). Examples include
+OOP interface for the Message Passing Interface (MPI) with enhanced tools (e.g., slave-master model, mutex). Examples include
 
 `MPI environment initializtion`: with OOP feature 'RAII' (resource Acquisition Is Initialization), initialize
 MPI environment by define an 'Environment' object. No need for calling 'MPI_Finalize' because it is automatically called
@@ -120,7 +122,7 @@ Rank: 3, Local Data: 3,3,3,3,3, Received Data: 2,2,2,2,2
 Rank: 4, Local Data: 4,4,4,4,4, Received Data: 3,3,3,3,3
 ```
 `Master-slave scheduling`: a counter class that supports task distribution. Each process calls get() method to fetch the value of the counter and add 1 to it.
-`Synchronization`: the spin lock class gives a simple way of constructing critical region.
+`Synchronization`: the spin lock and mutex classes give simple ways of constructing critical region.
 ```c++
 HIPP::MPI::CounterS<> cnt(comm);            // start a counter
 int max_val = 16;
@@ -144,8 +146,6 @@ Rank: 2, Vals got: 4
 Rank: 3, Vals got: 6,12
 Rank: 1, Vals got: 8
 ```
-
-
 
 ## Install
 

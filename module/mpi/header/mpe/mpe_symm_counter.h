@@ -45,7 +45,13 @@ CounterS _HIPP_TEMPARG::CounterS(const Comm &comm, int n_counters)
 
     auto info = Info::create();
     info.set( "accumulate_ordering", "none" );
-    _win = comm.win_create(base_ptr, buf_size, sizeof(value_t), info);
+    try{
+        _win = comm.win_create(base_ptr, buf_size, sizeof(value_t), info);
+    }catch( ... ){
+        free_mem(base_ptr);
+        ErrMPI::print_err(emFLPFB, "  ... RMA window creation failed\n");
+        throw;
+    }
 }
 _HIPP_TEMPHD
 CounterS _HIPP_TEMPARG::~CounterS() noexcept{

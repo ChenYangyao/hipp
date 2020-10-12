@@ -75,12 +75,18 @@ public:
      * number `e`.
      * The priting can be turned off by calling err_cntl_flag(0), or turned on 
      * by calling err_cntl_flag(1).
+     * 
+     * print_err() - just print, do not throw.
      */ 
     template<typename ...Args>
     static void throw_( errno_t e, Args &&... args ){
+        print_err(std::forward<Args>(args)...);
+        throw ErrMPI(e);
+    }
+    template<typename ...Args>
+    static void print_err( Args &&... args ){
         if( _err_cntl_flag )
             prints(std::forward<Args>(args)... );
-        throw ErrMPI(e);
     }
     /**
      * directly abort the program.

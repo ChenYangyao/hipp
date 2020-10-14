@@ -2,6 +2,14 @@
 HIPP::MPI Module
 *************************************
 
+Terms and Conventions
+------------------------
+
+The conventions in terms of MPI are:
+
+* We use term **Standard** to means the MPI standard APIs (types, functions, variables, macros, etc.) defined by the `MPI Forum <https://www.mpi-forum.org/mpi-31/>`_ . E.g. The **Standard** call ``MPI_Init()`` is the entrance of (almost) all MPI programs.
+
+
 .. toctree:: 
     :maxdepth: 1
     :caption: High-level API

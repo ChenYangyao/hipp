@@ -42,12 +42,26 @@ class SeqBlock;
  */
 class Env{
 public:
+    enum: int {
+        THREAD_SINGLE = MPI_THREAD_SINGLE, 
+        THREAD_FUNNELED = MPI_THREAD_FUNNELED,
+        THREAD_SERIALIZED = MPI_THREAD_SERIALIZED,
+        THREAD_MULTIPLE = MPI_THREAD_MULTIPLE };
+
     Env();
     Env(int &argc, char **&argv );
     Env(int &argc, char **&argv, int required, int &provided );
+    Env(const Env &) = delete;
+    Env(Env &&) = delete;
+    Env & operator=(const Env &) = delete;
+    Env & operator=(Env &&) = delete;
     ~Env() noexcept;
 
     /**
+     * info() - print MPI environment details
+     * @fmt_cntl: 0/1 for inline/block info, 2 for block library version.
+     * 
+     * operator(os, env) is equivalent to env.info(os).
      */
     ostream & info( ostream &os = cout, int fmt_cntl = 1 ) const;
     friend ostream & operator<<( ostream &os, const Env &);

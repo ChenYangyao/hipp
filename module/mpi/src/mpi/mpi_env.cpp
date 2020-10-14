@@ -74,7 +74,7 @@ ostream & Env::info( ostream &os, int fmt_cntl ) const{
     
     if( fmt_cntl == 0 ){
         prt(os, HIPPCNTL_CLASS_INFO_INLINE(HIPP::MPI::Env));
-        prt_f(os, "Standard: %d.%d", ver, subver) << endl;
+        prt_f(os, "Standard: %d.%d", ver, subver);
     }
     if( fmt_cntl >= 1 ){
         string procname = processor_name();

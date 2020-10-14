@@ -25,6 +25,7 @@ author = 'Yangyao Chen & Kai Wang'
 release = '0.0.1'
 
 highlight_language = "cpp"
+primary_domain = 'cpp'
 
 
 # -- General configuration ---------------------------------------------------

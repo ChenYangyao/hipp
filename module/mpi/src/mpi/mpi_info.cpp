@@ -10,7 +10,7 @@ ostream & Info::info( ostream &os, int fmt_cntl ) const{
         prt(os, HIPPCNTL_CLASS_INFO_INLINE(HIPP::MPI::Info));
         if( is_null() ) prt(os, "Null");
         else prt( os, "no. of keys: ", get_nkeys() );
-    }else if( fmt_cntl >= 1 ){
+    }else if( fmt_cntl == 1 ){
         prt(os, HIPPCNTL_CLASS_INFO(HIPP::MPI::Info));
         if( is_null() ) prt(os, "  Null") << endl;
         else{
@@ -24,6 +24,21 @@ ostream & Info::info( ostream &os, int fmt_cntl ) const{
                 }
                 os << std::flush;
             }
+        }
+    }else if( fmt_cntl >= 2 ){
+        if( is_null() ) prt(os, "Null");
+        else{
+            int nkeys = get_nkeys();
+            prt(os, nkeys, " items (");
+            if( nkeys > 0 ){
+                auto pair = get(0);
+                prt(os, pair.first, "->", pair.second);
+            }
+            for(int i=1; i<nkeys; ++i){
+                auto pair = get(i);
+                prt(os, ", ", pair.first, "->", pair.second);
+            }
+            prt(os, ")");
         }
     }
     return os;

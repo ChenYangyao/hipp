@@ -147,14 +147,14 @@ Info Win::get_info(){
     auto info = _obj_ptr->get_info();
     return Info::_from_raw(info, 1);
 }
-Win Win::nullval() noexcept{
-    return _from_raw(_obj_raw_t::nullval(), 0);
-}
 void Win::attach(void *base, aint_t size){
     _obj_ptr->attach(base, size);
 }
 void Win::detach(const void *base){
     _obj_ptr->detach(base);
+}
+Win Win::nullval() noexcept{
+    return _from_raw(_obj_raw_t::nullval(), 0);
 }
 void Win::put(int target_rank, const Datapacket &origin_dpacket, 
     const Datapacket &target_dpacket){

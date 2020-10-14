@@ -86,7 +86,12 @@ public:
      * 
      * get_group() - return the processes group associated with this window.
      * 
-     * get_info() and set_info()- get used hints and set new hints.
+     * get_info() and set_info() - get used hints and set new hints.
+     * 
+     * attach() and detach() - attach and detach dynamic memory to the local 
+     * window. Only valid if the window is created with DYNAMIC flavor.
+     * 
+     * nullval - returun a nullval (internally MPI_WIN_NULL)
      */
     bool is_null() const;
     void * shared_query(int rank, aint_t &size, int &disp_unit) const;
@@ -99,11 +104,41 @@ public:
     int get_model() const;
     void set_info(const Info &info);
     Info get_info();
-
-    static Win nullval() noexcept;
     void attach(void *base, aint_t size);
     void detach(const void *base);
-
+    static Win nullval() noexcept;
+    
+    /**
+     * RMA communication calls. 
+     * Here the Datapacket of the origin buffer/result buffer should be 
+     * specified by either triplet or vector or string (see class definition 
+     * of Datapacket). The Datapacket of the target window should be specified
+     * by triplet {(aint_t)displacement, (int)size, (Datatype)datatype}.
+     * Since all RMA calls are not guaranteed blocking, make sure your buffer is 
+     * not released until the synchronization calls are made.
+     * 
+     * put() -  put data in origin buffer to target window. 
+     * get() -  get the data in the target window into origin buffer.
+     * accumulate() -   accumulate the origin buffer, with operation 'op', to 
+     *          the target window.
+     * get_accumulate() -   similar to accumulate but also fetch the data before
+     *          accumulating.
+     * The second version of each call accepts only a 'target_disp', which means 
+     * the size and datatype are the same as the 'origin_dpacket'.
+     * 
+     * fetch_and_op() is a simplified version of get_accumulate() which assume
+     * size = 1. The template version can be applied to predefined datatypes.
+     * 
+     * compare_and_swap() is a important synchronization call, which compare
+     * the data in 'compare' with the data in target window. If the same, write
+     * the data in 'origin_addr' to the target window. The data in target window
+     * (before writing) is always returned in 'result_addr'.
+     * The template version accepts predefined datatypes.
+     * 
+     * The non-blocking version (rput, rget, ...) returns a request object which
+     * can be waited or tested later. Non-blocking version is only valid in 
+     * passive target access.
+     */
     void put(int target_rank, const Datapacket &origin_dpacket, 
         const Datapacket &target_dpacket);
     void put(int target_rank, const Datapacket &origin_dpacket, 
@@ -164,6 +199,18 @@ public:
         const Datapacket &result_dpacket, const void *origin_addr, 
         aint_t target_disp);
 
+    /**
+     * RMA synchronization calls.
+     * These calls either finish the RMA operations or synchoronize the public
+     * and private buffer (if in a SEPARATE model). Look at the MPI standard
+     * specifications before using them.
+     * 
+     * The 'guard' version (with a suffix 'g') adopts RAII convention. When
+     * called, it returns a guard object. The corresponding epoch-end operation 
+     * (fence, complete, wait, ...) is automatically called at the destruction 
+     * of the guard object (user may end the epoch in advanced by calling 
+     * release() of the guard object).
+     */
     void fence(int assert=0);
     void start(const Group &group, int assert=0);
     void complete();
@@ -194,6 +241,17 @@ protected:
 };
 
 namespace _mpi_win_helper{
+/**
+ * SyncGuard - the Win synchronization guard object. Typically usage is
+ * 
+ *  auto win = comm.win_create(...);
+ *  void *outbuf, *inbuf;
+ *  { // Start a local block. Guard is destructed at the end of the block.
+ *      auto g = win.fence_g();
+ *      win.put(outbuf);
+ *      win.get(inbuf);   }
+ *  // Reuse the outbuf and inbuf now.
+ */
 class SyncGuard {
 public:
     enum: int { syncOVER=0,

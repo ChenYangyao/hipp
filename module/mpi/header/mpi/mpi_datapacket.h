@@ -24,7 +24,7 @@ class Win;
 class Datapacket{
 public:
     /**
-     * data packet constructors
+     * data packet constructors.
      * (1)  formally specify the buffer as a triplet.
      * (2)  same with (1), but use a string that can be converted to a datatype
      *      by the high-level library.

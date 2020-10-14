@@ -9,12 +9,14 @@ HIPParcos (HIPP) is a C++ pacakge for scientific computation. It provides high-l
 ## What can you find in HIPParcos?
 
 ### MPI Interface
-OOP interface for the Message Passing Interface (MPI) with enhanced tools (e.g., slave-master model, mutex). Examples include
+OOP interface for the Message Passing Interface (MPI) with enhanced tools (e.g., master-slave models, mutex). Examples include:
 
 `MPI environment initializtion`: with OOP feature 'RAII' (resource Acquisition Is Initialization), initialize
 MPI environment by define an 'Environment' object. No need for calling 'MPI_Finalize' because it is automatically called
 after env is destructed.
 ```c++
+#include <hippmpi.h>
+
 int main(int argc, char *argv[]){
     HIPP::MPI::Env env(argc, argv);    // initialize MPI
     auto comm = env.world();           // communication world object
@@ -23,14 +25,14 @@ int main(int argc, char *argv[]){
 }
 ```
 
-`Object printing`: it is easy to print the status of a MPI object - very useful
+`Object printing`: it is easy to print the status of a MPI object - useful
 for bug diagnosis.
 ```c++
 auto win = comm.win_create_dynamic();  // create a RMA window
 if( comm.rank() == 0 )
     cout << win;
 ```
-Outputs give detail infomation of the window object we have created.
+Outputs give detail infomation of the window object we have created:
 ```txt
 HIPP::MPI::Win instance [loc=0x7ffe4ce9cfa0, size=16, align=8]
 ----------
@@ -93,7 +95,7 @@ Output is like (run with 4 processes)
 6,6,6,6,6
 ```
 
-`Remote memory access`: cyclic PUT, i.e., each process PUTs an array of numbers to its 'next' neighbor.
+`Remote memory access (RMA)`: cyclic PUT, i.e., each process PUTs an array of numbers to its 'next' neighbor.
 Synchronization is made by starting the 'fence'. No need for seconding call of fence because of RAII.
 It easy to enforce a sequential output by defining a SeqBlock object.
 
@@ -122,6 +124,7 @@ Rank: 3, Local Data: 3,3,3,3,3, Received Data: 2,2,2,2,2
 Rank: 4, Local Data: 4,4,4,4,4, Received Data: 3,3,3,3,3
 ```
 `Master-slave scheduling`: a counter class that supports task distribution. Each process calls get() method to fetch the value of the counter and add 1 to it.
+
 `Synchronization`: the spin lock and mutex classes give simple ways of constructing critical region.
 ```c++
 HIPP::MPI::CounterS<> cnt(comm);            // start a counter

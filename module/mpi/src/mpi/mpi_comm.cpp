@@ -154,6 +154,11 @@ Comm Comm::cart_create( const vector<int> &dims,
         dims.data(), periods.data(), reorder ), 1 );
 }
 void Comm::dims_create( int nnodes, int ndims, vector<int> &dims ){
+    if( nnodes <= 0 || ndims <= 0 )
+        ErrLogic::throw_(ErrLogic::eDOMAIN, emFLPFB, 
+            "  ... nnodes ", nnodes, " and ndims ", ndims, 
+            " are invalid (must be positive)\n");
+    dims.resize(ndims, 0);
     _obj_raw_t::dims_create(nnodes, ndims, dims.data());
 }
 int Comm::topo_test()const{

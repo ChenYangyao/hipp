@@ -4,15 +4,15 @@ High-level API - MPI Environment
 Preprocessing Macros
 ----------------------
 
-    .. c:macro:: HIPPMPI_STD_VERSION
-                HIPPMPI_STD_SUBVERSION
-                HIPPMPI_STD
+    .. c:macro::    HIPPMPI_STD_VERSION
+                    HIPPMPI_STD_SUBVERSION
+                    HIPPMPI_STD
 
         These three macros are defined to be **Standard** ``MPI_VERSION``, ``MPI_SUBVERSION`` and ``( MPI_VERSION*100 + MPI_SUBVERSION )``.
         The last one provides a unique value that identifies the MPI library version.
 
         These three macros are used to detect the library version at preprocess-time. If it is not neccessary to perform such detections 
-        at preprocess-time, it is better to use the methods of :class:`Env` class.
+        at preprocess-time, it is better to use the methods of :class:`Env <HIPP::MPI::Env>` class.
 
 .. namespace:: HIPP::MPI
 
@@ -40,11 +40,21 @@ Preprocessing Macros
         initialize MPI. The required thread-safty-level and supported thread-safety-level 
         are passed and returned through the last two args.
         Four thread-safety levels are defined as ``enum: int`` type in the scope of 
-        ``Env``: ``THREAD_SINGLE``, ``THREAD_FUNNELED``, ``THREAD_SERIALIZED`` and ``THREAD_MULTIPLE```
+        :class:`Env`: ``THREAD_SINGLE``, ``THREAD_FUNNELED``, ``THREAD_SERIALIZED`` and ``THREAD_MULTIPLE```
         (see MPI **Standard** for semantics).
 
     .. function::   ostream & info( ostream &os = cout, int fmt_cntl = 1 ) const
                     friend ostream & operator<<( ostream &os, const Env &)
+        
+        ``info()`` displays some basic information of the env instance to ``os``.
+        
+        :arg fmt_cntl:  Control the display format. 0 for inline information and 1 \
+                for a verbose, multiple-line information.
+        :return: the argument ``os`` is returned.
+        
+        The overloaded `<<` operator is equivalent to info() with the default 
+        ``fmt_cntl``.
+            
     
     .. function::   static void version( int &version, int &subversion )
                     static string library_version()
@@ -72,7 +82,7 @@ Preprocessing Macros
     **Examples:**
 
     A typical usage of the MPI interface is like the following. Instead of calling *Standard* ``MPI_Init()`` and ``MPI_Finalize()``,
-    we just define a variable of type ``Env``. This automatically initialize the MPI environment, and at the return of 
+    we just define a variable of type :class:`Env`. This automatically initialize the MPI environment, and at the return of 
     the ``main()``, it automatically finalizes the MPI environment. For example::
 
         int main(int argc, char *argv[]){    

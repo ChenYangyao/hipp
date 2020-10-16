@@ -14,6 +14,7 @@ namespace MPI{
 
 const int 
     UNDEFINED = MPI_UNDEFINED,
+    ROOT = MPI_ROOT,
     PROC_NULL = MPI_PROC_NULL,
     ANY_SOURCE = MPI_ANY_SOURCE,
     ANY_TAG = MPI_ANY_TAG,

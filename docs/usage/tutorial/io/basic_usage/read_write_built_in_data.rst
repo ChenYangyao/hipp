@@ -20,7 +20,7 @@ example, we store the data in a dynamically allocated array.::
     int *data_ptr = new int[521];
     // init data_ptr
     o_h5.create_dataset<int>("another_data", {521}).write(data_ptr);
-    delete[] data_ptr
+    delete[] data_ptr;
 
 The reading to a vector is especially easy since HIPP::IO will automatically resize the vector according to the
 data space property.::

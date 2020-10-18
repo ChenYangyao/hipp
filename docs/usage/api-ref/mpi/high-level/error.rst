@@ -68,12 +68,12 @@ High-level API - Error Handling
     perform actions to recover. If the exception is too severe to be handled, just rethrow 
     it or abort the whole program. The following code sample illustrates this process::
 
-        int *out_buff = nullptr;        // a must-fail operation, read from 0-address
+        int *out_buff = nullptr;        // A must-fail operation, read from 0-address.
         int dest = 1, tag = 0;
         try{
             comm.send(dest, tag, out_buff, 1, "int");
         }catch( HIPP::ErrAppMPI &e ){   // catch the exception
-            // Now you handle the error. Here we just print its content and rethrow it
+            // Now you handle the error. Here we just print its content and rethrow it.
             auto error_number = e.get_errno();
             HIPP::MPI::ErrMPI::print_err(
                 emFLPFB, "rank ", comm.rank(), ", out buff ", out_buff, 

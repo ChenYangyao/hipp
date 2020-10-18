@@ -359,7 +359,7 @@ High-level API - Process Group and Communication
         The common args of these functions are:
 
         :arg info: info object to 'hint' the implementation. A null info (as returned by 
-            :func:``Info::nullval()`` is always valid). See MPI **Standard** for 
+            :func:`Info::nullval()` is always valid). See MPI **Standard** for 
             which hints are defined. See also the implementation 
             manual for implementation-specific hints.
 

@@ -86,12 +86,12 @@ Preprocessing Macros
     the ``main()``, it automatically finalizes the MPI environment. For example::
 
         int main(int argc, char *argv[]){    
-            HIPP::MPI::Env env;            // start the MPI environment 
+            HIPP::MPI::Env env;            // Start the MPI environment. 
             
-            // Do something using MPI, e.g.
-            cout << env;                   // output environment information
+            // Do something using MPI, such as:
+            cout << env;                   // Output environment information.
 
-            return 0;                      // return from main, MPI finalizes
+            return 0;                      // Return from main, MPI finalizes.
         }
 
     may output:

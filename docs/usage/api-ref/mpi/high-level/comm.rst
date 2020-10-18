@@ -114,12 +114,12 @@ High-level API - Process Group and Communication
                 double b = 2.;
             };
 
-            keyval = HIPP::MPI::Comm::create_keyval<AttrT>(); // Create a key for attribute caching
+            keyval = HIPP::MPI::Comm::create_keyval<AttrT>(); // Create a key for attribute caching.
 
-            comm.set_attr(keyval, new AttrT);          // Set the attribute to communicator 'comm'
-            auto new_comm = comm.dup();                // At 'dup', new_comm get a copy of attribute
+            comm.set_attr(keyval, new AttrT);          // Set the attribute to communicator 'comm'.
+            auto new_comm = comm.dup();                // At 'dup', new_comm get a copy of attribute.
             AttrT *attr_val;
-            if( new_comm.get_attr(keyval, attr_val) )  // Now we print it
+            if( new_comm.get_attr(keyval, attr_val) )  // Now we print it.
                 cout << "a=" << attr_val->a << ", b=" << attr_val->b << endl;
 
             comm.del_attr(keyval);                     // Delete all attributes, and free the key.
@@ -131,6 +131,8 @@ High-level API - Process Group and Communication
         .. code-block:: text 
 
             a=1, b=2
+
+    
 
     .. function::   Comm split( int color, int key = 0 )const
                     Comm dup() const
@@ -202,7 +204,7 @@ High-level API - Process Group and Communication
             auto inter_comm = comm.split(rank==0).create_inter(local_leader, 
                 comm, remote_leader, tag);
 
-            // Perform inter-collective-communication with the communicator
+            // Perform inter-collective-communication with the communicator.
             auto &dtype = HIPP::MPI::INT;
             if( rank == 0 ){
                 int out_buff = rank, count = 1, root=HIPP::MPI::ROOT;
@@ -251,6 +253,7 @@ High-level API - Process Group and Communication
 
             ``group()`` returns the (local) group of processes in the communicator. If this is an 
             inter-communicator, ``remote_group()`` returns the remote group of procecess.
+
 
     .. _api-mpi-comm-virtual-topology:
 
@@ -356,7 +359,7 @@ High-level API - Process Group and Communication
         The common args of these functions are:
 
         :arg info: info object to 'hint' the implementation. A null info (as returned by 
-            :func:``Info::nullval()`` is always valid). See MPI **Standard** for 
+            :func:`Info::nullval()` is always valid). See MPI **Standard** for 
             which hints are defined. See also the implementation 
             manual for implementation-specific hints.
 
@@ -373,8 +376,8 @@ High-level API - Process Group and Communication
             int disp = 0;
             {   
                 int dest = (comm.rank()+1) % comm.size();
-                auto guard = win.fence_g();           // RMA synchronization call
-                win.put(dest, out_buff, disp);        // RMA PUT call 
+                auto guard = win.fence_g();           // RMA synchronization call.
+                win.put(dest, out_buff, disp);        // RMA PUT call.
             }
             {   
                 // Now, sequentially print the local data and those received from 
@@ -590,3 +593,81 @@ High-level API - Process Group and Communication
         original one).
 
         Please refer to the **Standard** for the detailed semantics of these collective calls.
+
+    **Examples:**
+
+    A typical point-to-point communication is displayed. The process with rank 0 send 
+    a vector of values to each of the other processes::
+
+        int rank = comm.rank(), size = comm.size();
+        HIPP::MPI::Mutex mtx(comm);    // Initialize a mutex for exclusive printing.
+
+        constexpr int count = 5, tag = 0;
+        if( rank == 0 ){
+            // Process 0 sends a vector of values to each of the other processes.
+            for(int i=1; i<size; ++i){      
+                vector<double> out_buff(count, i);
+                comm.send(i, tag, out_buff);
+            }
+        }else{
+            // Receive the vector of values from rank-0 process. Then print it.
+            vector<double> in_buff(count);
+            comm.recv(0, tag, in_buff.data(), count, HIPP::MPI::DOUBLE);
+
+            mtx.lock();                // Avoid the entanglement of output.
+            cout << "Rank " << rank << " receives ";
+            HIPP::prt_a(cout, in_buff) << endl;
+            mtx.unlock();
+        }
+
+    We display two ways of specifying the communication buffer by using either 
+    a single vector or a standard MPI triplet ``(address, count, datatype)``.
+    Four ways of specifying buffer are avaiable, see :ref:`API/MPI/Point-to-point Communication <api-mpi-comm-point-to-point>`.
+    The output is (order may be different at runs)
+
+    .. code-block:: text
+
+        Rank 4 receives 4,4,4,4,4
+        Rank 2 receives 2,2,2,2,2
+        Rank 1 receives 1,1,1,1,1
+        Rank 3 receives 3,3,3,3,3
+
+    To show an alternative way of point-to-point communication, 
+    we use the non-standard mode ('ready' mode here). To use the 'ready' mode, 
+    the receive side prepares the receive buffer and start a non-blocking 
+    receive. It then notifies the sender to ask a response::
+    
+        if( rank == 0 ){
+            /**
+            * Process 0 waits for each of the other processes to send a notification.
+            * Then it make a response.
+            * The notification has no data, so buff = NULL, count = 0, 
+            * datatype = any ("char" here).
+            * The reponse uses a 'ready' mode because the target must get ready.
+            */
+            for(int i=1; i<size; ++i){
+                // 
+                auto status = comm.recv(HIPP::MPI::ANY_SOURCE, tag, NULL, 0, "char");
+                vector<double> out_buff(count, i);
+                comm.rsend(status.source(), tag, out_buff);
+            }
+        }else{
+            /**
+            * Prepare a buffer 'in_buff' and start the non-blocking recv.
+            * Then, notify process 0 and wait for response.
+            */
+            vector<double> in_buff(count);
+            auto request = comm.irecv(0, tag, in_buff);
+            comm.send(0, tag, NULL, 0, "char");
+            request.wait();
+
+            mtx.lock();                 // Avoid the entanglement of output.
+            cout << "Rank " << rank << " receives ";
+            HIPP::prt_a(cout, in_buff) << endl;
+            mtx.unlock();
+        }
+    
+    The output is similar to the previous example using standard send/recv.
+
+
+        

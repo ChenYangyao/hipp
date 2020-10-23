@@ -90,6 +90,9 @@ void Requests::testsome( int &count,
         indices.data(), (Status::mpi_t *)statuses.data() );
 }
 
+void Requests::cancel(){ _obj_ptr->cancel(); }
+void Requests::cancel(int i){ _obj_ptr->cancel(i); }
+
 
 } // namespace MPI
 } // namespace HIPP

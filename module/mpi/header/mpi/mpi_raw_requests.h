@@ -123,6 +123,10 @@ public:
             MPI_Testsome(_vals.size(), _vals.data(), &count, indices, statuses),
                 emFLPFB );
     }
+    void cancel(){ cancel(0); }
+    void cancel(int i){
+        ErrMPI::check(MPI_Cancel(&_vals[i]), emFLPFB, "  ... index=", i, '\n');
+    }
 protected:
     vector<mpi_t> _vals;
     vector<int> _states;

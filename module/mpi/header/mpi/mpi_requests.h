@@ -13,6 +13,7 @@ namespace MPI{
 class Comm;
 class File;
 class Win;
+class Message;
 
 /**
  * the high-level MPI requests interface.
@@ -109,11 +110,15 @@ public:
     void testall(int &flag, vector<Status> &statuses);
     void waitsome( int &count, vector<int> &indices, vector<Status> &statuses);
     void testsome( int &count, vector<int> &indices, vector<Status> &statuses);
+
+    void cancel();
+    void cancel(int i);
 protected:
     static Requests _from_raw(mpi_t rq, int state);
     friend class Comm;
     friend class File;
     friend class Win;
+    friend class Message;
 };
 
 inline ostream & operator<<( ostream &os, const Requests &rqs ){

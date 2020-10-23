@@ -13,6 +13,7 @@ namespace MPI{
 class Comm;
 class File;
 class Win;
+class Message;
 
 /**
  * a datapacked is defined, in the high-level interface, as a triplet 
@@ -65,6 +66,7 @@ protected:
     friend class Comm;
     friend class File;
     friend class Win;
+    friend class Message;
 };
 
 template<typename T, typename A>

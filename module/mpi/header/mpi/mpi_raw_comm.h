@@ -264,6 +264,15 @@ public:
         return rq;
     }
 
+    MPI_Status iprobe(int src, int tag, int &flag) const;
+    MPI_Status probe(int src, int tag) const;
+    MPI_Status improbe(int src, int tag, int &flag, MPI_Message &message) const;
+    MPI_Status mprobe(int src, int tag, MPI_Message &message) const;
+    static MPI_Status mrecv( void *buff, int count, MPI_Datatype dtype, 
+        MPI_Message &message);
+    static MPI_Request imrecv(void *buff, int count, MPI_Datatype dtype, 
+        MPI_Message &message);
+
     /**
      * wrappers of MPI original blocking/non-blocking collective communication
      * (data transfer and computation).
@@ -540,6 +549,50 @@ protected:
     int _state;
 };
     
+
+inline MPI_Status _Comm::iprobe(int src, int tag, int &flag) const {
+    MPI_Status st;
+    ErrMPI::check(
+        MPI_Iprobe(src, tag, _val, &flag, &st), 
+            emFLPFB, "  ... src=", src, ", tag=", tag, '\n');
+    return st;
+}
+inline MPI_Status _Comm::probe(int src, int tag) const {
+    MPI_Status st;
+    ErrMPI::check(MPI_Probe(src, tag, _val, &st), 
+        emFLPFB, "  ... src=", src, ", tag=", tag, '\n');
+    return st;
+}
+inline MPI_Status _Comm::improbe(
+    int src, int tag, int &flag, MPI_Message &message) const {
+    MPI_Status st;
+    ErrMPI::check(
+        MPI_Improbe(src, tag, _val, &flag, &message, &st), 
+            emFLPFB, "  ... src=", src, ", tag=", tag, '\n');
+    return st;
+}
+inline MPI_Status _Comm::mprobe(int src, int tag, MPI_Message &message) const {
+    MPI_Status st;
+    ErrMPI::check(MPI_Mprobe(src, tag, _val, &message, &st), 
+        emFLPFB, "  ... src=", src, ", tag=", tag, '\n');
+    return st;
+}
+
+inline MPI_Status _Comm::mrecv( void *buff, int count, MPI_Datatype dtype, 
+    MPI_Message &message){
+    MPI_Status st;
+    ErrMPI::check(MPI_Mrecv(buff, count, dtype, &message, &st), emFLPFB, 
+        "  ... buff=", buff, ", count=", count, '\n');
+    return st;
+}
+inline MPI_Request _Comm::imrecv(void *buff, int count, MPI_Datatype dtype, 
+    MPI_Message &message){
+    MPI_Request req;
+    ErrMPI::check(MPI_Imrecv(buff, count, dtype, &message, &req), emFLPFB, 
+        "  ... buff=", buff, ", count=", count, '\n');
+    return req;
+}
+
 } // namespace MPI
 } // namespace HIPP
 #endif	//_HIPPMPI_MPI_RAW_COMM_H_

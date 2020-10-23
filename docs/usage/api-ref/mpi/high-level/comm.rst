@@ -17,6 +17,10 @@ High-level API - Process Group and Communication
     communicator like the the communication world, it is easy to operate on its 
     process group and use :func:`Comm::create` to create a new communicator.
 
+    The ``Comm`` object can be **copy-constructed**, **copy-assigned**, **move-constructed**
+    and **move-assigned**. The copy operation gives a object that refers to the same 
+    commnicator (internally the same ``MPI_Comm``). The destructor is ``noexcept``.
+
     .. type::   std::function<bool(Comm &oldcomm, int keyval, void *extra_state, void *attr_val, void *&attr_val_out)> copy_attr_fn_t
                     std::function<void(Comm &comm, int keyval, void *attr_val, void *extra_state)> del_attr_fn_t
 
@@ -34,6 +38,7 @@ High-level API - Process Group and Communication
         the attribute value. ``NULL_DEL_FN`` does nothing at the delete of 
         the attribute.
 
+
     .. function:: void free() noexcept
 
         free the current communicator instance, and set it to a null 
@@ -50,7 +55,7 @@ High-level API - Process Group and Communication
         :arg fmt_cntl:  Control the display format. 0 for inline information and 1 for a verbose, multiple-line information. 2 for a exhausted priting, with lots of information to be printed.
         :return: The argument ``os`` is returned.
 
-        The overloaded `<<` operator is equivalent to info() with the default 
+        The overloaded `<<` operator is equivalent to ``info()`` with default 
         ``fmt_cntl``.
 
         The returned reference of ``os`` allows you to chain the outputs, such as 
@@ -452,7 +457,7 @@ High-level API - Process Group and Communication
             can specify :var:`HIPP::MPI::PROC_NULL` as target rank, then the call 
             has no effect and returns immediately.
         :arg tag:  a tag for matching the send/recv operation pairs. 
-            Wildcard :var:'HIPP::MPI::ANY_TAG' are allowed for recv calls to match any tags.
+            Wildcard :var:`HIPP::MPI::ANY_TAG` are allowed for recv calls to match any tags.
         :arg args: specify the data buffer to be sent/received. Four cases are valid, see below.
 
         The valid ``args`` are: 
@@ -469,6 +474,24 @@ High-level API - Process Group and Communication
         of point-to-point communication, it is erroneous to pass a pure-right-value or x-value 
         (i.e., a temporary variable) as ``v`` or ``s``, because, user must ensure not 
         using the buffer before the completion of communication.
+
+
+    .. function::       Status probe(int src, int tag) const
+                        Status iprobe(int src, int tag, int &flag) const
+                        std::pair<Status, Message> mprobe(int src, int tag) const
+                        std::pair<Status, Message> improbe(int src, int tag, int &flag) const
+
+        The probe operations allow incoming messages to be checked for, without actually receiving them.
+        In all probe calls, ``src`` and ``tag`` specify the target message to be checked for 
+        (which can be wildcards), 
+        in the calling communicators. The blocking version ``probe()`` and ``mprobe()`` wait until one 
+        message is found, while the non-blocking version ``iprobe()`` and ``improbe()`` return immediately, 
+        with the ``flag`` indicating whether the message is found.
+        
+        A :class:`HIPP::MPI::Status` object is returned to allow the check of message details. 
+        A **matched** version ``mprobe()`` or ``improbe()`` also return a :class:`HIPP::MPI::Message` object
+        to allow receiving calls precisely applied to the matched message, which may be helpful in a 
+        threaded program.
         
     
     .. function::   void barrier() const
@@ -668,6 +691,311 @@ High-level API - Process Group and Communication
         }
     
     The output is similar to the previous example using standard send/recv.
+
+
+
+.. class::  Group: public MPIObj<_Group>
+
+    ``Group`` is the high-level interface for group of process.
+
+    As in the **Standard** MPI, a group of processes defines the process 
+    name-ranking, which is the basis of
+    point-to-point communication. a process group also defines the involved 
+    processes of a collective communication.
+
+    An initial group instance should be obtained
+    from a communicator through method :func:`Comm::group`. 
+    After that, you may apply the group transformation 
+    functions (union, intersection, difference, ...) to create new groups based
+    on existing groups.
+
+    The life time of the group is manipulated by the instance, and you are not
+    necessary to manually control it. However, you may call ``free()`` to 
+    free the group instance in advance.
+
+    The ``Group`` object can be **copy-constructed**, **copy-assigned**, **move-constructed**
+    and **move-assigned**. The copy operation gives a object that refers to the same 
+    process group (internally the same ``MPI_Group``). The destructor is ``noexcept``.
+
+    .. function:: void free() noexcept
+        
+        free the group instance and set it to a null value as returned by 
+        :func:`Group::nullval`.
+        
+        Calling ``free()`` is not necessary for any group, since the life time 
+        is controlled automatically, but you may want to release the resources 
+        in advance.
+        
+        ``free()`` can be called at any time, and even multiple times, and even 
+        when the instance is a null value or a predefined value.
+    
+    
+    
+    .. function::   ostream &info( ostream &os = cout, int fmt_cntl = 1 ) const
+                friend ostream & operator<<( ostream &os, const Group &group )
+
+        ``info()`` prints the information of the current instance to the stream 
+        ``os``.
+    
+        :arg fmt_cntl:   control the amount of information to be printed, 0 for a 
+                 short and inline priting, 1 for a verbose, multi-line version.
+        :return: The argument ``os`` is returned.
+    
+        The overloaded `<<` operator is equivalent to ``info()`` with 
+        default ``fmt_cntl``.
+    
+    .. function::   int size() const
+                int rank() const
+                int is_null() const
+                vector<int> translate_ranks( \
+                    const vector<int> &ranks, const Group &othergroup )const
+                int compare( const Group &othergroup )const
+
+    
+        Inquery the information of the group instance.
+
+        ``size()`` gives the number of processes in this group.
+        ``rank()`` returns the rank of the current process in this group. 
+        If the calling process is not in the group, return UNDEFINED.
+        
+        ``is_null()`` tests whether the group is a null value/null instance. 
+        
+        ``translate_ranks()`` accepts the ranks of processes in the group instance, returns 
+        their ranks in another group ``othergroup``.
+        
+        ``compare()``
+        compares two groups. It may return IDENT, SIMILAR or UNEQUAL. See
+        the **Standard** MPI specification for detail.
+     
+    
+    .. function::   Group union_( const Group &othergroup )const
+                Group intersection( const Group &othergroup )const
+                Group difference( const Group &othergroup )const
+                Group incl( const vector<int> &ranks )const
+                Group excl( const vector<int> &ranks )const
+                Group range_incl( const vector<int> &ranks )const
+                Group range_excl( const vector<int> &ranks )const
+                static Group emptyval() noexcept
+                static Group nullval() noexcept
+
+        Group transformation and creation functions.
+
+        ``union_()``, ``intersection()`` or ``difference()`` operates on the 
+        calling group instance and another group ``othergroup``, performs set-like 
+        operation, and returned new group instace. The ranks of processes in 
+        the new group is ordered according to their ranks in the calling group.
+        In the ``union_()`` case,  if a process is not in the calling group, 
+        but in ``othergroup``, it is appended after all processes in the calling 
+        group and ranked according to its rank in ``other group``. The set 
+        operations may give a empty group instance, which is identical
+        to the one returned by ``emptyval()`` (i.e., the comparison using :func:`compare` method gives 
+        :var:`HIPP::MPI::IDENT`).
+
+        ``incl()`` returns a new group that includes the processes specified by 
+        ``ranks`` in the original group. If ``ranks.size()`` is zero, returns 
+        a empty group. ``excl()``, on the other hand, excludes processes specified 
+        by ``ranks`` in the original group and returns the new group.
+
+        ``range_incl()`` and ``range_excl()`` are similar to ``incl()`` and ``excl()``, respectively.
+        But these two calls use triplets to specified the ranks to be included or excluded.
+        The argument, ``ranks``, must be ``{b1, e1, stride1, b2, e2, stride2, ...}``, where 
+        each triplet ``{bk, ek, stridek}`` specifies processes with ranks ``bk``, ``bk+stridek``, 
+        ``bk+2*stridek``, ..., ``bk+floor[(ek-bk)/stridek]*stridek``. It is valid that ``e < b && stridek < 0``,
+        but invalid that ``stridek = 0``.
+
+        ``emptyval()`` returns an empty group. ``nullval()`` returns a null group.
+        Note that an empty group is different from a null group - the 
+        former is  a valid group instance, the later is a **invalid** one that cannot be used 
+        as an argument of many functions.
+
+
+    **Example:**
+
+    The following codes show how to create a new process group from a existing group::
+
+        HIPP::MPI::Env env;
+        auto comm = env.world();
+
+        auto group = comm.group();
+        auto new_group = group.incl({0,1,2});
+
+        if( comm.rank() == 0 )
+            cout << group << new_group;
+
+    Starting from the world communicator returned by :func:`Env::world`, a call 
+    of :func:`Comm::group` gives the group that contains all the processes.
+    By using :func:`Group::incl`, the first three processes are picked out to give a new group. 
+    The information of the old and new groups is printed. Outputs are (run with 6 processes)
+
+    .. code-block:: text
+
+        PP::MPI::Group instance [loc=0x7ffeba41f750, size=16, align=8]
+        ----------
+        Size info (size=6, rank=0)
+        HIPP::MPI::Group instance [loc=0x7ffeba41f760, size=16, align=8]
+        ----------
+        Size info (size=3, rank=0)
+
+    Note that you can get the same result by using ``auto new_group = group.range_incl({0,2,1})`` 
+    instead of the ``incl()``.
+
+
+.. class:: Requests : public MPIObj<_Requests>
+
+    The high-level MPI requests interface. 
+    
+    A request is returned by a non-blocking communication call.
+    A ``Requests`` object host an array of requests (internally, an array of ``MPI_Requests``). 
+    The reason of allowing one object hosting an array of requests, not just a single request ,
+    is that the later may cause overhaed in the multiple-completion call on requests.
+
+    The ``Requests`` object can be **copy-constructed**, **copy-assigned**, **move-constructed**
+    and **move-assigned**. The copy operation gives a object that refers to the same 
+    array of requests. The destructor is ``noexcept``.
+
+    .. function::       Requests()
+
+        Default constructor - construct an empty array of requests. User may later 
+        put new requests into the instance by :func:`Requests::put()` or :func:`Requests::operator+=()`.
+
+    .. function::       void free()
+                        void clear()
+
+        ``free()`` frees all requests in this instance, and set the current instance 
+        to a null value as returned by :func:`Requests::nullval()`. 
+        For persistent requests in the array of requests, ``free()`` frees them (so, make sure 
+        that they are completed by completion calls). For other types of requests, ``free()``
+        requires that they are already completed as become null values.
+
+        ``clear()`` is similar to ``free()``, but it sets the current instance to an empty 
+        request array. The difference is that the null value is a length-1 request array, 
+        but an empty array is length-0.
+    
+    .. function::       ostream &info( ostream &os = cout, int fmt_cntl = 1 ) const
+                        friend ostream & operator<<( ostream &os, const Requests &rqs )
+        
+
+        ``info()`` displays some basic information of the requests instance to ``os``.
+
+        :arg fmt_cntl:  Control the display format. 0 for inline information and 1 for a verbose, multiple-line information.
+        :return: The argument ``os`` is returned.
+
+        The overloaded `<<` operator is equivalent to ``info()`` with default 
+        ``fmt_cntl``.
+
+        The returned reference of ``os`` allows you to chain the outputs, such as 
+        ``requests.info(cout) << " continue printing " << std::endl``.
+
+    
+    
+    .. function::       mpi_t raw(int i)const
+                        bool is_null() const
+                        bool is_null(int i) const
+                        int size() const
+                        bool empty() const
+
+        Inquery the information of the current request array.
+        ``is_null(i)`` tests whether the i-th request in the array is a null value,
+        ``is_null()`` without an argument is equivalent to ``is_null(0)``.
+        ``size()`` returns the number of requests in the array.
+        ``empty()`` tests whether the array is empty.
+
+    
+    
+    .. function::       static Requests nullval() noexcept
+
+        Return a null value, which is a length-1 request array with the only 
+        element to be a null value (Internally ``MPI_REQUEST_NULL``).
+
+    
+    
+    .. function::   void put( Requests & rqs)
+                    void put( Requests && rqs)
+                    Requests & operator+=( Requests & rqs )
+                    Requests & operator+=( Requests && rqs )
+                    Requests get( int i )
+                    Requests get( int b, int e )
+
+        ``put()`` transfers the requests in ``rqs`` into the calling instance 
+        (appended at the tail of the; order is kept). `rqs` becomes empty.
+        
+        Overloaded operator ``+=`` is equivalent to put().
+        
+        ``get()`` does the opposite thing, extracting the request(s) in the current
+        instance and return them. 
+        ``get(i)`` returns the i-th request, and get(b, e) returns a range of 
+        requests indexed in the range [b, e).
+        After the return of ``get()``, the returned requests are removed from the 
+        caller instance, the hole is filled by the tail elements remaining in 
+        the caller instance (the order may change). 
+
+    .. function::   Status wait()
+                    Status wait(int i)
+                    Status test(int &flag)
+                    Status test(int i, int &flag)
+                    Status status(int &flag) const
+                    Status status(int i, int &flag) const
+                    Status waitany(int &index)
+                    Status testany(int &index, int &flag)
+                    void waitall(vector<Status> &statuses)
+                    void testall(int &flag, vector<Status> &statuses)
+                    void waitsome( int &count, vector<int> &indices, vector<Status> &statuses)
+                    void testsome( int &count, vector<int> &indices, vector<Status> &statuses)
+
+        Completion calls of the request(s). Please refer to the MPI **Standard** for detailed 
+        semantics.
+
+        ``wait()`` without argument is equivalent to ``wait(0)``. 
+        ``test(flag)`` is equivalent to ``test(0, flag)``.
+
+        ``status(flag)`` is equivalent to ``status(0, flag)``. The status call returns ``flag=true`` 
+        if the communication is complete, and returns the a :class:`HIPP::MPI::Status` object that describes the status
+        of such. Otherwise it sets ``flag=false``. The status call differs from the test/wait call in that it 
+        does not deallocate or inactivate the request. 
+
+    .. function::   void cancel()
+                    void cancel(int i)
+
+        Calls that cancel the posted requests.
+        ``cancel()`` is equivalent to ``cancel(0)``.
+
+
+.. class:: Status
+
+    Communication status record.
+    
+    The ``Status`` class is binary-compatible with Standard **MPI_Status**, i.e.,
+    a conversion from ``Status *`` to ``MPI_Status *`` is always valid. 
+    This design is to reduce the overhead when waiting/testing multiple messages 
+    in the non-block communications.
+
+    The ``Status`` object can be **copy-constructed**, **copy-assigned**, **move-constructed**
+    and **move-assigned**. The copy operation gives a object that has the same communication status 
+    record. The destructor is ``noexcept``.
+
+    Default constructor of ``Status`` gives an object with uninitialized status record.
+    
+    
+    
+    .. function::   int source() const noexcept
+                    int tag() const noexcept
+                    int error() const noexcept
+                    int count( const Datatype &dtype ) const
+                    int count( const string &dtype ) const
+                    bool test_cancelled() const
+    
+        Inquery the message properties.
+        ``source()`` gives the rank of srouce process, ``tag()`` gives the tag of 
+        the matched message, ``error()`` gives the error code, ``count()`` counts the data item,
+        and ``test_cancelled()`` returns true if the message request is cancelled.
+        
+        The error code is set only when a multiple-completion call failed and
+        an ``ERR_IN_STATUS`` is returned.
+        
+        :arg dtype:  pre-defined or derived datatype. Signature of ``dtype`` must match the datatype used in the communication that returns this status. Only pre-defined datatypes support the string version (see :class:`HIPP::MPI::Datatype`).
+
+
+
 
 
         

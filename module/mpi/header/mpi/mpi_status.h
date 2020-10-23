@@ -22,9 +22,9 @@ namespace MPI{
 class Status{
 public:
     typedef MPI_Status mpi_t;
-    Status(){ }
-    Status( mpi_t status): _status( status ){ }
-    ~Status(){ }
+    Status() noexcept { }
+    Status( mpi_t status) noexcept : _status( status ){ }
+    ~Status() noexcept { }
     
     /**
      * query the message properties, rank of srouce process, tag of the matched

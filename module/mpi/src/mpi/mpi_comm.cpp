@@ -212,6 +212,22 @@ Win Comm::win_allocate_shared(void *&base_ptr,
         raw(), &base_ptr);
     return Win::_from_raw(win, Win::_obj_raw_t::stFREE);
 }
+Status Comm::probe(int src, int tag) const{
+    return _obj_ptr->probe(src, tag);
+}
+Status Comm::iprobe(int src, int tag, int &flag) const{
+    return _obj_ptr->iprobe(src, tag, flag);
+}
+std::pair<Status, Message> Comm::mprobe(int src, int tag) const{
+    Message msg;
+    Status st = _obj_ptr->mprobe(src, tag, msg._message);
+    return {st, msg};
+}
+std::pair<Status, Message> Comm::improbe(int src, int tag, int &flag) const{
+    Message msg;
+    Status st = _obj_ptr->improbe(src, tag, flag, msg._message);
+    return {st, msg};
+}
 void Comm::barrier() const{
     _obj_ptr->barrier();
 }

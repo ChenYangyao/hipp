@@ -11,6 +11,7 @@
 #include "mpi_datapacket.h"
 #include "mpi_op.h"
 #include "mpi_status.h"
+#include "mpi_message.h"
 #include "mpi_requests.h"
 #include "mpi_win.h"
 namespace HIPP{
@@ -198,6 +199,11 @@ public:
     Requests irsend( int dest, int tag, Args && ...args ) const;
     template<typename ...Args>
     Requests irecv( int src, int tag, Args && ...args ) const;
+
+    Status probe(int src, int tag) const;
+    Status iprobe(int src, int tag, int &flag) const;
+    std::pair<Status, Message> mprobe(int src, int tag) const;
+    std::pair<Status, Message> improbe(int src, int tag, int &flag) const;
 
     /**
      * collective communication

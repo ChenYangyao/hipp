@@ -14,7 +14,62 @@ Preprocessing Macros
         These three macros are used to detect the library version at preprocess-time. If it is not neccessary to perform such detections 
         at preprocess-time, it is better to use the methods of :class:`Env <HIPP::MPI::Env>` class.
 
+
 .. namespace:: HIPP::MPI
+
+All of the following are defined within the namespace ``HIPP::MPI``.
+
+Static Variables
+----------------------
+
+    .. var::        const int UNDEFINED = MPI_UNDEFINED
+                    const int ROOT = MPI_UNDEFINED
+                    const int PROC_NULL = MPI_PROC_NULL
+                    const int ANY_SOURCE = MPI_ANY_SOURCE
+                    const int ANY_TAG = MPI_ANY_TAG
+                    const int ERR_IN_STATUS = MPI_ERR_IN_STATUS
+                    void * const BOTTOM = MPI_BOTTOM 
+                    void * const IN_PLACE = MPI_IN_PLACE
+
+        Variables used in MPI communications.
+
+
+
+    .. var::        const int KEYVAL_INVALID = MPI_KEYVAL_INVALID
+        
+        Variable used in attribute caching.
+
+
+    .. var::        const int IDENT = MPI_IDENT
+                    const int SIMILAR = MPI_SIMILAR
+                    const int UNEQUAL = MPI_UNEQUAL
+
+        Variables as the results of object comparison.
+                    
+    .. var::        const int DISTRIBUTE_BLOCK = MPI_DISTRIBUTE_BLOCK
+                    const int DISTRIBUTE_CYCLIC = MPI_DISTRIBUTE_CYCLIC
+                    const int DISTRIBUTE_NONE = MPI_DISTRIBUTE_NONE
+                    const int DISTRIBUTE_DFLT_DARG = MPI_DISTRIBUTE_DFLT_DARG
+                    const int ORDER_C = MPI_ORDER_C
+                    const int ORDER_FORTRAN = MPI_ORDER_FORTRAN
+                    const int GRAPH = MPI_GRAPH 
+                    const int CART = MPI_CART
+                    const int DIST_GRAPH = MPI_DIST_GRAPH
+            
+        Variables used in virtual topologies and data distributions.
+
+                
+Type Aliases
+----------------------
+    
+    .. type::       MPI_Aint aint_t
+                    MPI_Offset offset_t
+                    std::size_t size_t
+
+
+
+Classes
+----------------------
 
 .. class:: Env
 

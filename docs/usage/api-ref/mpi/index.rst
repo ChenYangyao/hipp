@@ -36,7 +36,7 @@ The conventions in terms of MPI are:
     High-level API Overview <high-level/index>
     MPI Environment (definitions, Env) <high-level/env>
     Error Handling (ErrMPI) <high-level/error>
-    Process Group and Communication (Comm, Group, Requests, Status) <high-level/comm>
+    Process Group and Communication (Comm, Group, Requests, Status, Message) <high-level/comm>
     Datatype and Operation (Datatype, Datapacket, Op) <high-level/datatype>
     Remote Memory Access (Win) <high-level/rma>
     Parallel I/O (File) <high-level/file>

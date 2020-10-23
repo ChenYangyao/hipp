@@ -474,6 +474,24 @@ High-level API - Process Group and Communication
         of point-to-point communication, it is erroneous to pass a pure-right-value or x-value 
         (i.e., a temporary variable) as ``v`` or ``s``, because, user must ensure not 
         using the buffer before the completion of communication.
+
+
+    .. function::       Status probe(int src, int tag) const
+                        Status iprobe(int src, int tag, int &flag) const
+                        std::pair<Status, Message> mprobe(int src, int tag) const
+                        std::pair<Status, Message> improbe(int src, int tag, int &flag) const
+
+        The probe operations allow incoming messages to be checked for, without actually receiving them.
+        In all probe calls, ``src`` and ``tag`` specify the target message to be checked for 
+        (which can be wildcards), 
+        in the calling communicators. The blocking version ``probe()`` and ``mprobe()`` wait until one 
+        message is found, while the non-blocking version ``iprobe()`` and ``improbe()`` return immediately, 
+        with the ``flag`` indicating whether the message is found.
+        
+        A :class:`HIPP::MPI::Status` object is returned to allow the check of message details. 
+        A **matched** version ``mprobe()`` or ``improbe()`` also return a :class:`HIPP::MPI::Message` object
+        to allow receiving calls precisely applied to the matched message, which may be helpful in a 
+        threaded program.
         
     
     .. function::   void barrier() const
@@ -935,6 +953,12 @@ High-level API - Process Group and Communication
         of such. Otherwise it sets ``flag=false``. The status call differs from the test/wait call in that it 
         does not deallocate or inactivate the request. 
 
+    .. function::   void cancel()
+                    void cancel(int i)
+
+        Calls that cancel the posted requests.
+        ``cancel()`` is equivalent to ``cancel(0)``.
+
 
 .. class:: Status
 
@@ -958,10 +982,12 @@ High-level API - Process Group and Communication
                     int error() const noexcept
                     int count( const Datatype &dtype ) const
                     int count( const string &dtype ) const
+                    bool test_cancelled() const
     
         Inquery the message properties.
         ``source()`` gives the rank of srouce process, ``tag()`` gives the tag of 
-        the matched message, ``error()`` gives the error code, ``count()`` counts the data item.
+        the matched message, ``error()`` gives the error code, ``count()`` counts the data item,
+        and ``test_cancelled()`` returns true if the message request is cancelled.
         
         The error code is set only when a multiple-completion call failed and
         an ``ERR_IN_STATUS`` is returned.

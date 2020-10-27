@@ -973,9 +973,7 @@ High-level API - Process Group and Communication
     and **move-assigned**. The copy operation gives a object that has the same communication status 
     record. The destructor is ``noexcept``.
 
-    Default constructor of ``Status`` gives an object with uninitialized status record.
-    
-    
+    The default constructor of ``Status`` gives an object with uninitialized status record.
     
     .. function::   int source() const noexcept
                     int tag() const noexcept

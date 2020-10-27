@@ -22,9 +22,9 @@ namespace MPI{
 class Status{
 public:
     typedef MPI_Status mpi_t;
-    Status(){ }
-    Status( mpi_t status): _status( status ){ }
-    ~Status(){ }
+    Status() noexcept { }
+    Status( mpi_t status) noexcept : _status( status ){ }
+    ~Status() noexcept { }
     
     /**
      * query the message properties, rank of srouce process, tag of the matched
@@ -42,6 +42,7 @@ public:
     int error() const noexcept { return _status.MPI_ERROR; }
     int count( const Datatype &dtype ) const { return _count(dtype.raw()); }
     int count( const string &dtype ) const;
+    bool test_cancelled() const;
 protected:
     mpi_t _status;
     int _count( Datatype::mpi_t dtype ) const {
@@ -57,6 +58,12 @@ inline int Status::count( const string &dtype ) const {
         ErrLogic::throw_( ErrLogic::eINVALIDARG, emFLPFB, 
             "  ... datatype ", dtype, " is invalid\n" );
     return _count( it->second->raw() );
+}
+
+inline bool Status::test_cancelled() const{
+    int flag;
+    ErrMPI::check(MPI_Test_cancelled(&_status, &flag), emFLPFB); 
+    return flag;
 }
 
 } // namespace MPI    

@@ -4,17 +4,72 @@ High-level API - MPI Environment
 Preprocessing Macros
 ----------------------
 
-    .. c:macro:: HIPPMPI_STD_VERSION
-                HIPPMPI_STD_SUBVERSION
-                HIPPMPI_STD
+    .. c:macro::    HIPPMPI_STD_VERSION
+                    HIPPMPI_STD_SUBVERSION
+                    HIPPMPI_STD
 
         These three macros are defined to be **Standard** ``MPI_VERSION``, ``MPI_SUBVERSION`` and ``( MPI_VERSION*100 + MPI_SUBVERSION )``.
         The last one provides a unique value that identifies the MPI library version.
 
         These three macros are used to detect the library version at preprocess-time. If it is not neccessary to perform such detections 
-        at preprocess-time, it is better to use the methods of :class:`Env` class.
+        at preprocess-time, it is better to use the methods of :class:`Env <HIPP::MPI::Env>` class.
+
 
 .. namespace:: HIPP::MPI
+
+All of the following are defined within the namespace ``HIPP::MPI``.
+
+Static Variables
+----------------------
+
+    .. var::        const int UNDEFINED = MPI_UNDEFINED
+                    const int ROOT = MPI_UNDEFINED
+                    const int PROC_NULL = MPI_PROC_NULL
+                    const int ANY_SOURCE = MPI_ANY_SOURCE
+                    const int ANY_TAG = MPI_ANY_TAG
+                    const int ERR_IN_STATUS = MPI_ERR_IN_STATUS
+                    void * const BOTTOM = MPI_BOTTOM 
+                    void * const IN_PLACE = MPI_IN_PLACE
+
+        Variables used in MPI communications.
+
+
+
+    .. var::        const int KEYVAL_INVALID = MPI_KEYVAL_INVALID
+        
+        Variable used in attribute caching.
+
+
+    .. var::        const int IDENT = MPI_IDENT
+                    const int SIMILAR = MPI_SIMILAR
+                    const int UNEQUAL = MPI_UNEQUAL
+
+        Variables as the results of object comparison.
+                    
+    .. var::        const int DISTRIBUTE_BLOCK = MPI_DISTRIBUTE_BLOCK
+                    const int DISTRIBUTE_CYCLIC = MPI_DISTRIBUTE_CYCLIC
+                    const int DISTRIBUTE_NONE = MPI_DISTRIBUTE_NONE
+                    const int DISTRIBUTE_DFLT_DARG = MPI_DISTRIBUTE_DFLT_DARG
+                    const int ORDER_C = MPI_ORDER_C
+                    const int ORDER_FORTRAN = MPI_ORDER_FORTRAN
+                    const int GRAPH = MPI_GRAPH 
+                    const int CART = MPI_CART
+                    const int DIST_GRAPH = MPI_DIST_GRAPH
+            
+        Variables used in virtual topologies and data distributions.
+
+                
+Type Aliases
+----------------------
+    
+    .. type::       MPI_Aint aint_t
+                    MPI_Offset offset_t
+                    std::size_t size_t
+
+
+
+Classes
+----------------------
 
 .. class:: Env
 
@@ -40,11 +95,21 @@ Preprocessing Macros
         initialize MPI. The required thread-safty-level and supported thread-safety-level 
         are passed and returned through the last two args.
         Four thread-safety levels are defined as ``enum: int`` type in the scope of 
-        ``Env``: ``THREAD_SINGLE``, ``THREAD_FUNNELED``, ``THREAD_SERIALIZED`` and ``THREAD_MULTIPLE```
+        :class:`Env`: ``THREAD_SINGLE``, ``THREAD_FUNNELED``, ``THREAD_SERIALIZED`` and ``THREAD_MULTIPLE```
         (see MPI **Standard** for semantics).
 
     .. function::   ostream & info( ostream &os = cout, int fmt_cntl = 1 ) const
                     friend ostream & operator<<( ostream &os, const Env &)
+        
+        ``info()`` displays some basic information of the env instance to ``os``.
+        
+        :arg fmt_cntl:  Control the display format. 0 for inline information and 1 \
+                for a verbose, multiple-line information.
+        :return: the argument ``os`` is returned.
+        
+        The overloaded `<<` operator is equivalent to info() with the default 
+        ``fmt_cntl``.
+            
     
     .. function::   static void version( int &version, int &subversion )
                     static string library_version()
@@ -72,16 +137,16 @@ Preprocessing Macros
     **Examples:**
 
     A typical usage of the MPI interface is like the following. Instead of calling *Standard* ``MPI_Init()`` and ``MPI_Finalize()``,
-    we just define a variable of type ``Env``. This automatically initialize the MPI environment, and at the return of 
+    we just define a variable of type :class:`Env`. This automatically initialize the MPI environment, and at the return of 
     the ``main()``, it automatically finalizes the MPI environment. For example::
 
         int main(int argc, char *argv[]){    
-            HIPP::MPI::Env env;            // start the MPI environment 
+            HIPP::MPI::Env env;            // Start the MPI environment. 
             
-            // Do something using MPI, e.g.
-            cout << env;                   // output environment information
+            // Do something using MPI, such as:
+            cout << env;                   // Output environment information.
 
-            return 0;                      // return from main, MPI finalizes
+            return 0;                      // Return from main, MPI finalizes.
         }
 
     may output:

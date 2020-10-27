@@ -154,6 +154,11 @@ Comm Comm::cart_create( const vector<int> &dims,
         dims.data(), periods.data(), reorder ), 1 );
 }
 void Comm::dims_create( int nnodes, int ndims, vector<int> &dims ){
+    if( nnodes <= 0 || ndims <= 0 )
+        ErrLogic::throw_(ErrLogic::eDOMAIN, emFLPFB, 
+            "  ... nnodes ", nnodes, " and ndims ", ndims, 
+            " are invalid (must be positive)\n");
+    dims.resize(ndims, 0);
     _obj_raw_t::dims_create(nnodes, ndims, dims.data());
 }
 int Comm::topo_test()const{
@@ -206,6 +211,22 @@ Win Comm::win_allocate_shared(void *&base_ptr,
     auto win = Win::_obj_raw_t::allocate_shared(size, disp_unit, info.raw(),
         raw(), &base_ptr);
     return Win::_from_raw(win, Win::_obj_raw_t::stFREE);
+}
+Status Comm::probe(int src, int tag) const{
+    return _obj_ptr->probe(src, tag);
+}
+Status Comm::iprobe(int src, int tag, int &flag) const{
+    return _obj_ptr->iprobe(src, tag, flag);
+}
+std::pair<Status, Message> Comm::mprobe(int src, int tag) const{
+    Message msg;
+    Status st = _obj_ptr->mprobe(src, tag, msg._message);
+    return {st, msg};
+}
+std::pair<Status, Message> Comm::improbe(int src, int tag, int &flag) const{
+    Message msg;
+    Status st = _obj_ptr->improbe(src, tag, flag, msg._message);
+    return {st, msg};
 }
 void Comm::barrier() const{
     _obj_ptr->barrier();

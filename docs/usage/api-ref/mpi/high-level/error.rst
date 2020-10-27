@@ -1,10 +1,14 @@
 High-level API - Error Handling
 ===============================================================
 
+.. namespace:: HIPP::MPI
+
 .. class::  ErrMPI: public HIPP::ErrType<HIPP::ErrAppMPI, HIPP::ErrClassDefault>
 
-    The exception which is thrown when an internal call of **Standard** MPI API
-    failed. You may capture it with property exception declaration in the ``catch``
+    ``ErrMPI`` is the exception which is thrown when an internal call of **Standard** MPI API
+    failed. 
+    
+    You may capture it with property exception declaration in the ``catch``
     clause. This exception is eventually rooted at ``std::exception``, so you may use 
     ``std::exception`` declaration to capture all exceptions.
 
@@ -43,15 +47,16 @@ High-level API - Error Handling
         Convinient function for detect, report errors and throw exceptions. These
         function all print the detail location of the error, as well as the information 
         provided by the caller through ``args``. The prints can be turned on/off by 
-        methods :func:`err_cntl_flag` with arguments 1/0.
+        methods :func:`ErrMPI::err_cntl_flag` with arguments 1/0.
         
         ``check()`` examine the reuturned value of a MPI **Standard** call. If ``e`` is 
         a number that indicates an error, it prints args into ``cerr``, and 
-        throw an :class:`ErrMPI` exception with error number ``e``. ``throw()`` does not perform examine, just prints args and throw.
+        throw an :class:`ErrMPI` exception with error number ``e``. ``throw()`` does 
+        not perform examine, just prints args and throw.
         ``print_err()`` does nothing but print args.
 
         ``abort()`` always prints and always abort the program. 
-        By default, only the un-recoverable error calls abort() in the high-level
+        By default, only the un-recoverable error calls ``abort()`` in the high-level
         interface. An error when destructing a MPI internal object
         is usually considered un-recoverable, and causes the high-level interface 
         abort the program.
@@ -63,31 +68,39 @@ High-level API - Error Handling
     perform actions to recover. If the exception is too severe to be handled, just rethrow 
     it or abort the whole program. The following code sample illustrates this process::
 
-        int *out_buff = nullptr;        // a must-fail operation, read from 0-address
+        int *out_buff = nullptr;        // A must-fail operation, read from 0-address.
         int dest = 1, tag = 0;
         try{
             comm.send(dest, tag, out_buff, 1, "int");
         }catch( HIPP::ErrAppMPI &e ){   // catch the exception
+            // Now you handle the error. Here we just print its content and rethrow it.
             auto error_number = e.get_errno();
-            HIPP::MPI::ErrMPI::print_err(emFLPFB,
-                "In main() function rank 1 failed to send buff at ", 
-                &out_buff, "with errno ", error_number, "\n");
-            throw;                      // after printing, rethrow the exception
+            HIPP::MPI::ErrMPI::print_err(
+                emFLPFB, "rank ", comm.rank(), ", out buff ", out_buff, 
+                ", error no ", error_number, '\n');
+            cout << e.whats() << endl;
+            throw;      
         }
 
-    Here we send a message starting at a protected address, to the rank-1 process 
-    in the communicator ``comm``. This call will fail on most modern platforms,
-    which cause an exception of type ``ErrMPI`` thrown. Here we try to capture
-    it by specifying the exception declaration of one of its parent class 
-    :class:`HIPP::ErrAppMPI`. We may get the error number by :function:`get_errno` method 
-    and use it to do something. Here we just print some information and rethrow the 
-    exception, which eventually abort the program. (The :c:macro:`emFLPFB` is a 
-    useful preprocess-macro defined in global ``HIPP`` namespace).
+    where we send a message starting at a protected address, to the rank-1 process 
+    in the communicator ``comm``. 
+    This call fails on most modern platforms,
+    which throws an exception of type ``ErrMPI`` thrown. Here we catch
+    it by exception declaration of one of its parent class 
+    :class:`HIPP::ErrAppMPI`. We can get the error number by :func:`ErrMPI::get_errno` 
+    method and use it to handle the error, or get the detail error information by 
+    :func:`ErrMPI::whats` method.
+    Here we just print some information using :func:`ErrMPI::print_err`, and print the 
+    exception detail output by :func:`ErrMPI::whats`, and rethrow the 
+    exception, which eventually aborts the program.
+    Note that The :c:macro:`emFLPFB` is a 
+    useful preprocess-macro which gives the file, line number and function signature.
 
-    The output will be like the following, 
+    The output is like the following, 
     where we see the error stack is printed: the first block is printed by 
     the internal intermediate HIPP API call, the second is by the user, and 
-    the third depends on your compiler.
+    the third is returned by :func:`whats` which depends on your MPI **Standard**
+    implementation behind the HIPP high-level API.
 
     .. code-block:: text 
 
@@ -95,11 +108,12 @@ High-level API - Error Handling
         [ line ] 208
         [ function ] void HIPP::MPI::_Comm::send(const void*, int, MPI_Datatype, int, int) const
 
-        [ file ] /path/to/src/example.cpp
-        [ line ] 17
+        [ file ] /path/to/example.cpp
+        [ line ] 19
         [ function ] int main(int, const char**)
-        In main() function rank 1 failed to send buff at 0 with errno 4
+        rank 0, out buff 0, error no 4
 
-        terminate called after throwing an instance of 'HIPP::MPI::ErrMPI'
-        what():  MPI internal error.
+        Application: MPI | Class: default | Type: Invalid buffer pointer, error stack:
+        MPI_Send(174): MPI_Send(buf=(nil), count=1, MPI_INT, dest=1, tag=0, MPI_COMM_WORLD) failed
+        MPI_Send(119): Null buffer pointer
 

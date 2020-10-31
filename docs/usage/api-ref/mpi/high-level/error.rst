@@ -1,7 +1,12 @@
-High-level API - Error Handling
+Error Handling
 ===============================================================
 
+The following classes are all defined within namespace ``HIPP::MPI``.
+
 .. namespace:: HIPP::MPI
+
+Class ErrMPI: Exception Handler 
+---------------------------------
 
 .. class::  ErrMPI: public HIPP::ErrType<HIPP::ErrAppMPI, HIPP::ErrClassDefault>
 

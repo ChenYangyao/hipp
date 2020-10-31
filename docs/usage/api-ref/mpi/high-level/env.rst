@@ -1,75 +1,96 @@
-High-level API - MPI Environment
+MPI Environment
 ================================================
 
-Preprocessing Macros
-----------------------
+Module-specific Definitions and Consts
+---------------------------------------
 
-    .. c:macro::    HIPPMPI_STD_VERSION
-                    HIPPMPI_STD_SUBVERSION
-                    HIPPMPI_STD
+.. _api-mpi-macro:
 
-        These three macros are defined to be **Standard** ``MPI_VERSION``, ``MPI_SUBVERSION`` and ``( MPI_VERSION*100 + MPI_SUBVERSION )``.
-        The last one provides a unique value that identifies the MPI library version.
+**Macros** are defined for version detection: 
 
-        These three macros are used to detect the library version at preprocess-time. If it is not neccessary to perform such detections 
-        at preprocess-time, it is better to use the methods of :class:`Env <HIPP::MPI::Env>` class.
+.. c:macro::    HIPPMPI_STD_VERSION
+                HIPPMPI_STD_SUBVERSION
+                HIPPMPI_STD
+
+    These three macros are defined to be **Standard** ``MPI_VERSION``, ``MPI_SUBVERSION`` and ``( MPI_VERSION*100 + MPI_SUBVERSION )``.
+    The last one provides a unique value that identifies the MPI library version.
+
+    These three macros are used to detect the library version at preprocess-time. If it is not neccessary to perform such detections 
+    at preprocess-time, it is better to use the methods of :class:`HIPP::MPI::Env` class.
+
+
+    **Examples:** Users can use the following macros to detect the version of MPI library, and possibly 
+    conditionally include headers or make definitions::
+
+        #include <hippmpi.h>
+
+        #if HIPPMPI_STD >= 301
+        // We have MPI-3 standard-compatible library. Now make your inclusions or definitions. 
+        #elif HIPPMPI_STD >= 201
+        // We only have a MPI-2 library. 
+        #else 
+        // The MPI version is somehow very old. It is better to upgrade it. 
+        #endif 
 
 
 .. namespace:: HIPP::MPI
 
+.. _api-mpi-static-var:
+
 All of the following are defined within the namespace ``HIPP::MPI``.
 
-Static Variables
-----------------------
+**Static variables**:
 
-    .. var::        const int UNDEFINED = MPI_UNDEFINED
-                    const int ROOT = MPI_UNDEFINED
-                    const int PROC_NULL = MPI_PROC_NULL
-                    const int ANY_SOURCE = MPI_ANY_SOURCE
-                    const int ANY_TAG = MPI_ANY_TAG
-                    const int ERR_IN_STATUS = MPI_ERR_IN_STATUS
-                    void * const BOTTOM = MPI_BOTTOM 
-                    void * const IN_PLACE = MPI_IN_PLACE
+.. var::        const int UNDEFINED = MPI_UNDEFINED
+                const int ROOT = MPI_UNDEFINED
+                const int PROC_NULL = MPI_PROC_NULL
+                const int ANY_SOURCE = MPI_ANY_SOURCE
+                const int ANY_TAG = MPI_ANY_TAG
+                const int ERR_IN_STATUS = MPI_ERR_IN_STATUS
+                void * const BOTTOM = MPI_BOTTOM 
+                void * const IN_PLACE = MPI_IN_PLACE
 
-        Variables used in MPI communications.
-
+    Variables used in MPI communications.
 
 
-    .. var::        const int KEYVAL_INVALID = MPI_KEYVAL_INVALID
-        
-        Variable used in attribute caching.
 
-
-    .. var::        const int IDENT = MPI_IDENT
-                    const int SIMILAR = MPI_SIMILAR
-                    const int UNEQUAL = MPI_UNEQUAL
-
-        Variables as the results of object comparison.
-                    
-    .. var::        const int DISTRIBUTE_BLOCK = MPI_DISTRIBUTE_BLOCK
-                    const int DISTRIBUTE_CYCLIC = MPI_DISTRIBUTE_CYCLIC
-                    const int DISTRIBUTE_NONE = MPI_DISTRIBUTE_NONE
-                    const int DISTRIBUTE_DFLT_DARG = MPI_DISTRIBUTE_DFLT_DARG
-                    const int ORDER_C = MPI_ORDER_C
-                    const int ORDER_FORTRAN = MPI_ORDER_FORTRAN
-                    const int GRAPH = MPI_GRAPH 
-                    const int CART = MPI_CART
-                    const int DIST_GRAPH = MPI_DIST_GRAPH
-            
-        Variables used in virtual topologies and data distributions.
-
-                
-Type Aliases
-----------------------
+.. var::        const int KEYVAL_INVALID = MPI_KEYVAL_INVALID
     
-    .. type::       MPI_Aint aint_t
-                    MPI_Offset offset_t
-                    std::size_t size_t
+    Variable used in attribute caching.
 
 
+.. var::        const int IDENT = MPI_IDENT
+                const int SIMILAR = MPI_SIMILAR
+                const int UNEQUAL = MPI_UNEQUAL
 
-Classes
-----------------------
+    Variables as the results of object comparison.
+                
+.. var::        const int DISTRIBUTE_BLOCK = MPI_DISTRIBUTE_BLOCK
+                const int DISTRIBUTE_CYCLIC = MPI_DISTRIBUTE_CYCLIC
+                const int DISTRIBUTE_NONE = MPI_DISTRIBUTE_NONE
+                const int DISTRIBUTE_DFLT_DARG = MPI_DISTRIBUTE_DFLT_DARG
+                const int ORDER_C = MPI_ORDER_C
+                const int ORDER_FORTRAN = MPI_ORDER_FORTRAN
+                const int GRAPH = MPI_GRAPH 
+                const int CART = MPI_CART
+                const int DIST_GRAPH = MPI_DIST_GRAPH
+        
+    Variables used in virtual topologies and data distributions.
+
+.. _api-mpi-type-alias:
+
+**Type aliases**:
+    
+.. type::       MPI_Aint aint_t
+                MPI_Offset offset_t
+                std::size_t size_t
+
+    ``aint_t`` is used for address (e.g., byte displacement/offset). ``offset_t`` is used for address-difference. ``size_t`` 
+    is ordinary C++ size type (e.g., for container size/capacity, loop boundary). 
+
+
+Class Env: MPI Environment handler 
+----------------------------------------
 
 .. class:: Env
 
@@ -124,7 +145,7 @@ Classes
                     static string processor_name()
 
         Query information of the library implementation: upper bound for a tag value, rank of 
-        the host process (if none, returns PROC_NULL), rank of process that has I/O facilities 
+        the host process (if none, returns :var:`PROC_NULL`), rank of process that has I/O facilities 
         (possibly myrank), a boolean value indicate whether clocks are synchronized, and 
         the name of the host machine.
 

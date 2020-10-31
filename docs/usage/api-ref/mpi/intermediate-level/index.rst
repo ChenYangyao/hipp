@@ -1,4 +1,4 @@
-Intermediate-level API - Overview
+Intermediate-level API Overview
 ==================================================
 
 Todo.

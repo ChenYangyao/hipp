@@ -1,2 +1,2 @@
-High-level API - Other Standard Facilities
+Other Standard Facilities
 ===============================================================

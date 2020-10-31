@@ -17,18 +17,6 @@
 namespace HIPP{
 namespace MPI{
 
-/**
- * the high-level communicator interface for MPI system
- * 
- * The communicator instance should not be directly constructed, but should be
- * returned by other function calls like the communicator management functions
- * Comm class, or by the world() function of Env class. After you have a initial
- * communicator like the 'world', it is convinient to operate on its process 
- * group and use Comm::create() to create a new communicator.
- * 
- * After the communicator object is obtained, the communication in this 
- * communicator is invoked by its member functions.
- */
 class Comm: public MPIObj<_Comm> {
 public:
     typedef MPIObj<_Comm> _obj_base_t;
@@ -42,29 +30,11 @@ public:
     static const copy_attr_fn_t NULL_COPY_FN, DUP_FN;
     static const del_attr_fn_t NULL_DEL_FN;
 
-    /**
-     * display some basic information of the communicator to `os`
-     * @fmt_cntl:   control the display format. 0 for inline information and 1
-     *              for a verbose, multiple-line information. 2 for a exhausted
-     *              priting, with lots of information to be printed.
-     * The `os` object is returned.
-     * 
-     * The overloaded `<<` operator is equivalent to info() with the default 
-     * `fmt_cntl`.
-     */
     ostream &info( ostream &os = cout, int fmt_cntl = 1 ) const;
     friend ostream & operator<<( ostream &os, const Comm &comm );
-    
-    /**
-     * free the current communicator, and set it to a null communicator as 
-     * returned by nullval().
-     * free() can be called at any time, even for the pre-defined communicators.
-     */
+
     void free() noexcept;
 
-    /**
-     * inquiry the communicator infomation - size, rank and test if it is null.
-     */
     int size() const;
     int rank() const;
     bool is_null() const;
@@ -74,11 +44,6 @@ public:
 
     /**
      * attribute caching
-     * In the template version, the cached attribute must be a pointer to
-     * `AttrT` which is dynamically allocated with new operator.
-     * The template create_keyval() uses the copy constructor and deconstructor
-     * of `AttrT` to make new heap object and delete existing object, and set
-     * extra_state = nullptr.
      */
     static int create_keyval( copy_attr_fn_t copy_attr_fn = NULL_COPY_FN,
         del_attr_fn_t del_attr_fn = NULL_DEL_FN, void *extra_state = nullptr );
@@ -94,22 +59,6 @@ public:
 
     /**
      * communicator management
-     * 
-     * split() - split the communicator into several ones.
-     * dup()   - copy the current communicator
-     * create()- create new communicators
-     * These operations are all collective, and must be called by all the 
-     * processes in the group of current communicator.
-     * 
-     * world(), selfval() and nullval() return the predefined communicators. 
-     * These calls are local.
-     * 
-     * create_inter() - create a new inter-communicater.
-     * This must be called by two groups of processes, both provide the local
-     * leader. The local leader must specify the peer_comm that contains self
-     * and the remote leader.
-     * 
-     * merge_inter()  - merge the inter-communicator into a intra one.
      */
     Comm split( int color, int key = 0 )const;
     Comm dup() const;
@@ -165,18 +114,7 @@ public:
         const Info &info=Info::nullval()) const;
 
     /**
-     * point-to-point communication
-     * 
-     * In the following send/recv operations, `args` are data buffer to be 
-     * sent from/received into. Any arguments that can be used to construct
-     * a `Datapacket` type is a valid way of specifying the data buffer.
-     * 
-     * According to MPI standard, the non-blocking version is started with an 
-     * `i`. Both blocking and non-blocking versions provide four send modes: 
-     * standard, synchronous, bufferd and ready modes. The blocking recv returns 
-     * a Status object containing the information that has been received. The 
-     * non-blocking send/recv returns a Requests object for handling the 
-     * completion/testing of the communication.
+     * point-to-point communication     
      */
     template<typename ...Args>
     void send( int dest, int tag, Args && ...args ) const;
@@ -207,24 +145,6 @@ public:
 
     /**
      * collective communication
-     * 
-     * According to MPI standard, some collective communication functions can
-     * apply to both inter and intra communicators. If intra communicators
-     * are used, then only the 'all to all' functions are bi-directional, others
-     * are uni-directional.
-     * Some recv/send buffer can be specified with a HIPP::MPI::IN_PLACE, this
-     * is exactly same as MPI_IN_PLACE.
-     * The non-blocking version here returns a Requests object for later testing
-     * and completion. The requests object should not be freed manually before
-     * completion.
-     * In all cases, the datatype argument mush be exactly a Datatype object or
-     * array of Datatype objects. This is different from the point-to-point
-     * communication, where you can pass a string to indicate a basic type. One
-     * exception is alltoallw() and ialltoallw(), in which the datatype 
-     * arguments is an array of original MPI datatype (This design avoid the 
-     * problem when using non-blocking collective operation, and also avoid 
-     * overhead in converting the datatype from high-level instance to MPI 
-     * original one).
      */
     void barrier() const;
     void bcast( void *buf, int count, const Datatype &dtype, int root) const;

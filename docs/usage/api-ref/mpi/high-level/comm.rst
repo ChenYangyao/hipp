@@ -1,7 +1,12 @@
-High-level API - Process Group and Communication
+Basic Communication
 ===============================================================
 
+The following classes are all defined within namespace ``HIPP::MPI``.
+
 .. namespace:: HIPP::MPI
+
+Class Comm: Communicator
+-------------------------------
 
 .. class:: Comm : public MPIObj<_Comm>
 
@@ -21,8 +26,10 @@ High-level API - Process Group and Communication
     and **move-assigned**. The copy operation gives a object that refers to the same 
     commnicator (internally the same ``MPI_Comm``). The destructor is ``noexcept``.
 
-    .. type::   std::function<bool(Comm &oldcomm, int keyval, void *extra_state, void *attr_val, void *&attr_val_out)> copy_attr_fn_t
-                    std::function<void(Comm &comm, int keyval, void *attr_val, void *extra_state)> del_attr_fn_t
+    .. type::   std::function<bool(Comm &oldcomm, int keyval, void *extra_state, \
+                    void *attr_val, void *&attr_val_out)> copy_attr_fn_t
+                std::function<void(Comm &comm, int keyval, void *attr_val, \
+                    void *extra_state)> del_attr_fn_t
 
         The attribute caching copy function and delete function types. See MPI **Standard**
         for the definition of attribute caching. HIPP allows you to provide 
@@ -162,7 +169,7 @@ High-level API - Process Group and Communication
         communicater is that the caller process resides in.
 
         :arg color: processes with the same color is grouped into the same new group. If 
-            a process does not want a new communicater, set ``color=HIPP::MPI::UNDEFINED``,
+            a process does not want a new communicater, set ``color=UNDEFINED``,
             in such a case the split operation returns a null process as 
             returned by :func:`Comm::nullval()`.
         :arg key: specify the rank of processes in the new group. Process has a smaller 
@@ -452,21 +459,21 @@ High-level API - Process Group and Communication
 
         :arg dest: rank of the target process of the communication, i.e., 
             source of a recv call and target of a send call. Recv calls can use 
-            the wildcard :var:`HIPP::MPI::ANY_SOURCE` to match message from any process. 
+            the wildcard :var:`ANY_SOURCE` to match message from any process. 
             Both recv and send calls 
-            can specify :var:`HIPP::MPI::PROC_NULL` as target rank, then the call 
+            can specify :var:`PROC_NULL` as target rank, then the call 
             has no effect and returns immediately.
         :arg tag:  a tag for matching the send/recv operation pairs. 
-            Wildcard :var:`HIPP::MPI::ANY_TAG` are allowed for recv calls to match any tags.
+            Wildcard :var:`ANY_TAG` are allowed for recv calls to match any tags.
         :arg args: specify the data buffer to be sent/received. Four cases are valid, see below.
 
         The valid ``args`` are: 
         
-        - ``(const) void *buff, int size, HIPP::MPI::Datatype dtype``: the most **Standard** way of specifying a buffer in MPI, the starting address ``buff``, number of elements ``size`` of type ``dtype``.  
+        - ``(const) void *buff, int size, Datatype dtype``: the most **Standard** way of specifying a buffer in MPI, the starting address ``buff``, number of elements ``size`` of type ``dtype``.  
 
-        - ``(const) void *buff, int size, const std::string dtype``: similar to the first, but use a string to specify the datatype. Only predefined datatypes are allowed, such as int, float, etc (see :class:`HIPP::MPI::Datatype`).   
+        - ``(const) void *buff, int size, const std::string dtype``: similar to the first, but use a string to specify the datatype. Only predefined datatypes are allowed, such as int, float, etc (see :class:`Datatype`).   
 
-        - ``(const) vector<T, A> & v`` where T are any predefined types, such as int, float, etc (see :class:`HIPP::MPI::Datatype`): send from/recv to the vector of elements, which is equivalent to the triplet ``v.data(), v.size(), "T"``.   
+        - ``(const) vector<T, A> & v`` where T are any predefined types, such as int, float, etc (see :class:`Datatype`): send from/recv to the vector of elements, which is equivalent to the triplet ``v.data(), v.size(), "T"``.   
 
         - ``const std::string &s``: send the string of characters. Only send call can use this signature, because a `std::string` is not writable.
 
@@ -488,8 +495,8 @@ High-level API - Process Group and Communication
         message is found, while the non-blocking version ``iprobe()`` and ``improbe()`` return immediately, 
         with the ``flag`` indicating whether the message is found.
         
-        A :class:`HIPP::MPI::Status` object is returned to allow the check of message details. 
-        A **matched** version ``mprobe()`` or ``improbe()`` also return a :class:`HIPP::MPI::Message` object
+        A :class:`Status` object is returned to allow the check of message details. 
+        A **matched** version ``mprobe()`` or ``improbe()`` also return a :class:`Message` object
         to allow receiving calls precisely applied to the matched message, which may be helpful in a 
         threaded program.
         
@@ -597,20 +604,20 @@ High-level API - Process Group and Communication
         are used, then only the 'all to all' functions are bi-directional, others
         are uni-directional.
 
-        Some recv/send buffer can be specified with a ``HIPP::MPI::IN_PLACE``, this
+        Some recv/send buffer can be specified with a :var:`IN_PLACE`, this
         is exactly the same as the **Standard** MPI_IN_PLACE.
         
-        The non-blocking version here returns a :class:`HIPP::MPI::Requests` object 
+        The non-blocking version here returns a :class:`Requests` object 
         for later testing
         and completion. The requests object should not be freed manually before
         completion.
         
-        In all cases, the datatype argument mush be exactly a :class:`HIPP::MPI::Datatype` 
+        In all cases, the datatype argument mush be exactly a :class:`Datatype` 
         instance or
         an array of such. This is different from the point-to-point
         communication, where you can pass a string to indicate a basic type. One
         exception is ``alltoallw()`` and ``ialltoallw()``, in which the datatype 
-        arguments is an array of original MPI datatype as returned by method :func:`HIPP::MPI::Datatype::raw()` 
+        arguments is an array of original MPI datatype as returned by method :func:`Datatype::raw()` 
         (this design avoid the problem when using non-blocking collective operation, and also avoid 
         overhead in converting the datatype from high-level instance to MPI 
         original one).
@@ -693,6 +700,8 @@ High-level API - Process Group and Communication
     The output is similar to the previous example using standard send/recv.
 
 
+Class Group: Process Collection
+----------------------------------
 
 .. class::  Group: public MPIObj<_Group>
 
@@ -789,7 +798,7 @@ High-level API - Process Group and Communication
         group and ranked according to its rank in ``other group``. The set 
         operations may give a empty group instance, which is identical
         to the one returned by ``emptyval()`` (i.e., the comparison using :func:`compare` method gives 
-        :var:`HIPP::MPI::IDENT`).
+        :var:`IDENT`).
 
         ``incl()`` returns a new group that includes the processes specified by 
         ``ranks`` in the original group. If ``ranks.size()`` is zero, returns 
@@ -839,6 +848,8 @@ High-level API - Process Group and Communication
     Note that you can get the same result by using ``auto new_group = group.range_incl({0,2,1})`` 
     instead of the ``incl()``.
 
+Class Requests: Non-blocking Handler
+-------------------------------------------
 
 .. class:: Requests : public MPIObj<_Requests>
 
@@ -949,7 +960,7 @@ High-level API - Process Group and Communication
         ``test(flag)`` is equivalent to ``test(0, flag)``.
 
         ``status(flag)`` is equivalent to ``status(0, flag)``. The status call returns ``flag=true`` 
-        if the communication is complete, and returns the a :class:`HIPP::MPI::Status` object that describes the status
+        if the communication is complete, and returns the a :class:`Status` object that describes the status
         of such. Otherwise it sets ``flag=false``. The status call differs from the test/wait call in that it 
         does not deallocate or inactivate the request. 
 
@@ -959,6 +970,8 @@ High-level API - Process Group and Communication
         Calls that cancel the posted requests.
         ``cancel()`` is equivalent to ``cancel(0)``.
 
+Class Status: Return Status 
+--------------------------------
 
 .. class:: Status
 
@@ -990,7 +1003,7 @@ High-level API - Process Group and Communication
         The error code is set only when a multiple-completion call failed and
         an ``ERR_IN_STATUS`` is returned.
         
-        :arg dtype:  pre-defined or derived datatype. Signature of ``dtype`` must match the datatype used in the communication that returns this status. Only pre-defined datatypes support the string version (see :class:`HIPP::MPI::Datatype`).
+        :arg dtype:  pre-defined or derived datatype. Signature of ``dtype`` must match the datatype used in the communication that returns this status. Only pre-defined datatypes support the string version (see :class:`Datatype`).
 
 
 

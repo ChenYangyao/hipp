@@ -1,2 +1,2 @@
-High-level API - Remote Memory Access
+Remote Memory Access
 ===============================================================

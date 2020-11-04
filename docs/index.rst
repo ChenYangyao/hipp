@@ -3,27 +3,34 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-HIPParcos - A C++ Library for High-performance Scientific Computation
-=================================================================================
-
+HIPP: A C++ Toolkit for Parallel Computation
+======================================================================
 
 Why HIPP ? 
 -----------------------
 
 .. toctree::
    :maxdepth: 1
-   :titlesonly:
-   :caption: Documentation
+   :caption: Get Started
 
-   Installation <usage/installation>
-   Quick Start <usage/quickstart>
-   Tutorial <usage/tutorial/index>
-   API Reference <usage/api-ref/index>
+   usage/get-start/installation
+   usage/get-start/quickstart
 
-The documentation is organized into four parts. **Installation** gives description of 
-how to install HIPP on different platforms. The remaining three parts **Quick Start**, 
-**Tutorial** and **API Reference** are ordered from easy to deep/detailed. 
+.. toctree::
+   :maxdepth: 1
+   :caption: Tutorial
 
+   usage/tutorial/index
+   usage/tutorial/simd/index.rst
+
+.. toctree::
+   :maxdepth: 1
+   :caption: API Reference
+
+   usage/api-ref/cntl/index
+   usage/api-ref/mpi/index
+   usage/api-ref/io/index
+   usage/api-ref/simd/index
 
 Indices and tables
 --------------------

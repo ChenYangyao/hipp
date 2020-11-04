@@ -1,6 +1,8 @@
 #ifndef _HIPPCNTL_INCL_H_
 #define _HIPPCNTL_INCL_H_
 
+#include "sys_spec.h"
+
 // Streams
 #include <iostream>
 #include <fstream>

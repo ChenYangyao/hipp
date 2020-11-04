@@ -17,7 +17,7 @@ import sphinx_rtd_theme
 
 # -- Project information -----------------------------------------------------
 
-project = 'HIPParcos'
+project = 'HIPP'
 copyright = '2020, Yangyao Chen & Kai Wang'
 author = 'Yangyao Chen & Kai Wang'
 
@@ -52,6 +52,9 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # a list of builtin themes.
 #
 html_theme = "sphinx_rtd_theme"
+html_theme_options = {
+    "navigation_depth": -1
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

@@ -231,13 +231,7 @@ HIPP provides some optional functions. If your system has the depencency it need
 
 ## Documentation
 
-The documentation of HIPP is organized into three layers, with increasing depth.  
-
-* The [Tutorial](documentation/tutorial/) provides a basic guide of how to use HIPP to perform basic enhancement of C++ language, perform parallel computation with OOP style MPI interface,  or doing I/O with the IO interface. 
-* The [User's Guide](documentation/users-guide.md) gives a more deep description about the design, the structure and implementation detail of HIPP.
-* The [Interfaces by Modules](documentation/interfaces-by-modules/) provides a introduction of HIPP categorized by Modules and Submodules.
-
-The documentation now available at [Gitbook](https://hipp.gitbook.io/hipparcos/).
+The documentation is now available at [Read the docs](https://hipparcos.readthedocs.io/en/latest/).
 
 
 

@@ -27,11 +27,9 @@ public:
     static ptr_t alloc_c( size_t n, Args && ...args );
     template<typename ...Args>
     static ptr_t alloc_r( ptr_t ptr, size_t n, Args && ...args );
-#if defined (__linux__)
-    template<typename ...Args>
-    static ptr_t alloc_a( size_t n, Args && ...args );
     template<typename ...Args>
     static ptr_t alloc_a( size_t n, size_t n_align, Args && ...args );
+#ifdef _HIPP_SYS_SPEC_POSIX
     template<typename ...Args>
     static ptr_t alloc_p( size_t n, Args && ...args );
 #endif
@@ -76,14 +74,6 @@ typename MemObj<T>::ptr_t MemObj<T>::alloc_r( ptr_t ptr, size_t n, Args && ...ar
     return static_cast<ptr_t>( 
         MemRaw::realloc_e( ptr, n*size, std::forward<Args>(args)... ) );
 }
-#if defined (__linux__)
-template<typename T>
-template<typename ...Args>
-typename MemObj<T>::ptr_t MemObj<T>::alloc_a( size_t n, Args && ...args ){
-    return static_cast<ptr_t>( 
-        MemRaw::aligned_alloc_e( alignment, n*size, 
-        std::forward<Args>(args)... ) );
-}
 template<typename T>
 template<typename ...Args>
 typename MemObj<T>::ptr_t MemObj<T>::alloc_a( size_t n, size_t n_align, 
@@ -98,6 +88,7 @@ typename MemObj<T>::ptr_t MemObj<T>::alloc_a( size_t n, size_t n_align,
             _roundup_as_multiple(_size, _align), 
             std::forward<Args>(args)... ) );
 }
+#ifdef _HIPP_SYS_SPEC_POSIX
 template<typename T>
 template<typename ...Args>
 typename MemObj<T>::ptr_t MemObj<T>::alloc_p( size_t n, Args && ...args ){
@@ -107,6 +98,7 @@ typename MemObj<T>::ptr_t MemObj<T>::alloc_p( size_t n, Args && ...args ){
         std::forward<Args>(args)... ) );
 }
 #endif
+
 template<typename T>
 void MemObj<T>::dealloc( ptr_t &ptr ){
     MemRaw::free_e(ptr);

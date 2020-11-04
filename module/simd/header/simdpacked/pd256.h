@@ -84,8 +84,7 @@ public:
     static scal_t to_scal( vec_t a ) noexcept;
 #endif
     static int movemask( vec_t a ) noexcept;
-    static vec_t movehdup( vec_t a ) noexcept;
-    static vec_t moveldup( vec_t a ) noexcept;
+    static vec_t movedup( vec_t a ) noexcept;
     static vec_t set( scal_t e3, scal_t e2, scal_t e1, scal_t e0 ) noexcept;
     static vec_t set1( scal_t a ) noexcept;
 
@@ -234,7 +233,7 @@ inline Packed<double,4>::scal_t Packed<double,4>::to_scal( vec_t a ) noexcept{
 inline int Packed<double,4>::movemask( vec_t a ) noexcept{
     return _mm256_movemask_pd(a);
 }
-inline Packed<double,4>::vec_t Packed<double,4>::moveldup( vec_t a ) noexcept{
+inline Packed<double,4>::vec_t Packed<double,4>::movedup( vec_t a ) noexcept{
     return _mm256_movedup_pd(a);
 }
 inline Packed<double,4>::vec_t Packed<double,4>::set( scal_t e3, scal_t e2, scal_t e1, scal_t e0 ) noexcept{

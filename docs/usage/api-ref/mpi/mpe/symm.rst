@@ -1,2 +1,2 @@
-Extended API  - Symmetric Models
+Symmetric Models
 ====================================================

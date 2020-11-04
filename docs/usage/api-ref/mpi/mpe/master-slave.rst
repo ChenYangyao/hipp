@@ -1,2 +1,2 @@
-Extended API  - Master-slave Models
+Master-slave Models
 ====================================================

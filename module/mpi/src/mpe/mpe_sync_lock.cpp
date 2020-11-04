@@ -31,6 +31,7 @@ SpinLockGuard::operator bool() const noexcept{
 void SpinLockGuard::unlock(){
     if( _lock_id >= 0 ){
         _lock->unlock(_lock_id);
+        _lock_id = -1;
     }else
         ErrLogic::throw_(ErrLogic::eDOMAIN, emFLPFB, 
             "  ... already unlocked");
@@ -58,6 +59,7 @@ MutexGuard::~MutexGuard(){
 void MutexGuard::unlock(){
     if(_lock_id >= 0){
         _lock->unlock(_lock_id);
+        _lock_id = -1;
     }else 
         ErrLogic::throw_(ErrLogic::eDOMAIN, emFLPFB, 
             "  ... already unlocked");

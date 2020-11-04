@@ -85,7 +85,7 @@ any other kinds of tasks.::
         vector<TaskInfo> tasks;
         // init all the tasks
         for (int i_proc = 1; i_proc < world.size(); ++i_proc)
-            world.send(i_proc, 0, &takss[i_proc], sizeof(TaskInfo), HIPP::MPI::CHAR);
+            world.send(i_proc, 0, &takss[i_proc], sizeof(TaskInfo) / sizeof(char), HIPP::MPI::CHAR);
         local_task = tasks[0];
     } else {
         world.recv(0, 0, &local_task, sizeof(TaskInfo) / sizeof(char), HIPP::MPI::CHAR);

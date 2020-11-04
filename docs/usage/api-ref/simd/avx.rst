@@ -496,7 +496,6 @@ Vector<float, 8>
                     Vec log2_faster( ) const noexcept
                     Vec log_faster( ) const noexcept
                     Vec log10_faster( ) const noexcept
-
                     Vec pow2_fast() const noexcept
                     Vec exp_fast() const noexcept
                     Vec pow10_fast() const noexcept

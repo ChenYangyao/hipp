@@ -21,6 +21,7 @@ Why HIPP ?
    :caption: Tutorial
 
    usage/tutorial/index
+   usage/tutorial/simd/index.rst
 
 .. toctree::
    :maxdepth: 1

@@ -1,6 +1,6 @@
-************************
-MPI Module
-************************
+*********************************
+API Reference of the MPI Module
+*********************************
 
 .. _api-mpi-usage:
 
@@ -33,7 +33,7 @@ The compiling command in an Unix-like system would be like
 
 .. code-block:: bash 
 
-    $ mpicxx src.cpp -lhippmpi -lhippcntl
+    $ mpicxx -std=c++17 src.cpp -lhippmpi -lhippcntl
 
 .. _api-mpi-convention:
 

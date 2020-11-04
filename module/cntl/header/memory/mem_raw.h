@@ -21,21 +21,24 @@ public:
     /**
      * C-style raw (un-constructed) memory managements.
      * One-to-one corresponds to GNU-C library functions.
+     * 
+     * The aligned_alloc requires C++17.
      */
     static ptr_t malloc( size_t size );
     static ptr_t calloc( size_t nmemb, size_t size );
     static ptr_t realloc( ptr_t ptr, size_t size );
-
-#if defined (__linux__)
     static ptr_t aligned_alloc( size_t alignment, size_t size );
-#endif
     static void free( ptr_t ptr );
+
+#ifdef _HIPP_SYS_SPEC_POSIX
     /**
      * allocate n page
      * Equavalent to aligned_alloc( getpagesize(), n*getpagesize() ).
      */
-#if defined (__linux__)
     static ptr_t page( size_t n );
+    /**
+     * Return the page size. Only works in a POSIX system.
+     */ 
     static size_t pagesize() noexcept;
 #endif
 
@@ -51,20 +54,16 @@ public:
     static ptr_t calloc_e( size_t nmemb, size_t size, Args && ...args );
     template<typename... Args>
     static ptr_t realloc_e( ptr_t ptr, size_t size, Args && ...args );
-
-#if defined (__linux__)
     template<typename... Args>
     static ptr_t aligned_alloc_e( 
         size_t alignment, size_t size, Args && ...args );
-#endif 
-
     template<typename T>
     static void free_e( T* &ptr );
 
-#if defined (__linux__)
+#ifdef _HIPP_SYS_SPEC_POSIX
     template<typename... Args>
     static ptr_t page_e( size_t n, Args && ...args );
-#endif
+#endif 
 };
     
 
@@ -77,18 +76,14 @@ inline MemRaw::ptr_t MemRaw::calloc( size_t nmemb, size_t size ){
 inline MemRaw::ptr_t MemRaw::realloc( ptr_t ptr, size_t size ){
     return ::realloc(ptr, size);
 }
-
-#if defined (__linux__)
 inline MemRaw::ptr_t MemRaw::aligned_alloc( size_t alignment, size_t size ){
-    return ::aligned_alloc( alignment, size );
+    return ::aligned_alloc(alignment, size);
 }
-#endif
-
 inline void MemRaw::free( ptr_t ptr ){
     ::free(ptr);
 }
 
-#if defined (__linux__)
+#ifdef _HIPP_SYS_SPEC_POSIX
 inline MemRaw::ptr_t MemRaw::page( size_t n ){
     size_t _pagesize = pagesize();
     return aligned_alloc( _pagesize, n*_pagesize );
@@ -121,8 +116,6 @@ MemRaw::ptr_t MemRaw::realloc_e( ptr_t ptr, size_t size, Args && ...args ){
     }
     return ptr_re;
 }
-
-#if defined (__linux__)
 template<typename... Args>
 MemRaw::ptr_t MemRaw::aligned_alloc_e( size_t alignment, size_t size, 
     Args && ...args )
@@ -133,14 +126,12 @@ MemRaw::ptr_t MemRaw::aligned_alloc_e( size_t alignment, size_t size,
     }
     return ptr;
 }
-#endif
-
 template<typename T>
 void MemRaw::free_e( T* &ptr ){
     free( ptr );
     ptr = nullptr;
 }
-#if defined (__linux__)
+#ifdef _HIPP_SYS_SPEC_POSIX
 template<typename... Args>
 MemRaw::ptr_t MemRaw::page_e( size_t n, Args && ...args ){
     size_t _pagesize = pagesize();

@@ -86,7 +86,7 @@ SpinLock and Mutex
             lk.unlock();                // exit the critical region
         }
 
-    The output to the file "of.txt" is (order may change on each run)
+    The output to the file "of.txt" is (run with 3 processes; output order may change in each run)
 
     .. code-block:: text
 
@@ -221,3 +221,82 @@ Lock Guards
 
         Similar to the guard type of the spinlock (class :class:`SpinLock::guard_t`) 
         except that it is returned by the lock operations of the :class:`Mutex`.
+
+
+Sequential Block
+---------------------
+
+.. class:: SeqBlock
+
+    Create a critical region that is sequentially visited by the processes within
+    a given communicator.
+
+    The ``SeqBlock`` instance cannot be **copied** or **copy-constructed**, but it can 
+    be **moved** or **move-constructed**. The move operations and destructor are 
+    ``noexcept``.
+
+    .. function:: SeqBlock( const Comm &comm, int start = 1 )
+
+        Initialize the instance and mark the beginning of the critical region.
+        Execution in the critical region is ordered by the rank in the communicator
+        ``comm``.
+        
+        If ``start`` is non-zero, the critical region is started. Otherwise 
+        the critical region is not started and user may start it by the method 
+        :func:`begin`.
+
+    .. function::   void begin()
+                    void end()
+        
+        ``begin()`` starts a critical region. ``end()`` ends it.
+
+        The begin and end operations must be called in pair (except that the 
+        critical region is started on the construction of the instance).
+
+        When the instance is destructed, the critical region is automatically 
+        ends.
+
+    .. function:: static void free_cache( const Comm &comm )
+
+        The first time when a :class:`SeqBlock` instance is built on a communicator,
+        information is cached in this communicator to reduce overhead in the construction
+        of next :class:`SeqBlock` instances on the same communicator. 
+
+        Sometimes user may want to free such cache (although not necessary in 
+        most cases), so ``free_cache()`` is provided.
+
+        It is erroneous to free the cache when the critical region is not ended 
+        (i.e., before the call of :func:`end`).
+
+    **Examples:** we start a critical region in each process in the communicator ``comm``. 
+    Each process prints the rank of self to the screen. The output must be in the order 
+    of the rank in the ``comm``::
+
+        #include <unistd.h>                         // sleep (Unix-specific)
+        
+        {
+            HIPP::MPI::SeqBlock sb(comm);           // start the critical region
+            cout << "Process " << comm.rank() << " enter ";
+            sleep(1);
+            cout << "and exit the critical region" << endl;
+        }                                           // critical region ends
+
+    Equivalently, we can constrct the :class:`SeqBlock` instance but donot 
+    start the critical region. Then we call :func:`SeqBlock::begin` to start
+    and call :func:`SeqBlock::end` to end the critical region:
+
+    .. code-block::
+        :emphasize-lines: 2,4
+
+        HIPP::MPI::SeqBlock sb(comm, 0);
+        sb.begin();
+        // print to cout
+        sb.end();
+
+    The output is (run with 3 processes):
+
+    .. code-block:: text 
+
+        Process 0 enter and exit the critical region
+        Process 1 enter and exit the critical region
+        Process 2 enter and exit the critical region

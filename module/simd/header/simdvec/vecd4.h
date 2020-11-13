@@ -1,9 +1,10 @@
 #ifndef _HIPPSIMD_VECD4_H_
 #define _HIPPSIMD_VECD4_H_
 #include "vecbase.h"
-#include "../simdpacked/pd256.h"
 #include "math.h"
 #include "hippcntl.h"
+#include "veci32_8.h"
+#include "veci64_4.h"
 
 namespace HIPP{
 namespace SIMD{
@@ -22,7 +23,6 @@ struct AddrAligned: public Packd4Base {
 };
 struct CAddrAligned: public Packd4Base {
     typedef Vec<double, 4> vec; 
-    
     CAddrAligned( const vec *addr ): CAddrAligned( reinterpret_cast<const scal_t *>(addr) ){} 
     CAddrAligned( const scal_t *addr ): _addr(addr){}
     CAddrAligned( const vec_t *addr ): CAddrAligned( reinterpret_cast<const scal_t *>(addr) ){}
@@ -35,6 +35,8 @@ template<>
 class Vec<double, 4>: public _pd256_helper::Packd4Base {
 public:
     typedef Packed<double, 4> pack_t;
+    typedef Vec<long long, 4> i_t;
+    typedef Vec<int32_t, 4> ihp_t;
     typedef _pd256_helper::AddrAligned addr_t;
     typedef _pd256_helper::CAddrAligned caddr_t;
     
@@ -44,9 +46,9 @@ public:
     explicit Vec( caddr_t mem_addr ) noexcept;
     Vec( const vec_t &a ) noexcept;
     Vec( const scal_t *base_addr, 
-        ivec_t vindex, const int scale=SCALSIZE ) noexcept;
+        const i_t &vindex, const int scale=SCALSIZE ) noexcept;
     Vec( vec_t src, const scal_t *base_addr, 
-        ivec_t vindex, vec_t mask, const int scale=SCALSIZE ) noexcept;
+        const i_t &vindex, vec_t mask, const int scale=SCALSIZE ) noexcept;
     Vec( const Vec &a ) noexcept;
     Vec( Vec &&a ) noexcept;
     ~Vec() noexcept {}
@@ -63,42 +65,42 @@ public:
 
     Vec & load( caddr_t mem_addr ) noexcept;
     Vec & loadu( caddr_t mem_addr ) noexcept;
-    Vec & loadm( caddr_t mem_addr, ivec_t mask ) noexcept;
+    Vec & loadm( caddr_t mem_addr, const i_t &mask ) noexcept;
     Vec & load1( const scal_t *mem_addr ) noexcept;
     Vec & bcast( const scal_t *mem_addr ) noexcept;
     Vec & bcast( const vec_hc_t *mem_addr ) noexcept;
-    Vec & gather( const scal_t *base_addr, ivec_t vindex, 
+    Vec & gather( const scal_t *base_addr, const i_t &vindex, 
         const int scale=SCALSIZE ) noexcept;
-    Vec & gatherm( vec_t src, const scal_t *base_addr, ivec_t vindex, 
+    Vec & gatherm( vec_t src, const scal_t *base_addr, const i_t &vindex, 
         vec_t mask, const int scale=SCALSIZE ) noexcept;
-    Vec & gather_idxhp( const scal_t *base_addr, ivec_hp_t vindex, 
+    Vec & gather_idxhp( const scal_t *base_addr, const ihp_t &vindex, 
         const int scale=SCALSIZE ) noexcept;
-    Vec & gatherm_idxhp( vec_t src, const scal_t *base_addr, ivec_hp_t vindex, 
+    Vec & gatherm_idxhp( vec_t src, const scal_t *base_addr, const ihp_t &vindex, 
         vec_t mask, const int scale=SCALSIZE ) noexcept;
     const Vec & store( addr_t mem_addr ) const noexcept;
-    const Vec & storem( addr_t mem_addr, ivec_t mask ) const noexcept;
+    const Vec & storem( addr_t mem_addr, const i_t &mask ) const noexcept;
     const Vec & storeu( addr_t mem_addr ) const noexcept;
     const Vec & stream( addr_t mem_addr ) const noexcept;
     Vec & store( addr_t mem_addr ) noexcept;
-    Vec & storem( addr_t mem_addr, ivec_t mask ) noexcept;
+    Vec & storem( addr_t mem_addr, const i_t &mask ) noexcept;
     Vec & storeu( addr_t mem_addr ) noexcept;
     Vec & stream( addr_t mem_addr ) noexcept;
     const Vec & scatter( void *base_addr, 
-        ivec_t vindex, int scale=SCALSIZE ) const noexcept;
+        const i_t &vindex, int scale=SCALSIZE ) const noexcept;
     const Vec & scatterm( void *base_addr, mask8_t k,
-        ivec_t vindex, int scale=SCALSIZE ) const noexcept;
+        const i_t &vindex, int scale=SCALSIZE ) const noexcept;
     const Vec & scatter_idxhp( void *base_addr, 
-        ivec_hp_t vindex, int scale=SCALSIZE ) const noexcept;
+        const ihp_t &vindex, int scale=SCALSIZE ) const noexcept;
     const Vec & scatterm_idxhp( void *base_addr, mask8_t k,
-        ivec_hp_t vindex, int scale=SCALSIZE ) const noexcept;
+        const ihp_t &vindex, int scale=SCALSIZE ) const noexcept;
     Vec & scatter( void *base_addr, 
-        ivec_t vindex, int scale=SCALSIZE ) noexcept;
+        const i_t &vindex, int scale=SCALSIZE ) noexcept;
     Vec & scatterm( void *base_addr, mask8_t k,
-        ivec_t vindex, int scale=SCALSIZE ) noexcept;
+        const i_t &vindex, int scale=SCALSIZE ) noexcept;
     Vec & scatter_idxhp( void *base_addr, 
-        ivec_hp_t vindex, int scale=SCALSIZE ) noexcept;
+        const ihp_t &vindex, int scale=SCALSIZE ) noexcept;
     Vec & scatterm_idxhp( void *base_addr, mask8_t k,
-        ivec_hp_t vindex, int scale=SCALSIZE ) noexcept;
+        const ihp_t &vindex, int scale=SCALSIZE ) noexcept;
 
     
     scal_t to_scal( )const noexcept;
@@ -117,10 +119,10 @@ public:
      * in all binary operator/blend, 
      * 'this' is the left operator, input argument `a` is the right operator.
      */
-    Vec operator+( const Vec &a ) const noexcept;
-    Vec operator-( const Vec &a ) const noexcept;
-    Vec operator*( const Vec &a ) const noexcept;
-    Vec operator/( const Vec &a ) const noexcept;
+    friend Vec operator+( const Vec &a, const Vec &b ) noexcept;
+    friend Vec operator-( const Vec &a, const Vec &b ) noexcept;
+    friend Vec operator*( const Vec &a, const Vec &b ) noexcept;
+    friend Vec operator/( const Vec &a, const Vec &b ) noexcept;
     Vec operator++(int) noexcept;
     Vec & operator++() noexcept;
     Vec operator--(int) noexcept;
@@ -132,21 +134,21 @@ public:
     Vec hadd( const Vec &a ) const noexcept;
     Vec hsub( const Vec &a ) const noexcept;
 
-    Vec operator&( const Vec &a ) const noexcept;
+    friend Vec operator&( const Vec &a, const Vec &b ) noexcept;
     Vec andnot( const Vec &a ) const noexcept;
-    Vec operator|( const Vec &a ) const noexcept;
+    friend Vec operator|( const Vec &a, const Vec &b ) noexcept;
     Vec operator~()const noexcept;
-    Vec operator^( const Vec &a ) const noexcept;
+    friend Vec operator^( const Vec &a, const Vec &b ) noexcept;
     Vec & operator&=( const Vec &a ) noexcept;
     Vec & operator|=( const Vec &a ) noexcept;
     Vec & operator^=( const Vec &a ) noexcept;
     
-    Vec operator==( const Vec &a ) const noexcept;
-    Vec operator!=( const Vec &a ) const noexcept;
-    Vec operator<( const Vec &a ) const noexcept;
-    Vec operator<=( const Vec &a ) const noexcept;
-    Vec operator>( const Vec &a ) const noexcept;
-    Vec operator>=( const Vec &a ) const noexcept;
+    friend Vec operator==( const Vec &a, const Vec &b ) noexcept;
+    friend Vec operator!=( const Vec &a, const Vec &b ) noexcept;
+    friend Vec operator<( const Vec &a, const Vec &b ) noexcept;
+    friend Vec operator<=( const Vec &a, const Vec &b ) noexcept;
+    friend Vec operator>( const Vec &a, const Vec &b ) noexcept;
+    friend Vec operator>=( const Vec &a, const Vec &b ) noexcept;
 
     Vec blend( const Vec &a, const int imm8 ) const noexcept;
     Vec blend( const Vec &a, const Vec &mask ) const noexcept;
@@ -182,12 +184,12 @@ public:
     */
 protected:
     vec_t _val;
-    union _u_ivv_t{ ivec_t i; vec_t f; };
-    union _u_viv_t{ vec_t f; ivec_t i; };
+    union _u_ivv_t{ i_t i; vec_t f; };
+    union _u_viv_t{ vec_t f; i_t i; };
     union _u_vs_t{ vec_t f; scal_t s[NPACK]; };
     union _u_sv_t{ scal_t s[NPACK]; vec_t f; };
-    union _u_ivs_t{ ivec_t i; iscal_t s[NPACK]; };
-    union _u_siv_t{ iscal_t s[NPACK]; ivec_t i; };
+    union _u_ivs_t{ i_t i; iscal_t s[NPACK]; };
+    union _u_siv_t{ iscal_t s[NPACK]; i_t i; };
 };
 
 inline Vec<double,4>::Vec( scal_t e3, scal_t e2, scal_t e1, scal_t e0 ) noexcept 
@@ -197,11 +199,11 @@ inline Vec<double,4>::Vec( caddr_t mem_addr ) noexcept
     :_val(pack_t::load(mem_addr._addr)){ }
 inline Vec<double,4>::Vec( const vec_t &a ) noexcept :_val(a){ }
 inline Vec<double,4>::Vec( const scal_t *base_addr, 
-    pack_t::ivec_t vindex, const int scale ) noexcept 
-    :_val(pack_t::gather(base_addr, vindex, scale)){ }
+    const i_t &vindex, const int scale ) noexcept 
+    :_val(pack_t::gather(base_addr, vindex._val, scale)){ }
 inline Vec<double,4>::Vec( vec_t src, const scal_t *base_addr, 
-    pack_t::ivec_t vindex, vec_t mask, const int scale) noexcept 
-    :_val(pack_t::gatherm(src, base_addr, vindex, mask, scale)){ }
+    const i_t &vindex, vec_t mask, const int scale) noexcept 
+    :_val(pack_t::gatherm(src, base_addr, vindex._val, mask, scale)){ }
 inline Vec<double,4>::Vec( const Vec &a )noexcept :_val(a._val) { }
 inline Vec<double,4>::Vec( Vec &&a )noexcept :_val(a._val) { }
 inline Vec<double,4> & Vec<double,4>::operator=( const Vec &a ) noexcept{
@@ -218,7 +220,7 @@ inline ostream & Vec<double,4>::info( ostream &os, int fmt_cntl ) const{
     return os;
 }
 inline ostream & operator<<( ostream &os, const Vec<double,4> &v ){
-    return v.info();
+    return v.info(os);
 }
 inline const Vec<double,4>::vec_t & 
 Vec<double,4>::val() const noexcept{ return _val; }
@@ -240,8 +242,8 @@ inline Vec<double,4> & Vec<double,4>::loadu( caddr_t mem_addr ) noexcept
 { _val = pack_t::loadu(mem_addr._addr); return *this; }
 
 inline Vec<double,4> & 
-Vec<double,4>::loadm( caddr_t mem_addr, ivec_t mask ) noexcept 
-{ _val = pack_t::loadm(mem_addr._addr, mask); return *this; }
+Vec<double,4>::loadm( caddr_t mem_addr, const i_t &mask ) noexcept 
+{ _val = pack_t::loadm(mem_addr._addr, mask._val); return *this; }
 
 inline Vec<double,4> & Vec<double,4>::load1( const scal_t *mem_addr ) noexcept 
 { _val = pack_t::load1(mem_addr); return *this; }
@@ -254,9 +256,9 @@ inline Vec<double,4> & Vec<double,4>::bcast( const vec_hc_t *mem_addr ) noexcept
 
 inline Vec<double,4> & 
 Vec<double,4>::gather( const scal_t *base_addr, 
-    ivec_t vindex, const int scale ) noexcept{ 
+    const i_t &vindex, const int scale ) noexcept{ 
 #ifdef __AVX2__
-    _val = pack_t::gather(base_addr, vindex, scale);
+    _val = pack_t::gather(base_addr, vindex._val, scale);
 #else
 #ifdef _HIPPSIMD_WSEQ
 #warning AVX2 not enabled. HIPP::SIMD::Vec<double,4>::gather is implemented sequentially
@@ -273,9 +275,9 @@ Vec<double,4>::gather( const scal_t *base_addr,
 
 inline Vec<double,4> & 
 Vec<double,4>::gatherm( vec_t src, const scal_t *base_addr, 
-    ivec_t vindex, vec_t mask, const int scale ) noexcept { 
+    const i_t &vindex, vec_t mask, const int scale ) noexcept { 
 #ifdef __AVX2__
-    _val = pack_t::gatherm(src, base_addr, vindex, mask, scale); 
+    _val = pack_t::gatherm(src, base_addr, vindex._val, mask, scale); 
 #else
 #ifdef _HIPPSIMD_WSEQ
 #warning AVX2 not enabled. HIPP::SIMD::Vec<double,4>::gatherm is implemented sequentially
@@ -295,16 +297,16 @@ Vec<double,4>::gatherm( vec_t src, const scal_t *base_addr,
 }
 
 inline Vec<double,4> & Vec<double,4>::gather_idxhp( 
-    const scal_t *base_addr, ivec_hp_t vindex, 
+    const scal_t *base_addr, const ihp_t &vindex, 
     const int scale ) noexcept{
 #ifdef __AVX2__
-    _val = pack_t::gather_idxhp( base_addr, vindex, scale );
+    _val = pack_t::gather_idxhp( base_addr, vindex._val, scale );
 #else
 #ifdef _HIPPSIMD_WSEQ
 #warning AVX2 not enabled. HIPP::SIMD::Vec<double,4>::gather_idxhp is implemented sequentially
 #endif
     _u_vs_t val;
-    union { ivec_hp_t i; iscal_hp_t s[NPACK]; } const idx = {vindex};
+    union { ihp_t i; iscal_hp_t s[NPACK]; } const idx = {vindex};
     for(size_t i=0; i<NPACK; ++i){
         val.s[i] = *(const scal_t *)((const void *)base_addr + idx.s[i]*scale);
     }
@@ -313,17 +315,17 @@ inline Vec<double,4> & Vec<double,4>::gather_idxhp(
     return *this;
 }
 inline Vec<double,4> & Vec<double,4>::gatherm_idxhp( vec_t src, 
-    const scal_t *base_addr, ivec_hp_t vindex, 
+    const scal_t *base_addr, const ihp_t &vindex, 
     vec_t mask, const int scale ) noexcept{
 #ifdef __AVX2__
-    _val = pack_t::gatherm_idxhp(src, base_addr, vindex, mask, scale); 
+    _val = pack_t::gatherm_idxhp(src, base_addr, vindex._val, mask, scale); 
 #else
 #ifdef _HIPPSIMD_WSEQ
 #warning AVX2 not enabled. HIPP::SIMD::Vec<double,4>::gatherm_idxhp is implemented sequentially
 #endif
     _u_vs_t val;
     const _u_vs_t _src = {src};
-    union { ivec_hp_t i; iscal_hp_t s[NPACK]; } const idx = {vindex};
+    union { ihp_t i; iscal_hp_t s[NPACK]; } const idx = {vindex};
     const int _mask = pack_t::movemask(mask);
     for(size_t i=0; i<NPACK; ++i){
         val.s[i] = ( _mask & ( 1 << int(i) ) ) ? 
@@ -339,8 +341,8 @@ Vec<double,4>::store( addr_t mem_addr ) const noexcept
 { pack_t::store(mem_addr._addr, _val); return *this; }
 
 inline const Vec<double,4> & 
-Vec<double,4>::storem( addr_t mem_addr, ivec_t mask ) const noexcept 
-{ pack_t::storem(mem_addr._addr, mask, _val); return *this; }
+Vec<double,4>::storem( addr_t mem_addr, const i_t &mask ) const noexcept 
+{ pack_t::storem(mem_addr._addr, mask._val, _val); return *this; }
 
 inline const Vec<double,4> & 
 Vec<double,4>::storeu( addr_t mem_addr ) const noexcept 
@@ -355,8 +357,8 @@ Vec<double,4>::store( addr_t mem_addr ) noexcept
 { pack_t::store(mem_addr._addr, _val); return *this; }
 
 inline Vec<double,4> & 
-Vec<double,4>::storem( addr_t mem_addr, ivec_t mask ) noexcept 
-{ pack_t::storem(mem_addr._addr, mask, _val); return *this; }
+Vec<double,4>::storem( addr_t mem_addr, const i_t &mask ) noexcept 
+{ pack_t::storem(mem_addr._addr, mask._val, _val); return *this; }
 
 inline Vec<double,4> & 
 Vec<double,4>::storeu( addr_t mem_addr ) noexcept 
@@ -368,9 +370,9 @@ Vec<double,4>::stream( addr_t mem_addr ) noexcept
 
 inline const Vec<double, 4> & 
 Vec<double,4>::scatter( void *base_addr, 
-    ivec_t vindex, int scale ) const noexcept{
+    const i_t &vindex, int scale ) const noexcept{
 #if defined(__AVX512F__) && defined(__AVX512VL__)
-    pack_t::scatter( base_addr, vindex, _val, scale );
+    pack_t::scatter( base_addr, vindex._val, _val, scale );
 #else
 #ifdef _HIPPSIMD_WSEQ
 #warning HAVX512F + AVX512VL not enabled. PP::SIMD::Vec<double,4>::scatter is implemented sequentially
@@ -386,9 +388,9 @@ Vec<double,4>::scatter( void *base_addr,
 
 inline const Vec<double, 4> & 
 Vec<double,4>::scatterm( void *base_addr, mask8_t k,
-    ivec_t vindex, int scale ) const noexcept{
+    const i_t &vindex, int scale ) const noexcept{
 #if defined(__AVX512F__) && defined(__AVX512VL__)
-    pack_t::scatterm( base_addr, k, vindex, _val, scale );
+    pack_t::scatterm( base_addr, k, vindex._val, _val, scale );
 #else
 #ifdef _HIPPSIMD_WSEQ
 #warning AVX512F + AVX512VL not enabled. HIPP::SIMD::Vec<double,4>::scatterm is implemented sequentially
@@ -404,15 +406,15 @@ Vec<double,4>::scatterm( void *base_addr, mask8_t k,
 
 inline const Vec<double, 4> & 
 Vec<double,4>::scatter_idxhp( void *base_addr, 
-    ivec_hp_t vindex, int scale ) const noexcept{
+    const ihp_t &vindex, int scale ) const noexcept{
 #if defined(__AVX512F__) && defined(__AVX512VL__)
-    pack_t::scatter_idxhp( base_addr, vindex, _val, scale );
+    pack_t::scatter_idxhp( base_addr, vindex._val, _val, scale );
 #else
 #ifdef _HIPPSIMD_WSEQ
 #warning AVX512F + AVX512VL not enabled. HIPP::SIMD::Vec<double,4>::scatter_idxhp is implemented sequentially
 #endif
     const _u_vs_t val = {_val};
-    union { ivec_hp_t i; iscal_hp_t s[NPACK]; } const idx = {vindex};
+    union { ihp_t i; iscal_hp_t s[NPACK]; } const idx = {vindex};
     for(size_t i=0; i<NPACK; ++i)
         *(scal_t *)(base_addr + idx.s[i]*scale) = val.s[i];
 #endif
@@ -421,15 +423,15 @@ Vec<double,4>::scatter_idxhp( void *base_addr,
 
 inline const Vec<double, 4> & 
 Vec<double,4>::scatterm_idxhp( void *base_addr, mask8_t k,
-    ivec_hp_t vindex, int scale ) const noexcept{
+    const ihp_t &vindex, int scale ) const noexcept{
 #if defined(__AVX512F__) && defined(__AVX512VL__)
-    pack_t::scatterm_idxhp( base_addr, k, vindex, _val, scale );
+    pack_t::scatterm_idxhp( base_addr, k, vindex._val, _val, scale );
 #else
 #ifdef _HIPPSIMD_WSEQ
 #warning AVX512F + AVX512VL not enabled. HIPP::SIMD::Vec<double,4>::scatterm_idxhp is implemented sequentially
 #endif
     const _u_vs_t val = {_val};
-    union { ivec_hp_t i; iscal_hp_t s[NPACK]; } const idx = {vindex};
+    union { ihp_t i; iscal_hp_t s[NPACK]; } const idx = {vindex};
     for(size_t i=0; i<NPACK; ++i)
         if( k & ( (mask8_t)1 << (mask8_t)i ) )
             *(scal_t *)(base_addr + idx.s[i]*scale) = val.s[i];
@@ -439,25 +441,25 @@ Vec<double,4>::scatterm_idxhp( void *base_addr, mask8_t k,
 
 inline Vec<double, 4> & 
 Vec<double,4>::scatter( void *base_addr, 
-    ivec_t vindex, int scale ) noexcept{
-    return (Vec &)((const Vec *)this)->scatter(base_addr, vindex, scale);
+    const i_t &vindex, int scale ) noexcept{
+    return (Vec &)((const Vec *)this)->scatter(base_addr, vindex._val, scale);
 }
 
 inline Vec<double, 4> & 
 Vec<double,4>::scatterm( void *base_addr, mask8_t k,
-    ivec_t vindex, int scale ) noexcept{
-    return (Vec &)((const Vec *)this)->scatterm(base_addr, k, vindex, scale);
+    const i_t &vindex, int scale ) noexcept{
+    return (Vec &)((const Vec *)this)->scatterm(base_addr, k, vindex._val, scale);
 }
 
 inline Vec<double, 4> & 
 Vec<double,4>::scatter_idxhp( void *base_addr, 
-    ivec_hp_t vindex, int scale ) noexcept{
+    const ihp_t &vindex, int scale ) noexcept{
     return (Vec &)((const Vec *)this)->scatter_idxhp(base_addr, vindex, scale);    
 }
 
 inline Vec<double, 4> & 
 Vec<double,4>::scatterm_idxhp( void *base_addr, mask8_t k,
-    ivec_hp_t vindex, int scale ) noexcept{
+    const ihp_t &vindex, int scale ) noexcept{
     return (Vec &)((const Vec *)this)
         ->scatterm_idxhp(base_addr, k, vindex, scale);
 }
@@ -520,18 +522,17 @@ inline Vec<double,4> &
 Vec<double,4>::undefined() noexcept 
 { _val = pack_t::undefined(); return *this; }
 
-
-inline Vec<double,4> Vec<double,4>::operator+( const Vec &a ) const noexcept{
-    return pack_t::add(_val, a._val);
+inline Vec<double,4> operator+( const Vec<double, 4> &a, const Vec<double, 4> &b ) noexcept{
+    return Vec<double,4>::pack_t::add(a._val, b._val);
 }
-inline Vec<double,4> Vec<double,4>::operator-( const Vec &a ) const noexcept{
-    return pack_t::sub(_val, a._val);
+inline Vec<double,4> operator-( const Vec<double, 4> &a, const Vec<double, 4> &b ) noexcept{
+    return Vec<double,4>::pack_t::sub(a._val, b._val);
 }
-inline Vec<double,4> Vec<double,4>::operator*( const Vec &a ) const noexcept{
-    return pack_t::mul(_val, a._val);
+inline Vec<double,4> operator*( const Vec<double, 4> &a, const Vec<double, 4> &b ) noexcept{
+    return Vec<double,4>::pack_t::mul(a._val, b._val);
 }
-inline Vec<double,4> Vec<double,4>::operator/( const Vec &a ) const noexcept{
-    return pack_t::div(_val, a._val);
+inline Vec<double,4> operator/( const Vec<double, 4> &a, const Vec<double, 4> &b ) noexcept{
+    return Vec<double,4>::pack_t::div(a._val, b._val);
 }
 inline Vec<double,4> Vec<double,4>::operator++(int) noexcept{
     vec_t tempval = _val;
@@ -573,20 +574,20 @@ inline Vec<double, 4> Vec<double, 4>::hadd( const Vec &a ) const noexcept{
 inline Vec<double, 4> Vec<double, 4>::hsub( const Vec &a ) const noexcept{
     return pack_t::hsub(_val, a._val);
 }
-inline Vec<double,4> Vec<double,4>::operator&( const Vec &a ) const noexcept{
-    return pack_t::and_(_val, a._val);
+inline Vec<double,4> operator&( const Vec<double,4> &a, const Vec<double,4> &b ) noexcept{
+    return Vec<double,4>::pack_t::and_(a._val, b._val);
 }
 inline Vec<double,4> Vec<double,4>::andnot( const Vec &a ) const noexcept{
     return pack_t::andnot(_val, a._val);
 }
-inline Vec<double,4> Vec<double,4>::operator|( const Vec &a ) const noexcept{
-    return pack_t::or_(_val, a._val);
+inline Vec<double,4> operator|( const Vec<double,4> &a, const Vec<double,4> &b ) noexcept{
+    return Vec<double,4>::pack_t::or_(a._val, b._val);
 }
 inline Vec<double,4> Vec<double,4>::operator~()const noexcept{
     return pack_t::xor_(_val, pack_t::eq(_val, _val) );
 }
-inline Vec<double,4> Vec<double,4>::operator^( const Vec &a ) const noexcept{
-    return pack_t::xor_(_val, a._val);
+inline Vec<double,4> operator^( const Vec<double,4> &a, const Vec<double,4> &b ) noexcept{
+    return Vec<double,4>::pack_t::xor_(a._val, b._val);
 }
 Vec<double,4> & Vec<double,4>::operator&=( const Vec &a ) noexcept{
     _val = pack_t::and_(_val, a._val);
@@ -600,23 +601,23 @@ Vec<double,4> & Vec<double,4>::operator^=( const Vec &a ) noexcept{
     _val = pack_t::xor_(_val, a._val);
     return *this;
 }
-inline Vec<double,4> Vec<double,4>::operator==( const Vec &a ) const noexcept{
-    return pack_t::eq( _val, a._val );
+inline Vec<double,4> operator==( const Vec<double,4> &a, const Vec<double,4> &b ) noexcept{
+    return Vec<double,4>::pack_t::eq( a._val, b._val );
 }
-inline Vec<double,4> Vec<double,4>::operator!=( const Vec &a ) const noexcept{
-    return pack_t::neq( _val, a._val );
+inline Vec<double,4> operator!=( const Vec<double,4> &a, const Vec<double,4> &b ) noexcept{
+    return Vec<double,4>::pack_t::neq( a._val, b._val );
 }
-inline Vec<double,4> Vec<double,4>::operator<( const Vec &a ) const noexcept{
-    return pack_t::lt( _val, a._val );
+inline Vec<double,4> operator<( const Vec<double,4> &a, const Vec<double,4> &b ) noexcept{
+    return Vec<double,4>::pack_t::lt( a._val, b._val );
 }
-inline Vec<double,4> Vec<double,4>::operator<=( const Vec &a ) const noexcept{
-    return pack_t::le( _val, a._val );
+inline Vec<double,4> operator<=( const Vec<double,4> &a, const Vec<double,4> &b ) noexcept{
+    return Vec<double,4>::pack_t::le( a._val, b._val );
 }
-inline Vec<double,4> Vec<double,4>::operator>( const Vec &a ) const noexcept{
-    return pack_t::gt( _val, a._val );
+inline Vec<double,4> operator>( const Vec<double,4> &a, const Vec<double,4> &b ) noexcept{
+    return Vec<double,4>::pack_t::gt( a._val, b._val );
 }
-inline Vec<double,4> Vec<double,4>::operator>=( const Vec &a ) const noexcept{
-    return pack_t::ge( _val, a._val );
+inline Vec<double,4> operator>=( const Vec<double,4> &a, const Vec<double,4> &b ) noexcept{
+    return Vec<double,4>::pack_t::ge( a._val, b._val );
 }
 
 inline Vec<double,4> 

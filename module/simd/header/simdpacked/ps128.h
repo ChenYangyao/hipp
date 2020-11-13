@@ -4,49 +4,33 @@
 #include "../simdopcode/opcode.h"
 namespace HIPP{
 namespace SIMD{
-template<> class Packed<float, 4>{
+namespace _ps128_helper {
+
+class PackedBase {
+public:
     typedef float scal_t;
     typedef __m128 vec_t;
+    typedef typename TypeCvt<vec_t, -1, 0, 1>::ret vec_hc_t;
+    
+    typedef int32_t iscal_t;
+    typedef int64_t iscal_dp_t;
+    typedef uint32_t uiscal_t;
+    typedef typename TypeCvt<vec_t, 0, 0, 0>::ret ivec_t;
+
+    typedef __mmask8 mask8_t;
+};
+} // namespace _ps128_helper
+
+template<> class Packed<float, 4>: public _ps128_helper::PackedBase {
     enum: size_t { 
         NPACK=4, 
         NBIT=128, 
         VECSIZE=sizeof(vec_t), 
         SCALSIZE=sizeof(scal_t) };
-    typedef typename TypeCvt<vec_t, -1, 0, 1>::ret vec_hc_t;
-
-    typedef typename TypeCvt<vec_t, 0, 0, 0>::ret ivec_t;
-    typedef int32_t iscal_t;
-    typedef int64_t iscal_dp_t;
     typedef ivec_t mask_t;
     typedef ivec_t index_t;
     typedef u_int32_t imm_t;
 
-    /**
-     * L/S operations
-     * load() - load 4 packed single precision floating-point from `mem_addr` 
-     *          into dst.
-     * Post-fix can be:
-     * r:   reverse order.
-     * u:   not aligned to any.
-     * s:   load single float into lowest 32-bit of dst, zero others; (can be 
-     *      not aligned).
-     * 1:   broadcast single 32-bit float into dst.
-     * hi:  load into higher two float, copy others from a.
-     * lo:  load into lower two float, copy others from a.
-     * 
-     * bcast() - same as load1().
-     * 
-     * store() - store `a` into `mem_addr`
-     * Post-fix can be:
-     * r:   reverse order.
-     * u:   not aligned to any in memory.
-     * s:   store only lowest single float.
-     * 1:   store only lowest single float, 4-copy.
-     * hi:  store higher two floats.
-     * lo:  store lower two floats.
-     * 
-     * stream() - non-temporary memory hints.
-     */
     static vec_t load( const scal_t *mem_addr ) noexcept;
     static vec_t loadr( const scal_t *mem_addr ) noexcept;
     static vec_t loadu( const scal_t *mem_addr ) noexcept;
@@ -55,6 +39,7 @@ template<> class Packed<float, 4>{
     static vec_t loadhi( vec_t a, const vec_hc_t *mem_addr) noexcept; 
     static vec_t loadlo( vec_t a, const vec_hc_t *mem_addr) noexcept; 
     static vec_t bcast( const scal_t *mem_addr ) noexcept;
+
     static void store( scal_t *mem_addr, vec_t a ) noexcept;
     static void storer( scal_t *mem_addr, vec_t a ) noexcept;
     static void storeu( scal_t *mem_addr, vec_t a ) noexcept;
@@ -64,12 +49,11 @@ template<> class Packed<float, 4>{
     static void storelo( vec_hc_t *mem_addr, vec_t a ) noexcept;
     static void stream( scal_t *mem_addr, vec_t a ) noexcept;
 
-    /**
-     * arithmetic and logic operations
-     * The post-fix `s` means only do the operation for the lowest 32-bit, 
-     * and copy the upper bits from a into dst.
-     */
-    static vec_t add( vec_t a, vec_t b ) noexcept;
+    /** 
+     * the 's' version does arithmetic on the lower scalar, and copy the upper 3 
+     * scalars from a
+     */ 
+    static vec_t add( vec_t a, vec_t b ) noexcept;      
     static vec_t adds( vec_t a, vec_t b ) noexcept;
     static vec_t sub( vec_t a, vec_t b ) noexcept;
     static vec_t subs( vec_t a, vec_t b ) noexcept;
@@ -77,12 +61,9 @@ template<> class Packed<float, 4>{
     static vec_t divs( vec_t a, vec_t b ) noexcept;
     static vec_t mul( vec_t a, vec_t b ) noexcept;
     static vec_t muls( vec_t a, vec_t b ) noexcept;
-    static vec_t rcp( vec_t a ) noexcept;
-    static vec_t rcps( vec_t a ) noexcept;
-    static vec_t rsqrt( vec_t a ) noexcept;
-    static vec_t rsqrts( vec_t a ) noexcept;
-    static vec_t sqrt( vec_t a ) noexcept;
-    static vec_t sqrts( vec_t a ) noexcept;
+    static vec_t hadd( vec_t a, vec_t b ) noexcept;
+    static vec_t hsub( vec_t a, vec_t b ) noexcept;
+    
 
     static vec_t and_( vec_t a, vec_t b ) noexcept;
     static vec_t andnot( vec_t a, vec_t b ) noexcept;
@@ -179,6 +160,18 @@ template<> class Packed<float, 4>{
     static vec_t movehl( vec_t a, vec_t b ) noexcept;           // higher 2 floats from a, lower from b
     static vec_t movelh( vec_t a, vec_t b ) noexcept;           // lower ... ,higher...
     static int movemask( vec_t a ) noexcept;                    // move highest bit of each float into lowest 4 bits of dst.
+
+
+    /**
+     * the 's' version operates on the lower scalar, and copy the upper 3 
+     * scalars from a
+     */ 
+    static vec_t rcp( vec_t a ) noexcept;
+    static vec_t rcps( vec_t a ) noexcept;
+    static vec_t rsqrt( vec_t a ) noexcept;
+    static vec_t rsqrts( vec_t a ) noexcept;
+    static vec_t sqrt( vec_t a ) noexcept;
+    static vec_t sqrts( vec_t a ) noexcept;
 };
 
 inline Packed<float, 4>::vec_t Packed<float, 4>::load( const scal_t *mem_addr ) noexcept{ return _mm_load_ps(mem_addr); }
@@ -205,12 +198,9 @@ inline Packed<float, 4>::vec_t Packed<float, 4>::div( vec_t a, vec_t b ) noexcep
 inline Packed<float, 4>::vec_t Packed<float, 4>::divs( vec_t a, vec_t b ) noexcept{ return _mm_div_ss(a,b); }
 inline Packed<float, 4>::vec_t Packed<float, 4>::mul( vec_t a, vec_t b ) noexcept{ return _mm_mul_ps(a,b); }
 inline Packed<float, 4>::vec_t Packed<float, 4>::muls( vec_t a, vec_t b ) noexcept{ return _mm_mul_ss(a,b); }
-inline Packed<float, 4>::vec_t Packed<float, 4>::rcp( vec_t a ) noexcept{ return _mm_rcp_ps(a); }
-inline Packed<float, 4>::vec_t Packed<float, 4>::rcps( vec_t a ) noexcept{ return _mm_rcp_ss(a); }
-inline Packed<float, 4>::vec_t Packed<float, 4>::rsqrt( vec_t a ) noexcept{ return _mm_rsqrt_ps(a); }
-inline Packed<float, 4>::vec_t Packed<float, 4>::rsqrts( vec_t a ) noexcept{ return _mm_rsqrt_ss(a); }
-inline Packed<float, 4>::vec_t Packed<float, 4>::sqrt( vec_t a ) noexcept{ return _mm_sqrt_ps(a); }
-inline Packed<float, 4>::vec_t Packed<float, 4>::sqrts( vec_t a ) noexcept{ return _mm_sqrt_ss(a); }
+inline Packed<float, 4>::vec_t Packed<float, 4>::hadd( vec_t a, vec_t b ) noexcept{ return _mm_hadd_ps(a,b); }
+inline Packed<float, 4>::vec_t Packed<float, 4>::hsub( vec_t a, vec_t b ) noexcept{ return _mm_hsub_ps(a,b); }
+
 inline Packed<float, 4>::vec_t Packed<float, 4>::and_( vec_t a, vec_t b ) noexcept{ return _mm_and_ps(a,b); }
 inline Packed<float, 4>::vec_t Packed<float, 4>::andnot( vec_t a, vec_t b ) noexcept{ return _mm_andnot_ps(a,b); }
 inline Packed<float, 4>::vec_t Packed<float, 4>::or_( vec_t a, vec_t b ) noexcept{ return _mm_or_ps(a,b); }
@@ -277,6 +267,13 @@ inline Packed<float, 4>::vec_t Packed<float, 4>::moves( vec_t a, vec_t b ) noexc
 inline Packed<float, 4>::vec_t Packed<float, 4>::movehl( vec_t a, vec_t b ) noexcept{ return _mm_movehl_ps(a,b); }
 inline Packed<float, 4>::vec_t Packed<float, 4>::movelh( vec_t a, vec_t b ) noexcept{ return _mm_movelh_ps(a,b); }
 inline int Packed<float, 4>::movemask( vec_t a ) noexcept{ return _mm_movemask_ps(a); }
+
+inline Packed<float, 4>::vec_t Packed<float, 4>::rcp( vec_t a ) noexcept{ return _mm_rcp_ps(a); }
+inline Packed<float, 4>::vec_t Packed<float, 4>::rcps( vec_t a ) noexcept{ return _mm_rcp_ss(a); }
+inline Packed<float, 4>::vec_t Packed<float, 4>::rsqrt( vec_t a ) noexcept{ return _mm_rsqrt_ps(a); }
+inline Packed<float, 4>::vec_t Packed<float, 4>::rsqrts( vec_t a ) noexcept{ return _mm_rsqrt_ss(a); }
+inline Packed<float, 4>::vec_t Packed<float, 4>::sqrt( vec_t a ) noexcept{ return _mm_sqrt_ps(a); }
+inline Packed<float, 4>::vec_t Packed<float, 4>::sqrts( vec_t a ) noexcept{ return _mm_sqrt_ss(a); }
 
 } // namespace SIMD
 } // namespace HIPP

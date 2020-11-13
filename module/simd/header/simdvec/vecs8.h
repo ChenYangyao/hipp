@@ -100,10 +100,10 @@ public:
     Vec & setzero() noexcept;
     Vec & undefined() noexcept;
 
-    Vec operator+( const Vec &a ) const noexcept;
-    Vec operator-( const Vec &a ) const noexcept;
-    Vec operator*( const Vec &a ) const noexcept;
-    Vec operator/( const Vec &a ) const noexcept;
+    friend Vec operator+( const Vec &a, const Vec &b ) noexcept;
+    friend Vec operator-( const Vec &a, const Vec &b ) noexcept;
+    friend Vec operator*( const Vec &a, const Vec &b ) noexcept;
+    friend Vec operator/( const Vec &a, const Vec &b ) noexcept;
     Vec operator++(int) noexcept;
     Vec & operator++() noexcept;
     Vec operator--(int) noexcept;
@@ -115,21 +115,21 @@ public:
     Vec hadd( const Vec &a ) const noexcept;
     Vec hsub( const Vec &a ) const noexcept;
 
-    Vec operator&( const Vec &a ) const noexcept;
+    friend Vec operator&( const Vec &a, const Vec &b) noexcept;
     Vec andnot( const Vec &a ) const noexcept;
-    Vec operator|( const Vec &a ) const noexcept;
+    friend Vec operator|( const Vec &a, const Vec &b) noexcept;
     Vec operator~()const noexcept;
-    Vec operator^( const Vec &a ) const noexcept;
+    friend Vec operator^( const Vec &a, const Vec &b) noexcept;
     Vec & operator&=( const Vec &a ) noexcept;
     Vec & operator|=( const Vec &a ) noexcept;
     Vec & operator^=( const Vec &a ) noexcept;
     
-    Vec operator==( const Vec &a ) const noexcept;
-    Vec operator!=( const Vec &a ) const noexcept;
-    Vec operator<( const Vec &a ) const noexcept;
-    Vec operator<=( const Vec &a ) const noexcept;
-    Vec operator>( const Vec &a ) const noexcept;
-    Vec operator>=( const Vec &a ) const noexcept;
+    friend Vec operator==( const Vec &a, const Vec &b) noexcept;
+    friend Vec operator!=( const Vec &a, const Vec &b) noexcept;
+    friend Vec operator<( const Vec &a, const Vec &b) noexcept;
+    friend Vec operator<=( const Vec &a, const Vec &b) noexcept;
+    friend Vec operator>( const Vec &a, const Vec &b) noexcept;
+    friend Vec operator>=( const Vec &a, const Vec &b) noexcept;
 
     Vec blend( const Vec &a, const int imm8 ) const noexcept;
     Vec blend( const Vec &a, const Vec &mask ) const noexcept;
@@ -202,7 +202,7 @@ inline ostream & Vec<float,8>::info( ostream &os, int fmt_cntl ) const{
     return os;
 }
 inline ostream & operator<<( ostream &os, const Vec<float,8> &v ){
-    return v.info();
+    return v.info(os);
 }
 inline const Vec<float,8>::vec_t & Vec<float,8>::val() const noexcept{
     return _val;
@@ -415,17 +415,17 @@ inline Vec<float, 8> & Vec<float, 8>::undefined() noexcept{
     return *this;
 }
 
-inline Vec<float,8> Vec<float,8>::operator+( const Vec &a ) const noexcept{
-    return pack_t::add(_val, a._val);
+inline Vec<float,8> operator+( const Vec<float,8> &a, const Vec<float,8> &b) noexcept{
+    return Vec<float,8>::pack_t::add(a._val, b._val);
 }
-inline Vec<float,8> Vec<float,8>::operator-( const Vec &a ) const noexcept{
-    return pack_t::sub(_val, a._val);
+inline Vec<float,8> operator-( const Vec<float,8> &a, const Vec<float,8> &b) noexcept{
+    return Vec<float,8>::pack_t::sub(a._val, b._val);
 }
-inline Vec<float,8> Vec<float,8>::operator*( const Vec &a ) const noexcept{
-    return pack_t::mul(_val, a._val);
+inline Vec<float,8> operator*( const Vec<float,8> &a, const Vec<float,8> &b) noexcept{
+    return Vec<float,8>::pack_t::mul(a._val, b._val);
 }
-inline Vec<float,8> Vec<float,8>::operator/( const Vec &a ) const noexcept{
-    return pack_t::div(_val, a._val);
+inline Vec<float,8> operator/( const Vec<float,8> &a, const Vec<float,8> &b) noexcept{
+    return Vec<float,8>::pack_t::div(a._val, b._val);
 }
 inline Vec<float,8> Vec<float,8>::operator++(int) noexcept{
     vec_t tempval = _val;
@@ -467,20 +467,20 @@ inline Vec<float,8> Vec<float,8>::hadd( const Vec &a ) const noexcept{
 inline Vec<float,8> Vec<float,8>::hsub( const Vec &a ) const noexcept{
     return pack_t::hsub(_val, a._val);
 }
-inline Vec<float,8> Vec<float,8>::operator&( const Vec &a ) const noexcept{
-    return pack_t::and_(_val, a._val);
+inline Vec<float,8> operator&( const Vec<float,8> &a, const Vec<float,8> &b ) noexcept{
+    return Vec<float,8>::pack_t::and_(a._val, b._val);
 }
 inline Vec<float,8> Vec<float,8>::andnot( const Vec &a ) const noexcept{
     return pack_t::andnot(_val, a._val);
 }
-inline Vec<float,8> Vec<float,8>::operator|( const Vec &a ) const noexcept{
-    return pack_t::or_(_val, a._val);
+inline Vec<float,8> operator|( const Vec<float,8> &a, const Vec<float,8> &b ) noexcept{
+    return Vec<float,8>::pack_t::or_(a._val, b._val);
 }
 inline Vec<float,8> Vec<float,8>::operator~()const noexcept{
     return pack_t::xor_(_val, pack_t::eq(_val, _val) );
 }
-inline Vec<float,8> Vec<float,8>::operator^( const Vec &a ) const noexcept{
-    return pack_t::xor_(_val, a._val);
+inline Vec<float,8> operator^( const Vec<float,8> &a, const Vec<float,8> &b ) noexcept{
+    return Vec<float,8>::pack_t::xor_(a._val, b._val);
 }
 inline Vec<float,8> & Vec<float,8>::operator&=( const Vec &a ) noexcept{
     _val = pack_t::and_(_val, a._val);
@@ -494,23 +494,23 @@ inline Vec<float,8> & Vec<float,8>::operator^=( const Vec &a ) noexcept{
     _val = pack_t::xor_(_val, a._val);
     return *this;
 }
-inline Vec<float,8> Vec<float,8>::operator==( const Vec &a ) const noexcept{
-    return pack_t::eq( _val, a._val );
+inline Vec<float,8> operator==( const Vec<float,8> &a, const Vec<float,8> &b ) noexcept{
+    return Vec<float,8>::pack_t::eq( a._val, b._val );
 }
-inline Vec<float,8> Vec<float,8>::operator!=( const Vec &a ) const noexcept{
-    return pack_t::neq( _val, a._val );
+inline Vec<float,8> operator!=( const Vec<float,8> &a, const Vec<float,8> &b ) noexcept{
+    return Vec<float,8>::pack_t::neq( a._val, b._val );
 }
-inline Vec<float,8> Vec<float,8>::operator<( const Vec &a ) const noexcept{
-    return pack_t::lt( _val, a._val );
+inline Vec<float,8> operator<( const Vec<float,8> &a, const Vec<float,8> &b ) noexcept{
+    return Vec<float,8>::pack_t::lt( a._val, b._val );
 }
-inline Vec<float,8> Vec<float,8>::operator<=( const Vec &a ) const noexcept{
-    return pack_t::le( _val, a._val );
+inline Vec<float,8> operator<=( const Vec<float,8> &a, const Vec<float,8> &b ) noexcept{
+    return Vec<float,8>::pack_t::le( a._val, b._val );
 }
-inline Vec<float,8> Vec<float,8>::operator>( const Vec &a ) const noexcept{
-    return pack_t::gt( _val, a._val );
+inline Vec<float,8> operator>( const Vec<float,8> &a, const Vec<float,8> &b ) noexcept{
+    return Vec<float,8>::pack_t::gt( a._val, b._val );
 }
-inline Vec<float,8> Vec<float,8>::operator>=( const Vec &a ) const noexcept{
-    return pack_t::ge( _val, a._val );
+inline Vec<float,8> operator>=( const Vec<float,8> &a, const Vec<float,8> &b ) noexcept{
+    return Vec<float,8>::pack_t::ge( a._val, b._val );
 }
 inline Vec<float,8> Vec<float,8>::blend( const Vec &a, 
     const int imm8 ) const noexcept{

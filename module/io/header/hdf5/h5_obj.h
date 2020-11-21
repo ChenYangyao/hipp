@@ -11,4 +11,6 @@
 #include "h5_obj_attr.h"
 #include "h5_obj_dataset.h"
 #include "h5_obj_file.h"
+#include "h5_obj_group.h"
+#include "h5_obj_proplist.h"
 #endif	//_HIPPIO_H5_OBJ_H_

@@ -74,6 +74,9 @@ public:
     static void scatterm(void *base_addr, mask8_t k, ivec_t vindex, vec_t a, 
         int scale=SCALSIZE) noexcept;
 #endif
+
+    static ivec_t to_si(vec_t a) noexcept               { return _mm256_castps_si256(a); }
+    static vec_t from_si(ivec_t a) noexcept             { return _mm256_castsi256_ps(a); }
     static vec_t from_ivec( ivec_t a ) noexcept;
     static ivec_t to_ivec( vec_t a ) noexcept;
     static ivec_t tot_ivec( vec_t a ) noexcept;

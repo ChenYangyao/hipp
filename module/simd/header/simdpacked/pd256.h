@@ -75,6 +75,8 @@ public:
      * The to_ivec_xx() use NEAR mode for conversion. While the tot_ivec_xx()
      * does the truncation.
      */
+    static ivec_t to_si( vec_t a) noexcept              { return _mm256_castpd_si256(a); }
+    static vec_t from_si(ivec_t a) noexcept             { return _mm256_castsi256_pd(a); }
     static vec_t from_ivec_hp( ivec_hp_t a ) noexcept;
     static ivec_hp_t to_ivec_hp( vec_t a ) noexcept;
     static ivec_hp_t tot_ivec_hp( vec_t a ) noexcept;

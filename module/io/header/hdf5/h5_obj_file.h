@@ -84,7 +84,9 @@ public:
     bool attr_exists(const string &name) const;
 
     H5Group create_group( const string &name );
-    H5Group open_group( const string &name );
+    H5Group try_create_group( const string &name );
+    H5Group open_group( const string &name ); 
+    bool group_exists( const string &name ) const;
 
     static H5Proplist create_proplist(const string &cls = "c");
 };
@@ -108,22 +110,6 @@ H5Dataset H5File::create_dataset_scalar( const string &name,
         lcprop, cprop, aprop );
 }
 
-inline H5Dataset H5File::create_dataset_str( const string &name, size_t len,
-    const string &flag, const H5Proplist &lcprop, 
-    const H5Proplist &cprop, const H5Proplist &aprop ){
-    return H5Dataset::create_str( raw(), name, len, flag, lcprop, 
-        cprop, aprop );
-}
-
-inline H5Dataset
-H5File::open_dataset( const string &name, const H5Proplist &aprop ){
-    return H5Dataset::open(raw(), name, aprop);
-}
-inline bool 
-H5File::dataset_exists( const string &name ) const{
-    return H5Dataset::exists( raw(), name );
-}
-
 template<typename T>
 H5Attr H5File::create_attr(
     const string &name, const vector<size_t> &dims, 
@@ -136,46 +122,6 @@ template<typename T>
 H5Attr H5File::create_attr_scalar(
     const string &name, const string &flag){
     return H5Attr::create_scalar<T>(raw(), name, flag);
-}
-
-inline H5Attr H5File::create_attr_str(
-    const string &name, size_t len, const string &flag){
-    return H5Attr::create_str( raw(), name, len, flag );
-}
-
-inline H5Attr 
-H5File::open_attr(const string &name){
-    return H5Attr::open( raw(), name );
-}
-
-inline bool 
-H5File::attr_exists(const string &name) const{
-    return bool( _obj_ptr->exist_attr( name.c_str() ) );
-}
-
-inline H5Group H5File::create_group( const string &name ){
-    auto id = H5Group::_obj_raw_t::create( raw(), name.c_str() );
-    return H5Group( std::make_shared<H5Group::_obj_raw_t>( id ) );
-}
-
-inline H5Group H5File::open_group( const string &name ){
-    auto id = H5Group::_obj_raw_t::open( raw(), name.c_str() );
-    return H5Group( std::make_shared<H5Group::_obj_raw_t>( id ) );
-}
-
-inline H5Proplist 
-H5File::create_proplist(const string &cls){
-    id_t _cls = H5P_FILE_CREATE;
-    if( cls == "c" || cls == "create" )
-        _cls = H5P_FILE_CREATE;
-    else if( cls == "a" || cls == "access" )
-        _cls = H5P_FILE_ACCESS;
-    else if( cls == "m" || cls == "mount" )
-        _cls = H5P_FILE_MOUNT;
-    else 
-        ErrLogic::throw_( ErrLogic::eDOMAIN, emFLPFB, 
-            "   ... file property list class ", cls, " invalid "  );
-    return H5Proplist::_from_raw( H5Proplist::_obj_raw_t::create( _cls ) );
 }
 
 } // namespace IO

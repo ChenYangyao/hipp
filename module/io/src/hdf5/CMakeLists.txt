@@ -2,8 +2,11 @@ set(_submodid hdf5)
 set(_src 
     h5_error.cpp
     h5_type_raw.cpp    
-    h5_obj_proplist.cpp
     h5_obj_dataspace.cpp
+    h5_obj_group.cpp
+    h5_obj_file.cpp
+    h5_obj_dataset.cpp
+    h5_obj_proplist.cpp
 )
 set(_libname "${_projectid}${_modid}${_submodid}")
 

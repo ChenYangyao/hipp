@@ -36,6 +36,12 @@ Class H5XTable
     instances of such a data type are usually organized as a STL ``vector``. 
     In such case, ``H5XTable`` provides easy-use methods to I/O them. 
 
+    ``record_t`` cannot have a virtual method. It may have private attributes 
+    (not touched by ``H5XTable``).
+
+    ``H5XTable`` cannot be copied or copy-constructed, but it can be moved 
+    or move constructed. The destructor and move operations are noexcept.
+
     .. type:: vector<record_t> table_t
 
     .. function:: template<typename ...Args> H5XTable( Args &&...args )
@@ -47,6 +53,9 @@ Class H5XTable
         HDF5 dataset. The name of the dataset is specified by string you pass.
         The pointer to attribute provides type and size information that is 
         used internally by the library.
+
+        After construction, you may add/remove attributes by 
+        :func:`add_field`/:func:`remove_field`.
 
         Examples of table manipulators of ``Person`` and ``DarkMatterHalo`` 
         defined above are ::
@@ -99,10 +108,13 @@ Class H5XTable
 
         Read a table from the group ``dgrp``, or the root group of the file ``file``,
         or the root group of an existing file named "file_name". The loaded 
-        table is returned.
+        table is returned. The ignored fields are determined by the default 
+        constructor of ``record_t``.
 
         The second overload accepts two arguments ``(tbl, dgrp)``. It resizes 
-        ``tbl`` into proper shape and read in data from ``dgrp``.
+        ``tbl`` into proper shape and read in data from ``dgrp``. If the size of 
+        ``tbl`` is increased, the ignored fields are determined by the default
+        constructor of ``record_t``.
 
         For example, the following code loads a table of ``DarkMatterHalo``::
 
@@ -113,12 +125,32 @@ Class H5XTable
             vector<DarkMatterHalo> halos;
             halo_manip.read( halos, HIPP::IO::H5File("halos.h5", "r").open_group("/") );  
 
+
+    .. function::   template<typename field_t> H5XTable & add_field(const string &name, field_t record_t::*p)
+                    bool remove_field(const string &name) 
+                    bool has_field(const string &name)
+                    size_t n_fields() const noexcept
+                    bool empty() const noexcept
+
+            ``add_field(name, p)`` adds an attribute, pointed by ``p``, named ``name``, to the table manipulator.
+            ``remove(name)`` removes an attribute named ``name``.
+            
+            ``has_field(name)`` test whether an attribute of name ``name`` has been in the table manipulator.
+            ``n_fields()`` returns the total number of attributes.
+            ``empty()`` checks whether there is no attribute in the manipulator.
+
+
     **Examples:**
+
+    The following piece of code declares a C++ struct ``halo_t``, defines an I/O manipulator
+    ``tbl_manip`` for it, writes and reads a vector of ``halo_t`` into/from HDF5 file.
 
     .. code:: 
 
-        // Declare a struct for holding a dark matter halo.
-        // Define a size-10 vector of it (attribute-setting codes are ignored).
+        /**
+         * Declare a struct for holding a dark matter halo.
+         * Define a size-10 vector of it (attribute-setting codes are ignored).
+         */
         struct halo_t {
             float pos[3], vel[3];
             double halo_mass;
@@ -127,23 +159,27 @@ Class H5XTable
         };
         vector<halo_t> halos(10);
 
-        // Defined a halo table manipulator, which helps to load/store 
-        // the attributes in that vector from/into four datasets. 
+        /**
+         * Defined a halo table manipulator, which helps to load/store 
+         * the attributes in that vector from/into four datasets. 
+         */
         HIPP::IO::H5XTable<halo_t> tbl_manip(
             "Position", &halo_t::pos, 
             "Velocity", &halo_t::vel,
             "Halo Mass", &halo_t::halo_mass,
             "Tidal Tensor", &halo_t::tidal_tensor );
 
-        // Write the 10 halos into the root group of the file "halos.h5"
+        // Write the 10 halos into the root group of the file "halos.h5".
         tbl_manip.write(halos, "halos.h5");
+        
         // Or, write them into a given group
         tbl_manip.write(halos, 
             HIPP::IO::H5File("halos.h5", "a").create_group("Halos") );
 
-        // Load back the halos 
+        // Load back the halos.
         vector<halo_t> halos_loaded = tbl_manip.read("halos.h5");
-        // Or load into existing vector
+        
+        // Or load into existing vector.
         vector<halo_t> halos_loaded2;
         tbl_manip.read(halos_loaded2, 
             HIPP::IO::H5File("halos.h5", "r").open_group("Halos"));

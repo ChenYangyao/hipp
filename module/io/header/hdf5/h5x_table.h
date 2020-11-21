@@ -13,7 +13,20 @@ public:
 
     template<typename ...Args>
     H5XTable( Args &&...args );
-        
+
+    H5XTable(const H5XTable &) =delete;
+    H5XTable & operator=(const H5XTable &) =delete;
+    H5XTable(H5XTable &&) noexcept;
+    H5XTable & operator=(H5XTable &&) noexcept;
+    ~H5XTable() noexcept {}
+
+    template<typename field_t>
+    H5XTable & add_field(const string &name, field_t record_t::*p);
+    bool remove_field(const string &name); 
+    bool has_field(const string &name);
+    size_t n_fields() const noexcept;
+    bool empty() const noexcept;
+
     table_t read(H5Group dgrp);
     void read(table_t &tbl, H5Group dgrp);
     table_t read(H5File file);
@@ -25,9 +38,17 @@ public:
         const string flag="w");
 private:
     typedef vector<char> buff_t;
+    
+    /**
+     * Each Field instance is responsible for IO of an attribute of record_t.
+     * The two subclasses - ScalarField and ArrayField, deal with scalar/array 
+     * attributes, respectively.
+     */
     struct Field {
-        Field( buff_t *pbuff ): _pbuff(pbuff){}
         buff_t *_pbuff;
+        
+        Field( buff_t *pbuff ): _pbuff(pbuff){}
+        virtual ~Field() noexcept {}
 
         virtual size_t mem_size( const table_t &tbl ) const =0;
         virtual H5Dataset create_or_open(H5Group &h5g, 
@@ -49,6 +70,8 @@ private:
         pfield_t _p;
         
         ScalarField(pfield_t p, buff_t *pbuff): Field(pbuff), _p(p){}
+        virtual ~ScalarField() noexcept {}
+
         size_t mem_size( const table_t &tbl ) const override {
             return tbl.size();
         }
@@ -78,6 +101,8 @@ private:
         pfield_t _p;
 
         ArrayField(pfield_t p, buff_t *pbuff): Field(pbuff), _p(p){}
+        virtual ~ArrayField() noexcept {}
+
         size_t mem_size( const table_t &tbl ) const override {
             return tbl.size() * n_scalar;
         }
@@ -174,6 +199,41 @@ template<typename ...Args>
 H5XTable<record_t>::H5XTable( Args &&...args )
     { _push_fields( std::forward<Args>(args)... ); }
 
+template<typename record_t>
+H5XTable<record_t>::H5XTable(H5XTable &&that) noexcept 
+: _buff(std::move(that._buff)), _fields(std::move(that._fields)) 
+{}
+
+template<typename record_t>
+H5XTable<record_t> & H5XTable<record_t>::operator=(H5XTable &&that) noexcept 
+{
+    _buff = std::move(that._buff);
+    _fields = std::move(that._fields);
+    return *this;
+}
+template<typename record_t>
+template<typename field_t>
+H5XTable<record_t> & H5XTable<record_t>::add_field(const string &name, 
+    field_t record_t::*p) {
+    _push_fields(name, p);
+    return *this;
+}
+template<typename record_t>
+bool H5XTable<record_t>::remove_field(const string &name) {
+    return _fields.erase(name) == 1;
+}
+template<typename record_t>
+bool H5XTable<record_t>::has_field(const string &name){
+    return _fields.find(name) != _fields.end();
+}
+template<typename record_t>
+size_t H5XTable<record_t>::n_fields() const noexcept{
+    return _fields.size();
+}
+template<typename record_t>
+bool H5XTable<record_t>::empty() const noexcept{
+    return _fields.empty();
+}
 template<typename record_t>
 auto H5XTable<record_t>::read(H5Group dgrp) -> table_t
     { table_t tbl; read(tbl, dgrp); return tbl; }

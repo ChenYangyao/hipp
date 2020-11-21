@@ -1,5 +1,5 @@
 *********************************
-API Reference of the MPI Module
+API Reference for the MPI Module
 *********************************
 
 .. _api-mpi-usage:
@@ -19,6 +19,7 @@ Classes, functions and variables are all defined within the ``HIPP::MPI`` namesp
 Code that uses the MPI module would be like ::
 
     /* src.cpp */
+
     #include <hippmpi.h>                    // include all definitions in HIPP MPI
 
     int main(int argc, char const *argv[]){

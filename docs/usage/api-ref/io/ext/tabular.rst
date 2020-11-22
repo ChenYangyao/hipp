@@ -133,10 +133,13 @@ Class H5XTable
                     bool empty() const noexcept
 
             ``add_field(name, p)`` adds an attribute, pointed by ``p``, named ``name``, to the table manipulator.
-            ``remove(name)`` removes an attribute named ``name``.
+            
+            ``remove_field(name)`` removes an attribute named ``name``.
             
             ``has_field(name)`` test whether an attribute of name ``name`` has been in the table manipulator.
+            
             ``n_fields()`` returns the total number of attributes.
+            
             ``empty()`` checks whether there is no attribute in the manipulator.
 
 
@@ -160,8 +163,8 @@ Class H5XTable
         vector<halo_t> halos(10);
 
         /**
-         * Defined a halo table manipulator, which helps to load/store 
-         * the attributes in that vector from/into four datasets. 
+         * Defined a halo table manipulator, which helps to load/store the 
+         * attributes in that vector from/into four datasets. 
          */
         HIPP::IO::H5XTable<halo_t> tbl_manip(
             "Position", &halo_t::pos, 
@@ -169,17 +172,17 @@ Class H5XTable
             "Halo Mass", &halo_t::halo_mass,
             "Tidal Tensor", &halo_t::tidal_tensor );
 
-        // Write the 10 halos into the root group of the file "halos.h5".
+        /* Write the 10 halos into the root group of the file "halos.h5". */
         tbl_manip.write(halos, "halos.h5");
         
-        // Or, write them into a given group
+        /* Or, write them into a given group */
         tbl_manip.write(halos, 
             HIPP::IO::H5File("halos.h5", "a").create_group("Halos") );
 
-        // Load back the halos.
+        /* Load back the halos. */
         vector<halo_t> halos_loaded = tbl_manip.read("halos.h5");
         
-        // Or load into existing vector.
+        /* Or load into existing vector. */
         vector<halo_t> halos_loaded2;
         tbl_manip.read(halos_loaded2, 
             HIPP::IO::H5File("halos.h5", "r").open_group("Halos"));

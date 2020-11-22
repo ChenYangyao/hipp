@@ -33,10 +33,3 @@ Why HIPP ?
    usage/api-ref/mpi/index
    usage/api-ref/io/index
    usage/api-ref/simd/index
-
-Indices and tables
---------------------
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

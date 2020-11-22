@@ -22,9 +22,10 @@ public:
     /**
      * create a new file or open an existing file
      * @name:   file name
-     * @flag:   "w" for create and truncate, opened as R/W mode.
-     *          "r" for open existing file as R mode.
-     *          "a" for open existing file as W mode.
+     * @flag:   "w" - create and truncate, open as R/W mode.
+     *          "x" - exclusive create (failed if existing), open as R/W mode.
+     *          "r" - open existing file as R mode.
+     *          "a" - open existing file as R/W mode.
      * @cprop, aprop:   
      *          creation and access property lists. If open existing one, cprop
      *          is ignored.
@@ -33,6 +34,8 @@ public:
         id_t cprop = H5P_DEFAULT, id_t aprop = H5P_DEFAULT ){
         if( flag == "w" ){
             _obj = H5Fcreate( name, H5F_ACC_TRUNC, cprop, aprop );
+        }else if( flag == "x" ){
+            _obj = H5Fcreate( name, H5F_ACC_EXCL, cprop, aprop );
         }else if( flag == "r" ){
             _obj = H5Fopen( name, H5F_ACC_RDONLY, aprop);
         }else if ( flag == "a" ){
@@ -43,7 +46,6 @@ public:
         }
         ErrH5::check( _obj, emFLPFB );
     }
-
     id_t create_dataset( const char *name, id_t datatype, id_t dataspace, 
         id_t lcprop = H5P_DEFAULT, id_t dcprop = H5P_DEFAULT, 
         id_t aprop = H5P_DEFAULT ){

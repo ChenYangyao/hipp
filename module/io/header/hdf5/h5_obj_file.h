@@ -20,11 +20,14 @@ public:
     typedef H5Obj<_H5File> _obj_base_t;
     using _obj_base_t::_obj_base_t;
 
+    /**
+     * flag is the same as in _H5File, but the followings are added for 
+     * convenience:
+     * "ac" or "ca" for open existing file as R/W mode, create if not existing.
+     */
     H5File( const string &name, const string &flag, 
         const H5Proplist &cporp = H5Proplist::defaultval, 
-        const H5Proplist &aprop = H5Proplist::defaultval)
-        : _obj_base_t( std::make_shared<_obj_raw_t>( 
-            name.c_str(), flag, cporp.raw(), aprop.raw() ) ){ }
+        const H5Proplist &aprop = H5Proplist::defaultval);
 
     /**
      * create a dataset of type `T` under the file instance.

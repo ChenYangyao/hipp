@@ -2,6 +2,24 @@
 namespace HIPP{
 namespace IO{
     
+H5File::H5File( const string &name, const string &flag, 
+    const H5Proplist &cporp, const H5Proplist &aprop) 
+    : _obj_base_t(nullptr)
+{
+    if( flag == "ac" || flag == "ca" ){
+        try{
+            _H5EStackTempOff estk(H5E_DEFAULT);
+            _obj_ptr = std::make_shared<_obj_raw_t>(
+                name.c_str(), "x", cporp.raw(), aprop.raw());
+        }catch( const ErrH5 &e ){
+            _obj_ptr = std::make_shared<_obj_raw_t>(
+                name.c_str(), "a", cporp.raw(), aprop.raw());
+        }
+    }else{
+        _obj_ptr = std::make_shared<_obj_raw_t>( 
+            name.c_str(), flag, cporp.raw(), aprop.raw() );
+    }
+}
 H5Dataset H5File::create_dataset_str( const string &name, size_t len,
     const string &flag, const H5Proplist &lcprop, 
     const H5Proplist &cprop, const H5Proplist &aprop ){

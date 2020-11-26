@@ -4,7 +4,7 @@
 #include "h5_obj.h"
 namespace HIPP {
 namespace IO {
-
+    
 template<typename record_t>
 class H5XTable {
 public:
@@ -14,12 +14,19 @@ public:
     template<typename ...Args>
     H5XTable( Args &&...args );
 
+    /**
+     * Safe for operations. 
+     * Copy forbidden.
+     */
     H5XTable(const H5XTable &) =delete;
     H5XTable & operator=(const H5XTable &) =delete;
     H5XTable(H5XTable &&) noexcept;
     H5XTable & operator=(H5XTable &&) noexcept;
     ~H5XTable() noexcept {}
 
+    /** 
+     * Fields manipulator, acts like a unordered_map.
+     */
     template<typename field_t>
     H5XTable & add_field(const string &name, field_t record_t::*p);
     bool remove_field(const string &name); 

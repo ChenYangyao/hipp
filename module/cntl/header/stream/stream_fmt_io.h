@@ -1,13 +1,12 @@
 /**
  * creat: Yangyao CHEN, 2019/12/28
- *      [write   ] prt, prt_f, str, str_f - formatted writes
+ *      [write   ] prt, prt_f, prt_a, str, str_f, str_a - formatted writes
  *                  and string constructors.
  */ 
 
 #ifndef _HIPPCNTL_STREAM_FMT_IO_H_
 #define _HIPPCNTL_STREAM_FMT_IO_H_
-#include "../incl/incl.h"
-#include "../error/error.h"
+#include "stream_array.h"
 
 #define HIPPCNTL_CLASS_INFO(class_name) \
     #class_name " instance [loc=", (void *)this, ", size=", sizeof(class_name),\
@@ -30,14 +29,10 @@ namespace HIPP{
  *  const char *cstr = "world!";
  *  prt( cout, str, ", ", cstr );
  */
-template<typename Arg> ostream & prt( ostream &os, Arg &&arg )
-    { return os << std::forward<Arg>(arg); }
-template<typename Arg, typename ...Args>
-ostream & prt( ostream &os, Arg &&arg, Args &&...args ){
-    os  << std::forward<Arg>(arg);
-    return prt( os, std::forward<Args>(args)... );
+template<typename ...Args>
+ostream & prt(ostream &os, Args &&... args) {
+    return ( os << ... << std::forward<Args>(args) );
 }
-inline ostream & prt( ostream &os )noexcept{ return os; }
 
 /**
  * formatted print.
@@ -66,10 +61,38 @@ ostream & prt_f( ostream &os, const char *fmt, Args && ...args ){
 }
 
 /**
- * str() and str_f() - string constructors.
+ * print a list of elements into stream `os`.
  * 
- * Similar to prt() and prt_f(), but return a string instead of printing to 
- * stream.
+ * Adjacent elements are separated by a comma ','. No padding is added at the
+ * beginning or at the end of the printed list.
+ * 
+ * For a more fine-tuning controlling, use PrtArray<> class instead.
+ * 
+ * Examples
+ * ----------
+ *  // Print all elements in 'arr' into `cout`. Or print the first 4 elements
+ *  // into `cout`.
+ *  vector<int> arr(5, 1);
+ *  prt_a(cout, arr) << endl;
+ *  prt_a(cout, arr.begin(), arr.begin()+4) << endl;
+ *  // In the output devide, printed results would be like
+ *  // 1,1,1,1,1
+ *  // 1,1,1,1
+ */
+template<typename Container>
+ostream & prt_a( ostream &os, const Container &array ){
+    return PrtArray( array ).prt( os );
+}
+template<typename InputIterator>
+ostream & prt_a( ostream &os, InputIterator b, InputIterator e ){
+    return PrtArray( b, e ).prt( os );
+}
+
+/**
+ * str() and str_f() and str_a() - string constructors.
+ * 
+ * Similar to prt() and prt_f() and prt_a(), but return a string instead of 
+ * printing to stream.
  */
 template<typename ...Args>
 string str( Args && ...args ){
@@ -83,7 +106,18 @@ string str_f( const char *fmt, Args && ...args ){
     prt_f( oss, fmt, std::forward<Args>(args)... );
     return oss.str();
 }
-
+template<typename Container>
+string str_a( const Container &array ) {
+    ostringstream oss;
+    prt_a(oss, array);
+    return oss.str();
+}
+template<typename InputIterator>
+string str_a( InputIterator b, InputIterator e ){
+    ostringstream oss;
+    prt_a(oss, b, e);
+    return oss.str();
+}
     
 } // namespace HIPP
 #endif	//_HIPPCNTL_STREAM_FMT_IO_H_

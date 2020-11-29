@@ -20,8 +20,10 @@ Why HIPP ?
    :maxdepth: 1
    :caption: Tutorial
 
-   usage/tutorial/index
-   usage/tutorial/simd/index.rst
+   usage/tutorial/cntl/index
+   usage/tutorial/simd/index
+   usage/tutorial/mpi/index
+   usage/tutorial/io/index
 
 .. toctree::
    :maxdepth: 1
@@ -31,10 +33,3 @@ Why HIPP ?
    usage/api-ref/mpi/index
    usage/api-ref/io/index
    usage/api-ref/simd/index
-
-Indices and tables
---------------------
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

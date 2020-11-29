@@ -1,3 +1,8 @@
+/**
+ * creat: Yangyao CHEN, 2020/11/29
+ * The IO API of HIPP.
+ */ 
+
 #ifndef _HIPPIO_H_
 #define _HIPPIO_H_
 
@@ -6,4 +11,5 @@
 #endif
 
 #include "./hdf5/h5.h"
+#include "./hdf5/h5x_table.h"
 #endif	//_HIPPIO_H_

@@ -1,5 +1,5 @@
 ************************************
-Tutorial on the SIMD Module
+Data-parallelism with SIMD 
 ************************************
 
 The ``HIPP::SIMD`` module provides the OOP interface to single-instruction-multiple-data (SIMD) operations.

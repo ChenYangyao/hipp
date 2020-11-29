@@ -1,12 +1,14 @@
 /**
  * creat: Yangyao CHEN, 2020/01/11
- *      [write   ] H5File - HDF5 high-level file object.
+ *      [write   ] 
+ *      @H5File: HDF5 high-level file object.
  */ 
 
 #ifndef _HIPPIO_H5_OBJ_FILE_H_
 #define _HIPPIO_H5_OBJ_FILE_H_
 #include "h5_obj_base.h"
 #include "h5_obj_dataset.h"
+#include "h5_obj_datatype.h"
 #include "h5_obj_proplist.h"
 #include "h5_obj_group.h"
 namespace HIPP{
@@ -20,11 +22,14 @@ public:
     typedef H5Obj<_H5File> _obj_base_t;
     using _obj_base_t::_obj_base_t;
 
+    /**
+     * flag is the same as in _H5File, but the followings are added for 
+     * convenience:
+     * "ac" or "ca" for open existing file as R/W mode, create if not existing.
+     */
     H5File( const string &name, const string &flag, 
         const H5Proplist &cporp = H5Proplist::defaultval, 
-        const H5Proplist &aprop = H5Proplist::defaultval)
-        : _obj_base_t( std::make_shared<_obj_raw_t>( 
-            name.c_str(), flag, cporp.raw(), aprop.raw() ) ){ }
+        const H5Proplist &aprop = H5Proplist::defaultval);
 
     /**
      * create a dataset of type `T` under the file instance.
@@ -43,11 +48,16 @@ public:
      * It is best to calculate dims use H5TypeStr::shape().
      */
     template<typename T>
-    H5Dataset create_dataset( const string &name, const vector<size_t> &dims, 
+    H5Dataset create_dataset( const string &name, const vector<hsize_t> &dims, 
         const string &flag="trunc", 
         const H5Proplist &lcprop = H5Proplist::defaultval,
         const H5Proplist &cprop = H5Proplist::defaultval,
         const H5Proplist &aprop = H5Proplist::defaultval );
+    H5Dataset create_dataset(const string &name, const H5Datatype &dtype, 
+        const vector<hsize_t> &dims, const string &flag="trunc", 
+        const H5Proplist &lcprop = H5Proplist::defaultval,
+        const H5Proplist &cprop = H5Proplist::defaultval,
+        const H5Proplist &aprop = H5Proplist::defaultval);
     template<typename T>
     H5Dataset create_dataset_scalar( const string &name,
         const string &flag="trunc", 
@@ -72,8 +82,11 @@ public:
 
     template<typename T>
     H5Attr create_attr(
-        const string &name, const vector<size_t> &dims, 
+        const string &name, const vector<hsize_t> &dims, 
         const string &flag="trunc");
+    H5Attr create_attr(
+        const string &name, const H5Datatype &dtype, 
+        const vector<hsize_t> &dims, const string &flag="trunc");
     template<typename T>
     H5Attr create_attr_scalar(
         const string &name, const string &flag="trunc");
@@ -84,14 +97,16 @@ public:
     bool attr_exists(const string &name) const;
 
     H5Group create_group( const string &name );
-    H5Group open_group( const string &name );
+    H5Group try_create_group( const string &name );
+    H5Group open_group( const string &name ); 
+    bool group_exists( const string &name ) const;
 
     static H5Proplist create_proplist(const string &cls = "c");
 };
 
 template<typename T>
 H5Dataset H5File::create_dataset( 
-    const string &name, const vector<size_t> &dims, 
+    const string &name, const vector<hsize_t> &dims, 
     const string &flag,
     const H5Proplist &lcprop, const H5Proplist &cprop, 
     const H5Proplist &aprop )
@@ -108,25 +123,9 @@ H5Dataset H5File::create_dataset_scalar( const string &name,
         lcprop, cprop, aprop );
 }
 
-inline H5Dataset H5File::create_dataset_str( const string &name, size_t len,
-    const string &flag, const H5Proplist &lcprop, 
-    const H5Proplist &cprop, const H5Proplist &aprop ){
-    return H5Dataset::create_str( raw(), name, len, flag, lcprop, 
-        cprop, aprop );
-}
-
-inline H5Dataset
-H5File::open_dataset( const string &name, const H5Proplist &aprop ){
-    return H5Dataset::open(raw(), name, aprop);
-}
-inline bool 
-H5File::dataset_exists( const string &name ) const{
-    return H5Dataset::exists( raw(), name );
-}
-
 template<typename T>
 H5Attr H5File::create_attr(
-    const string &name, const vector<size_t> &dims, 
+    const string &name, const vector<hsize_t> &dims, 
     const string &flag)
 {
     return H5Attr::create<T>( raw(), name, dims, flag );
@@ -136,46 +135,6 @@ template<typename T>
 H5Attr H5File::create_attr_scalar(
     const string &name, const string &flag){
     return H5Attr::create_scalar<T>(raw(), name, flag);
-}
-
-inline H5Attr H5File::create_attr_str(
-    const string &name, size_t len, const string &flag){
-    return H5Attr::create_str( raw(), name, len, flag );
-}
-
-inline H5Attr 
-H5File::open_attr(const string &name){
-    return H5Attr::open( raw(), name );
-}
-
-inline bool 
-H5File::attr_exists(const string &name) const{
-    return bool( _obj_ptr->exist_attr( name.c_str() ) );
-}
-
-inline H5Group H5File::create_group( const string &name ){
-    auto id = H5Group::_obj_raw_t::create( raw(), name.c_str() );
-    return H5Group( std::make_shared<H5Group::_obj_raw_t>( id ) );
-}
-
-inline H5Group H5File::open_group( const string &name ){
-    auto id = H5Group::_obj_raw_t::open( raw(), name.c_str() );
-    return H5Group( std::make_shared<H5Group::_obj_raw_t>( id ) );
-}
-
-inline H5Proplist 
-H5File::create_proplist(const string &cls){
-    id_t _cls = H5P_FILE_CREATE;
-    if( cls == "c" || cls == "create" )
-        _cls = H5P_FILE_CREATE;
-    else if( cls == "a" || cls == "access" )
-        _cls = H5P_FILE_ACCESS;
-    else if( cls == "m" || cls == "mount" )
-        _cls = H5P_FILE_MOUNT;
-    else 
-        ErrLogic::throw_( ErrLogic::eDOMAIN, emFLPFB, 
-            "   ... file property list class ", cls, " invalid "  );
-    return H5Proplist::_from_raw( H5Proplist::_obj_raw_t::create( _cls ) );
 }
 
 } // namespace IO

@@ -1,6 +1,6 @@
 /**
  * creat: Yangyao CHEN, 2020/01/11
- * HD5 interfaces.
+ * Include all HD5 interfaces (high-level, intermediate-level, ...)
  */ 
 
 #ifndef _HIPPIO_H5_H_
@@ -23,4 +23,5 @@
  * high-level, pure OOP interface.
  */
 #include "h5_obj.h"
+
 #endif	//_HIPPIO_H5_H_

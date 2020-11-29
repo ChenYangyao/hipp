@@ -1,5 +1,5 @@
 ---
-description: Under Development
+description: Not Under Development
 ---
 
 # HIPParcos - A C++ HIgh Performance scientific computation Package

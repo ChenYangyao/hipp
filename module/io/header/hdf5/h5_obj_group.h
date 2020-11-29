@@ -1,3 +1,10 @@
+/**
+ * creat: Yangyao CHEN, 2020/11/29
+ *      [write   ]
+ *      @H5Group: High-level HDF5 group API.
+ */ 
+
+
 #ifndef _HIPPIO_H5_OBJ_GROUP_H_
 #define _HIPPIO_H5_OBJ_GROUP_H_
 #include "h5_obj_base.h"
@@ -13,19 +20,22 @@ public:
     using _obj_base_t::_obj_base_t;
 
     template<typename T>
-    H5Dataset create_dataset( const string &name, const vector<size_t> &dims, 
+    H5Dataset create_dataset( const string &name, const vector<hsize_t> &dims, 
         const string &flag="trunc",
         const H5Proplist &lcprop = H5Proplist::defaultval,
         const H5Proplist &cprop = H5Proplist::defaultval,
         const H5Proplist &aprop = H5Proplist::defaultval );
-
+    H5Dataset create_dataset(const string &name, const H5Datatype &dtype, 
+        const vector<hsize_t> &dims, const string &flag="trunc", 
+        const H5Proplist &lcprop = H5Proplist::defaultval,
+        const H5Proplist &cprop = H5Proplist::defaultval,
+        const H5Proplist &aprop = H5Proplist::defaultval);
     template<typename T>
     H5Dataset create_dataset_scalar( const string &name,
         const string &flag="trunc", 
         const H5Proplist &lcprop = H5Proplist::defaultval,
         const H5Proplist &cprop = H5Proplist::defaultval,
         const H5Proplist &aprop = H5Proplist::defaultval );
-    
     H5Dataset create_dataset_str( const string &name, size_t len,
         const string &flag="trunc", 
         const H5Proplist &lcprop = H5Proplist::defaultval,
@@ -38,8 +48,11 @@ public:
 
     template<typename T>
     H5Attr create_attr(
-        const string &name, const vector<size_t> &dims, 
+        const string &name, const vector<hsize_t> &dims, 
         const string &flag="trunc");
+    H5Attr create_attr(
+        const string &name, const H5Datatype &dtype, 
+        const vector<hsize_t> &dims, const string &flag="trunc");
     template<typename T>
     H5Attr create_attr_scalar(
         const string &name, const string &flag="trunc");
@@ -64,7 +77,7 @@ protected:
 
 template<typename T>
 H5Dataset H5Group::create_dataset( const string &name, 
-    const vector<size_t> &dims, 
+    const vector<hsize_t> &dims, 
     const string &flag, 
     const H5Proplist &lcprop, const H5Proplist &cprop, const H5Proplist &aprop){
     return H5Dataset::create<T>( 
@@ -79,7 +92,7 @@ H5Dataset H5Group::create_dataset_scalar( const string &name,
 }
 template<typename T>
 H5Attr H5Group::create_attr(
-    const string &name, const vector<size_t> &dims, 
+    const string &name, const vector<hsize_t> &dims, 
     const string &flag){
     return H5Attr::create<T>( raw(), name, dims, flag );
 }

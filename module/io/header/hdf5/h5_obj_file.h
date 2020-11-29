@@ -1,12 +1,14 @@
 /**
  * creat: Yangyao CHEN, 2020/01/11
- *      [write   ] H5File - HDF5 high-level file object.
+ *      [write   ] 
+ *      @H5File: HDF5 high-level file object.
  */ 
 
 #ifndef _HIPPIO_H5_OBJ_FILE_H_
 #define _HIPPIO_H5_OBJ_FILE_H_
 #include "h5_obj_base.h"
 #include "h5_obj_dataset.h"
+#include "h5_obj_datatype.h"
 #include "h5_obj_proplist.h"
 #include "h5_obj_group.h"
 namespace HIPP{
@@ -46,11 +48,16 @@ public:
      * It is best to calculate dims use H5TypeStr::shape().
      */
     template<typename T>
-    H5Dataset create_dataset( const string &name, const vector<size_t> &dims, 
+    H5Dataset create_dataset( const string &name, const vector<hsize_t> &dims, 
         const string &flag="trunc", 
         const H5Proplist &lcprop = H5Proplist::defaultval,
         const H5Proplist &cprop = H5Proplist::defaultval,
         const H5Proplist &aprop = H5Proplist::defaultval );
+    H5Dataset create_dataset(const string &name, const H5Datatype &dtype, 
+        const vector<hsize_t> &dims, const string &flag="trunc", 
+        const H5Proplist &lcprop = H5Proplist::defaultval,
+        const H5Proplist &cprop = H5Proplist::defaultval,
+        const H5Proplist &aprop = H5Proplist::defaultval);
     template<typename T>
     H5Dataset create_dataset_scalar( const string &name,
         const string &flag="trunc", 
@@ -75,8 +82,11 @@ public:
 
     template<typename T>
     H5Attr create_attr(
-        const string &name, const vector<size_t> &dims, 
+        const string &name, const vector<hsize_t> &dims, 
         const string &flag="trunc");
+    H5Attr create_attr(
+        const string &name, const H5Datatype &dtype, 
+        const vector<hsize_t> &dims, const string &flag="trunc");
     template<typename T>
     H5Attr create_attr_scalar(
         const string &name, const string &flag="trunc");
@@ -96,7 +106,7 @@ public:
 
 template<typename T>
 H5Dataset H5File::create_dataset( 
-    const string &name, const vector<size_t> &dims, 
+    const string &name, const vector<hsize_t> &dims, 
     const string &flag,
     const H5Proplist &lcprop, const H5Proplist &cprop, 
     const H5Proplist &aprop )
@@ -115,7 +125,7 @@ H5Dataset H5File::create_dataset_scalar( const string &name,
 
 template<typename T>
 H5Attr H5File::create_attr(
-    const string &name, const vector<size_t> &dims, 
+    const string &name, const vector<hsize_t> &dims, 
     const string &flag)
 {
     return H5Attr::create<T>( raw(), name, dims, flag );

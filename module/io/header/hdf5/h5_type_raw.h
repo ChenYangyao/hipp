@@ -1,6 +1,6 @@
 /**
  * creat: Yangyao CHEN, 2020/01/11
- *      [write   ] HDF5 intermediate-level type handler.
+ * HDF5 intermediate-level type handler.
  */ 
 
 #ifndef _HIPPIO_H5_TYPE_RAW_H_
@@ -55,10 +55,12 @@ _HIPPIO_H5_TYPENATIVE_DEF(double)
 _HIPPIO_H5_TYPENATIVE_DEF(float)
 _HIPPIO_H5_TYPENATIVE_DEF(long double)
 _HIPPIO_H5_TYPENATIVE_DEF(char)
+_HIPPIO_H5_TYPENATIVE_DEF(signed char)
 _HIPPIO_H5_TYPENATIVE_DEF(short)
 _HIPPIO_H5_TYPENATIVE_DEF(int)
 _HIPPIO_H5_TYPENATIVE_DEF(long)
 _HIPPIO_H5_TYPENATIVE_DEF(long long)
+_HIPPIO_H5_TYPENATIVE_DEF(unsigned char)
 _HIPPIO_H5_TYPENATIVE_DEF(unsigned short)
 _HIPPIO_H5_TYPENATIVE_DEF(unsigned int)
 _HIPPIO_H5_TYPENATIVE_DEF(unsigned long)
@@ -79,10 +81,12 @@ _HIPPIO_H5_TYPESTD_DEF(double)
 _HIPPIO_H5_TYPESTD_DEF(float)
 _HIPPIO_H5_TYPESTD_DEF(long double)
 _HIPPIO_H5_TYPESTD_DEF(char)
+_HIPPIO_H5_TYPESTD_DEF(signed char)
 _HIPPIO_H5_TYPESTD_DEF(short)
 _HIPPIO_H5_TYPESTD_DEF(int)
 _HIPPIO_H5_TYPESTD_DEF(long)
 _HIPPIO_H5_TYPESTD_DEF(long long)
+_HIPPIO_H5_TYPESTD_DEF(unsigned char)
 _HIPPIO_H5_TYPESTD_DEF(unsigned short)
 _HIPPIO_H5_TYPESTD_DEF(unsigned int)
 _HIPPIO_H5_TYPESTD_DEF(unsigned long)
@@ -130,7 +134,6 @@ public:
         return ret;
     }
 };
-
 
 } // namespace IO
 } // namespace HIPP

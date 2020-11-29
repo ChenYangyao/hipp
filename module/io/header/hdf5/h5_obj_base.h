@@ -1,6 +1,7 @@
 /**
  * creat: Yangyao CHEN, 2020/01/11
- *      [write   ] H5Obj - base class for all HDF5 high-level objects.
+ *      [write   ] 
+ *      @H5Obj: base class for all HDF5 high-level objects.
  */ 
 
 #ifndef _HIPPIO_H5_OBJ_BASE_H_
@@ -25,10 +26,6 @@ namespace IO{
 template<typename H5ObjRaw>
 class H5Obj {
 public:
-    typedef hid_t id_t;
-    typedef herr_t err_t;
-    typedef htri_t tri_t;
-    typedef hsize_t size_t;
     typedef H5ObjRaw _obj_raw_t;
     typedef std::shared_ptr<H5ObjRaw> _obj_ptr_t;
 

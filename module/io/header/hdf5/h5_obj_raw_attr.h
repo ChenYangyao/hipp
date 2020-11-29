@@ -1,3 +1,9 @@
+/**
+ * creat: Yangyao CHEN, 2020/11/29
+ *      [write   ] 
+ *      @_H5Attr:   Intermediate-level HDF5 attribute API.
+ */ 
+
 #ifndef _HIPPIO_H5_OBJ_RAW_ATTR_H_
 #define _HIPPIO_H5_OBJ_RAW_ATTR_H_
 #include "h5_obj_raw_base.h"

@@ -1,7 +1,16 @@
 #include <h5_obj_group.h>
 namespace HIPP {
 namespace IO{
-
+H5Dataset H5Group::create_dataset(
+    const string &name, const H5Datatype &dtype, 
+    const vector<hsize_t> &dims, const string &flag,
+    const H5Proplist &lcprop, const H5Proplist &cprop,
+    const H5Proplist &aprop)
+{
+    _H5Dataspace dspace(dims.size(), dims.data());
+    return H5Dataset::create(raw(), name, dtype.obj_raw(), dspace, 
+        flag, lcprop, cprop, aprop);
+}
 H5Dataset H5Group::create_dataset_str( const string &name, size_t len,
     const string &flag, const H5Proplist &lcprop, 
     const H5Proplist &cprop, const H5Proplist &aprop ){
@@ -15,7 +24,12 @@ H5Dataset H5Group::open_dataset( const string &name,
 bool H5Group::dataset_exists( const string &name )const{
     return H5Dataset::exists( raw(), name );
 }
-
+H5Attr H5Group::create_attr(
+    const string &name, const H5Datatype &dtype, 
+    const vector<hsize_t> &dims, const string &flag){
+    _H5Dataspace dspace(dims.size(), dims.data());
+    return H5Attr::create(raw(), name, dtype.obj_raw(), dspace, flag);
+}
 H5Attr H5Group::create_attr_str(
     const string &name, size_t len, const string &flag){
     return H5Attr::create_str( raw(), name, len, flag );

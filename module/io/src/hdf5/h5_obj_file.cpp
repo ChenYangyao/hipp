@@ -20,6 +20,15 @@ H5File::H5File( const string &name, const string &flag,
             name.c_str(), flag, cporp.raw(), aprop.raw() );
     }
 }
+H5Dataset H5File::create_dataset(const string &name, const H5Datatype &dtype, 
+    const vector<hsize_t> &dims, const string &flag,
+    const H5Proplist &lcprop, const H5Proplist &cprop,
+    const H5Proplist &aprop)
+{
+    _H5Dataspace dspace(dims.size(), dims.data());
+    return H5Dataset::create(raw(), name, dtype.obj_raw(), dspace, 
+        flag, lcprop, cprop, aprop);
+}
 H5Dataset H5File::create_dataset_str( const string &name, size_t len,
     const string &flag, const H5Proplist &lcprop, 
     const H5Proplist &cprop, const H5Proplist &aprop ){
@@ -31,6 +40,12 @@ H5Dataset H5File::open_dataset( const string &name, const H5Proplist &aprop ){
 }
 bool H5File::dataset_exists( const string &name ) const{
     return H5Dataset::exists( raw(), name );
+}
+H5Attr H5File::create_attr(
+    const string &name, const H5Datatype &dtype, 
+    const vector<hsize_t> &dims, const string &flag){
+    _H5Dataspace dspace(dims.size(), dims.data());
+    return H5Attr::create(raw(), name, dtype.obj_raw(), dspace, flag);
 }
 H5Attr H5File::create_attr_str(
     const string &name, size_t len, const string &flag){

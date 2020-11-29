@@ -9,6 +9,7 @@ set(_libname "${_projectid}${_modid}")
 add_library(${_libname} 
     SHARED 
         "$<TARGET_OBJECTS:${_libname}error>"
+        "$<TARGET_OBJECTS:${_libname}stream>"
 )
 set_target_properties(${_libname}
     PROPERTIES
@@ -18,7 +19,6 @@ target_compile_options(${_libname}
     PRIVATE
         ${_cxx_flags}
 )
-
 install(TARGETS ${_libname}
     DESTINATION lib
 )

@@ -1,6 +1,9 @@
 I/O the Arrays of Numeric Types
 ===============================================================
 
+All of the HIPP IO APIs can be accessed by including the header ``<hippio.h>``. The detailed conventions
+and compiling options are described in the :ref:`API Reference <api-io-usage>`.
+
 Write/Read Arrays
 --------------------------------------------------------------
 
@@ -37,7 +40,7 @@ compatible with the argument passed in ``write()``, or otherwise the result is
 undefined.
 
 To read the the dataset back into the memory, just open the dataset by ``open_dataset(dataset_name)``,
-and load the data into a vector by ``read(vector_name)``. The library automatically resize 
+and load the data into a vector by ``read(vector_name)``. The library automatically resizes 
 the vector according to the dataspace in the file::
 
     vector<double> arr1_in;
@@ -81,15 +84,15 @@ each dataset
 
     HDF5 "arrays.h5" {
     GROUP "/" {
-    DATASET "arr1" {
-        DATATYPE  H5T_IEEE_F64LE
-        DATASPACE  SIMPLE { ( 5 ) / ( 5 ) }
-        DATA {
-        (0): 0, 1, 2, 3, 4
+        DATASET "arr1" {
+            DATATYPE  H5T_IEEE_F64LE
+            DATASPACE  SIMPLE { ( 5 ) / ( 5 ) }
+            DATA {
+            (0): 0, 1, 2, 3, 4
+            }
         }
-    }
-    DATASET "arr2" ...
-    DATASET "arr3" ...
+        DATASET "arr2" ...
+        DATASET "arr3" ...
 
 .. warning::
 
@@ -108,10 +111,13 @@ each dataset
         struct ArrayType {
             float values[3];
         };
-        vector<ArrayType> vector_of_structs.
+        vector<ArrayType> vector_of_structs;
+
+        int raw_array[2][3];
 
     However, in such cases you need to take the pointer to the underlying data and 
     cast it into a proper numeric type::
 
-        dataset.write((double *)&vector_of_arrays[0]);
-        dataset.write((float *)&vector_of_structs[0]);
+        dset.write((double *)&vector_of_arrays[0]);
+        dset.write((float *)&vector_of_structs[0]);
+        dset.write(&raw_array[0][0]);

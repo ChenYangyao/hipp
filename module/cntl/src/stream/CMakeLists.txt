@@ -1,15 +1,6 @@
-set(_submodid hdf5)
+set(_submodid stream)
 set(_src 
-    h5_error.cpp
-    h5_type_raw.cpp    
-    h5_obj_raw_datatype.cpp    
-    h5_obj_dataspace.cpp
-    h5_obj_datatype.cpp
-    h5_obj_group.cpp
-    h5_obj_file.cpp
-    h5_obj_dataset.cpp
-    h5_obj_proplist.cpp
-)
+    stream_pretty.cpp)
 set(_libname "${_projectid}${_modid}${_submodid}")
 
 message(STATUS "Sub module: ${_libname}")
@@ -28,11 +19,10 @@ set_target_properties(${_libname}
 target_include_directories(${_libname}
     PRIVATE
         "${_moddir}/header/${_submodid}"
-    PUBLIC 
+    PUBLIC
         "${_moddir}/header"
-        "${_projectdir}/module/cntl/header"
 )
 target_compile_options(${_libname} 
-    PRIVATE
+    PRIVATE 
         ${_cxx_flags}
 )

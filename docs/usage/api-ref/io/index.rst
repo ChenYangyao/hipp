@@ -26,7 +26,7 @@ The compiling command in an Unix-like system would be like
 
     $ g++ -std=c++17 src.cpp -lhippio -lhippcntl -lhdf5
 
-.. _api-mpi-convention:
+.. _api-io-convention:
 
 To avoid confusion, we list the convetions used in this API reference:
 

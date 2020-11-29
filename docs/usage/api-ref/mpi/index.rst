@@ -1,5 +1,5 @@
 *********************************
-API Reference for the MPI Module
+MPI Module
 *********************************
 
 .. _api-mpi-usage:

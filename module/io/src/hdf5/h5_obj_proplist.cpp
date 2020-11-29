@@ -39,34 +39,34 @@ string H5Proplist::layout() const{
     return ans;
 }
 
-H5Proplist & H5Proplist::set_chunk( vector<size_t> dims ){
+H5Proplist & H5Proplist::set_chunk( vector<hsize_t> dims ){
     _obj_ptr->set_chunk( dims.size(), dims.data() );
     return *this;
 }
 int H5Proplist::chunk_ndims()const{
     return _obj_ptr->get_chunk_ndims();
 }
-vector<H5Proplist::size_t> H5Proplist::chunk() const{
+vector<hsize_t> H5Proplist::chunk() const{
     return _obj_ptr->get_chunk();
 }
 
 H5Proplist & H5Proplist::set_chunk_cache( 
-    std::size_t nslot, std::size_t nbytes, double w0 ){
+    size_t nslot, size_t nbytes, double w0 ){
     _obj_ptr->set_chunk_cache( nslot, nbytes, w0 );
     return *this;
 }
-void H5Proplist::chunk_cache( std::size_t &nslot, 
-    std::size_t &nbytes, double &w0 ) const{
+void H5Proplist::chunk_cache( size_t &nslot, 
+    size_t &nbytes, double &w0 ) const{
     _obj_ptr->get_chunk_cache( &nslot, &nbytes, &w0 );
 }
 
-H5Proplist & H5Proplist::set_cache( std::size_t nslot, 
-    std::size_t nbytes, double w0 ){
+H5Proplist & H5Proplist::set_cache( size_t nslot, 
+    size_t nbytes, double w0 ){
     _obj_ptr->set_cache( 0, nslot, nbytes, w0 );
     return *this;
 }
-void H5Proplist::cache( std::size_t &nslot, 
-    std::size_t &nbytes, double &w0 ) const{
+void H5Proplist::cache( size_t &nslot, 
+    size_t &nbytes, double &w0 ) const{
     _obj_ptr->get_cache( NULL, &nslot, &nbytes, &w0 );
 }
 

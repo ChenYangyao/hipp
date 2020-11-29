@@ -4,6 +4,62 @@
 #include "../error/error.h"
 namespace HIPP{
 
+/**
+ * PrtArray - formatted printing for array-like containers.
+ * 
+ * Format
+ * ----------
+ * indent padding item[0]    sep padding item[1]        ... sep padding item[ncol-1]  sep endline
+ * indent padding item[ncol] sep padding item[ncol+1]   ... sep padding item[2ncol-1] sep endline
+ * ... indent padding item[n-2]  sep padding item[n-1] endlast
+ * 
+ * If coloffset > 0, no indent is added at the start of the first line, and 
+ * new lines are started at (index + coloffset) % ncol == 0.
+ * 
+ * Default Format
+ * --------------
+ * @indent: 0 (no ident).
+ * @width:  -1 (no padding).
+ * @ncol:   -1 (no line-break).
+ * @coloffset:  0.
+ * @sep:    ",".
+ * @endline: "\n".
+ * @endlast: "".
+ * 
+ * Examples
+ * ----------
+ * vector<double> arr1 = {1,2,3,4,5,6,7,8};
+ * PrtArray p_arr1(arr1);
+ * cout << p_arr1 << endl;
+ * // Print as:
+ * // 1,2,3,4,5,6,7,8
+ *  
+ * p_arr1.ncol(3);
+ * cout << p_arr1 << endl;
+ * // print as
+ * // 1,2,3,
+ * // 4,5,6,
+ * // 7,8
+ *
+ * p_arr1.width(4);
+ * cout << p_arr1 << endl;
+ * // print as
+ * //   1,   2,   3,
+ * //   4,   5,   6,
+ * //   7,   8
+ *  
+ * cout << p_arr1;
+ * p_arr1.coloffset( arr1.size()%3 );
+ * cout << p_arr1 << endl;
+ * // print as
+ * //   1,   2,   3,
+ * //   4,   5,   6,
+ * //   7,   8,   1,
+ * //   2,   3,   4,
+ * //   5,   6,   7,
+ * //   8
+ * //
+ */
 template<typename InputIterator> class PrtArray;
 template<typename InputIterator>
 ostream & operator<<( ostream &os, const PrtArray<InputIterator> &arr );
@@ -11,57 +67,55 @@ ostream & operator<<( ostream &os, const PrtArray<InputIterator> &arr );
 template<typename InputIterator>
 class PrtArray{
 public:
+    typedef InputIterator iter_t;
+
     template<typename Container>
-    PrtArray( const Container &array );
-    template<typename _InputIterator>
-    PrtArray( _InputIterator b, _InputIterator e );
-    ~PrtArray(){ }
+    explicit PrtArray( const Container &array );
+    PrtArray( iter_t b, iter_t e );
+
+    ~PrtArray() noexcept { }
     PrtArray( const PrtArray & ) = default;
-    PrtArray( PrtArray && ) = default;
+    PrtArray( PrtArray && ) noexcept = default;
     PrtArray & operator=( const PrtArray & ) = default;
-    PrtArray & operator=( PrtArray && ) = default;
+    PrtArray & operator=( PrtArray && ) noexcept = default;
 
     ostream & prt( ostream &os = cout ) const;
     friend ostream & 
-        operator<< <InputIterator>( ostream &os, const PrtArray &arr );
+        operator<< <iter_t>( ostream &os, const PrtArray &arr );
     
-    template<typename Container>
-    PrtArray & set_array( const Container &array );
-    template<typename _InputIterator>
-    PrtArray & set_array( _InputIterator b, _InputIterator e );
-
+    std::pair<iter_t, iter_t> get_iter() const;
     std::ptrdiff_t indent() const noexcept;
     const string & endline() const noexcept;
-
     const string & sep() const noexcept;
     const string & endlast() const noexcept;
-
     std::ptrdiff_t ncol() const noexcept;
     std::ptrdiff_t coloffset() const noexcept;
-
     std::ptrdiff_t width() const noexcept;
 
+    template<typename Container>
+    PrtArray & set_array( const Container &array );
+    PrtArray & set_array( iter_t b, iter_t e );
     PrtArray & indent( std::ptrdiff_t value );
     PrtArray & endline( const string &value );
-
     PrtArray & sep( const string &value );
     PrtArray & endlast( const string &value );
-
     PrtArray & ncol( std::ptrdiff_t value );
     PrtArray & coloffset( std::ptrdiff_t value );
-
     PrtArray & width( std::ptrdiff_t value );
-
     PrtArray & reset_fmt();
 protected:
-    InputIterator _b, _e; 
+    iter_t _b, _e; 
     std::ptrdiff_t _indent = 0, _width = -1, 
         _ncol = -1, _coloffset = 0;
-    string _sep = ",", _endline = "\n", _endlast = "";
-
+    string  _sep = ",", _endline = "\n", _endlast = "";
     ostream & _prt_item( ostream &os,
-        InputIterator it, std::ptrdiff_t count ) const;
+        iter_t it, std::ptrdiff_t count ) const;
 };
+
+/* deduction guide for container input */
+template<typename Container>
+explicit PrtArray( const Container &array ) 
+    -> PrtArray<decltype(std::begin(array))>;
 
 template<typename InputIterator>
 template<typename Container>
@@ -69,8 +123,7 @@ PrtArray<InputIterator>::PrtArray( const Container &array )
 : _b( std::begin(array) ), _e( std::end(array) ){ }
 
 template<typename InputIterator>
-template<typename _InputIterator>
-PrtArray<InputIterator>::PrtArray( _InputIterator b, _InputIterator e )
+PrtArray<InputIterator>::PrtArray( iter_t b, iter_t e )
 : _b(b), _e(e){ }
 
 template<typename InputIterator>
@@ -91,25 +144,10 @@ template<typename InputIterator>
 ostream & operator<<( ostream &os, const PrtArray<InputIterator> &arr ){
     return arr.prt(os);
 }
-
 template<typename InputIterator>
-template<typename Container>
-PrtArray<InputIterator> & 
-PrtArray<InputIterator>::set_array( const Container &array ){
-    _b = std::begin(array);
-    _e = std::end(array);
-    return *this;
+auto PrtArray<InputIterator>::get_iter() const -> std::pair<iter_t, iter_t> {
+    return {_b, _e};
 }
-
-template<typename InputIterator>
-template<typename _InputIterator>
-PrtArray<InputIterator> & 
-PrtArray<InputIterator>::set_array( _InputIterator b, _InputIterator e ){
-    _b = b;
-    _e = e;
-    return *this;
-}
-
 template<typename InputIterator>
 std::ptrdiff_t PrtArray<InputIterator>::indent() const noexcept{
     return _indent;
@@ -137,15 +175,27 @@ template<typename InputIterator>
 std::ptrdiff_t PrtArray<InputIterator>::coloffset() const noexcept{
     return _coloffset;
 }
-
 template<typename InputIterator>
 std::ptrdiff_t PrtArray<InputIterator>::width() const noexcept{
     return _width;
 }
-
 template<typename InputIterator>
-PrtArray<InputIterator> & 
-PrtArray<InputIterator>::indent( std::ptrdiff_t value ){
+template<typename Container>
+auto PrtArray<InputIterator>::set_array( const Container &array )
+-> PrtArray & 
+{
+    _b = std::begin(array);
+    _e = std::end(array);
+    return *this;
+}
+template<typename InputIterator>
+auto PrtArray<InputIterator>::set_array( iter_t b, iter_t e ) -> PrtArray & 
+{
+    _b = b; _e = e; return *this;
+}
+template<typename InputIterator>
+auto PrtArray<InputIterator>::indent( std::ptrdiff_t value ) -> PrtArray &
+{
     if( value < 0 )
         ErrLogic::throw_( ErrLogic::eDOMAIN, emFLPFB, 
             "  ... indent value must be non-negative. Got ", 
@@ -154,54 +204,51 @@ PrtArray<InputIterator>::indent( std::ptrdiff_t value ){
     return *this;
 }
 template<typename InputIterator>
-PrtArray<InputIterator> & 
-PrtArray<InputIterator>::endline( const string &value ){
+auto 
+PrtArray<InputIterator>::endline( const string &value ) -> PrtArray & {
     _endline = value;
     return *this;
 }
-
 template<typename InputIterator>
-PrtArray<InputIterator> & PrtArray<InputIterator>::sep( const string &value ){
+auto PrtArray<InputIterator>::sep( const string &value ) -> PrtArray & {
     _sep = value;
     return *this;
 }
-
 template<typename InputIterator>
-PrtArray<InputIterator> & 
-PrtArray<InputIterator>::endlast( const string &value ){
+auto PrtArray<InputIterator>::endlast( const string &value ) -> PrtArray & {
     _endlast = value;
     return *this;
 }
-
 template<typename InputIterator>
-PrtArray<InputIterator> & PrtArray<InputIterator>::ncol( std::ptrdiff_t value ){
+auto PrtArray<InputIterator>::ncol( std::ptrdiff_t value ) -> PrtArray & {
     if( value == 0 || value < -1 )
         ErrLogic::throw_( ErrLogic::eDOMAIN, emFLPFB, 
             "  ... ncol value must be -1 or positive. Got", value, '\n' );
     _ncol = value;
     return *this;
 }
-
 template<typename InputIterator>
-PrtArray<InputIterator> & 
-PrtArray<InputIterator>::coloffset( std::ptrdiff_t value ){
+auto PrtArray<InputIterator>::coloffset( std::ptrdiff_t value ) -> PrtArray & 
+{
     if( value < 0 )
         ErrLogic::throw_( ErrLogic::eDOMAIN, emFLPFB, 
             "  ... coloffset value must be non-negative. Got", value, '\n' );
     _coloffset = value;
     return *this;
 }
-
 template<typename InputIterator>
-PrtArray<InputIterator> & 
-PrtArray<InputIterator>::width( std::ptrdiff_t value ){
+auto PrtArray<InputIterator>::width( std::ptrdiff_t value ) -> PrtArray & {
     if( value < -1 )
         ErrLogic::throw_( ErrLogic::eDOMAIN, emFLPFB, 
             "  ... width value must be -1 or positive. Got", value, '\n' );
     _width = value;
     return *this;
 }
-
+template<typename InputIterator>
+auto PrtArray<InputIterator>::reset_fmt() -> PrtArray & {
+    _indent = 0; _width = -1; _ncol = -1; _coloffset = 0;
+    _sep = ","; _endline = "\n"; _endlast = "";
+}
 template<typename InputIterator>
 ostream & PrtArray<InputIterator>::_prt_item( ostream &os,
     InputIterator it, std::ptrdiff_t count ) const{
@@ -213,41 +260,6 @@ ostream & PrtArray<InputIterator>::_prt_item( ostream &os,
     if( _width > 0 ) os << std::setw( _width );
     os << *it;
     return os;
-}
-
-template<typename InputIterator>
-PrtArray<InputIterator> & PrtArray<InputIterator>::reset_fmt(){
-    _indent = 0; _width = -1; _ncol = -1; _coloffset = 0;
-    _sep = ","; _endline = "\n"; _endlast = "";
-}
-
-/**
- * print a list of elements into stream `os`.
- * 
- * Adjacent elements are separated by a comma ','. No padding is added at the
- * beginning or at the end of the printed list.
- * 
- * For a more fine-tuning controlling, use PrtArray<> class instead.
- * 
- * Examples
- * ----------
- *  // Print all elements in 'arr' into `cout`. Or print the first 4 elements
- *  // into `cout`.
- *  vector<int> arr(5, 1);
- *  prt_a(cout, arr) << endl;
- *  prt_a(cout, arr.begin(), arr.begin()+4) << endl;
- *  // In the output devide, printed results would be like
- *  // 1,1,1,1,1
- *  // 1,1,1,1
- */
-template<typename Container>
-ostream & prt_a( ostream &os, const Container &array ){
-    typedef typename Container::const_iterator it_t;
-    return PrtArray<it_t>( array ).prt( os );
-}
-template<typename InputIterator>
-ostream & prt_a( ostream &os, InputIterator b, InputIterator e ){
-    return PrtArray<InputIterator>( b, e ).prt( os );
 }
     
 } // namespace HIPP

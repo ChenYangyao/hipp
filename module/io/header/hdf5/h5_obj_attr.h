@@ -1,6 +1,7 @@
 /**
  * creat: Yangyao CHEN, 2020/01/11
- *      [write   ] H5Attr - HDF5 attribute high-level object.
+ *      [write   ] 
+ *      @H5Attr: HDF5 attribute high-level object.
  */ 
 
 #ifndef _HIPPIO_H5_OBJ_ATTR_H_
@@ -68,7 +69,7 @@ protected:
 
     template<typename T>
     static H5Attr create( id_t loc, const string &name, 
-        const vector<size_t> &dims, 
+        const vector<hsize_t> &dims, 
         const string &flag);
 
     template<typename T>
@@ -110,8 +111,8 @@ H5Attr::datatype() const
 template<typename T, typename A>
 void H5Attr::write( const vector<T, A> &buff ){
     auto dims = dataspace().dims();
-    auto size = std::accumulate( dims.begin(), dims.end(), size_t(1),
-        std::multiplies<size_t>() );
+    auto size = std::accumulate( dims.begin(), dims.end(), hsize_t(1),
+        std::multiplies<hsize_t>() );
     if( size != buff.size() )
         ErrLogic::throw_( ErrLogic::eLENGTH, emFLPFB,
             "  ... buff length ", buff.size(), 
@@ -120,7 +121,8 @@ void H5Attr::write( const vector<T, A> &buff ){
 }
 template<>
 inline void H5Attr::write( const vector<string> &buff ){
-    auto size = dataspace().size(), len=datatype().size();
+    auto size = dataspace().size();
+    auto len = datatype().size();
     size_t realsize=buff.size(), reallen = H5TypeStr::shape(buff)[1];
     if( size != realsize )
         ErrLogic::throw_( ErrLogic::eLENGTH, emFLPFB,
@@ -148,14 +150,15 @@ inline void H5Attr::write( const string &buff ){
 template<typename T, typename A>
 void H5Attr::read( vector<T, A> &buff ) const{
     auto dims = dataspace().dims();
-    auto size = std::accumulate( dims.begin(), dims.end(), size_t(1), 
-        std::multiplies<size_t>() );
+    auto size = std::accumulate( dims.begin(), dims.end(), hsize_t(1), 
+        std::multiplies<hsize_t>() );
     buff.resize( size );
     read<T>( buff.data() );
 }
 template<>
 inline void H5Attr::read( vector<string> &buff ) const{
-    auto size = dataspace().size(), len = datatype().size();
+    auto size = dataspace().size();
+    auto len = datatype().size();
     vector<char> _buff( size*len, '\0' );
     _obj_ptr->read( datatype().raw(), _buff.data());
     buff = H5TypeStr::deserialize( _buff, size );
@@ -174,7 +177,7 @@ inline void H5Attr::read( string &buff ) const{
 }
 
 template<typename T>
-H5Attr H5Attr::create( id_t loc, const string &name, const vector<size_t> &dims, 
+H5Attr H5Attr::create( id_t loc, const string &name, const vector<hsize_t> &dims, 
     const string &flag){
     int rank = dims.size();
     _H5Dataspace dspace( rank, dims.data() );
@@ -183,7 +186,7 @@ H5Attr H5Attr::create( id_t loc, const string &name, const vector<size_t> &dims,
 }
 template<>
 inline H5Attr H5Attr::create<string>( 
-    id_t loc, const string &name, const vector<size_t> &dims, 
+    id_t loc, const string &name, const vector<hsize_t> &dims, 
     const string &flag){
     typedef H5TypeStr str_t;
     _H5Datatype dtype( _H5Datatype::copy( str_t::h5_id ) );

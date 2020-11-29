@@ -1,3 +1,9 @@
+/**
+ * creat: Yangyao CHEN, 2020/11/29
+ *      [write   ]
+ *      @H5PropList: High-level HDF5 property list API.
+ */ 
+
 #ifndef _HIPPIO_H5_OBJ_PROPLIST_H_
 #define _HIPPIO_H5_OBJ_PROPLIST_H_
 #include "h5_obj_base.h"
@@ -17,18 +23,18 @@ public:
     H5Proplist & set_layout( const string &layout );
     string layout() const;
 
-    H5Proplist & set_chunk( vector<size_t> dims );
+    H5Proplist & set_chunk( vector<hsize_t> dims );
     int chunk_ndims() const;
-    vector<size_t> chunk() const;
+    vector<hsize_t> chunk() const;
 
     H5Proplist & set_chunk_cache( 
-        std::size_t nslot, std::size_t nbytes, double w0 );
-    void chunk_cache( std::size_t &nslot, 
-        std::size_t &nbytes, double &w0 ) const;
+        size_t nslot, size_t nbytes, double w0 );
+    void chunk_cache( size_t &nslot, 
+        size_t &nbytes, double &w0 ) const;
     
-    H5Proplist & set_cache( std::size_t nslot, 
-        std::size_t nbytes, double w0 );
-    void cache( std::size_t &nslot, std::size_t &nbytes, double &w0 ) const;
+    H5Proplist & set_cache( size_t nslot, 
+        size_t nbytes, double w0 );
+    void cache( size_t &nslot, size_t &nbytes, double &w0 ) const;
 
     static const H5Proplist defaultval;
 protected:

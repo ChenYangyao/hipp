@@ -1,8 +1,7 @@
 /**
  * creat: Yangyao CHEN, 2020/01/11
  *      [write   ] 
- *          ErrH5 - the HDF5 wrapped high-level interface exception 
- *                  class.
+ *      @ErrH5: the HDF5 wrapped high-level interface exception class.
  */ 
 
 #ifndef _HIPPIO_H5_ERROR_H_

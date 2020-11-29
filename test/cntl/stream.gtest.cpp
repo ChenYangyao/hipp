@@ -82,16 +82,16 @@ TEST_F(CntlStreamPrtTest, PrtA) {
 }
 
 /* str and str_X */
-TEST(CntlStream, Str){
+TEST(CntlStreamTest, Str){
     int a = 1;
     auto s = str(a, " is ", "not ", 2);
     ASSERT_EQ(s, "1 is not 2");
 }
-TEST(CntlStream, StrF){
+TEST(CntlStreamTest, StrF){
     auto s = str_f("%d%s%s%5.1f", 1, " is ", "not ", 2.1);
     ASSERT_EQ(s, "1 is not   2.1");
 }
-TEST(CntlStream, StrA){
+TEST(CntlStreamTest, StrA){
     vector<double> a = {1,2,3,4,5};
     auto s = str_a(a); 
     ASSERT_EQ(s, "1,2,3,4,5");

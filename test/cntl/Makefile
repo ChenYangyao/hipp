@@ -15,12 +15,10 @@ gtest.out: $(GTEST_OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS) -lgtest_main -lgtest
 gtest:
 	make gtest.out && ./gtest.out
-	rm -f *.h5
 
 clean:
 	rm -f *.gtest.o 
 	rm -f *.gtest.out 
 	rm -f *.out
-	rm -f *.h5
 
 

@@ -1,3 +1,8 @@
+/**
+ * creat: Yangyao CHEN, 2020/11/29
+ * The IO API of HIPP.
+ */ 
+
 #ifndef _HIPPIO_H_
 #define _HIPPIO_H_
 

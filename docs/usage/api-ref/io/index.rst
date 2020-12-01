@@ -1,5 +1,5 @@
 *************************************
-API Reference for the IO Module
+IO Module
 *************************************
 
 .. _api-io-usage:

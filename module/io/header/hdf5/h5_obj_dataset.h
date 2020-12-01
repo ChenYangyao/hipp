@@ -20,6 +20,7 @@ class H5File;
 class H5Dataset: public H5Obj<_H5Dataset>{
 public:
     typedef H5Obj<_H5Dataset> _obj_base_t;
+
     using _obj_base_t::_obj_base_t;
     
     /**
@@ -132,7 +133,7 @@ public:
         const H5Dataspace &filespace=H5Dataspace::allval,
         const H5Proplist &xprop=H5Proplist::defaultval ) const;
 
-    static H5Proplist create_proplist( const string &cls );
+    static H5Proplist create_proplist(const string &cls);
     H5Proplist proplist(const string &cls) const;
 protected:
     friend class H5Group;

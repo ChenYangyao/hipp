@@ -14,6 +14,11 @@ public:
     typedef H5S_seloper_t seloper_t;
     typedef H5S_class_t class_t;
 
+    static constexpr class_t 
+        NULL_C = H5S_NULL, 
+        SIMPLE_C = H5S_SIMPLE,
+        SCALAR_C = H5S_SCALAR;
+        
     explicit _H5Dataspace( id_t dataspace, int state=stFREE) noexcept;
     _H5Dataspace( int rank, const hsize_t *dims, const hsize_t *maxdims=NULL );
     ~_H5Dataspace();

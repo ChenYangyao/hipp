@@ -1,4 +1,4 @@
-I/O the Arrays of Numeric Types
+I/O Arrays of Numeric Types
 ===============================================================
 
 All of the HIPP IO APIs can be accessed by including the header ``<hippio.h>``. The detailed conventions
@@ -77,7 +77,7 @@ of that array. Then the write/read operations are the same as those of one-dimen
     dset3.read(arr3_in_buff);
 
 After the output operations, a file named "arrays.h5" is created in the OS's file system.
-Using ``h5dump`` in the command line prompt, you can view and verify the content of 
+Using ``h5dump arrays.h5`` in the command line prompt, you can view and verify the content of 
 each dataset
 
 .. code-block:: text 

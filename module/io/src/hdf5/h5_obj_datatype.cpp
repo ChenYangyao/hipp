@@ -33,7 +33,7 @@ H5Datatype & H5Datatype::pack(){
 unsigned H5Datatype::nmembers() const {
     return _obj_ptr->get_nmembers();
 }
-unsigned H5Datatype::nmember_index(const string &name) const {
+unsigned H5Datatype::member_index(const string &name) const {
     return _obj_ptr->get_member_index(name.c_str());
 }
 H5Datatype::class_t H5Datatype::member_class(unsigned idx) const {

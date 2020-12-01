@@ -10,9 +10,6 @@
 namespace HIPP{
 namespace IO{
 
-/**
- * HDF5 high-level datatype object.
- */
 class H5Datatype: public H5Obj<_H5Datatype>{
 public:
     typedef H5Obj<_H5Datatype> _obj_base_t;
@@ -26,28 +23,12 @@ public:
     
     using _obj_base_t::_obj_base_t;
 
-    /**
-     * test whether the two datatype is equal.
-     */
     bool equal( const H5Datatype &dtype ) const;
-    /**
-     * retrurn the byte-size of the datatype.
-     */
     size_t size() const;
 
-    /**
-     * make a copy of the current datatype
-     */
     H5Datatype copy() const;
-
-    /**
-     * set the size of the current datatype
-     */
     void resize( size_t size );
 
-    /**
-     * compound datatype creator and visitor
-     */
     static H5Datatype create(class_t c, size_t size);
     template<typename record_t, typename field_t, typename ...Args>
     static H5Datatype create_compound(
@@ -58,7 +39,7 @@ public:
     H5Datatype & insert(const string &name, field_t record_t::*field_ptr);
     H5Datatype & pack();
     unsigned nmembers() const;
-    unsigned nmember_index(const string &name) const;
+    unsigned member_index(const string &name) const;
     class_t member_class(unsigned idx) const;
     size_t member_offset(unsigned idx) const;
     H5Datatype member_type(unsigned idx) const;

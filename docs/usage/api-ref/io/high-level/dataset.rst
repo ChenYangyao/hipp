@@ -348,28 +348,25 @@ class H5Dataset
                         H5Attr create_attr(\
                             const string &name, const vector<hsize_t> &dims, \
                             const string &flag="trunc")
-                    H5Attr open_attr(const string &name)
+                    H5Attr create_attr(\
+                        const string &name, const H5Datatype &dtype, \
+                        const vector<hsize_t> &dims, const string &flag="trunc")
+                    template<typename T>\
+                    H5Attr create_attr_scalar(\
+                        const string &name, const string &flag="trunc")
+                    H5Attr create_attr_str(\
+                        const string &name, size_t len, const string &flag="trunc")
+        
+        Create a new attribute (or open an existing attribute) under the root group of this file instance.
+
+        The template parameter and argument list is the same with :func:`H5File::create_dataset()` and its variants. 
+        The difference is that you cannot specify any property list.
+        
+
+    .. function::   H5Attr open_attr(const string &name)
                     bool attr_exists(const string &name) const
-        
-        Attribute manipulation methods.
 
-        ``create_attr<T>()`` creates an attribute of type ``T`` under the dataset instance with 
-        name spefified by ``name``, dimensions spefified by ``dims`` (i.e., number of elements on each 
-        dimension). 
-        Type ``T`` can be either numeric :ref:`Predefined Datatypes <api-io-dtype-predefined>` (e.g., ``int``, ``float``) 
-        or ``std::string``:
-
-        -   For nuemric types， ``dims`` is the actual shape of the array to be created.
-        -   For ``std::string``, the attribute can contain an array of string.  
-            The ``dims`` must be ``{ num_of_str, max_str_size}``, where ``max_str_size`` must contain the space of 
-            the terminate null character. It is best to calculate dims use :func:`H5TypeStr::shape`.
-        
-        If the attribute has been existed, ``flag`` specifies how to deal with it. Possible values are:
-        
-        - "trunc": just open it.
-        - "excl":  do not open and throw a exception :class:`ErrH5`.
-
-        ``open_attr()`` opens an existing attribute of name ``name``. If not existing, throw an error :class:`ErrH5`.
+        Opens an existing attribute of name ``name``. If not existing, throw an error :class:`ErrH5`.
 
         ``attr_exists()`` checks whether an attribute has been existed.
     

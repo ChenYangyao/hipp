@@ -20,59 +20,31 @@ class H5File;
 class H5Dataset: public H5Obj<_H5Dataset>{
 public:
     typedef H5Obj<_H5Dataset> _obj_base_t;
+
     using _obj_base_t::_obj_base_t;
     
-    /**
-     * retrive the info of this dataset.
-     * dataspace(): return the dataspace.
-     * datatype():  return the datatype.
-     */
     H5Dataspace dataspace();
     const H5Dataspace dataspace() const;
     H5Datatype datatype();
     const H5Datatype datatype() const;
     
-    /**
-     * create an attribute of type `T` under the dataset instance.
-     * @name:   attribute name.
-     * @dims:   dimensions.
-     * @flag:   if the attribute of name `name` exists, flag specifies how to
-     *          deal with it. Possible values are:
-     *          "trunc": just open it.
-     *          "excl":  do not open and throw a exception `ErrH5`.
-     * Type `T` can be either numeric type (e.g. float, double, int, ...) or 
-     * std::string.
-     * For nuemric type (e.g. float, double, int, char ...), `dims` is at 
-     * actual shape of the array to be created.
-     * For std::string, the `dims` must be { no. of str, max str size }. The 
-     * `max str size` must contain the space of the terminate null character.
-     * It is best to calculate dims use H5TypeStr::shape().
-     */
     template<typename T>
     H5Attr create_attr(
         const string &name, const vector<hsize_t> &dims, 
         const string &flag="trunc");
-    /**
-     * open an existing attribute of name `name`.
-     * If not existing, throw an error `ErrH5`.
-     * 
-     * To check whether a attribute of name `name` exists, use 
-     * attr_exists(name).
-     */
+    H5Attr create_attr(
+        const string &name, const H5Datatype &dtype, 
+        const vector<hsize_t> &dims, const string &flag="trunc");
+    template<typename T>
+    H5Attr create_attr_scalar(
+        const string &name, const string &flag="trunc");
+    H5Attr create_attr_str(
+        const string &name, size_t len, const string &flag="trunc");
+
+
     H5Attr open_attr(const string &name);
     bool attr_exists(const string &name) const;
 
-    /**
-     * write data in `buff` into the dataset.
-     * Type and number of elements in the `buff` must be compatible with the 
-     * dataset size.
-     * Vector version: check the size of `buff`. If not compatible an ErrLogic
-     * is thrown.
-     * Pointer version, no check is performed.
-     * @T:  Type of element. Must be a numeric type.
-     * 
-     * For the vector version, vector<string> is allowed.
-     */
     template<typename T, typename A>
     void write( const vector<T, A> &buff, 
         const H5Dataspace &memspace = H5Dataspace::allval, 
@@ -98,17 +70,7 @@ public:
         const H5Dataspace &filespace=H5Dataspace::allval, 
         const H5Proplist &xprop=H5Proplist::defaultval );
 
-    /**
-     * read data in the dataset into buff.
-     * Type and number of elements in the `buff` must be compatible with the 
-     * dataset size.
-     * Vector version: size of buff is automatically resized to the dataset 
-     * size.
-     * Pointer version: no resize is performed.
-     * @T:  Type of element. Must be a numeric type.
-     * 
-     * For the vector version, vector<string> is allowed.
-     */
+
     template<typename T, typename A>
     void read( vector<T, A> &buff,
         const H5Dataspace &memspace = H5Dataspace::allval, 
@@ -132,7 +94,7 @@ public:
         const H5Dataspace &filespace=H5Dataspace::allval,
         const H5Proplist &xprop=H5Proplist::defaultval ) const;
 
-    static H5Proplist create_proplist( const string &cls );
+    static H5Proplist create_proplist(const string &cls);
     H5Proplist proplist(const string &cls) const;
 protected:
     friend class H5Group;
@@ -174,6 +136,11 @@ H5Attr H5Dataset::create_attr(const string &name, const vector<hsize_t> &dims,
     const string &flag)
 {
     return H5Attr::create<T>(raw(), name, dims, flag);
+}
+template<typename T>
+H5Attr H5Dataset::create_attr_scalar(
+    const string &name, const string &flag){
+    return H5Attr::create_scalar<T>(raw(), name, flag);
 }
 template<typename T, typename A>
 void H5Dataset::write( const vector<T, A> &buff, 

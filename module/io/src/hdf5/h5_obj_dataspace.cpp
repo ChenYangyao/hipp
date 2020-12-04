@@ -8,17 +8,18 @@ H5Dataspace::H5Dataspace( const vector<hsize_t> &dims,
     const vector<hsize_t> &maxdims )
     :_obj_base_t( std::make_shared<_obj_raw_t>( 
         dims.size(), dims.data(), maxdims.data() ) ){}
-
+H5Dataspace H5Dataspace::create(class_t type){
+    return _from_raw( _obj_raw_t::create(type) );
+}
 H5Dataspace H5Dataspace::create_null(){
-    return _from_raw( _obj_raw_t::create( H5S_NULL ) );
+    return create(NULL_C);
 }
 H5Dataspace H5Dataspace::create_scalar(){
-    return _from_raw( _obj_raw_t::create( H5S_SCALAR ) );
+    return create(SCALAR_C);
 }
 H5Dataspace H5Dataspace::create_simple(){
-    return _from_raw( _obj_raw_t::create( H5S_SIMPLE ) );
+    return create(SIMPLE_C);
 }
-
 int H5Dataspace::ndims( )const{
     return _obj_ptr->get_simple_extent_ndims();
 }

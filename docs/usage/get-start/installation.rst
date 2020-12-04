@@ -13,7 +13,7 @@ The library is tested to work on a GNU-compliant compiling system, but have not 
 to contact us if you have any problem.
 
 Depending on the modules you want to install, other libraries may be necessary. 
-See the :ref:`Installation Options <install-opt>`.
+See the :ref:`Installation Options <install-opt>` below.
 
 
 How to Install
@@ -22,7 +22,7 @@ How to Install
 (1) Clone or download the `Github <https://github.com/ChenYangyao/hipp>`_ repository 
     (unzip it if compressed), then enter the root directory of it. 
 
-(2) Execute in you command.
+(2) Execute the following shell commands:
 
     .. code-block:: bash 
 
@@ -56,24 +56,22 @@ the corresponding option on in the invoke of cmake:
 
 The supported modules and system-requirements are 
 
-========================== ================================ =============================================
-Module                     Description                      System Requirement
-========================== ================================ =============================================
-mpi                        Message Passing Interface        A MPI environment (supports standard >= 3.0)
-hdf5                       IO library                       C environment for HDF5 (>=1.8.0)
-simd                       Template SIMD library            x86 Arch that supports SIMD 
-gsl                        The scientific library           GSL (>=2.6) 
-========================== ================================ =============================================
+========================== ========================== ================================ =============================================
+Module                     CMake Option               Description                      System Requirement
+========================== ========================== ================================ =============================================
+MPI                        -Denable-mpi=ON            Message Passing Interface        MPI environment (standard >= 3.0)
+IO                         -Denable-hdf5=ON           IO library                       HDF5 C library (version >=1.8.0)
+SIMD                       -Denable-simd=ON           Template SIMD library            x86 Arch that supports SIMD 
+NUMERICAL                  -Denable-gsl=ON            The scientific library           GSL (>=2.6) 
+========================== ========================== ================================ =============================================
         
-These options can be turned on simultaneously. e.g. :bash:`-Denable-mpi=ON -Denable-gsl=ON`.
-
-Other options that can be specified by :bash:`-D` in the invode of :bash:`cmake` are 
+These options can be turned on simultaneously. e.g. :bash:`-Denable-mpi=ON -Denable-gsl=ON`. Other options that can be specified by :bash:`-D` in the invode of :bash:`cmake` are 
 
 ========================== ====================================================
 Option                     Description                     
 ========================== ====================================================
-cxx                        The C++ compiler (must support standard 17)
-prefix                     The location to install the binary and header files
+-Dcxx=/path/to/cxx         The C++ compiler (must support standard 17)
+-Dprefix=/path/to/install  The location to install the binary and header files
 ========================== ====================================================
 
 

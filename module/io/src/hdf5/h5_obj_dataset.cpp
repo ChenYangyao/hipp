@@ -17,7 +17,16 @@ H5Datatype H5Dataset::datatype(){
 }
 const H5Datatype H5Dataset::datatype() const
     { return const_cast<H5Dataset *>(this)->datatype(); }
-
+H5Attr H5Dataset::create_attr(
+    const string &name, const H5Datatype &dtype, 
+    const vector<hsize_t> &dims, const string &flag){
+    _H5Dataspace dspace(dims.size(), dims.data());
+    return H5Attr::create(raw(), name, dtype.obj_raw(), dspace, flag);
+}
+H5Attr H5Dataset::create_attr_str(
+    const string &name, size_t len, const string &flag){
+    return H5Attr::create_str( raw(), name, len, flag );
+}
 H5Attr H5Dataset::open_attr(const string &name){
     return H5Attr::open( raw(), name );
 }

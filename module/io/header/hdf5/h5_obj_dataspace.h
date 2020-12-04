@@ -14,11 +14,20 @@ class H5Dataspace: public H5Obj<_H5Dataspace>{
 public:
     typedef H5Obj<_H5Dataspace> _obj_base_t;
     
+    typedef _obj_raw_t::class_t class_t;
+    static constexpr class_t 
+        NULL_C = _obj_raw_t::NULL_C,
+        SIMPLE_C = _obj_raw_t::SIMPLE_C,
+        SCALAR_C = _obj_raw_t::SCALAR_C;
+
     static const H5Dataspace allval, nullval, scalarval;
 
     using _obj_base_t::_obj_base_t;
+
     H5Dataspace( const vector<hsize_t> &dims );
     H5Dataspace( const vector<hsize_t> &dims, const vector<hsize_t> &maxdims );
+
+    static H5Dataspace create(class_t type);
     static H5Dataspace create_null();
     static H5Dataspace create_scalar();
     static H5Dataspace create_simple();

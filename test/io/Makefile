@@ -1,6 +1,6 @@
 CXXFLAGS = $(CXX_BASE_FLAGS) -pthread
 LDFLAGS = 
-LDLIBS = -lmymathCC $(CXX_BASE_LIBDIRS) -lhippcntl
+LDLIBS = $(CXX_BASE_LIBDIRS) -lhippcntl
 .PHONY: clean gtest
 
 EXECS := $(patsubst %.cpp,%.out,$(wildcard *.cpp))

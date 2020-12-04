@@ -357,9 +357,9 @@ class H5Dataset
                     H5Attr create_attr_str(\
                         const string &name, size_t len, const string &flag="trunc")
         
-        Create a new attribute (or open an existing attribute) under the root group of this file instance.
+        Create a new attribute (or open an existing attribute) under the current dataset.
 
-        The template parameter and argument list is the same with :func:`H5File::create_dataset()` and its variants. 
+        The template parameter and argument list are the same with :func:`H5File::create_dataset` and its variants. 
         The difference is that you cannot specify any property list.
         
 

@@ -13,8 +13,8 @@ HIPP: Modern C++ Toolkit for HPC
 .. |badge3| image:: https://img.shields.io/github/last-commit/ChenYangyao/hipp
 .. |badge4| image:: https://img.shields.io/github/last-commit/ChenYangyao/hipp/dev
 
-**HIPP** is still under active development. If you live C++ programming and scientific computation, you 
-are welcome to join us. Also, we are happy to receive any comment or suggestion from you.
+**HIPP** is still under active development. If you love C++ programming and scientific computation, you 
+are welcome to join us. We are happy to receive any comment or suggestion from you.
 
 About HIPP 
 -----------------------

@@ -1,7 +1,55 @@
 Quick Start
 =====================
 
-Write and Build an Application that Use HIPP: A Minimal Example  
+The Overall Structure and Conventions of HIPP
+-----------------------------------------------
+
+.. _hipp-namespace:
+
+HIPP's functions/objects are defined in a single **namespace** ``HIPP``. Depending on the module to use,
+you may need to include different **header files** and visit sub-namespaces. See :numref:`fig-hipp-namespaces`
+for a summary.
+
+-   The general C++ utilities are defined directly in namespace ``HIPP``. Users include the header ``<hippcntl.h>`` for access to them.
+    Examples include the :func:`HIPP::prt` function and the :class:`HIPP::ErrLogic` class.
+-   For each module X, there is a single sub-namespace ``HIPP::X``. User include the header ``<hippx.h>`` to use them. 
+    For example, the ``MPI`` module has a namespace ``HIPP::MPI``. Therefore, to use the communicator class, include ``<htppmpi.h>``
+    and define :class:`HIPP::MPI::Comm` instances.
+
+.. _hipp-naming-convention:
+
+HIPP uses an ordinary **naming conventions** for definitions:
+
+-   Namespaces are capitalized. For example: 
+    
+    - The global namespace ``HIPP``
+    - The sub-namespace ``MPI``, ``IO``, ``SIMD``.
+
+-   C++ ``class/struct`` uses CamelCase convention, with the first letter capitalized. For example: 
+    
+    - The MPI group class :class:`HIPP::MPI::Group`.
+    - HDF5 file class :class:`HIPP::IO::H5File`.
+    - Logic exception type :class:`HIPP::ErrLogic`.
+
+-   Functions, (class) methods and variables are lower case. For example: 
+    
+    - The printing function :func:`prt`. 
+    - The dataset creation method in a HDF5 file class :func:`HIPP::IO::H5File::create_dataset`.
+
+-   Constant variables (``const`` or ``constexpr``) are capitalized, except for special cases. For example: 
+
+    - The MPI float datatype :var:`HIPP::MPI::DOUBLE`.
+    - The HDF5 dataspace class for scalar :enumerator:`HIPP::IO::H5Dataspace::SCALAR_C`.
+
+.. _fig-hipp-namespaces:
+.. figure:: img/hipp-namespaces.png
+
+    **Header files and namespaces.**
+    All HIPP utilities are defined
+    in the namespace ``HIPP``. Functions/objects in a module are defined in the sub-namespace,
+
+
+Using HIPP: A Minimal Example  
 -----------------------------------------------------------------
 
 .. code-block::

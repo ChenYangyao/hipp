@@ -5,8 +5,8 @@ The following classes are all defined within namespace ``HIPP::MPI``.
 
 .. namespace:: HIPP::MPI
 
-Class Comm: Communicator
--------------------------------
+Class Comm: the Communication Context 
+----------------------------------------
 
 .. class:: Comm : public MPIObj<_Comm>
 
@@ -700,8 +700,8 @@ Class Comm: Communicator
     The output is similar to the previous example using standard send/recv.
 
 
-Class Group: Process Collection
-----------------------------------
+Class Group: the Process Collection
+-------------------------------------------
 
 .. class::  Group: public MPIObj<_Group>
 
@@ -848,7 +848,7 @@ Class Group: Process Collection
     Note that you can get the same result by using ``auto new_group = group.range_incl({0,2,1})`` 
     instead of the ``incl()``.
 
-Class Requests: Non-blocking Handler
+Class Requests: the Non-blocking Handler
 -------------------------------------------
 
 .. class:: Requests : public MPIObj<_Requests>
@@ -970,7 +970,7 @@ Class Requests: Non-blocking Handler
         Calls that cancel the posted requests.
         ``cancel()`` is equivalent to ``cancel(0)``.
 
-Class Status: Return Status 
+Class Status: the Return Status 
 --------------------------------
 
 .. class:: Status

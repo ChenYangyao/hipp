@@ -7,6 +7,7 @@ set(_src
     h5_obj_datatype.cpp
     h5_obj_group.cpp
     h5_obj_file.cpp
+    h5_obj_attr.cpp
     h5_obj_dataset.cpp
     h5_obj_proplist.cpp
 )

@@ -45,8 +45,11 @@ To avoid confusion, we list the convetions used in this API reference:
     :maxdepth: 2
     :caption: High-level API 
 
+    high-level/global-def
+    high-level/error
     high-level/file 
     high-level/dataset 
+    high-level/attr
 
 .. toctree::
     :maxdepth: 2

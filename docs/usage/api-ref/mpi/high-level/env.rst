@@ -89,7 +89,7 @@ All of the following are defined within the namespace ``HIPP::MPI``.
     is ordinary C++ size type (e.g., for container size/capacity, loop boundary). 
 
 
-Class Env: MPI Environment handler 
+Class Env: the MPI Environment handler 
 ----------------------------------------
 
 .. class:: Env

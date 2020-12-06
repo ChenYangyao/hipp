@@ -6,7 +6,7 @@ Installation
 System Requirements
 --------------------------
 
-- A Modern C++ compiler (supports C++ standard 17).
+- Modern C++ compiler (supports C++ standard 17).
 - CMake (version >= 3.9).
 
 The library is tested to work on a GNU-compliant compiling system, but have not tested on other compilers. Feel free 
@@ -26,23 +26,31 @@ How to Install
 
     .. code-block:: bash 
 
-        cmake ./ -Dprefix=./
+        mkdir build && cd build
+        cmake ..
         make 
         make install 
 
-    This configures, builds and installs **HIPP** in the current directory. 
+    This configures, builds the library in the :bash:`build/` directory, and install it into 
+    the default system location. 
+    
+    If you want to specify you own installation location, use :bash:`cmake .. -DCMAKE_INSTALL_PREFIX=/path/to/install` instead. 
     If successful, two folders named **lib** and **include** are generated, which contain 
-    the library and header files, respectively. 
-    You can modify the environment lists (e.g., :bash:`LIBRARY_PATH`, :bash:`LD_LIBRARY_PATH` and :bash:`CPLUS_INCLUDE_PATH`) 
-    to allow the installed files found by your compiling system.
+    the library and header files, respectively. You may add them into environment list. 
 
-To test whether the library is successfully installed, enter the directory **example/cntl** and try 
+    To compile the library parallelly, use :bash:`make -j number-of-processes`.
 
-.. code-block:: bash 
+    If your CMake version is recent enough, you can use :bash:`cmake --build . -j number-of-processes` to compile and 
+    use :bash:`cmake --build . --target install` to install.
 
-    make print.out && ./print.out
+(3) To test whether the library is successfully installed, execute
 
-This compiles and run an example file. If successful, it prints some meaningful results.
+    .. code-block:: bash 
+
+        make test 
+
+    This runs the test cases and outputs (if any) the errors discovered. 
+    You may use :bash:`ctest -VV` to print detail test output.
 
 .. _install-opt:
 
@@ -52,9 +60,9 @@ the corresponding option on in the invoke of cmake:
 
 .. code-block:: bash 
 
-    cmake ./ -Dprefix=./ -Denable-mpi=ON
+    cmake .. -Denable-mpi=ON
 
-The supported modules and system-requirements are 
+The supported modules and system-requirements are (can be turned on simultaneously): 
 
 ========================== ========================== ================================ =============================================
 Module                     CMake Option               Description                      System Requirement
@@ -65,14 +73,15 @@ SIMD                       -Denable-simd=ON           Template SIMD library     
 NUMERICAL                  -Denable-gsl=ON            The scientific library           GSL (>=2.6) 
 ========================== ========================== ================================ =============================================
         
-These options can be turned on simultaneously. e.g. :bash:`-Denable-mpi=ON -Denable-gsl=ON`. Other options that can be specified by :bash:`-D` in the invode of :bash:`cmake` are 
+Other options that can be specified by :bash:`-D` in the invode of :bash:`cmake` are 
 
-========================== ====================================================
-Option                     Description                     
-========================== ====================================================
--Dcxx=/path/to/cxx         The C++ compiler (must support standard 17)
--Dprefix=/path/to/install  The location to install the binary and header files
-========================== ====================================================
+======================================= ===================================================================
+Option                                  Description                     
+======================================= ===================================================================
+-DCMAKE_CXX_COMPILE=/path/to/compiler   The C++ compiler (must support standard 17)
+-DCMAKE_CXX_FLAGS="flag1 flag2 ..."     Compiling and linking flags (default: "-O3 -Wall")
+-DBUILD_TESTING=OFF                     Whether to build test cases (default: ON)
+======================================= ===================================================================
 
 
 

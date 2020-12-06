@@ -10,10 +10,11 @@ HIPP's functions/objects are defined in a single **namespace** ``HIPP``. Dependi
 you may need to include different **header files** and visit sub-namespaces. See :numref:`fig-hipp-namespaces`
 for a summary.
 
--   The general C++ utilities are defined directly in namespace ``HIPP``. Users include the header ``<hippcntl.h>`` for access to them.
-    Examples include the :func:`HIPP::prt` function and the :class:`HIPP::ErrLogic` class.
+-   The general C++ utilities are defined directly in namespace ``HIPP``. 
+    Users include the header ``<hippcntl.h>`` for access to them,
+    e.g., the :func:`HIPP::prt` function and the :class:`HIPP::ErrLogic` class.
 -   For each module X, there is a single sub-namespace ``HIPP::X``. User include the header ``<hippx.h>`` to use them. 
-    For example, the ``MPI`` module has a namespace ``HIPP::MPI``. Therefore, to use the communicator class, include ``<htppmpi.h>``
+    For example, to use the communicator class in the MPI module, include ``<htppmpi.h>``
     and define :class:`HIPP::MPI::Comm` instances.
 
 .. _hipp-naming-convention:

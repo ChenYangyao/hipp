@@ -176,7 +176,7 @@ H5XTable<record_t>::H5XTable( Args &&...args )
 
 template<typename record_t>
 H5XTable<record_t>::H5XTable(H5XTable &&that) noexcept 
-: _buff(std::move(that._buff)), _fields(std::move(that._fields)),
+: _fields(std::move(that._fields)), _buff(std::move(that._buff)),
 _comp_dtype(std::move(that._comp_dtype))
 {}
 

@@ -147,7 +147,9 @@ struct Field {
 
     template<typename MIter>
     static void _push_dims(vector<hsize_t> &dims){
-        constexpr hsize_t n_elem = sizeof(MIter) / sizeof(scalar_t);
+        constexpr hsize_t n1 = sizeof(MIter),
+            n2 = sizeof(scalar_t),
+            n_elem =  n1/n2; 
         if constexpr( n_elem > 1 ){
             dims.push_back(n_elem);
             _push_dims<decltype(std::declval<MIter>()[0])>(dims);

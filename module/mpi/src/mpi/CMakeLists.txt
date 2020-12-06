@@ -14,7 +14,7 @@ set(_src
     mpi_requests.cpp
 )
 set(_libname "${_projectid}${_modid}${_submodid}")
-
+set(_headerdir "${_moddir}/header")
 message(STATUS "Sub module: ${_libname}")
 message("   Sources: ${_src}")
 
@@ -30,15 +30,11 @@ set_target_properties(${_libname}
 )
 target_include_directories(${_libname}
     PRIVATE
-        "${_moddir}/header/${_submodid}"
-    PUBLIC 
-        ${MPI_CXX_INCLUDE_PATH}
-        "${_moddir}/header"
-        "${_projectdir}/module/cntl/header"
+        "${_headerdir}/${_submodid}"
+        "${_headerdir}"
 )
-target_compile_options(${_libname} 
-    PUBLIC 
-        ${MPI_CXX_COMPILE_FLAGS}
+target_link_libraries(${_libname}
     PRIVATE
-        ${_cxx_flags}
+        "${_projectid}cntl"
+        MPI::MPI_CXX
 )

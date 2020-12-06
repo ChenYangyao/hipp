@@ -3,7 +3,7 @@ set(_src
     gsl_util_error.cpp
 )
 set(_libname "${_projectid}${_modid}${_submodid}")
-
+set(_headerdir "${_moddir}/header")
 message(STATUS "Sub module: ${_libname}")
 message("   Sources: ${_src}")
 
@@ -13,24 +13,22 @@ target_sources(${_libname}
     PRIVATE
         ${_src}
 )
-
 set_target_properties(${_libname}
     PROPERTIES
         POSITION_INDEPENDENT_CODE 1
 )
-
-set(_includes "${_moddir}/header" "${_projectdir}/module/cntl/header")
+set(_includes 
+    "${_headerdir}/${_submodid}"
+    "${_headerdir}" 
+)
 if(gsl_include_dir)
-    list(APPEND _includes ${gsl_include_dir})
+    list(APPEND _includes "${gsl_include_dir}")
 endif()
 target_include_directories(${_libname}
     PRIVATE
-        "${_moddir}/header/${_submodid}"
-    PUBLIC  
         ${_includes}
 )
-
-target_compile_options(${_libname} 
+target_link_libraries(${_libname}
     PRIVATE
-        ${_cxx_flags}
+        "${_projectid}cntl"
 )

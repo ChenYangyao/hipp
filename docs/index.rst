@@ -8,7 +8,7 @@ HIPP: Modern C++ Toolkit for HPC
 
 |badge1| |badge2| |badge3|
 
-.. |badge1| image:: https://img.shields.io/github/v/tag/ChenYangyao/hipp
+.. |badge1| image:: https://img.shields.io/github/v/release/ChenYangyao/hipp?include_prereleases
 .. |badge2| image:: https://img.shields.io/github/license/ChenYangyao/hipp
 .. |badge3| image:: https://img.shields.io/github/last-commit/ChenYangyao/hipp
 
@@ -101,6 +101,3 @@ Contributors
    usage/api-ref/mpi/index
    usage/api-ref/io/index
    usage/api-ref/simd/index
-
-.. role:: bash(code)
-   :language: bash

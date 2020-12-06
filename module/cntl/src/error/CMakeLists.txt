@@ -3,8 +3,9 @@ set(_src
     error_application.cpp 
     error_class.cpp 
     error_type.cpp)
-set(_libname "${_projectid}${_modid}${_submodid}")
 
+set(_libname "${_projectid}${_modid}${_submodid}")
+set(_headerdir "${_moddir}/header")
 message(STATUS "Sub module: ${_libname}")
 message("   Sources: ${_src}")
 
@@ -20,11 +21,7 @@ set_target_properties(${_libname}
 )
 target_include_directories(${_libname}
     PRIVATE
-        "${_moddir}/header/${_submodid}"
+        "${_headerdir}/${_submodid}"
     PUBLIC
-        "${_moddir}/header"
-)
-target_compile_options(${_libname} 
-    PRIVATE 
-        ${_cxx_flags}
+        "${_headerdir}"
 )

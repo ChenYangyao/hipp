@@ -10,9 +10,6 @@
 namespace HIPP{
 namespace IO{
 
-/**
- * the HDF5 wrapped high-level interface exception class.
- */
 class ErrH5: public ErrAppH5, public ErrClassDefault{
 public:
     typedef herr_t errno_t;
@@ -38,15 +35,12 @@ public:
     void set_errno( errno_t new_errno ) noexcept
         { _errno = new_errno; }
 
-    /**
-     * check(r, info) test if `r` < 0. If so call throw_(r, info).
-     * throw_(r, info) printing some information `info` and always throws an 
-     * `ErrH5(r)`, the printing is controlled by err_cntl_flag().
-     */
+    /* if r < 0, call throw_(args) */
     template<typename ReturnType, typename ...Args>
     static void check( ReturnType r, Args &&... args ){
         if( r < 0 ) throw_( r, std::forward<Args>(args)... );
     }
+    /* print args and throw ErrH5() */
     template<typename ReturnType, typename ...Args>
     static void throw_( ReturnType r, Args &&... args ){
         if( _err_cntl_flag )
@@ -54,14 +48,7 @@ public:
         throw ErrH5();
     }
 
-    /**
-     * the error-reporing controlling flag for our high-level wrapper.
-     * If set to 0, no error is printed on an exception. Otherwise some
-     * information is printed to `std::cerr` before an thrown exception.
-     * 
-     * err_cntl_flag() retrive the current flag, err_cntl_flag(flag) set the
-     * flag.
-     */
+    /* 1 for reporting error, 0 for not */
     static flag_t err_cntl_flag() noexcept
         { return _err_cntl_flag; }
     static void err_cntl_flag( flag_t flag ) noexcept

@@ -53,9 +53,9 @@ HIPP uses an ordinary **naming conventions** for definitions:
 
 Using HIPP: A Minimal Example  
 -----------------------------------------------------------------
-:download:`quick-start/printing.cpp <../../../example/quick-start/printing.cpp>`
+:download:`quick-start/printing.cpp </../example/quick-start/printing.cpp>`
 
-.. include:: ../../../example/quick-start/printing.cpp 
+.. include:: /../example/quick-start/printing.cpp 
     :code:  cpp
 
 To use HIPP general-purpose C++ utilities, include the header ``<hippcntl.h>``. HIPP provides
@@ -86,9 +86,9 @@ The output for this simple example is:
 
 Using the MPI Module
 -------------------------------
-:download:`quick-start/p2p-comm.cpp <../../../example/quick-start/p2p-comm.cpp>`
+:download:`quick-start/p2p-comm.cpp </../example/quick-start/p2p-comm.cpp>`
 
-.. include:: ../../../example/quick-start/p2p-comm.cpp 
+.. include:: /../example/quick-start/p2p-comm.cpp 
     :code:  cpp
 
 HIPP's MPI module provides full-OOP interface for the message passing programming. First, include the 
@@ -120,9 +120,9 @@ The output for this example is:
 
 Using the IO Module 
 ------------------------------------
-:download:`quick-start/io-arrays.cpp <../../../example/quick-start/io-arrays.cpp>`
+:download:`quick-start/io-arrays.cpp </../example/quick-start/io-arrays.cpp>`
 
-.. include:: ../../../example/quick-start/io-arrays.cpp 
+.. include:: /../example/quick-start/io-arrays.cpp 
     :code:  cpp
 
 IO as the HDF5 format is extremely easy with HIPP. First, include the header ``<hippio.h>``
@@ -151,7 +151,8 @@ to a group in the file, each member as a separate dataset.
 Or, you may use the call :func:`write_records <HIPP::IO::H5XTable::write_records>`
 to output them as a single dataset of compound datatype.
 
-To compile, link the library :bash:`hippcntl` and :bash:`hippio`.
+To compile, link the HIPP libraries :bash:`hippcntl` and :bash:`hippio`. Depending 
+on the platform, link to the underlying HDF5 library :bash:`hdf5` may also be necessary.
 
 .. code-block:: bash 
 

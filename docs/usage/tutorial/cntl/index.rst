@@ -1,3 +1,3 @@
 **********************************************
-General-purpose Utilities for C++ Programming
+General-purpose C++ Utilities
 **********************************************

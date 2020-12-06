@@ -326,7 +326,7 @@ Class H5Dataspace
         In the second overload, setting ``stride`` or ``block`` to ``NULL`` means "1" in all dimensions.
 
 
-class H5Dataset 
+Class H5Dataset 
 ---------------------
 
 .. class::  H5Dataset

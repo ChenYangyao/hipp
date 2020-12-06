@@ -3,24 +3,23 @@ project(hipp LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-include(cmake/colors.cmake)
-define_colors()
-
-set(_cxx_flags "-O3" "-Wall" CACHE STRING "c++ flags")
-if(prefix)
-    message(STATUS "Set prefix ${BoldBlue}${prefix}${ColourReset}")
-    set(CMAKE_INSTALL_PREFIX "${prefix}" CACHE PATH "Path to install" FORCE)
-else()
-    message(STATUS "Use default install path ${BoldBlue}${CMAKE_INSTALL_PREFIX}${ColourReset}")
-endif()
-
-if(cxx)
-    message(STATUS "Set cxx ${BoldBlue}${cxx}${ColourReset}")
-    set(CMAKE_CXX_COMPILER ${cxx} CACHE FILEPATH "CXX compiler" FORCE)
-else()
-    message(STATUS "Use default CXX compiler ${BoldBlue}${CMAKE_CXX_COMPILER}${ColourReset}")
-endif()
-
 set(_projectid hipp)
 set(_projectdir ${CMAKE_CURRENT_SOURCE_DIR})
+
+set(gsl_include_dir "" CACHE STRING "GSL header dir")
+set(gsl_lib_dir "" CACHE STRING "GSL library dir")
+
+if(NOT CMAKE_CXX_FLAGS)
+    set(CMAKE_CXX_FLAGS "-O3 -Wall")
+endif()
+
+include(cmake/colors.cmake)
+include(cmake/gtest.cmake)
+define_colors()
+
 add_subdirectory(module)
+
+include(CTest)
+if(BUILD_TESTING)
+    add_subdirectory(test)
+endif()

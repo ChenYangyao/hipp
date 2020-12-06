@@ -1,7 +1,7 @@
 CXX = c++
 CXXFLAGS = -std=c++17 -O3 -Wall
 LDFLAGS = 
-LDLIBS = -lhippcntl
+LDLIBS = -lhippio -lhippcntl -lhdf5
 
 MPICXX = mpicxx 
 MPILDLIBS = -lhippmpi

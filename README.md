@@ -4,7 +4,6 @@ HIPP: Modern C++ Toolkit for HPC
 ![](https://img.shields.io/github/v/tag/ChenYangyao/hipp)
 ![](https://img.shields.io/github/license/ChenYangyao/hipp)
 ![](https://img.shields.io/github/last-commit/ChenYangyao/hipp)
-![](https://img.shields.io/github/last-commit/ChenYangyao/hipp/dev)
 
 **HIPP** is still under active development. If you love C++ programming and scientific computation, you 
 are welcome to join us. We are happy to receive any comment or suggestion from you.
@@ -67,7 +66,7 @@ Here are some good examples of why to choose HIPP.
     all of our library components. Some of the modules yet cannot fit into the Google Test framework. If you have any 
     idea please help us. 
 
--   HIPP has a stack of abstraction layers. By using HIPP, you can finish almost all tasks that can be 
+-   HIPP has a stack of **abstraction layers**. By using HIPP, you can finish almost all tasks that can be 
     achieved by the underlying libraries. However, sometimes you still want to go back to the underlying
     libraries, possibly because the extreme demanding of performance or flexibility. To enable this, 
     HIPP uses abstraction layers, one on the top of another one, to allow the access of the underlying 

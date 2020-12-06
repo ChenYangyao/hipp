@@ -1,12 +1,13 @@
 set(_modid mpi)
 set(_moddir "${CMAKE_CURRENT_SOURCE_DIR}")
 
-message(STATUS "Module: ${_projectid}${_modid}")
+set(_libname "${_projectid}${_modid}")
+set(_headerdir "${_moddir}/header")
+message(STATUS "Module: ${_libname}")
 message("   Source at: ${_moddir}")
 
 find_package(MPI REQUIRED)
 add_subdirectory(src)
-set(_libname "${_projectid}${_modid}")
 add_library(${_libname}
     SHARED 
         "$<TARGET_OBJECTS:${_libname}mpi>"
@@ -16,25 +17,24 @@ set_target_properties(${_libname}
     PROPERTIES
         POSITION_INDEPENDENT_CODE 1
 )
-target_compile_options(${_libname} 
-    PRIVATE
-        ${_cxx_flags}
-)
 target_link_libraries(${_libname}
     PUBLIC 
-        MPI::MPI_CXX
         "${_projectid}cntl"
+        MPI::MPI_CXX
 )
-
+target_include_directories(${_libname} 
+    INTERFACE 
+        "${_headerdir}"
+)
 install(TARGETS ${_libname}
     DESTINATION lib
 )
 install(DIRECTORY 
-        "${_moddir}/header/mpi"
-        "${_moddir}/header/mpe"
+        "${_headerdir}/mpi"
+        "${_headerdir}/mpe"
     DESTINATION include
 )
 install(FILES
-        "${_moddir}/header/${_projectid}${_modid}.h"
+        "${_headerdir}/${_libname}.h"
     DESTINATION include
 )

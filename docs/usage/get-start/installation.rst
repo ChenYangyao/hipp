@@ -1,6 +1,8 @@
 Installation
 ===============================
 
+.. include:: /global.rst
+
 .. _install-requirement:
 
 System Requirements
@@ -50,9 +52,14 @@ How to Install
         make test 
 
     This runs the test cases and outputs (if any) the errors discovered. 
-    You may use :bash:`ctest -VV` to print detail test output.
+    Instead, you may use :bash:`ctest -VV` to run the tests and print more detailed information.
 
 .. _install-opt:
+
+
+Install Optional Modules
+---------------------------
+
 
 **Optionally**, you can install other modules supported by HIPP. For example, if your 
 system has a MPI environment, you can enable the installation of the MPI module in HIPP, by turning
@@ -71,6 +78,7 @@ MPI                        -Denable-mpi=ON            Message Passing Interface 
 IO                         -Denable-hdf5=ON           IO library                       HDF5 C library (version >=1.8.0)
 SIMD                       -Denable-simd=ON           Template SIMD library            x86 Arch that supports SIMD 
 NUMERICAL                  -Denable-gsl=ON            The scientific library           GSL (>=2.6) 
+ALGORITHM                  Automatically installed    The algorithms                   
 ========================== ========================== ================================ =============================================
         
 Other options that can be specified by :bash:`-D` in the invode of :bash:`cmake` are 

@@ -1,6 +1,8 @@
 Quick Start
 =====================
 
+.. include:: /global.rst
+
 The Overall Structure and Conventions of HIPP
 -----------------------------------------------
 
@@ -47,43 +49,32 @@ HIPP uses an ordinary **naming conventions** for definitions:
 
     **Header files and namespaces.**
     All HIPP utilities are defined
-    in the namespace ``HIPP``. Functions/objects in a module are defined in the sub-namespace,
-
+    in the namespace ``HIPP``. Functions/objects in a module are defined in the sub-namespace.
 
 Using HIPP: A Minimal Example  
 -----------------------------------------------------------------
+:download:`quick-start/printing.cpp <../../../example/quick-start/printing.cpp>`
 
-.. code-block::
+.. include:: ../../../example/quick-start/printing.cpp 
+    :code:  cpp
 
-    /* printing.cpp */
-    #include <hippcntl.h>
-    using namespace std;
+To use HIPP general-purpose C++ utilities, include the header ``<hippcntl.h>``. HIPP provides
+several stream manipulation classes and functions. 
 
-    int main(int argc, char const *argv[]) 
-    {
-        double a = 1;
-        int b = 2;
-        string s = "The sum of ";
+-   The "pretty" stream, :var:`pout <HIPP::pout>`, is just like ``std::cout``,
+    but it accepts comma separated arguments, so that the code for printing is more concise.
+-   The printing function :func:`prt_a <HIPP::prt_a>` prints an array of elements into a std stream.
+-   The string constructing functions :func:`str <HIPP::str>` and :func:`str_a <HIPP::str_a>` construct
+    ``std::string`` from a series of arguments and an array of elements, respectively.
 
-        /* print arguments of any type to standard out */
-        HIPP::pout << s, a, " and ", b, " is ", a+b, endl;
-
-        /* print any STL container that supports iteration into stream */
-        vector<int> arr {1,2,3,4,5};
-        HIPP::prt_a(cout, arr) << endl;
-
-        /* transform variables into string */
-        string s_joined = HIPP::str(s, a, " and ", b, " is ", a+b, '\n')
-            + HIPP::str_a(arr) + '\n';
-        HIPP::pout << s_joined;
-
-        return 0;
-    }
+To compile, link the library :bash:`hippcntl`. Execution would be the same as an usually executable.
 
 .. code-block:: bash 
 
     c++ -std=c++17 -O3 -Wall  -o printing.out printing.cpp -lhippcntl
     ./printing.out 
+
+The output for this simple example is:
 
 .. code-block:: text 
 
@@ -95,37 +86,33 @@ Using HIPP: A Minimal Example
 
 Using the MPI Module
 -------------------------------
+:download:`quick-start/p2p-comm.cpp <../../../example/quick-start/p2p-comm.cpp>`
 
-.. code-block:: 
+.. include:: ../../../example/quick-start/p2p-comm.cpp 
+    :code:  cpp
 
-    /* p2p-comm.cpp */
-    #include <hippcntl.h>
-    #include <hippmpi.h>
-    using namespace std;
+HIPP's MPI module provides full-OOP interface for the message passing programming. First, include the 
+header ``<hippmpi.h>``
+To initialize the MPI environment, just define a named variable of type :class:`Env <HIPP::MPI::Env>`.
+As opposed to the standard MPI calls ``MPI_Init()`` and ``MPI_Finalize()``, such a OOP way 
+is both simpler and safer, because the finalization call is automatically made on the 
+destruction of the :class:`Env <HIPP::MPI::Env>` object - you have no change to forget it.
 
-    int main(int argc, char *argv[]) 
-    {
-        HIPP::MPI::Env env(argc, argv);             // Init the MPI environment
-        auto comm = env.world();
+To make point-to-point communication, just get a "world" communicator from the :class:`Env <HIPP::MPI::Env>` object.
+It has a type :class:`Comm <HIPP::MPI::Comm>`, but the easiest way is to use an ``auto`` to let the compiler
+determine its type. Then, calling the :func:`send <HIPP::MPI::Comm::send>` and :func:`recv <HIPP::MPI::Comm::send>`
+methods of it to make communication. In this example we send an array of five elements from Process 0 to Process 1.
 
-        if( comm.rank() == 0 ){
-            int tag = 0, dest_rank = 1;
-            vector<int> out_arr {1,2,3,4,5};
-            comm.send(dest_rank, tag, out_arr);     // Process 0 sends to 1
-        }else if( comm.rank() == 1 ){
-            int tag = 0, src_rank = 0;
-            vector<int> in_arr(5);
-            comm.recv(src_rank, tag, in_arr);       // Process 1 sends to 0
-            HIPP::prt_a(cout, in_arr) << endl;
-        }
-
-        return 0;
-    }
+To compile, link the library :bash:`hippcntl` and :bash:`hippmpi`, and use proper MPI compiler wrapper 
+(e.g. :bash:`mpicxx`). 
+Execution would be the same as other MPI applications - just use :bash:`mpirun` or :bash:`mpiexec`.
 
 .. code-block:: bash 
 
     mpicxx -std=c++17 -O3 -Wall -o p2p-comm.mp.out p2p-comm.cpp -lhippmpi -lhippcntl
     mpirun -n 4 ./p2p-comm.mp.out
+
+The output for this example is:
 
 .. code-block:: text 
 
@@ -133,45 +120,45 @@ Using the MPI Module
 
 Using the IO Module 
 ------------------------------------
+:download:`quick-start/io-arrays.cpp <../../../example/quick-start/io-arrays.cpp>`
 
-.. code-block::
+.. include:: ../../../example/quick-start/io-arrays.cpp 
+    :code:  cpp
 
-    /* io-arrays.cpp */
-    #include <hippcntl.h>
-    #include <hippio.h>
-    using namespace std;
+IO as the HDF5 format is extremely easy with HIPP. First, include the header ``<hippio.h>``
+To create a new file of HDF5 format, just 
+define a variable typed :class:`H5File <HIPP::IO::H5File>` with a desired file name and the ``"w"``
+mode (truncate the file if existing).
 
-    struct Person {
-        int age;
-        char name[32];
-        double height;
-    };
+To write a single array dataset of numeric type, just create a new dataset by method 
+:func:`create_dataset <HIPP::IO::H5File::create_dataset>`. The template parameter
+specifies the element type in file (``double`` here), the two arguments are 
+the name of the dataset and the shape of the array (1-d array of 32 elements here).
+Then, a call of :func:`write <HIPP::IO::H5Dataset::write>` on the dataset instance outputs
+the data in a buffer (a ``std::vector`` or a raw buffer) to the file.
 
-    int main(int argc, char const *argv[]){
-        /* create a new file named arrays.h5 */
-        HIPP::IO::H5File out_file("arrays.h5", "w");
+To write tabular data (array of use-defined ``struct``, like the ``Person`` here), 
+HIPP provides an easy-to-use 
+extension class :class:`H5XTable <HIPP::IO::H5XTable>`. 
+If all the members in the struct 
+are numeric types (or their fixed-length raw array, like ``char[32]`` and ``int [3][4]``),
+:class:`H5XTable <HIPP::IO::H5XTable>` can deal with it. 
+You just define a 
+:class:`H5XTable <HIPP::IO::H5XTable>` instance, use the arguments to specify 
+the name of each member and the member pointer to it. Then, a single call 
+of :func:`write <HIPP::IO::H5XTable::write>` outputs an array of the struct data 
+to a group in the file, each member as a separate dataset.
+Or, you may use the call :func:`write_records <HIPP::IO::H5XTable::write_records>`
+to output them as a single dataset of compound datatype.
 
-        vector<double> floats(32);
-        /* write 32 floats as an 1-d array into dataset "floats"*/
-        out_file.create_dataset<double>("floats", {32}).write(floats);
-
-        vector<Person> persons(8);
-        HIPP::IO::H5XTable<Person> tbl_manip (
-            "age",      &Person::age,
-            "name",     &Person::name,
-            "height",   &Person::height);
-        /* write 8 objects into a group "persons" as separate datasets for fields */
-        tbl_manip.write(persons, out_file.create_group("persons"));
-        /* or, write them as records into a single dataset "person_records" */
-        tbl_manip.write_records(persons, out_file, "person_records");
-
-        return 0;
-    }
+To compile, link the library :bash:`hippcntl` and :bash:`hippio`.
 
 .. code-block:: bash 
 
     c++ -std=c++17 -O3 -Wall -o io-arrays.out io-arrays.cpp -lhippio -lhippcntl -lhdf5
     ./io-arrays.out
+
+Using :bash:`h5dump arrays.h5`, you can verify the content in the new HDF5 file:
 
 .. code-block:: text 
 

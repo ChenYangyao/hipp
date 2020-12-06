@@ -1,7 +1,7 @@
 HIPP: Modern C++ Toolkit for HPC
 ======================================================================
 
-![](https://img.shields.io/github/v/tag/ChenYangyao/hipp)
+![](https://img.shields.io/github/v/release/ChenYangyao/hipp?include_prereleases)
 ![](https://img.shields.io/github/license/ChenYangyao/hipp)
 ![](https://img.shields.io/github/last-commit/ChenYangyao/hipp)
 

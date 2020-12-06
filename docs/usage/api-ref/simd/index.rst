@@ -1,5 +1,5 @@
 *********************************************
-API Reference for the Template SIMD Module
+SIMD Module
 *********************************************
 
 .. _api-simd-usage:

@@ -239,6 +239,15 @@ void Comm::gather( const void *sendbuf, int sendcount, const Datatype &sendtype,
     _obj_ptr->gather(sendbuf, sendcount, sendtype.raw(), recvbuf,
         recvcount, recvtype.raw(), root);
 }
+void Comm::gather(const void *sendbuf, void *recvbuf, 
+    int count, const Datatype &dtype, int root) const {
+    gather(sendbuf, count, dtype, recvbuf, count, dtype, root);
+}
+void Comm::gather(const Datapacket &send_dpacket, 
+    void *recvbuf, int root) const {
+    const auto &dp = send_dpacket;
+    gather(dp._buff, recvbuf, dp._size, dp._dtype, root);
+}
 void Comm::gatherv(
     const void *sendbuf, int sendcount, const Datatype &sendtype, 
     void *recvbuf, const int recvcounts[], const int displs[],
@@ -251,6 +260,15 @@ void Comm::scatter(
     void *recvbuf, int recvcount, const Datatype &recvtype, int root )const{
     _obj_ptr->scatter( sendbuf, sendcount, sendtype.raw(), 
         recvbuf, recvcount, recvtype.raw(), root );
+}
+void Comm::scatter(const void *sendbuf, void *recvbuf, 
+    int count, const Datatype &dtype, int root) const {
+    scatter(sendbuf, count, dtype, recvbuf, count, dtype, root);
+}
+void Comm::scatter(const void *sendbuf, 
+    const Datapacket &recv_dpacket, int root) const {
+    const auto &dp = recv_dpacket;
+    scatter(sendbuf, dp._buff, dp._size, dp._dtype, root);
 }
 void Comm::scatterv(
     const void *sendbuf, const int sendcounts[], const int displs[], 
@@ -296,6 +314,11 @@ void Comm::reduce( const void *sendbuf, void *recvbuf, int count,
     const Datatype &dtype, const Oppacket &op, int root ) const{
     _obj_ptr->reduce( sendbuf, recvbuf, count, 
         dtype.raw(), op._op.raw(), root );
+}
+void Comm::reduce( const Datapacket &send_dpacket, void *recvbuf,
+    const Oppacket &op, int root ) const {
+    const auto &dp = send_dpacket;
+    reduce(dp._buff, recvbuf, dp._size, dp._dtype, op, root);
 }
 void Comm::allreduce( const void *sendbuf, void *recvbuf, int count, 
     const Datatype &dtype, const Oppacket &op ) const{

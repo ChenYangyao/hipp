@@ -505,6 +505,9 @@ Class Comm: the Communication Context
                     void bcast( void *buf, int count, const Datatype &dtype, int root) const
                     void gather( const void *sendbuf, int sendcount, const Datatype &sendtype, \
                         void *recvbuf, int recvcount, const Datatype &recvtype, int root) const
+                    void gather(const void *sendbuf, void *recvbuf, \
+                        int count, const Datatype &dtype, int root) const
+                    void gather(const Datapacket &send_dpacket, void *recvbuf, int root) const
                     void gatherv(\
                         const void *sendbuf, int sendcount, const Datatype &sendtype, \
                         void *recvbuf, const int recvcounts[], const int displs[],\
@@ -512,6 +515,10 @@ Class Comm: the Communication Context
                     void scatter(\
                         const void *sendbuf, int sendcount, const Datatype &sendtype,\
                         void *recvbuf, int recvcount, const Datatype &recvtype, int root )const
+                    void scatter(const void *sendbuf, void *recvbuf, \
+                        int count, const Datatype &dtype, int root) const 
+                    void scatter(const void *sendbuf, \
+                        const Datapacket &recv_dpacket, int root) const
                     void scatterv(\
                         const void *sendbuf, const int sendcounts[], const int displs[], \
                         const Datatype &sendtype,\
@@ -535,6 +542,8 @@ Class Comm: the Communication Context
                         const Datatype::mpi_t recvtypes[] ) const
                     void reduce( const void *sendbuf, void *recvbuf, int count, \
                         const Datatype &dtype, const Oppacket &op, int root ) const
+                    void reduce( const Datapacket &send_dpacket, void *recvbuf,\
+                        const Oppacket &op, int root ) const
                     void allreduce( const void *sendbuf, void *recvbuf, int count, \
                         const Datatype &dtype, const Oppacket &op ) const
                     static void reduce_local( const void *inbuf, void *inoutbuf, int count, \

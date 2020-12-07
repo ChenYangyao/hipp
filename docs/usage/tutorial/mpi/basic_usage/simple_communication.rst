@@ -3,7 +3,7 @@ Basic Point-to-point and Collective Communication
 
 .. include:: /global.rst
 
-Point-to-point communication
+Point-to-point Communication
 --------------------------------------------------------------
 
 We demonstrate how to use HIPP's MPI module to perform basic point-to-point communication
@@ -31,7 +31,7 @@ To send a message (a vector containing 10 double-precision values in the example
 (2) The message buffer. In HIPP, you can directly use a single ``std::vector`` of numeric elements as the buffer. We will discuss
     other ways of specifying buffer in the below.
 
-Therefore, a call of ``comm.send(dest, tag, send_buff)`` (``[3]`` in the example) sends the buffer ``send_buff`` 
+Therefore, a call of ``comm.send(dest, tag, sendbuf)`` (``[3]`` in the example) sends the buffer ``sendbuf`` 
 to the process ranked ``dest`` with a ``tag``, in the context of the communicator.
 
 The message-receiving call ``comm.recv(src, tag, recv_buff)`` (``[4]`` in the example) does things inversely, 
@@ -70,6 +70,8 @@ Depending on the types of the arguments, the function call gives different seman
 
 HIPP supports **four** types of arguments passed to send/recv calls. They are listed below:
 
+.. _tutor-mpi-buff-spec:
+
 ========================================================== ===================================================================================
 Arguments                                                   Semantics
 ========================================================== ===================================================================================
@@ -96,7 +98,7 @@ Therefore, the following calls are valid::
     comm.recv(src, tag, &recv_buff[0], 10, "int");
 
 
-Collective communication
+Collective Communication
 --------------------------------------------------------------
 
 :download:`mpi/basic-collective.cpp </../example/tutorial/mpi/basic-collective.cpp>`
@@ -118,36 +120,38 @@ Let's first initialize the MPI environment and define some helpful variables::
     HIPP::MPI::Env env;                                 
     auto comm = env.world();                            
     int rank = comm.rank(), n_procs = comm.size();
-    const auto &dtype = HIPP::MPI::INT;
 
-Since we use integers as operands, we define a integer ``dtype``, which will be used in the communication.
+Each process gets its rank in the communicator and the number of processes.
 
 Now, let process 0 prepares the tasks for all processes and spreads it into other process by 
 :func:`scatter() <HIPP::MPI::Comm::scatter>`::
 
-    int local_edges[2];                        // Each process will get its task edges.
-    /* Process 0 prepares task edges for each process and scatters it to them. */
+    vector<int> local_edges(2);                 // Each process will get its task edges.
     if( rank == 0 ){
         int total_num = 10000, num_per_proc = total_num/n_procs;
         vector<pair<int, int>> edges; 
         for (int i = 0; i < n_procs; i++) 
             edges.emplace_back(i*num_per_proc, (i+1)*num_per_proc);
         edges.back().second = total_num;
-
-        comm.scatter(&edges[0], 2, dtype,       // [1] Send buffer
-            local_edges, 2, dtype,              // ... recv buffer
-            0);                                 // ... root.
+        comm.scatter(&edges[0], local_edges, 0); // [1] Scatter "edges" into "local_edges"
     }else{
-        comm.scatter(NULL, 2, dtype, local_edges, 2, dtype, 0);                      
+        comm.scatter(NULL, local_edges, 0);                   
     }
 
 We distribute the tasks in such a way: each process gets a contiguous chunk to sum. The edges
 for each chunk can be represented by two integers, so we use a ``std::pair`` to describe 
 the task for each processes. Process 0 then uses a ``std::vector`` to hold all tasks. 
 After the call of :func:`scatter() <HIPP::MPI::Comm::scatter>` (``[1]`` in the code), each process gets its local 
-task, which can be finished by::
+task. 
 
-    /* Each process finishes its computation. */
+Again, :func:`scatter() <HIPP::MPI::Comm::scatter>` has sevaral overloads. The simplest 
+arguments are: ``(const void *sendbuf, const Datapacket &recv_dpacket, int root)``. The ``sendbuf``
+is the starting address of the sending buffer, the ``recv_dpacket`` can be constructed by 
+ways like in the :ref:`Point-to-point Communication <tutor-mpi-buff-spec>`. We use a single 
+vector in the ``[1]`` of the code. Equivalently, we may use ``comm.scatter(&edges[0], {&local_edges[0], 2, "int"}, 0)``.
+
+Then, each process finishes its task by simply adding all numbers between the edges::
+
     int local_sum = 0;
     for(int i=local_edges[0]; i<local_edges[1]; ++i)
         local_sum += i;
@@ -155,17 +159,19 @@ task, which can be finished by::
 Then a :func:`reduce() <HIPP::MPI::Comm::reduce>` call (``[2]`` in the code) gathers the results in all processes, 
 makes summation, and put it in the ``sum`` of the root process (process 0)::
 
-    /* Make reduction of local summations to a total value. */
     if( rank == 0 ){
         int sum = 0;
-        comm.reduce(&local_sum, &sum, 1, dtype, // [2] Send and recv buffer
-            "+", 0);                            // ... operation and root.
+        comm.reduce({&local_sum, 1, "int"}, 
+            &sum, "+", 0);                      // [2] Reduce from "local_sum" into "sum" 
 
         HIPP::pout << "Result of sum is ", sum, 
             " (found by ", n_procs, " processes)", endl; 
     }else{
-        comm.reduce(&local_sum, NULL, 1, dtype, "+", 0);
+        comm.reduce({&local_sum, 1, "int"}, NULL, "+", 0);
     }
+
+The simplest arguments of :func:`reduce() <HIPP::MPI::Comm::reduce>` is ``(const Datapacket &send_dpacket, void *recvbuf,
+const Oppacket &op, int root)``. Where we use the ``op``-code ``"+"`` to make summation. 
 
 The output of the program (run with 4 processes) is 
 

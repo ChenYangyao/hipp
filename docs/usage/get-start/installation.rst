@@ -71,24 +71,35 @@ the corresponding option on in the invoke of cmake:
 
 The supported modules and system-requirements are (can be turned on simultaneously): 
 
-========================== ========================== ================================ =============================================
-Module                     CMake Option               Description                      System Requirement
-========================== ========================== ================================ =============================================
-MPI                        -Denable-mpi=ON            Message Passing Interface        MPI environment (standard >= 3.0)
-IO                         -Denable-hdf5=ON           IO library                       HDF5 C library (version >=1.8.0)
-SIMD                       -Denable-simd=ON           Template SIMD library            x86 Arch that supports SIMD 
-NUMERICAL                  -Denable-gsl=ON            The scientific library           GSL (>=2.6) 
-ALGORITHM                  Automatically installed    The algorithms                   
-========================== ========================== ================================ =============================================
-        
+
++--------------------------+-----------------------------+------------------------------+---------------------------+
+| Module                   | CMake Option                |  Description                 |    System Requirement     |
++==========================+=============================+==============================+===========================+
+| MPI                      | -Denable-mpi=ON             | Message Passing Interface    |  MPI environment |br|     |
+|                          |                             |                              |  (standard >= 3.0)        |
++--------------------------+-----------------------------+------------------------------+---------------------------+                                                                                       
+| IO                       | -Denable-hdf5=ON            | IO library                   |  HDF5 C library |br|      |
+|                          |                             |                              |  (version >=1.8.0)        |
++--------------------------+-----------------------------+------------------------------+---------------------------+                                                                                    
+| SIMD                     | -Denable-simd=ON            | Template SIMD library        | x86 Arch |br|             |
+|                          |                             |                              | (supporting SIMD)         |
++--------------------------+-----------------------------+------------------------------+---------------------------+
+| NUMERICAL                | -Denable-gsl=ON             | The scientific library       |  GSL (version >=2.6)      |
++--------------------------+-----------------------------+------------------------------+---------------------------+
+| ALGORITHM                | Automatically |br|          | The algorithms               |                           |
+|                          | installed                   |                              |                           |
++--------------------------+-----------------------------+------------------------------+---------------------------+
+
+
+
 Other options that can be specified by :bash:`-D` in the invode of :bash:`cmake` are 
 
 ======================================= ===================================================================
 Option                                  Description                     
 ======================================= ===================================================================
--DCMAKE_CXX_COMPILE=/path/to/compiler   The C++ compiler (must support standard 17)
--DCMAKE_CXX_FLAGS="flag1 flag2 ..."     Compiling and linking flags (default: "-O3 -Wall")
--DBUILD_TESTING=OFF                     Whether to build test cases (default: ON)
+-DCMAKE_CXX_COMPILE=/path/to/compiler   The C++ compiler |br| (must support standard 17)
+-DCMAKE_CXX_FLAGS="flag1 flag2 ..."     Compiling and linking flags |br| (default: "-O3 -Wall")
+-DBUILD_TESTING=OFF                     Whether to build test cases |br| (default: ON)
 ======================================= ===================================================================
 
 

@@ -1,13 +1,15 @@
 Basic Point-to-point and Collective Communication
 ===============================================================
 
+.. include:: /global.rst
+
 Point-to-point communication
 --------------------------------------------------------------
 
 We demonstrate how to use HIPP's MPI module to perform basic point-to-point communication
-among processes in the below. Here we use the :func:`send <HIPP::MPI::Comm::send>` and 
-:func:`recv <HIPP::MPI::Comm::recv>` methods of the :class:`Comm <HIPP::MPI::Comm>` class,
-which are counterparts of the **Standard** MPI calls ``MPI_Send`` and ``MPI_Recv``.
+among processes in the below. Here we use the :func:`send() <HIPP::MPI::Comm::send>` and 
+:func:`recv() <HIPP::MPI::Comm::recv>` methods of the :class:`Comm <HIPP::MPI::Comm>` class,
+which are counterparts of the **Standard** MPI calls ``MPI_Send()`` and ``MPI_Recv()``.
 
 :download:`mpi/basic-p2p.cpp </../example/tutorial/mpi/basic-p2p.cpp>`
 
@@ -16,17 +18,17 @@ which are counterparts of the **Standard** MPI calls ``MPI_Send`` and ``MPI_Recv
 
 To use any definition in HIPP MPI, include the header ``<hippmpi.h>`` and initialize the MPI environment 
 by defining a :class:`Env <HIPP::MPI::Env>` instance. The detailed conventions and compiling options can be
-found in the `API Reference <api-mpi-usage>`_.
+found in the :ref:`API Reference <api-mpi-usage>`.
 
-The :func:`rank <HIPP::MPI::Comm::rank>` method of the communicator tells the rank of the current process 
+The :func:`rank() <HIPP::MPI::Comm::rank>` method of the communicator tells the rank of the current process 
 in the groups of processes in the communicator (``[2]`` in the example). We use this rank determine the identity
 of each process (here, we will send a message from process 0 to process 1).
-Similarily, the :func:`size <HIPP::MPI::Comm::size>` method tells the total number of processes.
+Similarily, the :func:`size() <HIPP::MPI::Comm::size>` method tells the total number of processes.
 
 To send a message (a vector containing 10 double-precision values in the example), we need to specify two things:
 
 (1) The message envelop (target process ``rank``, and the ``tag`` to match).
-(2) The message buffer. In HIPP, you can directly use a single vector of numeric elements as the buffer. We will discuss
+(2) The message buffer. In HIPP, you can directly use a single ``std::vector`` of numeric elements as the buffer. We will discuss
     other ways of specifying buffer in the below.
 
 Therefore, a call of ``comm.send(dest, tag, send_buff)`` (``[3]`` in the example) sends the buffer ``send_buff`` 
@@ -36,7 +38,7 @@ The message-receiving call ``comm.recv(src, tag, recv_buff)`` (``[4]`` in the ex
 i.e., receive a message 
 from process ranked ``src`` with a matched ``tag``, and put the message into the buffer ``recv_buff``. It is 
 required that the size of ``recv_buff`` is larger than the message. To tell the actual number of elements 
-received, you use the :func:`count <HIPP::MPI::Status::count>` method of the return status of the receiving call.
+received, you use the :func:`count() <HIPP::MPI::Status::count>` method of the return status of the receiving call.
 In the example, although the receiving buffer size is 20, only 10 elements are put into the beginning of it.
 
 The output is 
@@ -56,73 +58,147 @@ information of the communicator, which might be useful for debugging.
         rank/size:        1/4
     Topology: undefined
 
+
+The Communication Buffer
+""""""""""""""""""""""""""
+
+In the above example of point-to-pointcommunication, 
+we use a ``std::vector`` of numeric type as the communication buffer. 
+Thanks to the meta-programming support of C++, we can pass different combinations of arguments
+to the same send/recv function call. 
+Depending on the types of the arguments, the function call gives different semantics.
+
+HIPP supports **four** types of arguments passed to send/recv calls. They are listed below:
+
+========================================================== ===================================================================================
+Arguments                                                   Semantics
+========================================================== ===================================================================================
+``const vector<T, A> &buff``                                a vector of any numeric type T and allocator A.
+``const string &buff``                                      a ``std::string`` (only valid for send call).
+``const void *buff, int n, Datatype dtype``                 raw buffer, starting at ``buff``, |br| consisting of ``n`` elements of type ``dtype``. 
+``const void *buff, int n, const string &dtype``            describe the element type by a string.
+========================================================== ===================================================================================
+
+Therefore, the following calls are valid::
+
+    vector<int> send_buff(10), recv_buff(10);
+    string send_str = "content to send";
+    vector<char> recv_str(128);
+
+    comm.send(dest, tag, send_buff);
+    comm.send(dest, tag, send_str);
+    comm.send(dest, tag, &send_buff[0], 10, HIPP::MPI::INT);
+    comm.send(dest, tag, &send_buff[0], 10, "int");
+
+    comm.recv(src, tag, recv_buff);
+    comm.recv(src, tag, recv_str);
+    comm.recv(src, tag, &recv_buff[0], 10, HIPP::MPI::INT);
+    comm.recv(src, tag, &recv_buff[0], 10, "int");
+
+
 Collective communication
 --------------------------------------------------------------
 
-The collective communication is also easy to implement. For example, if we want
-to calculate 1 + 2 + ... + 10000 using 10 processes.::
+:download:`mpi/basic-collective.cpp </../example/tutorial/mpi/basic-collective.cpp>`
 
-    using HIPP::MPI::INT;
-    HIPP::MPI::Env env;
-    auto world = env.world();
-    // distribute the task
-    int local_edges[2], sum = 0;
-    if (world.rank() == 0) {
-        int tot_num = 10;
-        vector<int> edges{0};
-        for (int i_proc = 0; i_proc < world.size(); ++i_proc)
-            edges.push_back((i_proc + 1) * ceil(tot_num / world.size()));
-        edges.back() = tot_num + 1; // modify the last element for un-uniform distribution
-        for (int i_proc = 1; i_proc < world.size(); ++i_proc)
-            world.send(i_proc, 0, &edges[i_proc], 2, INT);
-        local_edges[0] = edges[0];
-        local_edges[1] = edges[1];
-    } else {
-        world.recv(0, 0, &local_edges[0], 2, INT);
-    }
-    // do computation on each process
-    for (int i = local_edges[0]; i < local_edges[1]; ++i)
-        sum += i;
-    // collect the result
-    vector<int> res(world.size());
-    world.gather(&sum, 1, INT, res.data(), 1, INT, 0);
-    // print the summation
-    if (world.rank() == 0) {
-        int tot_sum = 0;
-        for (auto v: res)
-            tot_sum += v;
-        cout << "The summation is " << tot_sum << ", calculated with " << world.size() << " processes.";
+Collective communication is useful when all of the processes in a communicator 
+are involved in the communication. In the below, we show how to use HIPP MPI 
+collective calls to calculate the summation 
+
+.. math::
+
+    S = \sum_{i=0}^{N} i.
+
+We will use :func:`scatter() <HIPP::MPI::Comm::scatter>` method to spread task to 
+each process, let each process finish its own part of task, and then use :func:`reduce() <HIPP::MPI::Comm::reduce>`
+method to collectively sum the results from all parts.
+
+Let's first initialize the MPI environment and define some helpful variables::
+
+    HIPP::MPI::Env env;                                 
+    auto comm = env.world();                            
+    int rank = comm.rank(), n_procs = comm.size();
+    const auto &dtype = HIPP::MPI::INT;
+
+Since we use integers as operands, we define a integer ``dtype``, which will be used in the communication.
+
+Now, let process 0 prepares the tasks for all processes and spreads it into other process by 
+:func:`scatter() <HIPP::MPI::Comm::scatter>`::
+
+    int local_edges[2];                        // Each process will get its task edges.
+    /* Process 0 prepares task edges for each process and scatters it to them. */
+    if( rank == 0 ){
+        int total_num = 10000, num_per_proc = total_num/n_procs;
+        vector<pair<int, int>> edges; 
+        for (int i = 0; i < n_procs; i++) 
+            edges.emplace_back(i*num_per_proc, (i+1)*num_per_proc);
+        edges.back().second = total_num;
+
+        comm.scatter(&edges[0], 2, dtype,       // [1] Send buffer
+            local_edges, 2, dtype,              // ... recv buffer
+            0);                                 // ... root.
+    }else{
+        comm.scatter(NULL, 2, dtype, local_edges, 2, dtype, 0);                      
     }
 
-Here we employ the rank-0 process to distribute the task and collect the
-results after all the processses finished the tasks. For rank-0 process, we
-should not distribute the task though MPI. Otherwise, the send will block the
-program and rank-0 process cannot receive.
+We distribute the tasks in such a way: each process gets a contiguous chunk to sum. The edges
+for each chunk can be represented by two integers, so we use a ``std::pair`` to describe 
+the task for each processes. Process 0 then uses a ``std::vector`` to hold all tasks. 
+After the call of :func:`scatter() <HIPP::MPI::Comm::scatter>` (``[1]`` in the code), each process gets its local 
+task, which can be finished by::
+
+    /* Each process finishes its computation. */
+    int local_sum = 0;
+    for(int i=local_edges[0]; i<local_edges[1]; ++i)
+        local_sum += i;
+
+Then a :func:`reduce() <HIPP::MPI::Comm::reduce>` call (``[2]`` in the code) gathers the results in all processes, 
+makes summation, and put it in the ``sum`` of the root process (process 0)::
+
+    /* Make reduction of local summations to a total value. */
+    if( rank == 0 ){
+        int sum = 0;
+        comm.reduce(&local_sum, &sum, 1, dtype, // [2] Send and recv buffer
+            "+", 0);                            // ... operation and root.
+
+        HIPP::pout << "Result of sum is ", sum, 
+            " (found by ", n_procs, " processes)", endl; 
+    }else{
+        comm.reduce(&local_sum, NULL, 1, dtype, "+", 0);
+    }
+
+The output of the program (run with 4 processes) is 
+
+.. code-block:: text 
+
+    Result of sum is 49995000 (found by 4 processes)
 
 Although we did a extremely simple task using MPI, the pattern can be applied to
-any other kinds of tasks.::
+any other kinds of tasks::
 
-    struct TaskInfo{
-        // information about a task
+    struct TaskSpecification{
+        /* Specifies the task, e.g., 
+           source of data and computation method. */
+    };
+
+    if( rank == master ){
+        vector<TaskSpecification> tasks;
+
+        /* Use collective call or simply send call to 
+           spread tasks to workder processes. */
+        comm.scatter(...); 
+        for(...) comm.send(...); 
+    }else {
+        /* The worker receives its task by collective 
+           call or recv call. */
     }
 
-    HIPP::MPI::Env env;
-    auto world = env.world();
-    TaskInfo local_task;
-    if (world.rank() == 0){
-        vector<TaskInfo> tasks;
-        // init all the tasks
-        for (int i_proc = 1; i_proc < world.size(); ++i_proc)
-            world.send(i_proc, 0, &takss[i_proc], sizeof(TaskInfo) / sizeof(char), HIPP::MPI::CHAR);
-        local_task = tasks[0];
-    } else {
-        world.recv(0, 0, &local_task, sizeof(TaskInfo) / sizeof(char), HIPP::MPI::CHAR);
-    }
+    /* Do tasks. */
 
-    // do tasks
+    /* Collect results by collective call or send/recv call. */
 
-    // collect the result
-
-Here we use `char` datatype to send and recv the data, which can only be
-applied to homegeneous computer systems. Otherwise, you should mannually create
-a mpi datatype to send these data or send the struct one-by-one.
+Depending on the detail type of ``TaskSpecification``, you may use different 
+buffer specifications. If ``TaskSpecification`` has different types of 
+members, you may simply sends/receives it as a sequence of ``char`` 
+(valid in homegeneous system), or you construct new MPI datatypes using 
+the methods that we will introduce in later chapters.

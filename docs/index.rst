@@ -6,11 +6,24 @@
 HIPP: Modern C++ Toolkit for HPC
 ======================================================================
 
-|badge1| |badge2| |badge3|
+|badge1| |badge2| |badge3| |badge4|
 
 .. |badge1| image:: https://img.shields.io/github/v/release/ChenYangyao/hipp?include_prereleases
-.. |badge2| image:: https://img.shields.io/github/license/ChenYangyao/hipp
+   :target: https://github.com/ChenYangyao/hipp/releases
+   :alt: Release 
+
+.. |badge2| image:: https://readthedocs.org/projects/hipp/badge/?version=latest
+   :target: https://hipp.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
+
 .. |badge3| image:: https://img.shields.io/github/last-commit/ChenYangyao/hipp
+   :target: https://github.com/ChenYangyao/hipp/commits/master
+   :alt: Commits 
+
+.. |badge4| image:: https://img.shields.io/github/license/ChenYangyao/hipp
+   :target: https://github.com/ChenYangyao/hipp/blob/master/LICENSE
+   :alt: License
+
 
 **HIPP** is still under active development. If you love C++ programming and scientific computation, you 
 are welcome to join us. We are happy to receive any comment or suggestion from you. The codes are hosted 

@@ -16,10 +16,16 @@ jobs:
 
     steps:
     - name: Install gtest manually
-      run: sudo apt-get install libgtest-dev && cd /usr/src/gtest && sudo cmake CMakeLists.txt && sudo make && sudo cp *.a /usr/lib && sudo ln -s /usr/lib/libgtest.a /usr/local/lib/libgtest.a && sudo ln -s /usr/lib/libgtest_main.a /usr/local/lib/libgtest_main.a
+      run:  sudo apt-get install libgtest-dev && cd /usr/src/gtest && sudo cmake CMakeLists.txt && sudo make && sudo cp *.a /usr/lib && sudo ln -s /usr/lib/libgtest.a /usr/local/lib/libgtest.a && sudo ln -s /usr/lib/libgtest_main.a /usr/local/lib/libgtest_main.a
     
     - name: Install MPICH
-      run: sudo apt-get install -y mpich
+      run:  sudo apt-get install -y mpich
+    
+    - name: Install HDF5
+      run:  sudo apt-get install -y libhdf5-dev
+    
+    - name: Install GSL 
+      run:  sudo apt-get install -y libgsl-dev
 
     - uses: actions/checkout@v2
     - name: Create Build Environment
@@ -35,7 +41,7 @@ jobs:
       # Note the current convention is to use the -S and -B options here to specify source 
       # and build directories, but this is only available with CMake 3.13 and higher.  
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -Denable-simd=ON
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -Denable-simd=ON -Denable-hdf5=ON -Denable-mpi=ON -Denable-gsl=ON
 
     - name: Build
       working-directory: ${{runner.workspace}}/build

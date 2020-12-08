@@ -6,7 +6,7 @@
 HIPP: Modern C++ Toolkit for HPC
 ======================================================================
 
-|badge1| |badge2| |badge3| |badge4|
+|badge1| |badge2| |badge3| |badge4| |badge5|
 
 .. |badge1| image:: https://img.shields.io/github/v/release/ChenYangyao/hipp?include_prereleases
    :target: https://github.com/ChenYangyao/hipp/releases
@@ -16,11 +16,15 @@ HIPP: Modern C++ Toolkit for HPC
    :target: https://hipp.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-.. |badge3| image:: https://img.shields.io/github/last-commit/ChenYangyao/hipp
+.. |badge3| image:: https://img.shields.io/github/workflow/status/ChenYangyao/hipp/CMake
+   :target: https://github.com/ChenYangyao/hipp/actions?query=workflow%3ACMake
+   :alt: Build CMake
+
+.. |badge4| image:: https://img.shields.io/github/last-commit/ChenYangyao/hipp
    :target: https://github.com/ChenYangyao/hipp/commits/master
    :alt: Commits 
 
-.. |badge4| image:: https://img.shields.io/github/license/ChenYangyao/hipp
+.. |badge5| image:: https://img.shields.io/github/license/ChenYangyao/hipp
    :target: https://github.com/ChenYangyao/hipp/blob/master/LICENSE
    :alt: License
 

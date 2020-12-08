@@ -5,8 +5,8 @@ The following classes are all defined within namespace ``HIPP::MPI``.
 
 .. namespace:: HIPP::MPI
 
-Class Comm: Communicator
--------------------------------
+Class Comm: the Communication Context 
+----------------------------------------
 
 .. class:: Comm : public MPIObj<_Comm>
 
@@ -505,6 +505,9 @@ Class Comm: Communicator
                     void bcast( void *buf, int count, const Datatype &dtype, int root) const
                     void gather( const void *sendbuf, int sendcount, const Datatype &sendtype, \
                         void *recvbuf, int recvcount, const Datatype &recvtype, int root) const
+                    void gather(const void *sendbuf, void *recvbuf, \
+                        int count, const Datatype &dtype, int root) const
+                    void gather(const Datapacket &send_dpacket, void *recvbuf, int root) const
                     void gatherv(\
                         const void *sendbuf, int sendcount, const Datatype &sendtype, \
                         void *recvbuf, const int recvcounts[], const int displs[],\
@@ -512,6 +515,10 @@ Class Comm: Communicator
                     void scatter(\
                         const void *sendbuf, int sendcount, const Datatype &sendtype,\
                         void *recvbuf, int recvcount, const Datatype &recvtype, int root )const
+                    void scatter(const void *sendbuf, void *recvbuf, \
+                        int count, const Datatype &dtype, int root) const 
+                    void scatter(const void *sendbuf, \
+                        const Datapacket &recv_dpacket, int root) const
                     void scatterv(\
                         const void *sendbuf, const int sendcounts[], const int displs[], \
                         const Datatype &sendtype,\
@@ -535,8 +542,12 @@ Class Comm: Communicator
                         const Datatype::mpi_t recvtypes[] ) const
                     void reduce( const void *sendbuf, void *recvbuf, int count, \
                         const Datatype &dtype, const Oppacket &op, int root ) const
+                    void reduce( const Datapacket &send_dpacket, void *recvbuf,\
+                        const Oppacket &op, int root ) const
                     void allreduce( const void *sendbuf, void *recvbuf, int count, \
                         const Datatype &dtype, const Oppacket &op ) const
+                    void allreduce( const Datapacket &send_dpacket, void *recvbuf, \
+                        const Oppacket &op ) const
                     static void reduce_local( const void *inbuf, void *inoutbuf, int count, \
                         const Datatype &dtype, const Oppacket &op )
                     void reduce_scatter_block( const void *sendbuf, void *recvbuf, \
@@ -554,6 +565,10 @@ Class Comm: Communicator
                     Requests igather( \
                         const void *sendbuf, int sendcount, const Datatype &sendtype, \
                         void *recvbuf, int recvcount, const Datatype &recvtype, int root) const
+                    Requests igather(const void *sendbuf, void *recvbuf, \
+                        int count, const Datatype &dtype, int root) const
+                    Requests igather(const Datapacket &send_dpacket, \
+                        void *recvbuf, int root) const
                     Requests igatherv(\
                         const void *sendbuf, int sendcount, const Datatype &sendtype, \
                         void *recvbuf, const int recvcounts[], const int displs[],\
@@ -561,6 +576,10 @@ Class Comm: Communicator
                     Requests iscatter(\
                         const void *sendbuf, int sendcount, const Datatype &sendtype,\
                         void *recvbuf, int recvcount, const Datatype &recvtype, int root )const
+                    Requests iscatter(const void *sendbuf, void *recvbuf, \
+                        int count, const Datatype &dtype, int root) const
+                    Requests iscatter(const void *sendbuf, \
+                        const Datapacket &recv_dpacket, int root) const
                     Requests iscatterv(\
                         const void *sendbuf, const int sendcounts[], const int displs[], \
                         const Datatype &sendtype,\
@@ -585,8 +604,12 @@ Class Comm: Communicator
                         const Datatype::mpi_t recvtypes[] ) const
                     Requests ireduce( const void *sendbuf, void *recvbuf, int count, \
                         const Datatype &dtype, const Oppacket &op, int root ) const
+                    Requests ireduce( const Datapacket &send_dpacket, void *recvbuf, \
+                        const Oppacket &op, int root ) const
                     Requests iallreduce( const void *sendbuf, void *recvbuf, int count, \
                         const Datatype &dtype, const Oppacket &op ) const
+                    Requests iallreduce( const Datapacket &send_dpacket, void *recvbuf, \
+                        const Oppacket &op ) const
                     Requests ireduce_scatter_block( const void *sendbuf, void *recvbuf, \
                         int recvcount, const Datatype &dtype, const Oppacket &op ) const
                     Requests ireduce_scatter( const void *sendbuf, void *recvbuf, \
@@ -700,8 +723,8 @@ Class Comm: Communicator
     The output is similar to the previous example using standard send/recv.
 
 
-Class Group: Process Collection
-----------------------------------
+Class Group: the Process Collection
+-------------------------------------------
 
 .. class::  Group: public MPIObj<_Group>
 
@@ -848,7 +871,7 @@ Class Group: Process Collection
     Note that you can get the same result by using ``auto new_group = group.range_incl({0,2,1})`` 
     instead of the ``incl()``.
 
-Class Requests: Non-blocking Handler
+Class Requests: the Non-blocking Handler
 -------------------------------------------
 
 .. class:: Requests : public MPIObj<_Requests>
@@ -970,7 +993,7 @@ Class Requests: Non-blocking Handler
         Calls that cancel the posted requests.
         ``cancel()`` is equivalent to ``cancel(0)``.
 
-Class Status: Return Status 
+Class Status: the Return Status 
 --------------------------------
 
 .. class:: Status

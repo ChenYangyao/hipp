@@ -5,5 +5,5 @@ Process-level Parallelism with MPI
     :maxdepth: 1
     :caption: Basic usage
 
-    Simple communication <basic_usage/simple_communication.rst>
+    basic_usage/simple_communication
 

@@ -5,8 +5,8 @@ The following classes are all defined within namespace ``HIPP::MPI``.
 
 .. namespace:: HIPP::MPI
 
-Class ErrMPI: Exception Handler 
----------------------------------
+Class ErrMPI: the Exception Handler 
+-----------------------------------
 
 .. class::  ErrMPI: public HIPP::ErrType<HIPP::ErrAppMPI, HIPP::ErrClassDefault>
 
@@ -23,7 +23,7 @@ Class ErrMPI: Exception Handler
     .. function::   virtual const char *what() const noexcept override
                     virtual string whats() const override
 
-        This two functions report the detail of the exception instance.
+        These two functions report the detail of the exception instance.
         ``what()`` only roughly indicates the error at application level,
         but ``whats()`` returns more detailed information, including the info 
         associated with thrown error number.
@@ -40,14 +40,14 @@ Class ErrMPI: Exception Handler
         The MPI **Standard** does not require the error number to be dense. 
         That is, not all error number below ``last_usederrorno()`` is valid.
     
-    .. function::    template<typename ...Args>\
+    .. function::   template<typename ...Args>\
                         static void check( errno_t e, Args &&... args )
                     template<typename ...Args>\
                         static void throw_( errno_t e, Args &&... args )
-                template<typename ...Args>\
-                        static void print_err( Args &&... args )
-                template<typename ...Args>\
-                        static void abort( errno_t e, Args &&... args )
+                    template<typename ...Args>\
+                            static void print_err( Args &&... args )
+                    template<typename ...Args>\
+                            static void abort( errno_t e, Args &&... args )
         
         Convinient function for detect, report errors and throw exceptions. These
         function all print the detail location of the error, as well as the information 

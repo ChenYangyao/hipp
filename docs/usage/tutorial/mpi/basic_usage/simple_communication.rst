@@ -109,7 +109,7 @@ collective calls to calculate the summation
 
 .. math::
 
-    S = \sum_{i=0}^{N} i.
+    S = \sum_{i=0}^{N-1} i.
 
 We will use :func:`scatter() <HIPP::MPI::Comm::scatter>` method to spread task to 
 each process, let each process finish its own part of task, and then use :func:`reduce() <HIPP::MPI::Comm::reduce>`
@@ -149,6 +149,8 @@ arguments are: ``(const void *sendbuf, const Datapacket &recv_dpacket, int root)
 is the starting address of the sending buffer, the ``recv_dpacket`` can be constructed by 
 ways like in the :ref:`Point-to-point Communication <tutor-mpi-buff-spec>`. We use a single 
 vector in the ``[1]`` of the code. Equivalently, we may use ``comm.scatter(&edges[0], {&local_edges[0], 2, "int"}, 0)``.
+The ``root`` argument specifies the source of the data 
+(not significant at destination processes, therefore set as ``NULL``).
 
 Then, each process finishes its task by simply adding all numbers between the edges::
 
@@ -171,7 +173,8 @@ makes summation, and put it in the ``sum`` of the root process (process 0)::
     }
 
 The simplest arguments of :func:`reduce() <HIPP::MPI::Comm::reduce>` is ``(const Datapacket &send_dpacket, void *recvbuf,
-const Oppacket &op, int root)``. Where we use the ``op``-code ``"+"`` to make summation. 
+const Oppacket &op, int root)``. Where we use the ``op``-code ``"+"`` to make summation. ``root`` specifies 
+the target process in which the result is put (process 0 here).
 
 The output of the program (run with 4 processes) is 
 

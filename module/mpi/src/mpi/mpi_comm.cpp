@@ -324,6 +324,11 @@ void Comm::allreduce( const void *sendbuf, void *recvbuf, int count,
     const Datatype &dtype, const Oppacket &op ) const{
     _obj_ptr->allreduce( sendbuf, recvbuf, count, dtype.raw(), op._op.raw() );
 }
+void Comm::allreduce( const Datapacket &send_dpacket, void *recvbuf, 
+    const Oppacket &op ) const {
+    const auto &dp = send_dpacket;
+    allreduce(dp._buff, recvbuf, dp._size, dp._dtype, op);
+}
 void Comm::reduce_local( const void *inbuf, void *inoutbuf, int count, 
     const Datatype &dtype, const Oppacket &op ){
     _obj_raw_t::reduce_local( 
@@ -361,6 +366,15 @@ Requests Comm::igather( const void *sendbuf, int sendcount, const Datatype &send
         sendtype.raw(), recvbuf,
         recvcount, recvtype.raw(), root), 0);
 }
+Requests Comm::igather(const void *sendbuf, void *recvbuf, 
+    int count, const Datatype &dtype, int root) const {
+    return igather(sendbuf, count, dtype, recvbuf, count, dtype, root);
+}
+Requests Comm::igather(const Datapacket &send_dpacket, 
+    void *recvbuf, int root) const {
+    const auto &dp = send_dpacket;
+    return igather(dp._buff, recvbuf, dp._size, dp._dtype, root);
+}
 Requests Comm::igatherv(
     const void *sendbuf, int sendcount, const Datatype &sendtype, 
     void *recvbuf, const int recvcounts[], const int displs[],
@@ -375,6 +389,15 @@ Requests Comm::iscatter(
     return Requests::_from_raw( _obj_ptr->iscatter( sendbuf, sendcount, 
         sendtype.raw(), 
         recvbuf, recvcount, recvtype.raw(), root ), 0);
+}
+Requests Comm::iscatter(const void *sendbuf, void *recvbuf, 
+    int count, const Datatype &dtype, int root) const {
+    return iscatter(sendbuf, count, dtype, recvbuf, count, dtype, root);
+}
+Requests Comm::iscatter(const void *sendbuf, 
+    const Datapacket &recv_dpacket, int root) const {
+    const auto &dp = recv_dpacket;
+    return iscatter(sendbuf, dp._buff, dp._size, dp._dtype, root);
 }
 Requests Comm::iscatterv(
     const void *sendbuf, const int sendcounts[], const int displs[], 
@@ -427,10 +450,20 @@ Requests Comm::ireduce( const void *sendbuf, void *recvbuf, int count,
     return Requests::_from_raw( _obj_ptr->ireduce( sendbuf, recvbuf, count, 
         dtype.raw(), op._op.raw(), root ), 0);
 }
+Requests Comm::ireduce( const Datapacket &send_dpacket, void *recvbuf,
+    const Oppacket &op, int root ) const {
+    const auto &dp = send_dpacket;
+    return ireduce(dp._buff, recvbuf, dp._size, dp._dtype, op, root);
+}
 Requests Comm::iallreduce( const void *sendbuf, void *recvbuf, int count, 
     const Datatype &dtype, const Oppacket &op ) const{
     return Requests::_from_raw( _obj_ptr->iallreduce( sendbuf, recvbuf, count, 
         dtype.raw(), op._op.raw() ), 0);
+}
+Requests Comm::iallreduce( const Datapacket &send_dpacket, void *recvbuf, 
+    const Oppacket &op ) const {
+    const auto &dp = send_dpacket;
+    return iallreduce(dp._buff, recvbuf, dp._size, dp._dtype, op);
 }
 Requests Comm::ireduce_scatter_block( const void *sendbuf, void *recvbuf, 
     int recvcount, const Datatype &dtype, const Oppacket &op ) const{

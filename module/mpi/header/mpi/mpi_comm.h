@@ -195,12 +195,21 @@ public:
         const int senddispls[], const Datatype::mpi_t sendtypes[],
         void *recvbuf, const int recvcounts[], const int recvdispls[], 
         const Datatype::mpi_t recvtypes[] ) const;
+    /**
+     * Reduce calls
+     * Overloads:
+     * 2: the count and dtype are taken from send_dpacket.
+     * 
+     * The same applies for allreduce().
+     */
     void reduce( const void *sendbuf, void *recvbuf, int count, 
         const Datatype &dtype, const Oppacket &op, int root ) const;
     void reduce( const Datapacket &send_dpacket, void *recvbuf,
         const Oppacket &op, int root ) const;
     void allreduce( const void *sendbuf, void *recvbuf, int count, 
         const Datatype &dtype, const Oppacket &op ) const;
+    void allreduce( const Datapacket &send_dpacket, void *recvbuf, 
+        const Oppacket &op ) const;
     static void reduce_local( const void *inbuf, void *inoutbuf, int count, 
         const Datatype &dtype, const Oppacket &op );
     void reduce_scatter_block( const void *sendbuf, void *recvbuf, 
@@ -219,6 +228,10 @@ public:
     Requests igather( 
         const void *sendbuf, int sendcount, const Datatype &sendtype, 
         void *recvbuf, int recvcount, const Datatype &recvtype, int root) const;
+    Requests igather(const void *sendbuf, void *recvbuf, 
+        int count, const Datatype &dtype, int root) const;
+    Requests igather(const Datapacket &send_dpacket, 
+        void *recvbuf, int root) const;
     Requests igatherv(
         const void *sendbuf, int sendcount, const Datatype &sendtype, 
         void *recvbuf, const int recvcounts[], const int displs[],
@@ -226,6 +239,10 @@ public:
     Requests iscatter(
         const void *sendbuf, int sendcount, const Datatype &sendtype,
         void *recvbuf, int recvcount, const Datatype &recvtype, int root )const;
+    Requests iscatter(const void *sendbuf, void *recvbuf, 
+        int count, const Datatype &dtype, int root) const; 
+    Requests iscatter(const void *sendbuf, 
+        const Datapacket &recv_dpacket, int root) const;
     Requests iscatterv(
         const void *sendbuf, const int sendcounts[], const int displs[], 
         const Datatype &sendtype,
@@ -250,8 +267,12 @@ public:
         const Datatype::mpi_t recvtypes[] ) const;
     Requests ireduce( const void *sendbuf, void *recvbuf, int count, 
         const Datatype &dtype, const Oppacket &op, int root ) const;
+    Requests ireduce( const Datapacket &send_dpacket, void *recvbuf,
+        const Oppacket &op, int root ) const;
     Requests iallreduce( const void *sendbuf, void *recvbuf, int count, 
         const Datatype &dtype, const Oppacket &op ) const;
+    Requests iallreduce( const Datapacket &send_dpacket, void *recvbuf, 
+        const Oppacket &op ) const;
     Requests ireduce_scatter_block( const void *sendbuf, void *recvbuf, 
         int recvcount, const Datatype &dtype, const Oppacket &op ) const;
     Requests ireduce_scatter( const void *sendbuf, void *recvbuf, 

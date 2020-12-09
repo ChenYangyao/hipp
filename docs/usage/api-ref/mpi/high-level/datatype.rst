@@ -1,2 +1,147 @@
 Datatype and Operation
-===============================================================
+=================================
+
+
+The following classes are all defined within namespace ``HIPP::MPI``.
+
+.. namespace:: HIPP::MPI
+
+Class Datatype: the Type of Data Element
+------------------------------------------
+
+.. class:: Datatype 
+
+    ``Datatype`` describes the type of a data-elements (i.e., its byte-level interpretation and 
+    allowed operations on it). ``Datatype`` is used in the communication as a part of the 
+    data buffer descriptor.
+    
+    The ``Datatype`` object can be **copy-constructed**, **copy-assigned**, **move-constructed**
+    and **move-assigned**. The copy operation gives a object that refers to the same 
+    datatype (internally the same ``MPI_Datatype``). 
+    The copy operations, move operations and destructor are ``noexcept``.
+
+    .. function::   Datatype() noexcept
+
+        The default constructor - construct a null value, as returned by :func:`nullval`. 
+
+    .. function::   ostream &info( ostream &os = cout, int fmt_cntl = 1 ) const
+                    friend ostream & operator<<( ostream &os, const Datatype &dtype )
+
+        ``info()`` prints the information of the current instance to the stream 
+        ``os``.
+    
+        :arg fmt_cntl:   control the amount of information to be printed, 0 for a 
+                 short and inline priting, 1 for a verbose, multi-line version.
+        :return: The argument ``os`` is returned.
+    
+        The overloaded ``<<`` operator is equivalent to ``info()`` with 
+        default ``fmt_cntl``.
+    
+    .. function:: void free() noexcept
+
+        Free the object and set it to null value as returned by :func:`nullval`.
+        It is safe to call this function at any time, or even multiple times, 
+        except for exactly the predifined objects (they are `const`, but a 
+        non-const copy can be freed). 
+
+
+    .. function::   bool is_null() const
+                    void extent( aint_t &lb, aint_t &ext ) const
+                    void true_extent( aint_t &lb, aint_t &ext ) const
+                    int size() const
+
+        Inquery the information about this datatype instance.
+
+        ``is_null()`` tests whether this is a null value (an invalid instance 
+        for communication).
+
+        ``extent()`` gets the lower bound and extent of the datatype.
+        ``true_extent()`` gets the "true" lower bound and extent (ignore the 
+        changes made by, e.g., :func:`resized`).
+
+        ``size()`` get the size (i.e., number of bytes required to store 
+        the real data).
+
+
+    .. function::   Datatype dup() const
+                    static Datatype nullval() noexcept
+                    Datatype resized( aint_t lb, aint_t ext ) const
+
+        ``dup()`` creates a duplication of the current datatype.
+        
+        ``nullval()`` returns a null value, corresponding to 
+        ``MPI_DATATYPE_NULL`` internally.
+        
+        ``resized()`` creates a resized datatype with new lower bound ``lb`` and extent ``ext``. 
+
+
+    .. function::   Datatype contiguous( int count ) const
+                    Datatype vector( int count, int blklen, int stride ) const
+                    Datatype hvector( int count, int blklen, aint_t stride ) const
+                    Datatype indexed_block( int blklen, const std::vector<int> &displs ) const
+                    Datatype hindexed_block( int blklen, \
+                        const std::vector<aint_t> &displs ) const
+                    Datatype indexed( const std::vector<int> &blklens, \
+                        const std::vector<int> &displs ) const
+                    Datatype hindexed( const std::vector<int> &blklens, \
+                        const std::vector<aint_t> &displs ) const
+                    static Datatype struct_( const std::vector<int> &blklens, \
+                        const std::vector<aint_t> &displs, const std::vector<Datatype> &dtypes)
+
+        New datatype creation methods;
+
+        ``contiguous()`` creates a datatype with contiguous ``count`` elements of the current
+        datatype. 
+
+        ``vector()`` creates a vector datatype of the current datatype, 
+        consisting of ``count`` blocks, each with
+        ``blklen`` contiguous elements, separated with stride ``stride`` (in the 
+        unit of the current datatype). ``hvector()`` is similar, but the ``stride`` is in bytes. 
+
+        ``indexed_block()`` further allows non-constant stride. The displacements
+        of blocks are specified by ``displs`` (in the unit of the current datatype ).
+        ``hindexed_block()`` specifies the displacements in bytes. 
+
+        ``indexed()`` allows further flexibility - the blocks can have different lengths specified 
+        by ``blklens``.
+        ``hindexed()`` uses displacements in bytes;
+
+        ``struct_`` is the most general one - the datatypes of blocks can be different 
+        and specified by ``dtypes``.
+
+    .. function::   Datatype darray( int size, int rank, const std::vector<int> &gsizes, \
+                        const std::vector<int> &distribs, \
+                        const std::vector<int> &dargs,\
+                        const std::vector<int> &psizes, int order = ORDER_C )const
+                    Datatype subarray( const std::vector<int> &sizes, \
+                        const std::vector<int> &subsizes, \
+                        const std::vector<int> &starts, int order = ORDER_C )const
+
+        New datatype creation methods for distributed data.
+
+        ``darray()`` creates a datatype which describes a part of a large distributed array.
+        ``size`` and ``rank`` are the number of parts and the index of the target part. 
+        The array may have any dimension, with ``psizes`` specifying the number of process at each direction, 
+        ``gsizes`` describing the size
+        of the global array at each direction, ``distribs`` and ``dargs`` describing the 
+        distribution method (``distribs`` can be :var:`DISTRIBUTE_BLOCK` or 
+        :var:`DISTRIBUTE_CYCLIC` or :var:`DISTRIBUTE_NONE` for each dimension; 
+        ``dargs`` is block size, can be :var:`DISTRIBUTE_DFLT_DARG` for nearly uniform distribution or 
+        can be a interger).
+        ``order`` can be :var:`ORDER_C` or :var:`ORDER_FORTRAN`.
+
+
+Class Datapacket: the Data Buffer Descriptor
+-----------------------------------------------
+
+
+
+Class Op: the Operation
+---------------------------
+
+
+
+Class Oppacket: the Operation Descriptor
+--------------------------------------------
+
+

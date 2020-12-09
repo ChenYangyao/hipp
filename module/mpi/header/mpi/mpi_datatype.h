@@ -14,8 +14,6 @@ namespace HIPP{
 namespace MPI{
     
 /**
- * the high-level interface of MPI datatype.
- * 
  * One Datatype instance is exactly equivalent to a MPI original datatype,
  * with automatically managed life time. For any datatype, you may ( but
  * not necessary ) call free() manually so that you can free it in advance.

@@ -1,6 +1,7 @@
 Datatype and Operation
 =================================
 
+.. include:: /global.rst
 
 The following classes are all defined within namespace ``HIPP::MPI``.
 
@@ -15,14 +16,17 @@ Class Datatype: the Type of Data Element
     allowed operations on it). ``Datatype`` is used in the communication as a part of the 
     data buffer descriptor.
     
-    The ``Datatype`` object can be **copy-constructed**, **copy-assigned**, **move-constructed**
-    and **move-assigned**. The copy operation gives a object that refers to the same 
-    datatype (internally the same ``MPI_Datatype``). 
-    The copy operations, move operations and destructor are ``noexcept``.
+    **Memory management methods:**
+    
+    =================================================== ====================================================
+    Method                                              Detail 
+    =================================================== ====================================================
+    default constructor                                 Available; ``noexcept``; constructs a null value 
+                                                        |br| as returned by :func:`nullval`.
+    copy constructor |br| and ``operator=(&&)``         Available; ``noexcept``; shallow copy.
+    move constructor |br| and ``operator=(const &)``    Available; ``noexcept``.
+    =================================================== ====================================================
 
-    .. function::   Datatype() noexcept
-
-        The default constructor - construct a null value, as returned by :func:`nullval`. 
 
     .. function::   ostream &info( ostream &os = cout, int fmt_cntl = 1 ) const
                     friend ostream & operator<<( ostream &os, const Datatype &dtype )
@@ -130,10 +134,70 @@ Class Datatype: the Type of Data Element
         can be a interger).
         ``order`` can be :var:`ORDER_C` or :var:`ORDER_FORTRAN`.
 
+.. _api-mpi-predefined-dtype:
+
+Predefined Datatypes 
+-----------------------------
+
 
 Class Datapacket: the Data Buffer Descriptor
 -----------------------------------------------
 
+.. class::  Datapacket 
+
+    A ``Datapacket`` instance describes a data/message buffer in the communication (i.e., data packet).
+    As in the **Standard** MPI interface, a data buffer is described by a 
+    triplet ``(addr, size, datatype)``.  ``Datapacket`` encapsulates these three 
+    into a single object to make the communication calls more elegant.
+
+    **Memory management methods:**
+    
+    =================================================== ==================================================
+    Method                                              Detail 
+    =================================================== ==================================================
+    default constructor                                 Not available.
+    copy constructor |br| and ``operator=(&&)``         Defined; ``noexcept``; deep copy.
+    move constructor |br| and ``operator=(const &)``    Defined; ``noexcept``.
+    =================================================== ==================================================
+
+
+    .. function::   Datapacket(const void *buff, int size, Datatype dtype) noexcept
+                    Datapacket(const void *buff, int size, const string &dtype)
+                    Datapacket( const string &buff ) noexcept
+                    template<typename T, typename A>\
+                    Datapacket( const vector<T,A> &buff ) noexcept
+
+        Data packet constructors.
+        
+        (1)  formally specify the buffer as a triplet, i.e., starting address, number of elements and datatype.
+        
+        (2)  same with (1), but use a string to describe the datatype. It can be 
+             
+             - ``"byte"``, ``"char"`` or ``"bool"``;
+             - ``"X"``, ``"signed X"`` or ``"unsigned X"``, where ``X`` can be ``char``, ``short``, ``int``, ``long`` or ``long long``;
+             - ``"intX_t"`` or ``"uintX_t"``, where ``X`` can be ``8``, ``16``, ``32`` or ``64``;
+             - ``"float"``, ``"double"``, ``"long double"``.
+        
+        (3)  use a string ``buff`` -  equivalent to specify the triplet as ``(void *)buff.data(), buff.size(), "char"``.
+        
+        (4)  use a vector ``buff`` of type ``T`` - equivalent to specify the triplet as ``(void *)buff.data(), buff.size(), datadype_for_T`` Note that ``T`` can be 
+
+            - ``bool``, ``char``, ``signed char`` or ``unsigned char``;
+            - ``X`` or  ``unsigned X``, where ``X`` can be ``short``, ``int``, ``long`` or ``long long``;
+            - ``float``, ``double`` or ``long double``;
+            - ``std::complex<float>``, ``std::complex<double>`` or ``std::complex<long double>``.
+
+    
+    
+    .. function::   Datapacket(aint_t disp, int size, Datatype dtype) noexcept
+                    Datapacket(aint_t disp, int size, const string &dtype)
+
+        Sometimes, triplet is used to specify a memory segement relative to 
+        a base address (e.g., in RMA operations). In such cases, the first 
+        part of the triplet is a displacement relative to the base address. 
+        
+        The ``Datapacket`` type can represent such triplets, too. Internally, the
+        displacement is stored by casting into a ``void *``.
 
 
 Class Op: the Operation

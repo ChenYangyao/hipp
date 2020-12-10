@@ -83,6 +83,7 @@ All of the following are defined within the namespace ``HIPP::MPI``.
     
 .. type::       MPI_Aint aint_t
                 MPI_Offset offset_t
+                MPI_Count count_t
                 std::size_t size_t
 
     ``aint_t`` is used for address (e.g., byte displacement/offset). ``offset_t`` is used for address-difference. ``size_t`` 

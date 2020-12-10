@@ -21,8 +21,6 @@ class SyncGuard;
 class Comm;
 
 /**
- * the high-level RMA window interface for MPI system
- * 
  * Win represents a RMA window object (internally, MPI_Win). It can be created
  * by, e.g., Comm::win_create().
  * 

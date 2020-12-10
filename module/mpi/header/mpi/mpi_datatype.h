@@ -99,6 +99,7 @@ extern const Datatype SHORT;
 extern const Datatype INT;
 extern const Datatype LONG;
 extern const Datatype LLONG;
+extern const Datatype C_BOOL;
 
 extern const Datatype UNSIGNED_CHAR;
 extern const Datatype UNSIGNED_SHORT;
@@ -106,11 +107,6 @@ extern const Datatype UNSIGNED_INT;
 extern const Datatype UNSIGNED_LONG;
 extern const Datatype UNSIGNED_LLONG;
 
-extern const Datatype FLOAT;
-extern const Datatype DOUBLE;
-extern const Datatype LDOUBLE;
-
-extern const Datatype C_BOOL;
 extern const Datatype INT8;
 extern const Datatype INT16;
 extern const Datatype INT32;
@@ -119,18 +115,26 @@ extern const Datatype UINT8;
 extern const Datatype UINT16;
 extern const Datatype UINT32;
 extern const Datatype UINT64;
+
+extern const Datatype FLOAT;
+extern const Datatype DOUBLE;
+extern const Datatype LDOUBLE;
 extern const Datatype C_COMPLEX;
 extern const Datatype C_FLOAT_COMPLEX;
 extern const Datatype C_DOUBLE_COMPLEX;
 extern const Datatype C_LDOUBLE_COMPLEX;
 
-extern const Datatype BYTE;
-extern const Datatype PACKED;
 
 extern const Datatype BOOL;
 extern const Datatype FLOAT_COMPLEX;
 extern const Datatype DOUBLE_COMPLEX;
 extern const Datatype LDOUBLE_COMPLEX;
+
+extern const Datatype BYTE;
+extern const Datatype PACKED;
+extern const Datatype AINT;
+extern const Datatype OFFSET;
+extern const Datatype COUNT;
 
 extern const Datatype FLOAT_INT;
 extern const Datatype DOUBLE_INT;

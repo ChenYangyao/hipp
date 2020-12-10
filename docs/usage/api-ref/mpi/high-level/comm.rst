@@ -67,7 +67,7 @@ Class Comm: the Communication Context
         ``fmt_cntl``.
 
         The returned reference of ``os`` allows you to chain the outputs, such as 
-        ``comm.info(cout) << " continue printing " << std::endl``.
+        ``comm.info(cout) << " continue printing " << endl``.
         
     .. function::    int size() const
                     int rank() const

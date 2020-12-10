@@ -137,7 +137,7 @@ Class Datatype: the Type of Data Element
 .. _api-mpi-predefined-dtype:
 
 Predefined Datatypes 
------------------------------
+"""""""""""""""""""""""""
 
 .. var::    extern const Datatype CHAR
             extern const Datatype WCHAR
@@ -151,11 +151,14 @@ Predefined Datatypes
             extern const Datatype UNSIGNED_INT
             extern const Datatype UNSIGNED_LONG
             extern const Datatype UNSIGNED_LLONG
-            extern const Datatype FLOAT
-            extern const Datatype DOUBLE
-            extern const Datatype LDOUBLE
             extern const Datatype C_BOOL
-            extern const Datatype INT8
+
+    Predefined datatypes that have C counterparts ``char``, ``wchar_t``, ``signed char``
+    ``short``, ``int``, ``long``, ``long long``, ``unsigned char``
+    ``unsigned short``, ``unsigned int``, ``unsigned long``, ``unsigned long long``
+    ``_Bool``.
+
+.. var::    extern const Datatype INT8
             extern const Datatype INT16
             extern const Datatype INT32
             extern const Datatype INT64
@@ -163,26 +166,49 @@ Predefined Datatypes
             extern const Datatype UINT16
             extern const Datatype UINT32
             extern const Datatype UINT64
+
+    Predefined for fixed-length integers.
+
+.. var::    extern const Datatype FLOAT
+            extern const Datatype DOUBLE
+            extern const Datatype LDOUBLE
             extern const Datatype C_COMPLEX
             extern const Datatype C_FLOAT_COMPLEX
             extern const Datatype C_DOUBLE_COMPLEX
             extern const Datatype C_LDOUBLE_COMPLEX
-            extern const Datatype BYTE
-            extern const Datatype PACKED
-            extern const Datatype BOOL
+            
+    Predefined datatypes for floating-points numbers ``float``, ``double``, ``long double``
+    ``float _Complex``, ``float _Complex``, ``double _Complex``, ``long double _Complex``.
+
+            
+.. var::    extern const Datatype BOOL
             extern const Datatype FLOAT_COMPLEX
             extern const Datatype DOUBLE_COMPLEX
             extern const Datatype LDOUBLE_COMPLEX
-            extern const Datatype FLOAT_INT
+
+    Predefined datatypes for C++. ``bool``, ``std::complex<float>``, ``std::complex<double>``, ``std::complex<long double>``.
+
+.. var::    extern const Datatype BYTE
+            extern const Datatype PACKED
+            extern const Datatype AINT
+            extern const Datatype OFFSET
+            extern const Datatype COUNT
+
+    Special datatypes for a byte (8-bits), for the packed calls, and for :type:`aint_t`, :type:`offset_t` and :type:`count_t`.
+
+
+.. var::    extern const Datatype FLOAT_INT
             extern const Datatype DOUBLE_INT
             extern const Datatype LONG_DOUBLE_INT
             extern const Datatype SHORT_INT
             extern const Datatype INT_INT
             extern const Datatype LONG_INT
 
+    Predefined datatypes for reduction operations (such as :var:`MINLOC` and :var:`MAXLOC`). 
+
 
 Class Datapacket: the Data Buffer Descriptor
------------------------------------------------
+"""""""""""""""""""""""""""""""""""""""""""""""
 
 .. class::  Datapacket 
 
@@ -197,7 +223,7 @@ Class Datapacket: the Data Buffer Descriptor
     Method                                              Detail 
     =================================================== ==================================================
     default constructor                                 Not available.
-    copy constructor |br| and ``operator=(&&)``         Defined; ``noexcept``; deep copy.
+    copy constructor |br| and ``operator=(&&)``         Defined; ``noexcept``.
     move constructor |br| and ``operator=(const &)``    Defined; ``noexcept``.
     =================================================== ==================================================
 
@@ -220,8 +246,12 @@ Class Datapacket: the Data Buffer Descriptor
              - ``"float"``, ``"double"``, ``"long double"``.
         
         (3)  use a string ``buff`` -  equivalent to specify the triplet as ``(void *)buff.data(), buff.size(), "char"``.
+             Note that the buffer in ``std::string`` cannot be modified, so, do not use it in data-receiving calls. 
         
-        (4)  use a vector ``buff`` of type ``T`` - equivalent to specify the triplet as ``(void *)buff.data(), buff.size(), datadype_for_T`` Note that ``T`` can be 
+        .. _api-mpi-dpacket-predefined-type:
+
+        (4)  use a vector ``buff`` of type ``T`` - equivalent to specify the triplet as ``(void *)buff.data(), buff.size(), datadype_for_T`` 
+            Note that ``T`` can be any of the following predefined numeric types  
 
             - ``bool``, ``char``, ``signed char`` or ``unsigned char``;
             - ``X`` or  ``unsigned X``, where ``X`` can be ``short``, ``int``, ``long`` or ``long long``;
@@ -240,13 +270,149 @@ Class Datapacket: the Data Buffer Descriptor
         The ``Datapacket`` type can represent such triplets, too. Internally, the
         displacement is stored by casting into a ``void *``.
 
+    **Example:**
+
+    In the point-to-point communication, the send/recv call needs data buffer as argument.
+    Traditionally, MPI uses triplet ``(addr, size, datatype)`` to describe the data buffer.
+    In HIPP, the following calls are valid::
+
+        vector<int> send_buff(10), recv_buff(10);
+        string send_str = "content to send";
+        vector<char> recv_str(128);
+
+        comm.send(dest, tag, send_buff);
+        comm.send(dest, tag, send_str);
+        comm.send(dest, tag, &send_buff[0], 10, HIPP::MPI::INT);
+        comm.send(dest, tag, &send_buff[0], 10, "int");
+
+        comm.recv(src, tag, recv_buff);
+        comm.recv(src, tag, recv_str);
+        comm.recv(src, tag, &recv_buff[0], 10, HIPP::MPI::INT);
+        comm.recv(src, tag, &recv_buff[0], 10, "int");
+
+    HIPP uses the arguments after ``src`` (or ``dest``) and ``tag`` to construct a 
+    ``Datapacket`` instance, and uses members in this data packet as the buffer arguments
+    to the underlying MPI library.
+
+
 
 Class Op: the Operation
 ---------------------------
 
+.. class::  Op
+
+    ``Op`` describes the operation on data, which is used in, e.g., collective computation and 
+    remote accumulates.
+
+    **Memory management methods:**
+    
+    =================================================== ==================================================
+    Method                                              Detail 
+    =================================================== ==================================================
+    default constructor                                 Not available.
+    copy constructor |br| and ``operator=(&&)``         Defined; ``noexcept``.
+    move constructor |br| and ``operator=(const &)``    Defined; ``noexcept``.
+    =================================================== ==================================================
+
+    .. type::   MPI_User_function user_fn_t
+
+        User defined operation function that have signature 
+        ``void (user_fn_t)(void *, void *, int *, MPI_Datatype *)``. 
+    
+    .. function::   Op( user_fn_t user_fn, int commute)
+
+        Constructor - Construct an ``Op`` instance by an user defined function.
+
+        ``user_fn`` specifies the user-defined operation.
+        ``commute``  a Boolean value specifying whether the operator is commutative.
+
+    
+    .. function::   ostream & info( ostream &os = cout, int fmt_cntl=1 ) const
+                    friend ostream & operator<<( ostream &os, const Op &op )
+
+        Print some information about this instance into ``os``. 
+        
+        ``fmt_cntl`` controls the amount of information to print - 0 for a
+        inline, short information, and 1 for a verbose version.
+
+        ``operator<<`` is equivalent to ``info`` with default ``fmt_cntl``.
+        
+    
+    
+    .. function:: void free() noexcept
+
+        Free the operator in advance, an set it to null value as returned by
+        :func:`nullval`. It is valid to call it at any time, even multiple times
+        on the same instance.
+
+    
+    
+    .. function::   bool is_null() const
+                    bool commutative() const
+        
+        Test the properties of ``Op``.
+
+        ``is_null()`` tests whether the instance is a null value.
+        
+        ``commutative()`` tests whether the instance is commutative.
+
+    
+    
+    .. function::   static Op nullval() noexcept
+                    static Op create( user_fn_t user_fn, int commute )
+
+        Create a new operation.
+        
+        ``nullval()``  returns a null value.
+
+        ``create()``   creates a user-defined operator. 
+        The argument is the same as 
+        the constructor of Op.
+
+Predefined Operations
+"""""""""""""""""""""""""
+
+.. var::    extern Op MAX 
+            extern Op MIN
+            extern Op SUM
+            extern Op PROD
+            extern Op LAND
+            extern Op BAND
+            extern Op LOR
+            extern Op BOR
+            extern Op LXOR
+            extern Op BXOR
+            extern Op MAXLOC
+            extern Op MINLOC
+            extern Op REPLACE
+            extern Op NO_OP
 
 
 Class Oppacket: the Operation Descriptor
---------------------------------------------
+"""""""""""""""""""""""""""""""""""""""""
 
+.. class:: Oppacket
 
+    :class:`Op` class provides full interface for data operations. However, 
+    on most time, users are willing to use more elegant way to denote an operation
+    in the communication.
+
+    HIPP uses ``Oppacket`` to enable multiple ways of describing an operation.
+    Just like you can use multiple ways to denote the same data buffer (with :class:`Datapacket`).
+
+    .. function::   Oppacket( const Op &op )
+                    Oppacket( const string &op )
+                    Oppacket( const char *op )
+
+        Use either an ``Op`` instance or a string to construct an operation.
+        Allowed strings are:
+
+        -   Arithematic:  ``"sum"`` (or ``"+"``), ``"prod"`` (or ``"*"``).
+        -   Logic:        ``"land"`` (or ``"&&"``), ``"band"`` (or ``"&"``), ``"lor"`` (or ``"||"``),
+            ``"bor"`` (or ``"|"``), ``"lxor"``, ``"bxor"`` (or ``"^"``).
+        -   Min or max:   ``"max"``, ``"min"``, ``"maxloc"``, ``"minloc"``.
+        -   ``"replace"`` (or ``"="``),  ``"no_op"``.
+
+        
+
+    

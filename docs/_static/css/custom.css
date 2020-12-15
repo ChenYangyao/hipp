@@ -1,0 +1,32 @@
+.document p {
+    font-size:          0.9rem;
+    line-height:        1.45em;
+}
+
+.document ul, .document p {
+    margin-top:         6px;
+    margin-bottom:      6px;
+}
+
+.toctree-wrapper {
+    font-size:          medium;
+}
+
+.toctree-wrapper .toctree-l1 ul li>ul {
+    margin-top:         6px;
+    margin-bottom:      6px;
+}
+
+html.writer-html5 .rst-content table.docutils thead th, 
+html.writer-html5 .rst-content table.docutils tbody td {
+    padding:            4px 8px; 
+}
+
+html.writer-html5 .rst-content table.docutils td>p {
+    line-height:        0.95rem;
+    font-size:          0.8rem;
+}
+
+.fix-width-table td {
+    white-space:        normal !important;
+}

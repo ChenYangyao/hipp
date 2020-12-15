@@ -6,4 +6,5 @@ Process-level Parallelism with MPI
     :caption: Basic usage
 
     basic_usage/simple_communication
+    basic_usage/datatype
 

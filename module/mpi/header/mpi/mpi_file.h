@@ -16,9 +16,13 @@ public:
     typedef MPIObj<_File> _obj_base_t;
     using _obj_base_t::_obj_base_t;
 
+    /**
+     * @amode: could be "r", "w", "wr", "c" ("create"), "excl", 
+     *  "delete_on_close", "unique_open", "sequential", "a" ("append"),
+     *  or their comma-separated combination, e.g., "wr,c".
+     */
     File( const Comm &comm, const string &name, 
         const string &amode, const Info &info = Info::nullval() );
-    ~File(){}
 
     ostream &info( ostream &os = cout, int fmt_cntl = 1 ) const;
     friend ostream & operator<<( ostream &os, const File &file );

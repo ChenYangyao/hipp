@@ -55,11 +55,22 @@ html_theme = "sphinx_rtd_theme"
 html_theme_options = {
     "navigation_depth": -1
 }
+#html_theme = 'bootstrap-astropy'
+#html_theme_options = {
+#    'logotext1': 'packagename',  # white,  semi-bold
+#    'logotext2': '',  # orange, light
+#    'logotext3': ':docs',   # white,  light
+#    'astropy_project_menubar': True
+#}
+
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+html_css_files = [
+    'css/custom.css'
+]
 
 master_doc = 'index'
 

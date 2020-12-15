@@ -35,9 +35,22 @@ Module-specific Definitions and Consts
 
 .. namespace:: HIPP::MPI
 
-.. _api-mpi-static-var:
-
 All of the following are defined within the namespace ``HIPP::MPI``.
+
+
+.. _api-mpi-type-alias:
+
+**Type aliases**:
+    
+.. type::       MPI_Aint aint_t
+                MPI_Offset offset_t
+                MPI_Count count_t
+                std::size_t size_t
+
+    ``aint_t`` is used for address (e.g., byte displacement/offset). ``offset_t`` is used for address-difference. ``size_t`` 
+    is ordinary C++ size type (e.g., for container size/capacity, loop boundary). 
+
+.. _api-mpi-static-var:
 
 **Static variables**:
 
@@ -49,6 +62,7 @@ All of the following are defined within the namespace ``HIPP::MPI``.
                 const int ERR_IN_STATUS = MPI_ERR_IN_STATUS
                 void * const BOTTOM = MPI_BOTTOM 
                 void * const IN_PLACE = MPI_IN_PLACE
+                const size_t BSEND_OVERHEAD = MPI_BSEND_OVERHEAD
 
     Variables used in MPI communications.
 
@@ -77,17 +91,6 @@ All of the following are defined within the namespace ``HIPP::MPI``.
         
     Variables used in virtual topologies and data distributions.
 
-.. _api-mpi-type-alias:
-
-**Type aliases**:
-    
-.. type::       MPI_Aint aint_t
-                MPI_Offset offset_t
-                MPI_Count count_t
-                std::size_t size_t
-
-    ``aint_t`` is used for address (e.g., byte displacement/offset). ``offset_t`` is used for address-difference. ``size_t`` 
-    is ordinary C++ size type (e.g., for container size/capacity, loop boundary). 
 
 
 Class Env: the MPI Environment handler 

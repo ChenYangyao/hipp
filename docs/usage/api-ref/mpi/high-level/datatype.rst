@@ -227,6 +227,7 @@ Class Datapacket: the Data Buffer Descriptor
     move constructor |br| and ``operator=(const &)``    Defined; ``noexcept``.
     =================================================== ==================================================
 
+    .. _api-mpi-dpacket-constructor:
 
     .. function::   Datapacket(const void *buff, int size, Datatype dtype) noexcept
                     Datapacket(const void *buff, int size, const string &dtype)
@@ -236,21 +237,21 @@ Class Datapacket: the Data Buffer Descriptor
 
         Data packet constructors.
         
-        (1)  formally specify the buffer as a triplet, i.e., starting address, number of elements and datatype.
+        (1) formally specify the buffer as a triplet, i.e., starting address, number of elements and datatype.
         
-        (2)  same with (1), but use a string to describe the datatype. It can be 
+        (2) same with (1), but use a string to describe the datatype. It can be 
              
-             - ``"byte"``, ``"char"`` or ``"bool"``;
-             - ``"X"``, ``"signed X"`` or ``"unsigned X"``, where ``X`` can be ``char``, ``short``, ``int``, ``long`` or ``long long``;
-             - ``"intX_t"`` or ``"uintX_t"``, where ``X`` can be ``8``, ``16``, ``32`` or ``64``;
-             - ``"float"``, ``"double"``, ``"long double"``.
+            - ``"byte"``, ``"char"`` or ``"bool"``;
+            - ``"X"``, ``"signed X"`` or ``"unsigned X"``, where ``X`` can be ``char``, ``short``, ``int``, ``long`` or ``long long``;
+            - ``"intX_t"`` or ``"uintX_t"``, where ``X`` can be ``8``, ``16``, ``32`` or ``64``;
+            - ``"float"``, ``"double"``, ``"long double"``.
         
-        (3)  use a string ``buff`` -  equivalent to specify the triplet as ``(void *)buff.data(), buff.size(), "char"``.
-             Note that the buffer in ``std::string`` cannot be modified, so, do not use it in data-receiving calls. 
+        (3) use a string ``buff`` -  equivalent to specify the triplet as ``(void *)buff.data(), buff.size(), "char"``.
+            Note that the buffer in ``std::string`` cannot be modified, so, do not use it in data-receiving calls. 
         
         .. _api-mpi-dpacket-predefined-type:
 
-        (4)  use a vector ``buff`` of type ``T`` - equivalent to specify the triplet as ``(void *)buff.data(), buff.size(), datadype_for_T`` 
+        (4) use a vector ``buff`` of type ``T`` - equivalent to specify the triplet as ``(void *)buff.data(), buff.size(), datadype_for_T`` 
             Note that ``T`` can be any of the following predefined numeric types  
 
             - ``bool``, ``char``, ``signed char`` or ``unsigned char``;

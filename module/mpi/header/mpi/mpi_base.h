@@ -12,6 +12,11 @@
 namespace HIPP{
 namespace MPI{
 
+typedef MPI_Aint aint_t;
+typedef MPI_Offset offset_t;
+typedef MPI_Count count_t;
+typedef std::size_t size_t;
+
 const int 
     UNDEFINED = MPI_UNDEFINED,
     ROOT = MPI_ROOT,
@@ -57,10 +62,7 @@ const int
 void* const BOTTOM = MPI_BOTTOM, 
     * const IN_PLACE = MPI_IN_PLACE;
 
-typedef MPI_Aint aint_t;
-typedef MPI_Offset offset_t;
-typedef MPI_Count count_t;
-typedef std::size_t size_t;
+const size_t BSEND_OVERHEAD = MPI_BSEND_OVERHEAD;
 
 } // namespace MPI
 } // namespace HIPP

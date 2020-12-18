@@ -6,6 +6,8 @@
 namespace HIPP {
 namespace SIMD {
 
+#ifdef __AVX2__
+
 namespace _pi16_256_helper {
 struct AddrAligned: public PackBase {
     typedef Vec<int16_t, 16> vec; 
@@ -147,6 +149,8 @@ inline Vec<int16_t,16> operator|(const Vec<int16_t,16> &a, const Vec<int16_t,16>
 inline Vec<int16_t,16> operator^(const Vec<int16_t,16> &a, const Vec<int16_t,16> &b) noexcept{
     return Vec<int16_t,16>::pack_si_t::xor_(a._val, b._val);
 }
+
+#endif
 
 } // namespace SIMD
 } // namespace HIPP

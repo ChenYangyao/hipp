@@ -143,6 +143,8 @@ inline Vec<long long,4> operator^(const Vec<long long,4> &a, const Vec<long long
     return Vec<long long,4>::pack_si_t::xor_(a._val, b._val);
 }
 
+#endif
+
 } // namespace SIMD
 } // namespace HIPP
 #endif	//_HIPPSIMD_VECI64_4_H_

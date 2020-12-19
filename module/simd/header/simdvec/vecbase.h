@@ -3,7 +3,9 @@
 #include "../simdpacked/packed.h"
 namespace HIPP{
 namespace SIMD{
-template<typename ScaleT, size_t NPack> class Vec {};
+template<typename ScaleT, size_t NPack> class Vec {
+    std::enable_if_t<false, int> _m;
+};
 
 template<> class Vec<int8_t, 16> {
 public:

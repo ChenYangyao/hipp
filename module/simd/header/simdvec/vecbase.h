@@ -4,7 +4,7 @@
 namespace HIPP{
 namespace SIMD{
 template<typename ScaleT, size_t NPack> class Vec {
-    std::enable_if_t<false, int> _m;
+    ~Vec() = delete;
 };
 
 template<> class Vec<int8_t, 16> {

@@ -184,12 +184,12 @@ public:
     */
 protected:
     vec_t _val;
-    union _u_ivv_t{ i_t i; vec_t f; };
-    union _u_viv_t{ vec_t f; i_t i; };
-    union _u_vs_t{ vec_t f; scal_t s[NPACK]; };
-    union _u_sv_t{ scal_t s[NPACK]; vec_t f; };
-    union _u_ivs_t{ i_t i; iscal_t s[NPACK]; };
-    union _u_siv_t{ iscal_t s[NPACK]; i_t i; };
+    union _u_ivv_t{ i_t i; vec_t f; ~_u_ivv_t(){} };
+    union _u_viv_t{ vec_t f; i_t i; ~_u_viv_t(){} };
+    union _u_vs_t{ vec_t f; scal_t s[NPACK]; ~_u_vs_t(){} };
+    union _u_sv_t{ scal_t s[NPACK]; vec_t f; ~_u_sv_t(){} };
+    union _u_ivs_t{ i_t i; iscal_t s[NPACK]; ~_u_ivs_t(){} };
+    union _u_siv_t{ iscal_t s[NPACK]; i_t i; ~_u_siv_t(){} };
 };
 
 inline Vec<double,4>::Vec( scal_t e3, scal_t e2, scal_t e1, scal_t e0 ) noexcept 

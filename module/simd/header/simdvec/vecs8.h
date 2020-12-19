@@ -37,6 +37,8 @@ public:
     typedef _ps256_helper::AddrAligned addr_t;
     typedef _ps256_helper::CAddrAligned caddr_t;
 
+    typedef Vec<iscal_t, 8> IntVec;
+
     Vec() noexcept {}
     Vec( scal_t e7, scal_t e6, scal_t e5, scal_t e4, 
         scal_t e3, scal_t e2, scal_t e1, scal_t e0 ) noexcept;
@@ -88,7 +90,12 @@ public:
     Vec & scatterm(void *base_addr, mask8_t k, ivec_t vindex, 
         int scale=SCALSIZE) noexcept;
 
-    scal_t to_scal( )const noexcept;
+    scal_t to_scal()const noexcept;
+    IntVec to_ivec()const noexcept;
+
+    Vec & from_si(const IntVec &a) noexcept;
+    IntVec to_si()const noexcept;
+
     int movemask( ) const noexcept;
     Vec movehdup( ) const noexcept;
     Vec moveldup( ) const noexcept;
@@ -115,7 +122,7 @@ public:
     Vec hadd( const Vec &a ) const noexcept;
     Vec hsub( const Vec &a ) const noexcept;
 
-    friend Vec operator&( const Vec &a, const Vec &b) noexcept;
+    friend Vec operator&( const Vec &a, const Vec &b) noexcept;     // bitwise operation
     Vec andnot( const Vec &a ) const noexcept;
     friend Vec operator|( const Vec &a, const Vec &b) noexcept;
     Vec operator~()const noexcept;
@@ -124,7 +131,7 @@ public:
     Vec & operator|=( const Vec &a ) noexcept;
     Vec & operator^=( const Vec &a ) noexcept;
     
-    friend Vec operator==( const Vec &a, const Vec &b) noexcept;
+    friend Vec operator==( const Vec &a, const Vec &b) noexcept;    // for each single float. set all bits if yes
     friend Vec operator!=( const Vec &a, const Vec &b) noexcept;
     friend Vec operator<( const Vec &a, const Vec &b) noexcept;
     friend Vec operator<=( const Vec &a, const Vec &b) noexcept;
@@ -367,6 +374,16 @@ inline Vec<float,8>::scal_t
 Vec<float,8>::to_scal( )const noexcept{
     return pack_t::to_scal( _val );
 }
+
+inline auto Vec<float,8>::from_si(const IntVec &a) noexcept -> Vec & {
+    _val = pack_t::from_si(a.val());
+    return *this;
+}
+
+inline auto Vec<float,8>::to_si()const noexcept -> IntVec {
+    return pack_t::to_si(_val);
+}
+
 inline int Vec<float,8>::movemask( ) const noexcept{
     return pack_t::movemask( _val );
 }

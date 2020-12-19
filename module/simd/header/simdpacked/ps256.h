@@ -102,7 +102,7 @@ public:
     static vec_t hadd( vec_t a, vec_t b ) noexcept;
     static vec_t hsub( vec_t a, vec_t b ) noexcept;
 
-    static vec_t eq( vec_t a, vec_t b ) noexcept;
+    static vec_t eq( vec_t a, vec_t b ) noexcept; 
     static vec_t neq( vec_t a, vec_t b ) noexcept;
     static vec_t false_( vec_t a, vec_t b ) noexcept;
     static vec_t lt( vec_t a, vec_t b ) noexcept;

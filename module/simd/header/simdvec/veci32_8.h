@@ -85,6 +85,9 @@ public:
     friend Vec operator+(const Vec &a, const Vec &b) noexcept;
     friend Vec operator-(const Vec &a, const Vec &b) noexcept;
     friend Vec operator*(const Vec &a, const Vec &b) noexcept;
+    Vec & operator+=(const Vec &a) noexcept                     { _val = pack_t::add(_val, a._val); return *this; }
+    Vec & operator-=(const Vec &a) noexcept                     { _val = pack_t::sub(_val, a._val); return *this; }
+    Vec & operator*=(const Vec &a) noexcept                     { _val = pack_t::mul_as_lo(_val, a._val); return *this; }
 
     friend Vec operator==(const Vec &a, const Vec &b) noexcept;
     friend Vec operator>(const Vec &a, const Vec &b) noexcept;
@@ -94,6 +97,10 @@ public:
     Vec andnot(const Vec &b) const noexcept                     { return pack_si_t::andnot(_val, b._val); }
     friend Vec operator|(const Vec &a, const Vec &b) noexcept;
     friend Vec operator^(const Vec &a, const Vec &b) noexcept;
+    
+    Vec & operator&=(const Vec &a) noexcept                     { _val = pack_si_t::and_(_val, a._val); return *this; }
+    Vec & operator|=(const Vec &a) noexcept                     { _val = pack_si_t::or_(_val, a._val); return *this; }
+    Vec & operator^=(const Vec &a) noexcept                     { _val = pack_si_t::xor_(_val, a._val); return *this; }
 
     Vec sli_si(const int imm8) const noexcept                   { return pack_si_t::sli_si(_val, imm8); }
     Vec sli(const int imm8) const noexcept                      { return pack_t::sli(_val, imm8); }

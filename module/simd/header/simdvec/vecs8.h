@@ -375,6 +375,11 @@ Vec<float,8>::to_scal( )const noexcept{
     return pack_t::to_scal( _val );
 }
 
+inline
+auto Vec<float,8>::to_ivec()const noexcept -> IntVec {
+    return pack_t::to_ivec(_val);
+}
+
 inline auto Vec<float,8>::from_si(const IntVec &a) noexcept -> Vec & {
     _val = pack_t::from_si(a.val());
     return *this;

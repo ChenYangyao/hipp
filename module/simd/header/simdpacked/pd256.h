@@ -16,7 +16,7 @@ public:
     typedef typename TypeCvt<vec_t, -1, 0, 1>::ret vec_hc_t;
     typedef typename TypeCvt<vec_t, 0, -1, 1>::ret vec_hp_t;
 
-    typedef int64_t iscal_t;
+    typedef long long iscal_t;
     typedef int32_t iscal_hp_t;
     typedef typename TypeCvt<vec_t, 0, 0, 0>::ret ivec_t;
     typedef typename TypeCvt<vec_t, 0, -1, 0>::ret ivec_hp_t;    

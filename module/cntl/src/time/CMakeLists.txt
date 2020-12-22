@@ -1,6 +1,6 @@
-set(_submodid stream)
+set(_submodid time)
 set(_src 
-    stream_pretty.cpp)
+    time_ticker.cpp)
 
 set(_libname "${_projectid}${_modid}${_submodid}")
 set(_headerdir "${_moddir}/header")

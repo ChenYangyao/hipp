@@ -2,6 +2,7 @@
 #define _HIPPCNTL_STREAM_PRETTY_H_
 #include "../incl/incl.h"
 #include "../error/error.h"
+#include "stream_fmt_io.h"
 namespace HIPP {
 
 namespace _hippcntl_stream_pretty_helper {
@@ -15,15 +16,91 @@ public:
         { _os << pf; return *this; }
     StreamOperand & operator, (std::ios_base& (*pf)(std::ios_base&))
         { _os << pf; return *this; }
+
+
+    template<typename T, std::size_t N>
+    StreamOperand & operator,(const std::array<T, N> &v) {
+        return _prt_range(std::begin(v), std::end(v));
+    }
+    template<typename T, typename A>
+    StreamOperand & operator,(const std::deque<T, A> &v) {
+        return _prt_range(std::begin(v), std::end(v));
+    }
+    template<typename T, typename A>
+    StreamOperand & operator,(const std::forward_list<T, A> &v) {
+        return _prt_range(std::begin(v), std::end(v));
+    }
+    template<typename T, typename A>
+    StreamOperand & operator,(const std::list<T, A> &v) {
+        return _prt_range(std::begin(v), std::end(v));
+    }
+    template<typename K, typename T, typename Comp, typename A>
+    StreamOperand & operator,(const std::map<K,T,Comp,A> &v) {
+        return _prt_pair_range(std::begin(v), std::end(v));
+    }
+    template<typename K, typename T, typename Comp, typename A>
+    StreamOperand & operator,(const std::multimap<K,T,Comp,A> &v) {
+        return _prt_pair_range(std::begin(v), std::end(v));
+    }
+    template<typename T, typename Comp, typename A>
+    StreamOperand & operator,(const std::set<T,Comp,A> &v) {
+        return _prt_range(std::begin(v), std::end(v));
+    }
+    template<typename T, typename Comp, typename A>
+    StreamOperand & operator,(const std::multiset<T,Comp,A> &v) {
+        return _prt_range(std::begin(v), std::end(v));
+    }
+    template<typename K, typename T, typename Hash, typename Comp, typename A>
+    StreamOperand & operator,(const std::unordered_map<K,T,Hash,Comp,A> &v) {
+        return _prt_pair_range(std::begin(v), std::end(v));
+    }
+    template<typename K, typename T, typename Hash, typename Comp, typename A>
+    StreamOperand & operator,(const std::unordered_multimap<K,T,Hash,Comp,A> &v) {
+        return _prt_pair_range(std::begin(v), std::end(v));
+    }
+    template<typename T, typename Hash, typename Comp, typename A>
+    StreamOperand & operator,(const std::unordered_set<T,Hash,Comp,A> &v) {
+        return _prt_range(std::begin(v), std::end(v));
+    }
+    template<typename T, typename Hash, typename Comp, typename A>
+    StreamOperand & operator,(const std::unordered_multiset<T,Hash,Comp,A> &v) {
+        return _prt_range(std::begin(v), std::end(v));
+    }
+    template<typename T, typename A>
+    StreamOperand & operator,(const vector<T, A> &v) {
+        return _prt_range(std::begin(v), std::end(v));
+    }
+
     template<typename T>
-    StreamOperand & operator,(T &&x) { 
-        _os << std::forward<T>(x); 
+    StreamOperand & operator,(const T &x) { 
+        _os << x; 
         return *this; 
     }
 
     ostream & get_stream() const noexcept { return _os; }
 private:
     ostream &_os;
+
+    template<typename ForwardIt>
+    StreamOperand & _prt_range(ForwardIt b, ForwardIt e){
+        if( b != e )
+            *this, *b++;
+        while( b != e )
+            *this, ",", *b++;
+        return *this;
+    }
+    template<typename ForwardIt>
+    StreamOperand & _prt_pair_range(ForwardIt b, ForwardIt e){
+        if( b != e ){
+            *this, b->first, ':', b->second;
+            ++b;
+        }
+        while( b != e ){
+            *this, ",", b->first, ':', b->second;
+            ++b;
+        }
+        return *this;
+    }
 }; 
 } // namespace _hippcntl_stream_pretty_helper
 
@@ -39,18 +116,16 @@ public:
     PStream & operator=(PStream &&that) =delete;
     ~PStream() noexcept {}
 
-    stream_op_t & operator<< (ostream& (*pf)(ostream&))
-        { _op.get_stream() << pf; return _op; }
-    stream_op_t & operator<< (std::ios& (*pf)(std::ios&)) 
-        { _op.get_stream() << pf; return _op; }
+    stream_op_t & operator<< (ostream& (*pf)(ostream&)) { return _op, pf; }
+    stream_op_t & operator<< (std::ios& (*pf)(std::ios&)) { return _op, pf; }
     stream_op_t & operator<< (std::ios_base& (*pf)(std::ios_base&))
-        { _op.get_stream() << pf; return _op; }
+        { return _op, pf; }
+
     template<typename T>
     stream_op_t & operator<<(T &&x) { 
-        _op.get_stream() << std::forward<T>(x); 
-        return _op;
+        return _op, std::forward<T>(x);
     }
-
+    
     ostream & get_stream() const noexcept { return _op.get_stream(); }
 protected:
     stream_op_t _op;

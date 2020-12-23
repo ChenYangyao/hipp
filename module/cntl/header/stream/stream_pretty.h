@@ -8,6 +8,12 @@ namespace HIPP {
 namespace _hippcntl_stream_pretty_helper {
 class StreamOperand {
 public:
+    template<typename It>
+    struct it_pair_t {
+        It b, e;
+        it_pair_t(It _b, It _e): b(_b), e(_e) {} 
+    };
+
     explicit StreamOperand(ostream &os) noexcept : _os(os) {}
 
     StreamOperand & operator, (ostream& (*pf)(ostream&))
@@ -71,6 +77,11 @@ public:
         return _prt_range(std::begin(v), std::end(v));
     }
 
+    template<typename It>
+    StreamOperand & operator,(const it_pair_t<It> &it_pair) {
+        return _prt_range(it_pair.b, it_pair.e);
+    }
+
     template<typename T>
     StreamOperand & operator,(const T &x) { 
         _os << x; 
@@ -125,6 +136,9 @@ public:
     stream_op_t & operator<<(T &&x) { 
         return _op, std::forward<T>(x);
     }
+
+    template<typename It>
+    stream_op_t::it_pair_t<It> operator()(It b, It e){ return {b, e}; }
     
     ostream & get_stream() const noexcept { return _op.get_stream(); }
 protected:

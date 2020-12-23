@@ -77,6 +77,21 @@ public:
         return _prt_range(std::begin(v), std::end(v));
     }
 
+    template<typename T1, typename T2>
+    StreamOperand & operator,(const std::pair<T1, T2> &pr) {
+        return *this, pr.first, ':' , pr.second;
+    }
+
+    template<typename ...Ts>
+    StreamOperand & operator,(const std::tuple<Ts...> &tpl) {
+        if constexpr( std::tuple_size_v<std::tuple<Ts...> > == 0 ){
+            return *this;
+        }else{
+            *this, std::get<0>(tpl);
+            return _prt_tpl<std::tuple<Ts...>, 1>(tpl);
+        }
+    }
+
     template<typename It>
     StreamOperand & operator,(const it_pair_t<It> &it_pair) {
         return _prt_range(it_pair.b, it_pair.e);
@@ -102,15 +117,21 @@ private:
     }
     template<typename ForwardIt>
     StreamOperand & _prt_pair_range(ForwardIt b, ForwardIt e){
-        if( b != e ){
-            *this, b->first, ':', b->second;
-            ++b;
-        }
-        while( b != e ){
-            *this, ",", b->first, ':', b->second;
-            ++b;
-        }
+        if( b != e )
+            *this, *b++;
+        while( b != e )
+            *this, ",", *b++;
         return *this;
+    }
+
+    template<typename Tpl, std::size_t I>
+    StreamOperand & _prt_tpl(const Tpl &tpl){
+        if constexpr (I == std::tuple_size_v<Tpl>){
+            return *this;
+        }else{
+            *this, ':', std::get<I>(tpl);
+            return _prt_tpl<Tpl, I+1>(tpl);
+        }
     }
 }; 
 } // namespace _hippcntl_stream_pretty_helper

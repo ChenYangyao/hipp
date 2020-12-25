@@ -92,6 +92,8 @@ public:
     friend Vec operator==(const Vec &a, const Vec &b) noexcept;
     friend Vec operator>(const Vec &a, const Vec &b) noexcept;
     friend Vec operator<(const Vec &a, const Vec &b) noexcept;
+    int testz(const Vec &a) const noexcept                      { return pack_si_t::testz(_val, a._val); }
+    int testz() const noexcept                                  { return pack_si_t::testz(_val, _val); }
 
     friend Vec operator&(const Vec &a, const Vec &b) noexcept;
     Vec andnot(const Vec &b) const noexcept                     { return pack_si_t::andnot(_val, b._val); }

@@ -37,8 +37,9 @@ public:
      *      zero out.
      * 1:   broadcast single 32-bit float into dst.
      * 
-     * bcast() - load and broad cast. If input with scal_t*, broadcast one
-     * float, if with vec_hc_t *, broadcast the vec_hc_t (4 floats).
+     * bcast() - load and broadcast. If input with scal_t*, broadcast one
+     * float (same as load1), 
+     * if with vec_hc_t *, broadcast the vec_hc_t (4 floats).
      * gather() - load from different memory locations.
      * Post-fix can be:
      * m:   load if the highest bit of element in mask is asserted. Otherwise
@@ -75,16 +76,19 @@ public:
         int scale=SCALSIZE) noexcept;
 #endif
 
-    static ivec_t to_si(vec_t a) noexcept               { return _mm256_castps_si256(a); }
-    static vec_t from_si(ivec_t a) noexcept             { return _mm256_castsi256_ps(a); }
+    static ivec_t to_si(vec_t a) noexcept                                       { return _mm256_castps_si256(a); }
+    static vec_t from_si(ivec_t a) noexcept                                     { return _mm256_castsi256_ps(a); }
     static vec_t from_ivec( ivec_t a ) noexcept;
     static ivec_t to_ivec( vec_t a ) noexcept;
     static ivec_t tot_ivec( vec_t a ) noexcept;
     static scal_t to_scal( vec_t a ) noexcept;
+    static vec_hc_t to_vec_hc( vec_t a ) noexcept                               { return _mm256_castps256_ps128(a); }
+    static vec_hc_t extract_hc( vec_t a, const int imm8 ) noexcept              { return _mm256_extractf128_ps(a, imm8); }
 
     static int movemask( vec_t a ) noexcept;
     static vec_t movehdup( vec_t a ) noexcept;
     static vec_t moveldup( vec_t a ) noexcept;
+    
     static vec_t set( scal_t e7, scal_t e6, scal_t e5, scal_t e4, 
         scal_t e3, scal_t e2, scal_t e1, scal_t e0 ) noexcept;
 #ifdef __AVX2__
@@ -110,6 +114,7 @@ public:
     static vec_t gt( vec_t a, vec_t b ) noexcept;
     static vec_t ge( vec_t a, vec_t b ) noexcept;
     static vec_t cmp( vec_t a, vec_t b, const int op ) noexcept;
+    static int testz( vec_t a, vec_t b ) noexcept                               { return _mm256_testz_ps(a, b); }
 
     static vec_t and_( vec_t a, vec_t b ) noexcept;
     static vec_t andnot( vec_t a, vec_t b ) noexcept;

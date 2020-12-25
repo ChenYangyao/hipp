@@ -14,6 +14,7 @@ protected:
     template<typename T, size_t N> friend class Vec;
     __m128i _val;
 };
+
 template<> class Vec<int16_t, 8> {
 public:
     Vec(__m128i val) noexcept : _val(val){}
@@ -21,6 +22,7 @@ protected:
     template<typename T, size_t N> friend class Vec;
     __m128i _val;
 };
+
 template<> class Vec<int32_t, 4> {
 public:
     Vec(__m128i val) noexcept : _val(val){}
@@ -28,6 +30,7 @@ protected:
     template<typename T, size_t N> friend class Vec;
     __m128i _val;
 };
+
 template<> class Vec<long long, 2> {
 public:
     Vec(__m128i val) noexcept : _val(val){}

@@ -16,8 +16,8 @@ enum class Mode : int{
     /**
      * comparison opt
      */
-    CMP_EQ = _CMP_EQ_OQ,
-    CMP_FALSE = _CMP_FALSE_OQ,
+    CMP_EQ = _CMP_EQ_OQ,            // orderd, non-signaling
+    CMP_FALSE = _CMP_FALSE_OQ,      
     CMP_NEQ = _CMP_NEQ_OQ,
     CMP_LT = _CMP_LT_OQ,
     CMP_LE = _CMP_LE_OQ,

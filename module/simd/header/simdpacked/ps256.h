@@ -79,8 +79,11 @@ public:
     static ivec_t to_si(vec_t a) noexcept                                       { return _mm256_castps_si256(a); }
     static vec_t from_si(ivec_t a) noexcept                                     { return _mm256_castsi256_ps(a); }
     static vec_t from_ivec( ivec_t a ) noexcept;
-    static ivec_t to_ivec( vec_t a ) noexcept;
-    static ivec_t tot_ivec( vec_t a ) noexcept;
+    /** 
+     * to_ivec - round to nearest.
+     * tot_ivec - towards to 0. */
+    static ivec_t to_ivec( vec_t a ) noexcept                                   { return _mm256_cvtps_epi32(a); }
+    static ivec_t tot_ivec( vec_t a ) noexcept                                  { return _mm256_cvttps_epi32(a); }
     static scal_t to_scal( vec_t a ) noexcept;
     static vec_hc_t to_vec_hc( vec_t a ) noexcept                               { return _mm256_castps256_ps128(a); }
     static vec_hc_t extract_hc( vec_t a, const int imm8 ) noexcept              { return _mm256_extractf128_ps(a, imm8); }
@@ -88,7 +91,7 @@ public:
     static int movemask( vec_t a ) noexcept;
     static vec_t movehdup( vec_t a ) noexcept;
     static vec_t moveldup( vec_t a ) noexcept;
-    
+
     static vec_t set( scal_t e7, scal_t e6, scal_t e5, scal_t e4, 
         scal_t e3, scal_t e2, scal_t e1, scal_t e0 ) noexcept;
 #ifdef __AVX2__
@@ -189,12 +192,7 @@ inline void Packed<float, 8>::scatterm(
 inline Packed<float, 8>::vec_t Packed<float, 8>::from_ivec( ivec_t a ) noexcept{
     return _mm256_cvtepi32_ps( a );
 }
-inline Packed<float, 8>::ivec_t Packed<float, 8>::to_ivec( vec_t a ) noexcept{
-    return _mm256_cvtps_epi32(a);
-}
-inline Packed<float, 8>::ivec_t Packed<float, 8>::tot_ivec( vec_t a ) noexcept{
-    return _mm256_cvttps_epi32(a);
-}
+
 inline Packed<float, 8>::scal_t Packed<float, 8>::to_scal( vec_t a ) noexcept{
     return _mm256_cvtss_f32(a);
 }

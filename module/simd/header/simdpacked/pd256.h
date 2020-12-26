@@ -78,8 +78,8 @@ public:
     static ivec_t to_si( vec_t a) noexcept                                      { return _mm256_castpd_si256(a); }
     static vec_t from_si(ivec_t a) noexcept                                     { return _mm256_castsi256_pd(a); }
     static vec_t from_ivec_hp( ivec_hp_t a ) noexcept;
-    static ivec_hp_t to_ivec_hp( vec_t a ) noexcept;
-    static ivec_hp_t tot_ivec_hp( vec_t a ) noexcept;
+    static ivec_hp_t to_ivec_hp( vec_t a ) noexcept                             { return _mm256_cvtpd_epi32(a); }
+    static ivec_hp_t tot_ivec_hp( vec_t a ) noexcept                            { return _mm256_cvttpd_epi32(a); }
     static vec_t from_vec_hp( vec_hp_t a ) noexcept;
     static vec_hp_t to_vec_hp( vec_t a ) noexcept;
     static vec_hc_t to_vec_hc( vec_t a ) noexcept                               { return _mm256_castpd256_pd128(a); }
@@ -221,12 +221,6 @@ inline void Packed<double, 4>::scatterm_idxhp(void *base_addr, mask8_t k,
 #endif
 inline Packed<double,4>::vec_t Packed<double,4>::from_ivec_hp( ivec_hp_t a ) noexcept{
     return _mm256_cvtepi32_pd( a );
-}
-inline Packed<double,4>::ivec_hp_t Packed<double,4>::to_ivec_hp( vec_t a ) noexcept{
-    return _mm256_cvtpd_epi32(a);
-}
-inline Packed<double,4>::ivec_hp_t Packed<double,4>::tot_ivec_hp( vec_t a ) noexcept{
-    return _mm256_cvttpd_epi32(a);
 }
 inline Packed<double,4>::vec_t Packed<double,4>::from_vec_hp( vec_hp_t a ) noexcept{
     return _mm256_cvtps_pd( a );

@@ -77,7 +77,7 @@ public:
     Vec & setr(scal_t e3, scal_t e2, scal_t e1, scal_t e0) noexcept 
         { _val = pack_t::setr(e3, e2, e1, e0); return *this; }
     Vec & set1(scal_t a) noexcept                               { _val = pack_t::set1(a); return *this; }
-    Vec & set1(const VecHC &a) noexcept                          { _val = pack_t::set1(a._val); return *this; }
+    Vec & set1(const VecHC &a) noexcept;
     Vec & unpackhi(const Vec &a, const Vec &b) noexcept         { _val = pack_t::unpackhi(a._val, b._val); return *this; }
     Vec & unpacklo(const Vec &a, const Vec &b) noexcept         { _val = pack_t::unpacklo(a._val, b._val); return *this; }
     Vec & insert(scal_t i, const int index) noexcept            { _val = pack_t::insert(_val, i, index); return *this; }
@@ -105,11 +105,11 @@ public:
 
     Vec sli_si(const int imm8) const noexcept                   { return pack_si_t::sli_si(_val, imm8); }
     Vec sli(const int imm8) const noexcept                      { return pack_t::sli(_val, imm8); }
-    Vec sl(const VecHC &count) const noexcept                    { return pack_t::sl(_val, count._val); }
+    Vec sl(const VecHC &count) const noexcept;
     Vec sl(const Vec &count) const noexcept                     { return pack_t::sl(_val, count._val); }
     Vec sri_si(const int imm8) const noexcept                   { return pack_si_t::sri_si(_val, imm8); }
     Vec sri(const int imm8) const noexcept                      { return pack_t::sri(_val, imm8); }
-    Vec sr(const VecHC &count) const noexcept                    { return pack_t::sr(_val, count._val); }
+    Vec sr(const VecHC &count) const noexcept;
     Vec sr(const Vec &count) const noexcept                     { return pack_t::sr(_val, count._val); }
 protected:
     vec_t _val;

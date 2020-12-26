@@ -72,6 +72,8 @@ public:
     Vec & storem(addr_t mem_addr, const Vec &mask) noexcept     { pack_t::storem( mem_addr._addr, mask._val, _val ); return *this; }
     Vec & stream(addr_t mem_addr) noexcept                      { pack_si_t::stream( (vec_t *)mem_addr._addr, _val ); return *this; }
 
+    Vec & set() noexcept                                                        { return setzero(); }
+    Vec & setzero() noexcept                                                    { _val = pack_si_t::setzero(); return *this; }
     Vec & set(scal_t e3, scal_t e2, scal_t e1, scal_t e0) noexcept 
         { _val = pack_t::set(e3, e2, e1, e0); return *this; }
     Vec & setr(scal_t e3, scal_t e2, scal_t e1, scal_t e0) noexcept 

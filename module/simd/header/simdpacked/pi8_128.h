@@ -41,6 +41,9 @@ public:
 
     static vec_t add(vec_t a, vec_t b) noexcept                                 { return _mm_add_epi8(a, b); }
     static vec_t sub(vec_t a, vec_t b) noexcept                                 { return _mm_sub_epi8(a, b); }
+
+    static vec_t sli_si(vec_t a, int imm8) noexcept                             { return _mm_slli_si128(a, imm8); }
+    static vec_t sri_si(vec_t a, int imm8) noexcept                             { return _mm_srli_si128(a, imm8); }
 #endif //__SSE2__
 
 

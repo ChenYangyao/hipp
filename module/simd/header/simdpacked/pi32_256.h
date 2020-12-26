@@ -60,11 +60,11 @@ public:
     static vec_t sli(vec_t a, const int imm8) noexcept                      { return _mm256_slli_epi32(a, imm8); }
     static vec_t sr(vec_t a, vec_h4c_dp_t count) noexcept                   { return _mm256_srl_epi32(a, count); }
     static vec_t sr(vec_t a, vec_t count) noexcept                          { return _mm256_srlv_epi32(a, count); }
-    static vec_t sri(vec_t a, const int imm8) noexcept                      { return _mm256_srli_epi32(a, imm8); }
+    static vec_t sri(vec_t a, const int imm8) noexcept                      { return _mm256_srli_epi32(a, imm8); }  // shift in zeros
 
     static vec_t sra(vec_t a, vec_h4c_dp_t count) noexcept                  { return _mm256_sra_epi32(a, count); }
     static vec_t sra(vec_t a, vec_t count) noexcept                         { return _mm256_srav_epi32(a, count); }
-    static vec_t srai(vec_t a, const int imm8) noexcept                     { return _mm256_srai_epi32(a, imm8); }
+    static vec_t srai(vec_t a, const int imm8) noexcept                     { return _mm256_srai_epi32(a, imm8); }  // shift in sign bit
 
     static vec_t blend(vec_t a, vec_t b, const int imm8) noexcept           { return _mm256_blend_epi32(a, b, imm8); }
 

@@ -23,6 +23,12 @@ public:
 
     static vec_t add(vec_t a, vec_t b) noexcept                                 { return _mm_add_epi64(a, b); }
     static vec_t sub(vec_t a, vec_t b) noexcept                                 { return _mm_sub_epi64(a, b); }
+
+    static vec_t sl(vec_t a, vec_t count) noexcept                              { return _mm_sll_epi64(a, count); }
+    static vec_t sli(vec_t a, int imm8) noexcept                                { return _mm_slli_epi64(a, imm8); }
+
+    static vec_t sr(vec_t a, vec_t count) noexcept                              { return _mm_srl_epi64(a, count); }
+    static vec_t sri(vec_t a, int imm8) noexcept                                { return _mm_srli_epi64(a, imm8); }
 #endif //__SSE2__
 
 #ifdef __SSE4_1__

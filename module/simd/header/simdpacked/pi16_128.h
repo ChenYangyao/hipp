@@ -27,6 +27,14 @@ public:
     static vec_t add(vec_t a, vec_t b) noexcept                                 { return _mm_add_epi16(a, b); }
     static vec_t sub(vec_t a, vec_t b) noexcept                                 { return _mm_sub_epi16(a, b); }
     static vec_t mul_as_lo(vec_t a, vec_t b) noexcept   { return _mm_mullo_epi16(a, b); }
+
+    static vec_t sl(vec_t a, vec_t count) noexcept                              { return _mm_sll_epi16(a, count); }
+    static vec_t sli(vec_t a, int imm8) noexcept                                { return _mm_slli_epi16(a, imm8); }
+
+    static vec_t sr(vec_t a, vec_t count) noexcept                              { return _mm_srl_epi16(a, count); }
+    static vec_t sri(vec_t a, int imm8) noexcept                                { return _mm_srli_epi16(a, imm8); }
+    static vec_t sra(vec_t a, vec_t count) noexcept                             { return _mm_sra_epi16(a, count); }
+    static vec_t srai(vec_t a, int imm8) noexcept                               { return _mm_srai_epi16(a, imm8); }
 #endif //__SSE2__
 };
 

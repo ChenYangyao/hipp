@@ -82,6 +82,18 @@ public:
     friend Vec operator==(const Vec &a, const Vec &b) noexcept;
     friend Vec operator<(const Vec &a, const Vec &b) noexcept;
     friend Vec operator>(const Vec &a, const Vec &b) noexcept;
+
+    Vec sli(const int imm8) noexcept                                            { return pack_t::sli(_val, imm8); }
+    Vec sl(const Vec &count) noexcept                                           { return pack_t::sl(_val, count._val); }
+    Vec sli_si(const int imm8) noexcept                                         { return pack_si_t::sli_si(_val, imm8); }
+
+    Vec sri(const int imm8) noexcept                                            { return pack_t::sri(_val, imm8); }
+    Vec sr(const Vec &count) noexcept                                           { return pack_t::sr(_val, count._val); }
+    Vec sri_si(const int imm8) noexcept                                         { return pack_si_t::sri_si(_val, imm8); }
+
+    Vec srai(const int imm8) noexcept                                           { return pack_t::srai(_val, imm8); }
+    Vec sra(const Vec &count) noexcept                                          { return pack_t::sra(_val, count._val); }
+
 #endif //__SSE2__
 
 protected:

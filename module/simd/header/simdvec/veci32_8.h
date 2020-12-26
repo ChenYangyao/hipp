@@ -117,6 +117,9 @@ public:
     Vec sr(const VecH4C_DP &count) const noexcept;
     Vec sr(const Vec &count) const noexcept                                     { return pack_t::sr(_val, count._val); }
 
+    Vec srai(const int imm8) const noexcept                                      { return pack_t::srai(_val, imm8); }
+    Vec sra(const Vec &count) const noexcept                                     { return pack_t::sra(_val, count._val); }
+
     Vec blend(const Vec &b, const int imm8) const noexcept                      { return pack_t::blend(_val, b._val, imm8); }
     Vec abs() const noexcept                                                    { return pack_t::abs(_val); }
     Vec max(const Vec &b) const noexcept                                        { return pack_t::max(_val, b._val); }

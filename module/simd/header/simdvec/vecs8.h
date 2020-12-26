@@ -70,29 +70,36 @@ public:
     Vec & load1( const scal_t *mem_addr ) noexcept;
     Vec & bcast( const scal_t *mem_addr ) noexcept;
     Vec & bcast( const vec_hc_t *mem_addr ) noexcept;
+
+    /* gather and _m need AVX2, otherwise serialized */
     Vec & gather( const scal_t *base_addr, 
-        ivec_t vindex, const int scale=SCALSIZE ) noexcept;
-    Vec & gatherm( vec_t src, const scal_t *base_addr, 
-        ivec_t vindex, vec_t mask, const int scale=SCALSIZE ) noexcept;
+        const IntVec &vindex, const int scale=SCALSIZE ) noexcept;
+    Vec & gatherm(const Vec &src, const scal_t *base_addr, 
+        const IntVec &vindex,const Vec &mask, const int scale=SCALSIZE ) noexcept;
     const Vec & store( addr_t mem_addr ) const noexcept;
-    const Vec & storem( addr_t mem_addr, ivec_t mask ) const noexcept;
+    const Vec & storem( addr_t mem_addr, const IntVec &mask ) const noexcept;
     const Vec & storeu( addr_t mem_addr ) const noexcept;
     const Vec & stream( addr_t mem_addr ) const noexcept;
     Vec & store( addr_t mem_addr ) noexcept;
-    Vec & storem( addr_t mem_addr, ivec_t mask ) noexcept;
+    Vec & storem( addr_t mem_addr, const IntVec &mask ) noexcept;
     Vec & storeu( addr_t mem_addr ) noexcept;
     Vec & stream( addr_t mem_addr ) noexcept;
-    const Vec & scatter(void *base_addr, ivec_t vindex, 
+
+    /* scatter and _m need AVX512F & AVX512VL, otherwise serialized */
+    const Vec & scatter(void *base_addr, const IntVec &vindex, 
         int scale=SCALSIZE) const noexcept;
-    const Vec & scatterm(void *base_addr, mask8_t k, ivec_t vindex, 
+    const Vec & scatterm(void *base_addr, mask8_t k, const IntVec &vindex, 
         int scale=SCALSIZE) const noexcept;
-    Vec & scatter(void *base_addr, ivec_t vindex, 
+    Vec & scatter(void *base_addr, const IntVec &vindex, 
         int scale=SCALSIZE) noexcept;
-    Vec & scatterm(void *base_addr, mask8_t k, ivec_t vindex, 
+    Vec & scatterm(void *base_addr, mask8_t k, const IntVec &vindex, 
         int scale=SCALSIZE) noexcept;
 
     scal_t to_scal()const noexcept;
     IntVec to_ivec()const noexcept;
+    IntVec tot_ivec() const noexcept;
+    IntVec to_i32vec()const noexcept;       // same as to_ivec
+    IntVec tot_i32vec() const noexcept;     // same as tot_ivec
 
     Vec & from_si(const IntVec &a) noexcept;
     IntVec to_si()const noexcept;

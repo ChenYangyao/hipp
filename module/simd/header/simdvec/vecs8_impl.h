@@ -80,15 +80,15 @@ inline Vec<float,8> & Vec<float,8>::bcast( const vec_hc_t *mem_addr ) noexcept{
     return *this;
 }
 inline Vec<float,8> & Vec<float,8>::gather( const scal_t *base_addr, 
-    ivec_t vindex, const int scale ) noexcept{
+    const IntVec &vindex, const int scale ) noexcept{
 #ifdef __AVX2__
-    _val = pack_t::gather(base_addr, vindex, scale);
+    _val = pack_t::gather(base_addr, vindex.val(), scale);
 #else
 #ifdef _HIPPSIMD_WSEQ
 #warning AVX2 not enabled. HIPP::SIMD::Vec<float,8>::gather is implemented sequentially
 #endif
     _u_vs_t val;
-    const _u_ivs_t idx = { vindex };
+    const _u_ivs_t idx = { vindex.val() };
     for (size_t i = 0; i < NPACK; i++){
         val.s[i] = *(const scal_t *)((const void *)base_addr + idx.s[i]*scale);
     }
@@ -96,18 +96,18 @@ inline Vec<float,8> & Vec<float,8>::gather( const scal_t *base_addr,
 #endif
     return *this;
 }
-inline Vec<float,8> & Vec<float,8>::gatherm( vec_t src, const scal_t *base_addr, 
-    ivec_t vindex, vec_t mask, const int scale ) noexcept{
+inline Vec<float,8> & Vec<float,8>::gatherm( const Vec &src, const scal_t *base_addr, 
+    const IntVec &vindex, const Vec &mask, const int scale ) noexcept{
 #ifdef __AVX2__
-    _val = pack_t::gatherm(src, base_addr, vindex, mask, scale);
+    _val = pack_t::gatherm(src._val, base_addr, vindex._val, mask._val, scale);
 #else
 #ifdef _HIPPSIMD_WSEQ
 #warning AVX2 not enabled. HIPP::SIMD::Vec<float,8>::gatherm is implemented sequentially
 #endif
     _u_vs_t val;
-    const _u_vs_t _src = { src };
-    const _u_ivs_t idx = { vindex };
-    const int _mask = pack_t::movemask( mask );
+    const _u_vs_t _src = { src._val };
+    const _u_ivs_t idx = { vindex._val };
+    const int _mask = pack_t::movemask( mask._val );
     for (size_t i = 0; i < NPACK; i++){
         val.s[i] = ( _mask & ( 1 << int(i) ) ) ? 
             *(const scal_t *)((const void *)base_addr + idx.s[i]*scale) : 
@@ -123,8 +123,8 @@ Vec<float,8>::store( addr_t mem_addr ) const noexcept{
     return *this;
 }
 inline const Vec<float,8> & 
-Vec<float,8>::storem( addr_t mem_addr, ivec_t mask ) const noexcept{
-    pack_t::storem(mem_addr._addr, mask, _val);
+Vec<float,8>::storem( addr_t mem_addr, const IntVec &mask ) const noexcept{
+    pack_t::storem(mem_addr._addr, mask._val, _val);
     return *this;
 }
 inline const Vec<float,8> & 
@@ -143,8 +143,8 @@ Vec<float,8>::store( addr_t mem_addr ) noexcept{
     return *this;
 }
 inline Vec<float,8> & 
-Vec<float,8>::storem( addr_t mem_addr, ivec_t mask ) noexcept{
-    pack_t::storem(mem_addr._addr, mask, _val);
+Vec<float,8>::storem( addr_t mem_addr, const IntVec &mask ) noexcept{
+    pack_t::storem(mem_addr._addr, mask._val, _val);
     return *this;
 }
 inline Vec<float,8> & 
@@ -157,16 +157,16 @@ Vec<float,8>::stream( addr_t mem_addr ) noexcept{
     pack_t::stream(mem_addr._addr, _val);
     return *this;
 }
-inline const Vec<float,8> & Vec<float,8>::scatter(void *base_addr, ivec_t vindex, 
+inline const Vec<float,8> & Vec<float,8>::scatter(void *base_addr, const IntVec &vindex, 
     int scale) const noexcept{
 #if defined(__AVX512F__) && defined(__AVX512VL__)
-    pack_t::scatter( base_addr, vindex, _val, scale );
+    pack_t::scatter( base_addr, vindex._val, _val, scale );
 #else
 #ifdef _HIPPSIMD_WSEQ
 #warning AVX512F + AVX512VL not enabled. HIPP::SIMD::Vec<float,8>::scatter is implemented sequentially
 #endif
     const _u_vs_t val = {_val};
-    const _u_ivs_t idx = {vindex};
+    const _u_ivs_t idx = {vindex._val};
     for(size_t i=0; i<NPACK; ++i){
         *(scal_t *)(base_addr + idx.s[i]*scale) = val.s[i];
     }
@@ -174,16 +174,16 @@ inline const Vec<float,8> & Vec<float,8>::scatter(void *base_addr, ivec_t vindex
     return *this;    
 }
 inline const Vec<float,8> & 
-Vec<float,8>::scatterm(void *base_addr, mask8_t k, ivec_t vindex, 
+Vec<float,8>::scatterm(void *base_addr, mask8_t k, const IntVec &vindex, 
     int scale) const noexcept{
 #if defined(__AVX512F__) && defined(__AVX512VL__)
-    pack_t::scatterm( base_addr, k, vindex, _val, scale );
+    pack_t::scatterm( base_addr, k, vindex._val, _val, scale );
 #else
 #ifdef _HIPPSIMD_WSEQ
 #warning AVX512F + AVX512VL not enabled. HIPP::SIMD::Vec<float,8>::scatterm is implemented sequentially
 #endif
     const _u_vs_t val = {_val};
-    const _u_ivs_t idx = {vindex};
+    const _u_ivs_t idx = {vindex._val};
     for(size_t i=0; i<NPACK; ++i){
         if( k & ( (mask8_t)1 << (mask8_t)i ) )
             *(scal_t *)(base_addr + idx.s[i]*scale) = val.s[i];
@@ -191,11 +191,11 @@ Vec<float,8>::scatterm(void *base_addr, mask8_t k, ivec_t vindex,
 #endif
     return *this;
 }
-inline Vec<float,8> & Vec<float,8>::scatter(void *base_addr, ivec_t vindex, 
+inline Vec<float,8> & Vec<float,8>::scatter(void *base_addr, const IntVec &vindex, 
     int scale) noexcept{
     return (Vec &)((const Vec *)this)->scatter(base_addr, vindex, scale);
 }
-inline Vec<float,8> & Vec<float,8>::scatterm(void *base_addr, mask8_t k, ivec_t vindex, 
+inline Vec<float,8> & Vec<float,8>::scatterm(void *base_addr, mask8_t k, const IntVec &vindex, 
     int scale) noexcept{
     return (Vec &)((const Vec *)this)->scatterm(base_addr, k, vindex, scale);
 }
@@ -210,8 +210,23 @@ auto Vec<float,8>::to_ivec()const noexcept -> IntVec {
     return pack_t::to_ivec(_val);
 }
 
+inline 
+auto Vec<float,8>::tot_ivec() const noexcept -> IntVec {
+    return pack_t::tot_ivec(_val);
+}
+
+inline
+auto Vec<float,8>::to_i32vec()const noexcept -> IntVec {
+    return to_ivec();
+}
+
+inline 
+auto Vec<float,8>::tot_i32vec() const noexcept -> IntVec {
+    return tot_ivec();
+}
+
 inline auto Vec<float,8>::from_si(const IntVec &a) noexcept -> Vec & {
-    _val = pack_t::from_si(a.val());
+    _val = pack_t::from_si(a._val);
     return *this;
 }
 

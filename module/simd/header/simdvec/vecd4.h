@@ -76,10 +76,11 @@ public:
         const int scale=SCALSIZE ) noexcept;
     Vec & gatherm( const Vec &src, const scal_t *base_addr, const IntVec &vindex, 
         const Vec &mask, const int scale=SCALSIZE ) noexcept;
-    Vec & gather_idxhp( const scal_t *base_addr, const IntVecHP &vindex, 
+    Vec & gather( const scal_t *base_addr, const IntVecHP &vindex, 
         const int scale=SCALSIZE ) noexcept;
-    Vec & gatherm_idxhp( vec_t src, const scal_t *base_addr, const IntVecHP &vindex, 
-        vec_t mask, const int scale=SCALSIZE ) noexcept;
+    Vec & gatherm( const Vec &src, const scal_t *base_addr, const IntVecHP &vindex, 
+        const Vec &mask, const int scale=SCALSIZE ) noexcept;
+
     const Vec & store( addr_t mem_addr ) const noexcept;
     const Vec & storem( addr_t mem_addr, const IntVec &mask ) const noexcept;
     const Vec & storeu( addr_t mem_addr ) const noexcept;
@@ -92,23 +93,27 @@ public:
         const IntVec &vindex, int scale=SCALSIZE ) const noexcept;
     const Vec & scatterm( void *base_addr, mask8_t k,
         const IntVec &vindex, int scale=SCALSIZE ) const noexcept;
-    const Vec & scatter_idxhp( void *base_addr, 
+    const Vec & scatter( void *base_addr, 
         const IntVecHP &vindex, int scale=SCALSIZE ) const noexcept;
-    const Vec & scatterm_idxhp( void *base_addr, mask8_t k,
+    const Vec & scatterm( void *base_addr, mask8_t k,
         const IntVecHP &vindex, int scale=SCALSIZE ) const noexcept;
     Vec & scatter( void *base_addr, 
         const IntVec &vindex, int scale=SCALSIZE ) noexcept;
     Vec & scatterm( void *base_addr, mask8_t k,
         const IntVec &vindex, int scale=SCALSIZE ) noexcept;
-    Vec & scatter_idxhp( void *base_addr, 
+    Vec & scatter( void *base_addr, 
         const IntVecHP &vindex, int scale=SCALSIZE ) noexcept;
-    Vec & scatterm_idxhp( void *base_addr, mask8_t k,
+    Vec & scatterm( void *base_addr, mask8_t k,
         const IntVecHP &vindex, int scale=SCALSIZE ) noexcept;
 
     
-    scal_t to_scal( )const noexcept;
+    scal_t to_scal( ) const noexcept;
     Vec & from_si(const IntVec &a) noexcept;
-    IntVec to_si()const noexcept;
+    IntVec to_si() const noexcept;
+    IntVecHP to_ivec_hp() const noexcept;
+    IntVecHP tot_ivec_hp() const noexcept;
+    IntVecHP to_i32vec() const noexcept;
+    IntVecHP tot_i32vec() const noexcept;
     VecHC to_vec_hc() const noexcept;
     VecHC extract_hc(const int imm8) const noexcept;
     Vec unpackhi(const Vec &b) const noexcept                                   { return pack_t::unpackhi(_val, b._val); }

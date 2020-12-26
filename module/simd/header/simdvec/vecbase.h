@@ -7,7 +7,6 @@ template<typename ScaleT, size_t NPack> class Vec {
     ~Vec() = delete;
 };
 
-
 #define _HIPPSIMD_SERIES(func_name) \
     Vectorization is not enabled. Implement func_name sequentially
 

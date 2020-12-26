@@ -59,8 +59,8 @@ public:
     Vec & loaddqu(caddr_t mem_addr) noexcept                    { _val = pack_si_t::loaddqu( (const vec_t *)mem_addr._addr ); return *this; }
     Vec & loadstream(caddr_t mem_addr) noexcept                 { _val = pack_si_t::loadstream( (const vec_t *)mem_addr._addr ); return *this; }
     Vec & gather( const scal_t *base_addr, const Vec &vindex, const int scale=SCALSIZE ) noexcept       { _val = pack_t::gather(base_addr, vindex._val, scale); return *this; }
-    Vec & gather( const scal_t *base_addr, const VecHP &vindex, const int scale=SCALSIZE ) noexcept      { _val = pack_t::gather(base_addr, vindex._val, scale); return *this; }
-    Vec & gatherm( const Vec &src, const scal_t *base_addr, const VecHP &vindex, const Vec &mask, const int scale=SCALSIZE ) noexcept    { _val = pack_t::gatherm(src._val, base_addr, vindex._val, mask._val, scale); return *this; }
+    Vec & gather( const scal_t *base_addr, const VecHP &vindex, const int scale=SCALSIZE ) noexcept;
+    Vec & gatherm( const Vec &src, const scal_t *base_addr, const VecHP &vindex, const Vec &mask, const int scale=SCALSIZE ) noexcept;
     Vec & gatherm( const Vec &src, const scal_t *base_addr, const Vec &vindex, const Vec &mask, const int scale=SCALSIZE ) noexcept     { _val = pack_t::gatherm(src._val, base_addr, vindex._val, mask._val, scale); return *this; }
 
     const Vec & store(addr_t mem_addr) const noexcept           { pack_si_t::store( (vec_t *)mem_addr._addr, _val ); return *this; }

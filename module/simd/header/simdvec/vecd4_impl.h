@@ -118,7 +118,7 @@ inline Vec<double,4> & Vec<double,4>::gather(
 #warning AVX2 not enabled. HIPP::SIMD::Vec<double,4>::gather_idxhp is implemented sequentially
 #endif
     _u_vs_t val;
-    union { IntVecHP i; iscal_hp_t s[NPACK]; } const idx = {vindex._val};
+    union u_t { IntVecHP i; iscal_hp_t s[NPACK];  ~u_t(){} } const idx = {vindex._val};
     for(size_t i=0; i<NPACK; ++i){
         val.s[i] = *(const scal_t *)((const void *)base_addr + idx.s[i]*scale);
     }
@@ -137,7 +137,7 @@ inline Vec<double,4> & Vec<double,4>::gatherm( const Vec &src,
 #endif
     _u_vs_t val;
     const _u_vs_t _src = {src._val};
-    union { IntVecHP i; iscal_hp_t s[NPACK]; } const idx = {vindex._val};
+    union u_t { IntVecHP i; iscal_hp_t s[NPACK];  ~u_t(){}} const idx = {vindex._val};
     const int _mask = pack_t::movemask(mask._val);
     for(size_t i=0; i<NPACK; ++i){
         val.s[i] = ( _mask & ( 1 << int(i) ) ) ? 
@@ -226,7 +226,7 @@ Vec<double,4>::scatter( void *base_addr,
 #warning AVX512F + AVX512VL not enabled. HIPP::SIMD::Vec<double,4>::scatter_idxhp is implemented sequentially
 #endif
     const _u_vs_t val = {_val};
-    union { IntVecHP i; iscal_hp_t s[NPACK]; } const idx = {vindex};
+    union u_t { IntVecHP i; iscal_hp_t s[NPACK]; ~u_t(){} } const idx = {vindex};
     for(size_t i=0; i<NPACK; ++i)
         *(scal_t *)(base_addr + idx.s[i]*scale) = val.s[i];
 #endif
@@ -243,7 +243,7 @@ Vec<double,4>::scatterm( void *base_addr, mask8_t k,
 #warning AVX512F + AVX512VL not enabled. HIPP::SIMD::Vec<double,4>::scatterm_idxhp is implemented sequentially
 #endif
     const _u_vs_t val = {_val};
-    union { IntVecHP i; iscal_hp_t s[NPACK]; } const idx = {vindex};
+    union u_t { IntVecHP i; iscal_hp_t s[NPACK];  ~u_t(){} } const idx = {vindex};
     for(size_t i=0; i<NPACK; ++i)
         if( k & ( (mask8_t)1 << (mask8_t)i ) )
             *(scal_t *)(base_addr + idx.s[i]*scale) = val.s[i];
@@ -353,7 +353,7 @@ Vec<double,4>::set1( vec_hc_t a ) noexcept {
 #ifdef _HIPPSIMD_WSEQ
 #warning AVX2 or SSE2 not enabled. HIPP::SIMD::Vec<double,4>::set1(vec_hc_t) is implemented sequentially
 #endif
-    union { vec_hc_t f; scal_t s[NPACK/2] s; } val = {a};
+    union u_t { vec_hc_t f; scal_t s[NPACK/2] s;  ~u_t(){}} val = {a};
     set1( val.s[0] );    
 #endif
     return *this; 

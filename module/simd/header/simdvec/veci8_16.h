@@ -46,6 +46,15 @@ public:
     Vec & operator=(const Vec &a) noexcept                                      { _val = a._val; }
     Vec & operator=(Vec &&a) noexcept                                           { _val = a._val; }
     ~Vec() noexcept                                                             {}
+    
+    Vec & load(caddr_t mem_addr) noexcept                                       { _val = pack_t::load( (const vec_t *)mem_addr._addr); return *this; }
+    Vec & loadu(caddr_t mem_addr) noexcept                                      { _val = pack_t::loadu( (const vec_t *)mem_addr._addr); return *this; }   
+    const Vec & store(addr_t mem_addr) const noexcept                           { pack_t::store((vec_t *)mem_addr._addr, _val); return *this; }
+    const Vec & storeu(addr_t mem_addr) const noexcept                          { pack_t::storeu((vec_t *)mem_addr._addr, _val); return *this; }
+    Vec & store(addr_t mem_addr) noexcept                                       { pack_t::store((vec_t *)mem_addr._addr, _val); return *this; }
+    Vec & storeu(addr_t mem_addr) noexcept                                      { pack_t::storeu((vec_t *)mem_addr._addr, _val); return *this; }
+
+
 
     vec_t & val() noexcept                                                      {return _val;}
     const vec_t & val() const noexcept                                          {return _val;}

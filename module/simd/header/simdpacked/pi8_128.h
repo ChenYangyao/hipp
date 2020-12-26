@@ -23,6 +23,9 @@ public:
     static vec_t load(const vec_t *mem_addr) noexcept                           { return _mm_load_si128(mem_addr); }
     static vec_t loadu(const vec_t *mem_addr) noexcept                          { return _mm_loadu_si128(mem_addr); }
 
+    static void store(vec_t *mem_addr, vec_t a) noexcept                        { return _mm_store_si128(mem_addr, a); }
+    static void storeu(vec_t *mem_addr, vec_t a) noexcept                       { return _mm_storeu_si128(mem_addr, a); }
+
     static vec_t set() noexcept                                                 { return setzero(); }
     static vec_t setzero() noexcept                                             { return _mm_setzero_si128(); }
     static vec_t set1(char_t a) noexcept                                        { return _mm_set1_epi8(a); }

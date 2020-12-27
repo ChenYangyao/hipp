@@ -131,8 +131,8 @@ protected:
 };
 inline ostream & Vec<int32_t,8>::info(ostream &os, int fmt_cntl) const{
     prt( os,  "HIPP::SIMD::Vec<int32_t,8>("); 
-    const scal_t *p = (const scal_t *)&_val;
-    prt_a(os, p, p+NPACK) << ")";
+    union u_t { vec_t v; scal_t s[NPACK]; ~u_t(){} } u = {_val};
+    prt_a(os, u.s, u.s+NPACK) << ")";
     if( fmt_cntl >= 1 ) os << endl;
     return os;
 }

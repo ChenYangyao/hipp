@@ -105,6 +105,8 @@ public:
     IntVec to_si()const noexcept;
     VecHC to_vec_hc() const noexcept;
     VecHC extract_hc(const int imm8) const noexcept;
+    // Does not change. Only for generic programming
+    Vec to_f32vec() const noexcept                                              { return _val; }
 
     int movemask( ) const noexcept;
     Vec movehdup( ) const noexcept;

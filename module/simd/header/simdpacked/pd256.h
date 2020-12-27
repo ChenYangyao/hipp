@@ -81,7 +81,7 @@ public:
     static ivec_hp_t to_ivec_hp( vec_t a ) noexcept                             { return _mm256_cvtpd_epi32(a); }
     static ivec_hp_t tot_ivec_hp( vec_t a ) noexcept                            { return _mm256_cvttpd_epi32(a); }
     static vec_t from_vec_hp( vec_hp_t a ) noexcept;
-    static vec_hp_t to_vec_hp( vec_t a ) noexcept;
+    static vec_hp_t to_vec_hp( vec_t a ) noexcept                               { return _mm256_cvtpd_ps(a); }
     static vec_hc_t to_vec_hc( vec_t a ) noexcept                               { return _mm256_castpd256_pd128(a); }
 #ifdef __AVX2__
     static scal_t to_scal( vec_t a ) noexcept;
@@ -224,9 +224,6 @@ inline Packed<double,4>::vec_t Packed<double,4>::from_ivec_hp( ivec_hp_t a ) noe
 }
 inline Packed<double,4>::vec_t Packed<double,4>::from_vec_hp( vec_hp_t a ) noexcept{
     return _mm256_cvtps_pd( a );
-}
-inline Packed<double,4>::vec_hp_t Packed<double,4>::to_vec_hp( vec_t a ) noexcept{
-    return _mm256_cvtpd_ps(a);
 }
 #ifdef __AVX2__
 inline Packed<double,4>::scal_t Packed<double,4>::to_scal( vec_t a ) noexcept{

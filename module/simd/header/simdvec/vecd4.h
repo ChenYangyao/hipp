@@ -39,6 +39,7 @@ public:
     typedef Vec<iscal_t, 4> IntVec;
     typedef Vec<int32_t, 4> IntVecHP;
     typedef Vec<double, 2>  VecHC;
+    typedef Vec<float, 4>  VecHP;
     
     typedef _pd256_helper::AddrAligned addr_t;
     typedef _pd256_helper::CAddrAligned caddr_t;
@@ -116,6 +117,8 @@ public:
     IntVecHP tot_i32vec() const noexcept;
     VecHC to_vec_hc() const noexcept;
     VecHC extract_hc(const int imm8) const noexcept;
+    VecHP to_vec_hp() const noexcept;
+    VecHP to_f32vec() const noexcept;
     Vec unpackhi(const Vec &b) const noexcept                                   { return pack_t::unpackhi(_val, b._val); }
     Vec unpacklo(const Vec &b) const noexcept                                   { return pack_t::unpacklo(_val, b._val); }
 

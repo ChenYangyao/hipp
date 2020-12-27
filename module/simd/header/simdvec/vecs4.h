@@ -73,6 +73,9 @@ public:
 
 
     scal_t to_scal() const noexcept                                             { return pack_t::to_scal(_val); }
+#ifdef __SSE2__
+    IntVec to_si() const noexcept;
+#endif //__SSE2__
 
     Vec & set(scal_t e3, scal_t e2, scal_t e1, scal_t e0) noexcept              { _val = pack_t::set(e3, e2, e1, e0); return *this; }
     Vec & setr(scal_t e3, scal_t e2, scal_t e1, scal_t e0) noexcept             { _val = pack_t::setr(e3, e2, e1, e0); return *this; }

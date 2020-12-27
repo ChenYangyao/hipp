@@ -326,6 +326,15 @@ auto Vec<double,4>::extract_hc(const int imm8) const noexcept -> VecHC {
     return pack_t::extract_hc(_val, imm8); 
 }
 
+inline
+auto Vec<double,4>::to_vec_hp() const noexcept -> VecHP {
+    return pack_t::to_vec_hp(_val);
+}
+inline
+auto Vec<double,4>::to_f32vec() const noexcept -> VecHP {
+    return to_vec_hp();
+}
+
 inline int Vec<double,4>::movemask( ) const noexcept 
 { return pack_t::movemask(_val); }
 

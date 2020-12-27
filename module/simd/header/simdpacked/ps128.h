@@ -167,6 +167,9 @@ public:
     static vec_t movehl( vec_t a, vec_t b ) noexcept;           // dst[3:2] = a[3:2], dst[1:0] = b[3:2].
     static vec_t movelh( vec_t a, vec_t b ) noexcept;           //
     static int movemask( vec_t a ) noexcept;                    // move highest bit of each float into lowest 4 bits of dst.
+#ifdef __SSE2__
+    static ivec_t to_si(vec_t a) noexcept                                       { return _mm_castps_si128(a); }  
+#endif //__SSE2__
 #ifdef __SSE3__
     static vec_t movehdup( vec_t a) noexcept                                    { return _mm_movehdup_ps(a); }
     static vec_t moveldup( vec_t a ) noexcept                                   { return _mm_moveldup_ps(a); }

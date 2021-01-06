@@ -46,11 +46,24 @@ public:
         exit( e );
     }
     template<typename ...Args>
-    static void check( errno_t gsl_errno, Args &&... args )
-        { if( gsl_errno ) throw_(gsl_errno, std::forward<Args>(args)...); }
+    static void check( errno_t gsl_errno, Args &&... args ) { 
+        if( gsl_errno ) 
+            throw_(gsl_errno, std::forward<Args>(args)...); 
+    }
+
+    template<typename ...Args>
+    static void check_alloc( void *ptr, Args &&... args ){
+        if( !ptr )
+            throw_(GSL_ENOMEM, std::forward<Args>(args)...);
+    }
 
     static int _has_init_gsl_env;
+    static err_handler_t * _lib_default_err_handler;
 };
+
+
+
+
 
 
 } // namespace NUMERICAL

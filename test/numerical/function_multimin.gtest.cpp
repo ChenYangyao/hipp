@@ -41,10 +41,6 @@ TEST_F(FMinimizerNDTest, DefaultType){
     set_fn(5., 10., 2., 3., 4.);
     size_t n_iters = fmin.set_fn(fn, {0., 5.}, 1.).iterate_until();
     chk_result(n_iters, fmin.x_minimum());
-
-    fmin.info(cout, 0) << endl << endl;
-    fmin.info(cout, 1) << endl;
-    fmin.info(cout, 2) << endl;
 }
 
 TEST_F(FMinimizerNDTest, NMSimplexType){

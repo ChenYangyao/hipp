@@ -6,59 +6,6 @@ namespace HIPP{
 
 /**
  * PrtArray - formatted printing for array-like containers.
- * 
- * Format
- * ----------
- * indent padding item[0]    sep padding item[1]        ... sep padding item[ncol-1]  sep endline
- * indent padding item[ncol] sep padding item[ncol+1]   ... sep padding item[2ncol-1] sep endline
- * ... indent padding item[n-2]  sep padding item[n-1] endlast
- * 
- * If coloffset > 0, no indent is added at the start of the first line, and 
- * new lines are started at (index + coloffset) % ncol == 0.
- * 
- * Default Format
- * --------------
- * @indent: 0 (no ident).
- * @width:  -1 (no padding).
- * @ncol:   -1 (no line-break).
- * @coloffset:  0.
- * @sep:    ",".
- * @endline: "\n".
- * @endlast: "".
- * 
- * Examples
- * ----------
- * vector<double> arr1 = {1,2,3,4,5,6,7,8};
- * PrtArray p_arr1(arr1);
- * cout << p_arr1 << endl;
- * // Print as:
- * // 1,2,3,4,5,6,7,8
- *  
- * p_arr1.ncol(3);
- * cout << p_arr1 << endl;
- * // print as
- * // 1,2,3,
- * // 4,5,6,
- * // 7,8
- *
- * p_arr1.width(4);
- * cout << p_arr1 << endl;
- * // print as
- * //   1,   2,   3,
- * //   4,   5,   6,
- * //   7,   8
- *  
- * cout << p_arr1;
- * p_arr1.coloffset( arr1.size()%3 );
- * cout << p_arr1 << endl;
- * // print as
- * //   1,   2,   3,
- * //   4,   5,   6,
- * //   7,   8,   1,
- * //   2,   3,   4,
- * //   5,   6,   7,
- * //   8
- * //
  */
 template<typename InputIterator> class PrtArray;
 template<typename InputIterator>
@@ -92,6 +39,15 @@ public:
     std::ptrdiff_t coloffset() const noexcept;
     std::ptrdiff_t width() const noexcept;
 
+    /*  Default values:
+        @indent: 0 (no ident).
+        @width:  -1 (no padding).
+        @ncol:   -1 (no line-break).
+        @coloffset:  0.
+        @sep:    ",".
+        @endline: "\n".
+        @endlast: "".
+     */
     template<typename Container>
     PrtArray & set_array( const Container &array );
     PrtArray & set_array( iter_t b, iter_t e );

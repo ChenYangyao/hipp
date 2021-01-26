@@ -34,9 +34,7 @@ protected:
     static const errno_t _errmsg_maxno = 7;
     static const char * _errmsgs[];
 
-    const char *_what()const noexcept
-        { return _errno > _errmsg_maxno ? 
-            _errmsgs[_errmsg_maxno+1] : _errmsgs[_errno]; }
+    const char *_what()const noexcept;
 };
 
 inline ErrClass::ErrClass( errno_t new_errno ) noexcept

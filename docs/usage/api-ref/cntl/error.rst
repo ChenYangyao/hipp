@@ -55,6 +55,166 @@ Exception Handling
 
 The following variables, functions and classes are all defined within the namespace ``HIPP``.
 
+Overview of the Exception Layers
+------------------------------------
+
+One difficulty in the combination of HPC libraries is how to deal with their error/exception systems.
+In modern C++, exceptions are handled by try-catch clauses. But in libraries writen in C, exceptions 
+are usually hinted by the returned error code.
+
+HIPP defines an unified model for exceptions. An exception in HIPP is represented by a C++ struct, 
+which has an "application" and a "class". The "application" indicates which library causes the 
+error, and the "class" indicates the type of error. 
+
+The "application" and "class" information of an exception struct is encapsulated in 
+two parent structs, i.e., each exception struct has a parent struct which represents its 
+"application", and has a parent struct which represents its "class".
+
+For example, the struct :class:`MPI::ErrMPI` represents the exceptions thrown on calling of the 
+underlying MPI library. Hence, its "application" is :class:`ErrAppMPI` and its "class" 
+is :class:`ErrClassDefault` ("default" means the error happens in the underlying MPI library,
+not in the high-level wrappers).
+
+Once the exception struct is chosen, the detail reason of the exception is represented 
+by a member integer called error number or "errno".
+In the :class:`MPI::ErrMPI`, the errno is just the retuned value of the underlying MPI library,
+so that its meaning does not change when switching to the high-level wrappers.
+
+All the exception "application" structs are derived from :class:`ErrAPP`, and a member 
+integer (also called errno) is used to distinguish different applications. Such a design
+enables the users to capture all exceptions by the common parent struct :class:`ErrApp`,
+and dynamically check the "application" by the errno.
+For the same logic, all the exception "class" structs are derined from :class:`ErrClass`, with 
+a member integer distinguishing different error types.
+
+At the root, all the exception structs have a common ancestor ``std::exception``, which 
+is a typical strategy in designing C++ exception layers.
+
+.. graphviz::
+    :class: inherit-graph
+    
+    digraph ExceptionLayers {
+        
+        bgcolor="#ffffff00";
+        label="Inheritance Diagram";
+        node [font="helvetica", shape="box", fontsize="9", height="0.2", width="0.4"];
+        edge [arrowsize="0.5", dir="back"];
+        rankdir="LR";
+        nodesep="0.05";
+
+        a [label="std::exception"];
+
+        a2 [label="ErrApp"];
+        a1 [label="ErrClass"];
+        
+        a21 [label="ErrAppDefault"];
+        a22 [label="ErrAppUnknown"];
+        a23 [label="ErrAppSystem"];
+        a24 [label="ErrAppMPI"];
+        a25 [label="ErrAppOpenMP"];
+        a26 [label="ErrAppH5"];
+        a27 [label="ErrAppGSL"];
+        a28 [label="ErrAppPy"];
+        
+        a11 [label="ErrClassDefault"];
+        a12 [label="ErrClassUnknown"];
+        a13 [label="ErrClassRuntime"];
+        a14 [label="ErrClassLogic"];
+        a15 [label="ErrClassMemory"];
+        a16 [label="ErrClassCast"];
+        a17 [label="ErrClassIO"];
+
+        asystem [label="ErrSystem"];
+        aruntime [label="ErrRuntime"];
+        alogic [label="ErrLogic"];
+        agsl [label="NUMERICAL::ErrGSL"];
+        ampi [label="MPI::ErrMPI"];
+        ah5 [label="IO::ErrH5"];
+        
+        subgraph subeclass {
+            rank="same";
+            edge [style="invisible", dir="none"];
+            a2->a1;
+        }
+        subgraph subeappsub {
+            rank="same";
+            edge [style="invisible", dir="none"];
+            a21->a22->a23->a24->a25->a26->a27->a28->a11->a12->a13->a14->a15->a16->a17;
+        }
+
+        a -> a2;
+        a -> a1;
+
+        a2-> a21;
+        a2 -> a22;
+        a2 -> a23;
+        a2 -> a24;
+        a2 -> a25;
+        a2 -> a26;
+        a2 -> a27;
+        a2 -> a28;
+        
+        a1 -> a11;
+        a1 -> a12;
+        a1 -> a13;
+        a1 -> a14;
+        a1 -> a15;
+        a1 -> a16;
+        a1 -> a17;
+        
+        edge [color="red"];
+        a23 -> asystem;
+        a11 -> asystem;
+
+        edge [color="blue"];
+        a24 -> ampi;
+        a11 -> ampi;
+
+        edge [color="green"];
+        a26 -> ah5;
+        a11 -> ah5;
+
+        edge [color="purple"];
+        a27 -> agsl;
+        a11 -> agsl;
+
+        edge [color="black"];
+        a21 -> aruntime;
+        a13 -> aruntime;
+
+        edge [color="orange"];
+        a21 -> alogic;
+        a14 -> alogic;
+    }
+
+
+The following example shows how the throw an exception and catch it.
+Member function :func:`whats() <ErrLogic::whats>` is used to get the detail error information,
+:func:`get_errno() <ErrLogic::get_errno>` in the exception struct and its two parent structs are used to 
+get the error numbers::
+
+    try {
+        throw ErrLogic(ErrLogic::eLENGTH);
+    }catch( const ErrLogic &e ){
+        /* priting the detail of error */
+        pout << e.whats(), endl;
+
+        /* retrieve its errno for application, errno for class, and errno */
+        pout << e.ErrApp::get_errno(), ", ", 
+                e.ErrClass::get_errno(), ", ",
+                e.get_errno(), endl;
+    }
+
+The output is 
+
+.. code-block:: text
+
+    Application: default | Class: logic error | Type: eLENGTH
+    1, 4, 5
+
+Here, errno 1 represents the default "application", errno 4 represents 
+the logic error "class", and errno 5 represents the length error.
+
 Error Classes and Error in Applications
 -----------------------------------------
 
@@ -259,3 +419,4 @@ Predefined Error Classes and Applications
     Each of these classes defines errors in a specific application.
     
     They all have default constructors.
+

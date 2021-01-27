@@ -215,79 +215,8 @@ The output is
 Here, errno 1 represents the default "application", errno 4 represents 
 the logic error "class", and errno 5 represents the length error.
 
-Error Classes and Error in Applications
+Applications, Classes and Exceptions
 -----------------------------------------
-
-.. class::  ErrClass: virtual public std::exception
-
-    ``ErrClass`` is the base class of all "Error Class" classes. Each of the subclass
-    represents a type of error, e.g., runtime error, logic error, cast error, etc. 
-
-    ``ErrClass`` uses a single member typed :type:`errno_t` to represent which 
-    type of error it is, which we called "errno" or error number. 
-    The subclasses have no extra member, and each of them is pinned
-    to a fixed value of errno. Such a design enables the user to
-    
-    - catch all errors with ``ErrClass``, and dynamically check its type 
-      by using the errno.
-    - or, catch a specific type of error with one of its subclass.
-
-    ``ErrClass`` can be copy/move constructed/assigned.
-
-    .. type:: std::uint16_t errno_t
-
-        Type of the errno.
-
-    .. enum:: ERRNOS : errno_t
-
-        .. enumerator:: \
-            eDEFAULT=1
-            eUNKNOWN=2
-            eRUNTIME=3
-            eLOGIC=4
-            eMEMORY=5 
-            eCAST=6
-            eIO=7
-
-        Predefined errnos for different types of error.
-
-    .. function:: \
-        ErrClass( errno_t new_errno = 1 ) noexcept
-
-        Construct the instance by providing an errno - possibly used in the ``throw`` statement.
-        The errno can be any value defined as the enumerator typed :enum:`ERRNOS`.
-
-        Usually, we do not throw :class:`ErrClass`, but we throw a subclass of it. For example, we 
-        throw :class:`ErrClassLogic` to hint a general logic error (which is derived from :class:`ErrLogic`) 
-        when the application does not matter. 
-        Or we throw :class:`ErrLogic` to hint the logic error in the default application 
-        (which is derived from :class:`ErrAppDefault` and :class:`ErrClassLogic`).
-    
-    .. function:: \ 
-        virtual const char *what()const noexcept override
-        virtual string whats() const
-        static size_t errmsg_maxsize() noexcept
-        static errno_t errmsg_maxno() noexcept
-
-        Retrieve the detail of the exception instance. 
-
-        ``what()`` gives a short report, which is short and quick, with no obvious 
-        overhead (because the content returned by ``what()`` is stored statically).
-        The maximal length of the error message returned by ``what()`` can be 
-        obtained by ``errmsg_maxsize()`` (the NULL-terminate is not counted).
-        
-        ``whats()`` reports more details, but with larger overhead because the error 
-        message is dynamically constructed.
-
-        ``errmsg_maxno()`` gives the maximal errno that can be thrown with 
-        :class:`ErrClass`.
-    
-    .. function:: \    
-        errno_t get_errno() const noexcept
-        void set_errno( errno_t new_errno ) noexcept
-
-        Get the current errno or set the errno in the instance. ``new_errno`` can be 
-        any of the enumerators defined in :enum:`ERRNOS`.
 
 .. class:: ErrApp: virtual public std::exception
 
@@ -362,8 +291,91 @@ Error Classes and Error in Applications
         any of the enumerators defined in :enum:`ERRNOS`.
 
 
-Predefined Error Classes and Applications
----------------------------------------------
+
+.. class:: \
+    ErrAppDefault: public ErrApp
+    ErrAppUnknown: public ErrApp
+    ErrAppSystem: public ErrApp
+    ErrAppMPI: public ErrApp
+    ErrAppOpenMP: public ErrApp
+    ErrAppH5: public ErrApp
+    ErrAppGSL: public ErrApp
+    ErrAppPy: public ErrApp
+
+    Each of these classes defines errors in a specific application.
+    
+    They all have default constructors.
+
+.. class::  ErrClass: virtual public std::exception
+
+    ``ErrClass`` is the base class of all "Error Class" classes. Each of the subclass
+    represents a type of error, e.g., runtime error, logic error, cast error, etc. 
+
+    ``ErrClass`` uses a single member typed :type:`errno_t` to represent which 
+    type of error it is, which we called "errno" or error number. 
+    The subclasses have no extra member, and each of them is pinned
+    to a fixed value of errno. Such a design enables the user to
+    
+    - catch all errors with ``ErrClass``, and dynamically check its type 
+      by using the errno.
+    - or, catch a specific type of error with one of its subclass.
+
+    ``ErrClass`` can be copy/move constructed/assigned.
+
+    .. type:: std::uint16_t errno_t
+
+        Type of the errno.
+
+    .. enum:: ERRNOS : errno_t
+
+        .. enumerator:: \
+            eDEFAULT=1
+            eUNKNOWN=2
+            eRUNTIME=3
+            eLOGIC=4
+            eMEMORY=5 
+            eCAST=6
+            eIO=7
+
+        Predefined errnos for different types of error.
+
+    .. function:: \
+        ErrClass( errno_t new_errno = 1 ) noexcept
+
+        Construct the instance by providing an errno - possibly used in the ``throw`` statement.
+        The errno can be any value defined as the enumerator typed :enum:`ERRNOS`.
+
+        Usually, we do not throw :class:`ErrClass`, but we throw a subclass of it. For example, we 
+        throw :class:`ErrClassLogic` to hint a general logic error (which is derived from :class:`ErrLogic`) 
+        when the application does not matter. 
+        Or we throw :class:`ErrLogic` to hint the logic error in the default application 
+        (which is derived from :class:`ErrAppDefault` and :class:`ErrClassLogic`).
+    
+    .. function:: \ 
+        virtual const char *what()const noexcept override
+        virtual string whats() const
+        static size_t errmsg_maxsize() noexcept
+        static errno_t errmsg_maxno() noexcept
+
+        Retrieve the detail of the exception instance. 
+
+        ``what()`` gives a short report, which is short and quick, with no obvious 
+        overhead (because the content returned by ``what()`` is stored statically).
+        The maximal length of the error message returned by ``what()`` can be 
+        obtained by ``errmsg_maxsize()`` (the NULL-terminate is not counted).
+        
+        ``whats()`` reports more details, but with larger overhead because the error 
+        message is dynamically constructed.
+
+        ``errmsg_maxno()`` gives the maximal errno that can be thrown with 
+        :class:`ErrClass`.
+    
+    .. function:: \    
+        errno_t get_errno() const noexcept
+        void set_errno( errno_t new_errno ) noexcept
+
+        Get the current errno or set the errno in the instance. ``new_errno`` can be 
+        any of the enumerators defined in :enum:`ERRNOS`.
 
 .. class:: \
     ErrClassDefault: public ErrClass
@@ -406,17 +418,194 @@ Predefined Error Classes and Applications
         Class: logic error
         errno=4
 
-.. class:: \
-    ErrAppDefault: public ErrApp
-    ErrAppUnknown: public ErrApp
-    ErrAppSystem: public ErrApp
-    ErrAppMPI: public ErrApp
-    ErrAppOpenMP: public ErrApp
-    ErrAppH5: public ErrApp
-    ErrAppGSL: public ErrApp
-    ErrAppPy: public ErrApp
+.. class:: ErrSystem: public ErrAppSystem, ErrClassDefault
 
-    Each of these classes defines errors in a specific application.
+    Exception that is thrown on a failed system call.
+
+    .. type::   int errno_t
+                int flag_t
+
+        Types of errno and error controlling flag.
+
+    .. function:: ErrType( errno_t new_errno ) noexcept
+
+        Constructor. 
+
+        Initialize the exception instance with an errno. The errno should be 
+        a valid return value of the underlying operating system.
+
+    .. function:: \
+        virtual const char *what() const noexcept override
+        virtual string whats() const override
+        static size_t errmsg_maxsize() noexcept 
+        static errno_t errmsg_maxno() noexcept 
+
+        Get the exception details. ``what()`` gives a brief description. ``whats()`` gives 
+        a more detailed description (with larger overhead). 
+        
+        The maximal length 
+        of the C-style string retuned by ``what()`` can be obtained by ``errmsg_maxsize()`` 
+        (NULL-terminate is not counted).  The maximal errno can be obtained by ``errmsg_maxno()``.
+
+    .. function:: \
+        errno_t get_errno() const noexcept
+        void set_errno( errno_t new_errno ) noexcept 
+
+        Retrieve the current errno or set the errno.
+
+    .. function:: \
+        static flag_t err_cntl_flag() noexcept
+        static void err_cntl_flag( flag_t flag ) noexcept
+
+        Retrieve or set the thread-local, static error controlling flag. By default
+        the flag is ``1`` - error message is printed to the standard error stream 
+        on the throwing of each exception. If the flag is set to ``0``, the exception
+        throwing is silent. 
+
+    .. function:: \
+        template<typename ...Args> static void check( errno_t new_errno, Args &&... args )
+        template<typename ...Args> static void throw_( errno_t new_errno, Args &&... args )
+        template<typename ...Args> static void abort( errno_t e, Args &&... args )
+
+        ``check()`` checks if ``new_errno`` indicates an error. If it does, ``throw_(new_errno, args...)``
+        is invoked.
+
+        ``throw_()`` prints error message ``args...`` into standard error stream (if the error controlling flag is not disabled),
+        and throws an exception ``ErrSystem(new_errno)``.
+
+        ``abort()`` always prints the error message ``args...`` into standard error stream, and abort 
+        the program with exit code ``e``.
+
+.. class:: ErrRuntime: public ErrAppDefault, ErrClassRuntime
+
+    Exception that is thrown on a run-time error.
+
+    .. type::   int errno_t
+                int flag_t
+
+        Types of errno and error controlling flag.
+
+    .. enum:: ERRNOS: errno_t
+
+        .. enumerator:: \  
+            eDEFAULT=1
+            eOVERFLOW=2
+            eUNDERFLOW=3
+            eRANGE=4
+            eSTRCONSTRUCT=5
+
+        Predefined errnos for different run-time errors.
+
+    .. function:: ErrType( errno_t new_errno ) noexcept
+
+        Constructor. 
+
+        Initialize the exception instance with an errno. 
+        The errno can be any value defined as the enumerator typed :enum:`ERRNOS`.
+
+    .. function:: \
+        virtual const char *what() const noexcept override
+        virtual string whats() const override
+        static size_t errmsg_maxsize() noexcept 
+        static errno_t errmsg_maxno() noexcept 
+
+        Get the exception details. ``what()`` gives a brief description. ``whats()`` gives 
+        a more detailed description (with larger overhead). 
+        
+        The maximal length 
+        of the C-style string retuned by ``what()`` can be obtained by ``errmsg_maxsize()`` 
+        (NULL-terminate is not counted).  The maximal errno can be obtained by ``errmsg_maxno()``.
+
+    .. function:: \
+        errno_t get_errno() const noexcept
+        void set_errno( errno_t new_errno ) noexcept 
+
+        Retrieve the current errno or set the errno.
+
+    .. function:: \
+        static flag_t err_cntl_flag() noexcept
+        static void err_cntl_flag( flag_t flag ) noexcept
+
+        Retrieve or set the thread-local, static error controlling flag. By default
+        the flag is ``1`` - error message is printed to the standard error stream 
+        on the throwing of each exception. If the flag is set to ``0``, the exception
+        throwing is silent. 
+
+    .. function:: \
+        template<typename ...Args> static void throw_( errno_t new_errno, Args &&... args )
+        template<typename ...Args> static void abort( errno_t e, Args &&... args )
+
+        ``throw_()`` prints error message ``args...`` into standard error stream (if the error controlling flag is not disabled),
+        and throws an exception ``ErrRuntime(new_errno)``.
+
+        ``abort()`` always prints the error message ``args...`` into standard error stream, and abort 
+        the program with exit code ``e``.
+
+.. class:: ErrLogic: public ErrAppDefault, ErrClassLogic
+
+    Exception that is thrown on a logic error.
+
+    .. type::   int errno_t
+                int flag_t
+
+        Types of errno and error controlling flag.
+
+    .. enum:: ERRNOS: errno_t
+
+        .. enumerator:: \  
+            eDEFAULT=1
+            eDOMAIN=2
+            eINVALIDARG=3
+            eOUTOFRANGE=4
+            eLENGTH=5
+            eRECIPE_INCOMPLETE=6
+            eRECIPE_INCONSISTENT=7
+
+        Predefined errnos for different logic errors.
+
+    .. function:: ErrType( errno_t new_errno ) noexcept
+
+        Constructor. 
+
+        Initialize the exception instance with an errno. 
+        The errno can be any value defined as the enumerator typed :enum:`ERRNOS`.
+
+    .. function:: \
+        virtual const char *what() const noexcept override
+        virtual string whats() const override
+        static size_t errmsg_maxsize() noexcept 
+        static errno_t errmsg_maxno() noexcept 
+
+        Get the exception details. ``what()`` gives a brief description. ``whats()`` gives 
+        a more detailed description (with larger overhead). 
+        
+        The maximal length 
+        of the C-style string retuned by ``what()`` can be obtained by ``errmsg_maxsize()`` 
+        (NULL-terminate is not counted).  The maximal errno can be obtained by ``errmsg_maxno()``.
+
+    .. function:: \
+        errno_t get_errno() const noexcept
+        void set_errno( errno_t new_errno ) noexcept 
+
+        Retrieve the current errno or set the errno.
+
+    .. function:: \
+        static flag_t err_cntl_flag() noexcept
+        static void err_cntl_flag( flag_t flag ) noexcept
+
+        Retrieve or set the thread-local, static error controlling flag. By default
+        the flag is ``1`` - error message is printed to the standard error stream 
+        on the throwing of each exception. If the flag is set to ``0``, the exception
+        throwing is silent. 
+
+    .. function:: \
+        template<typename ...Args> static void throw_( errno_t new_errno, Args &&... args )
+        template<typename ...Args> static void abort( errno_t e, Args &&... args )
+
+        ``throw_()`` prints error message ``args...`` into standard error stream (if the error controlling flag is not disabled),
+        and throws an exception ``ErrLogic(new_errno)``.
+
+        ``abort()`` always prints the error message ``args...`` into standard error stream, and abort 
+        the program with exit code ``e``.
     
-    They all have default constructors.
 

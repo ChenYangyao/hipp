@@ -9,5 +9,6 @@
 #include "./error/error.h"
 #include "./memory/mem.h"
 #include "./stream/stream.h"
+#include "./time/time_utils.h"
 
 #endif	//_HIPPCNTL_H_

@@ -28,10 +28,10 @@ Class H5Datatype
 
     .. enum:: class_t 
 
-    .. enumerator:: class_t::COMPOUND_C
-                    class_t::OPAQUE_C
-                    class_t::ENUM_C
-                    class_t::STRING_C
+        .. enumerator:: COMPOUND_C
+                        OPAQUE_C
+                        ENUM_C
+                        STRING_C
 
         Enumerators of datatype classes. They can be passed into method :func:`create` 
         (to create new user-defined datatypes) or returned by :func:`member_class` (to detect classes 

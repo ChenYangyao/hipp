@@ -62,6 +62,7 @@ class _KDTree{
 public:
     typedef INDEX_T index_t;
     typedef FLOAT_T float_t;
+    typedef std::size_t size_t;
     typedef _kd_tree_helper::node_t<DIM, FLOAT_T, INDEX_T, PADDING> node_t;
     typedef typename node_t::point_t point_t;
     typedef const point_t * _p_point_t;
@@ -95,9 +96,17 @@ public:
 
     ngb_t nearest( const float_t *pos ) const;
     vector<ngb_t> nearest_k( const float_t *pos, index_t k ) const;
+    void nearest_k( const float_t *pos, index_t k, vector<ngb_t> &ngbs) const;
+    
     vector<ngb_t> nearest_r( const float_t *pos, float_t r ) const;
+    void nearest_r( const float_t *pos, float_t r, vector<ngb_t> &ngbs) const;
+    size_t count_r( const float_t *pos, float_t r) const;
+
     vector<_p_node_t> nearest_rect( 
         const float_t *pos, const float_t *dx ) const;
+    void nearest_rect( 
+        const float_t *pos, const float_t *dx, vector<_p_node_t> &ngbs) const;
+    size_t count_rect( const float_t *pos, const float_t *dx ) const;
 
     bool empty() const noexcept;
     index_t size() const noexcept;
@@ -116,10 +125,17 @@ protected:
         std::stack<_p_2node_t> &stk, _p_node_t &pnode, FLOAT_T &rsq ) const;
     void _nearest_k( const float_t pos[DIM], const index_t k,
         std::stack<_p_2node_t> &stk, std::priority_queue<ngb_t> &pq ) const;
+    
+    /* op: a callable that accepts (_pnode_t &pnode, float_t r_squred) */
+    template<typename Op>
     void _nearest_r( const float_t pos[DIM], const float_t rsq,
-        std::stack<_p_2node_t> &stk, vector<ngb_t> &ngbs ) const;
+        std::stack<_p_2node_t> &stk, Op op ) const;
+
+    /* op: a callable that accepts (_pnode_t &pnode) */
+    template<typename Op>
     void _nearest_rect( const float_t pos[DIM], const float_t dx[DIM],
-        std::stack<_p_2node_t> &stk, vector<_p_node_t> &ngbs ) const;
+        std::stack<_p_2node_t> &stk, Op op) const;
+
     void _walk_down( 
         _p_node_t &root, 
         const float_t pos[DIM], std::stack<_p_2node_t> &stk, 

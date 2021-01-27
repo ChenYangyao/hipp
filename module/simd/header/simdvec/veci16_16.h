@@ -6,6 +6,8 @@
 namespace HIPP {
 namespace SIMD {
 
+#ifdef __AVX2__
+
 namespace _pi16_256_helper {
 struct AddrAligned: public PackBase {
     typedef Vec<int16_t, 16> vec; 
@@ -33,9 +35,9 @@ public:
     typedef Packed<int16_t,16> pack_t;
     typedef _pi16_256_helper::AddrAligned addr_t;
     typedef _pi16_256_helper::CAddrAligned caddr_t;
-    typedef Vec<scal_t, 8> hc_t;
-    typedef Vec<int32_t, 8> hc_dp_t;
-    typedef Vec<long long, 2> h8c_d4p_t;
+    typedef Vec<scal_t, 8> VecHC;
+    typedef Vec<int32_t, 8> VecHC_DP;
+    typedef Vec<long long, 2> VecH8C_D4P;
     
     Vec() noexcept                                              {}
     explicit Vec(scal_t a) noexcept                             : _val( pack_t::set1(a) ) {}
@@ -72,9 +74,9 @@ public:
     Vec & setr(scal_t e15, scal_t e14, scal_t e13, scal_t e12, scal_t e11, scal_t e10, scal_t e9, scal_t e8, scal_t e7, scal_t e6, scal_t e5, scal_t e4, scal_t e3, scal_t e2, scal_t e1, scal_t e0) noexcept 
         { _val = pack_t::setr(e15, e14, e13, e12, e11, e10, e9, e8, e7, e6, e5, e4, e3, e2, e1, e0); return *this; }
     Vec & set1(scal_t a) noexcept                               { _val = pack_t::set1(a); return *this; }
-    Vec & set1(const hc_t &a) noexcept                          { _val = pack_t::set1(a._val); return *this; }
-    Vec & packs(const hc_dp_t &a, const hc_dp_t &b) noexcept    { _val = pack_t::packs(a._val, b._val); return *this; }
-    Vec & packus(const hc_dp_t &a, const hc_dp_t &b) noexcept   { _val = pack_t::packus(a._val, b._val); return *this; }
+    Vec & set1(const VecHC &a) noexcept                          { _val = pack_t::set1(a._val); return *this; }
+    Vec & packs(const VecHC_DP &a, const VecHC_DP &b) noexcept    { _val = pack_t::packs(a._val, b._val); return *this; }
+    Vec & packus(const VecHC_DP &a, const VecHC_DP &b) noexcept   { _val = pack_t::packus(a._val, b._val); return *this; }
     Vec & unpackhi(const Vec &a, const Vec &b) noexcept         { _val = pack_t::unpackhi(a._val, b._val); return *this; }
     Vec & unpacklo(const Vec &a, const Vec &b) noexcept         { _val = pack_t::unpacklo(a._val, b._val); return *this; }
     Vec & insert(scal_t i, const int index) noexcept            { _val = pack_t::insert(_val, i, index); return *this; }
@@ -86,6 +88,9 @@ public:
     friend Vec operator==(const Vec &a, const Vec &b) noexcept;
     friend Vec operator>(const Vec &a, const Vec &b) noexcept;
     friend Vec operator<(const Vec &a, const Vec &b) noexcept;
+    int testz(const Vec &a) const noexcept                      { return pack_si_t::testz(_val, a._val); }
+    int testz() const noexcept                                  { return pack_si_t::testz(_val, _val); }
+    
 
     friend Vec operator&(const Vec &a, const Vec &b) noexcept;
     Vec andnot(const Vec &b) const noexcept                     { return pack_si_t::andnot(_val, b._val); }
@@ -94,10 +99,10 @@ public:
 
     Vec sli_si(const int imm8) const noexcept                   { return pack_si_t::sli_si(_val, imm8); }
     Vec sli(const int imm8) const noexcept                      { return pack_t::sli(_val, imm8); }
-    Vec sl(const h8c_d4p_t &count) const noexcept               { return pack_t::sl(_val, count._val); }
+    Vec sl(const VecH8C_D4P &count) const noexcept               { return pack_t::sl(_val, count._val); }
     Vec sri_si(const int imm8) const noexcept                   { return pack_si_t::sri_si(_val, imm8); }
     Vec sri(const int imm8) const noexcept                      { return pack_t::sri(_val, imm8); }
-    Vec sr(const h8c_d4p_t &count) const noexcept               { return pack_t::sr(_val, count._val); }
+    Vec sr(const VecH8C_D4P &count) const noexcept               { return pack_t::sr(_val, count._val); }
 
     Vec blend(const Vec &b, const int imm8) const noexcept      { return pack_t::blend(_val, b._val, imm8); }
     Vec abs() const noexcept                                    { return pack_t::abs(_val); }
@@ -147,6 +152,8 @@ inline Vec<int16_t,16> operator|(const Vec<int16_t,16> &a, const Vec<int16_t,16>
 inline Vec<int16_t,16> operator^(const Vec<int16_t,16> &a, const Vec<int16_t,16> &b) noexcept{
     return Vec<int16_t,16>::pack_si_t::xor_(a._val, b._val);
 }
+
+#endif
 
 } // namespace SIMD
 } // namespace HIPP

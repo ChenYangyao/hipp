@@ -8,169 +8,156 @@ namespace NUMERICAL{
 
 class GSLFnFDF{
 public:
-    typedef std::function< double(double x, void *data) > user_fn_f_t;
+    typedef double value_t;
+    typedef std::function< value_t(value_t x) > user_fn_f_t;
     typedef user_fn_f_t user_fn_df_t;
-    typedef std::function< void(double x, void *data, double &f, double &df) >
+    typedef std::function< void(value_t x, value_t &f, value_t &df) >
         user_fn_fdf_t;
     typedef gsl_function_fdf gsl_fn_t;
 
-    GSLFnFDF( user_fn_f_t user_fn_f = &_null_user_fn_f, 
-        user_fn_df_t user_fn_df = &_null_user_fn_df, 
-        user_fn_fdf_t user_fn_fdf = &_null_user_fn_fdf, 
-        void *data = nullptr );
+    GSLFnFDF() noexcept;
+    GSLFnFDF( user_fn_f_t user_fn_f, user_fn_df_t user_fn_df, 
+        user_fn_fdf_t user_fn_fdf);
     
     GSLFnFDF( const GSLFnFDF & );
     GSLFnFDF( GSLFnFDF && );
     GSLFnFDF & operator=( const GSLFnFDF & );
     GSLFnFDF & operator=( GSLFnFDF && );
-    ~GSLFnFDF() noexcept;
+    ~GSLFnFDF();
 
-    void set_fn( user_fn_f_t user_fn_f = &_null_user_fn_f, 
-        user_fn_df_t user_fn_df = &_null_user_fn_df, 
-        user_fn_fdf_t user_fn_fdf = &_null_user_fn_fdf, 
-        void *data = nullptr );
+    GSLFnFDF & set_fn() noexcept;
+    GSLFnFDF & set_fn(user_fn_f_t user_fn_f, user_fn_df_t user_fn_df, 
+        user_fn_fdf_t user_fn_fdf);
 
-    double eval_f( double x );
-    double eval_df( double x );
-    void eval_fdf( double &x, double &f, double &df );
+    value_t eval_f(value_t x) const;
+    value_t eval_df(value_t x) const;
+    void eval_fdf(value_t x, value_t &f, value_t &df) const;
 
-    user_fn_f_t & get_user_fn_f( void *&data ) noexcept;
-    user_fn_df_t & get_user_fn_df( void *&data ) noexcept;
-    user_fn_fdf_t & get_user_fn_fdf( void *&data ) noexcept;
-    gsl_fn_t & get_gsl_fn( ) noexcept;
+    user_fn_f_t & get_user_fn_f() noexcept;
+    user_fn_df_t & get_user_fn_df() noexcept;
+    user_fn_fdf_t & get_user_fn_fdf() noexcept;
+    gsl_fn_t & get_gsl_fn() noexcept;
+
+    const user_fn_f_t & get_user_fn_f() const noexcept;
+    const user_fn_df_t & get_user_fn_df() const noexcept;
+    const user_fn_fdf_t & get_user_fn_fdf() const noexcept;
+    const gsl_fn_t & get_gsl_fn() const noexcept;
 protected:
-    struct param_t{
-        user_fn_f_t user_fn_f;
-        user_fn_df_t user_fn_df;
-        user_fn_fdf_t user_fn_fdf;
-        void *user_data;
-        param_t( user_fn_f_t _user_fn_f, 
-            user_fn_df_t _user_fn_df, user_fn_fdf_t _user_fn_fdf, 
-            void *_user_data)
-        :user_fn_f(_user_fn_f), user_fn_df(_user_fn_df), 
-        user_fn_fdf(_user_fn_fdf), user_data(_user_data){ }
-    };
-    param_t _param;
+    user_fn_f_t _user_fn_f;
+    user_fn_df_t _user_fn_df;
+    user_fn_fdf_t _user_fn_fdf;
     gsl_fn_t _gsl_fn;
-    static double _wrapper_fn_f( double x, void *param );
-    static double _wrapper_fn_df( double x, void *param );
+    static value_t _wrapper_fn_f( value_t x, void *param );
+    static value_t _wrapper_fn_df( value_t x, void *param );
     static void _wrapper_fn_fdf( 
-            double x, void *param, double *f, double *df );
-    static double _null_user_fn_f( double x, void *param );
-    static double _null_user_fn_df( double x, void *param );
-    static void _null_user_fn_fdf( double x, void *param, 
-        double &f, double &df );
+            value_t x, void *param, value_t *f, value_t *df );
 };
 
+inline GSLFnFDF::GSLFnFDF() noexcept: 
+GSLFnFDF(user_fn_f_t(), user_fn_df_t(), user_fn_fdf_t())
+{}
 
 inline GSLFnFDF::GSLFnFDF( user_fn_f_t user_fn_f, 
     user_fn_df_t user_fn_df, 
-    user_fn_fdf_t user_fn_fdf, 
-    void *data )
-:_param( user_fn_f, user_fn_df, user_fn_fdf, data )    
+    user_fn_fdf_t user_fn_fdf)
+: _user_fn_f(std::move(user_fn_f)), _user_fn_df(std::move(user_fn_df)), 
+_user_fn_fdf(std::move(user_fn_fdf))
 {
     _gsl_fn.f = &_wrapper_fn_f;
     _gsl_fn.df = &_wrapper_fn_df;
     _gsl_fn.fdf = &_wrapper_fn_fdf;
-    _gsl_fn.params = &_param;
+    _gsl_fn.params = this;
 }
 
 inline GSLFnFDF::GSLFnFDF( const GSLFnFDF & fn)
-:GSLFnFDF( fn._param.user_fn_f, fn._param.user_fn_df, fn._param.user_fn_fdf, 
-fn._param.user_data ){ }
+:GSLFnFDF(fn._user_fn_f, fn._user_fn_df, fn._user_fn_fdf){}
 
 inline GSLFnFDF::GSLFnFDF( GSLFnFDF && fn)
-:GSLFnFDF( std::move(fn._param.user_fn_f), 
-    std::move(fn._param.user_fn_df), std::move(fn._param.user_fn_fdf), 
-    fn._param.user_data )
-{ }
+:GSLFnFDF(std::move(fn._user_fn_f), std::move(fn._user_fn_df), 
+std::move(fn._user_fn_fdf)){}
 
 inline GSLFnFDF & GSLFnFDF::operator=( const GSLFnFDF & fn){
-    if( this != &fn ){
-        _param = fn._param;
-    }
+    _user_fn_f = fn._user_fn_f;
+    _user_fn_df = fn._user_fn_df;
+    _user_fn_fdf = fn._user_fn_fdf;
     return *this;
 }
 
 inline GSLFnFDF & GSLFnFDF::operator=( GSLFnFDF && fn){
-    if( this != &fn ){
-        _param.user_fn_f = std::move( fn._param.user_fn_f );
-        _param.user_fn_df = std::move( fn._param.user_fn_df );
-        _param.user_fn_fdf = std::move( fn._param.user_fn_fdf );
-        _param.user_data = fn._param.user_data;
-    }
+    _user_fn_f = std::move(fn._user_fn_f);
+    _user_fn_df = std::move(fn._user_fn_df);
+    _user_fn_fdf = std::move(fn._user_fn_fdf);
     return *this;
 }
 
-inline GSLFnFDF::~GSLFnFDF() noexcept{ }
+inline GSLFnFDF::~GSLFnFDF(){ }
 
-inline void GSLFnFDF::set_fn( user_fn_f_t user_fn_f, 
-    user_fn_df_t user_fn_df, 
-    user_fn_fdf_t user_fn_fdf, 
-    void *data ){
-    _param.user_fn_f = user_fn_f;
-    _param.user_fn_df = user_fn_df;
-    _param.user_fn_fdf = user_fn_fdf;
-    _param.user_data = data;
-}
-
-inline double GSLFnFDF::eval_f( double x ){
-    return _param.user_fn_f(x, _param.user_data);
-}
-inline double GSLFnFDF::eval_df( double x ){
-    return _param.user_fn_df(x, _param.user_data);
-}
-inline void GSLFnFDF::eval_fdf( double &x, double &f, double &df ){
-    _param.user_fn_fdf(x, _param.user_data, f, df);
+inline GSLFnFDF & GSLFnFDF::set_fn( user_fn_f_t user_fn_f, 
+    user_fn_df_t user_fn_df, user_fn_fdf_t user_fn_fdf)
+{
+    _user_fn_f = std::move(user_fn_f);
+    _user_fn_df = std::move(user_fn_df);
+    _user_fn_fdf = std::move(user_fn_fdf);
+    return *this;
 }
 
-inline GSLFnFDF::user_fn_f_t & GSLFnFDF::get_user_fn_f( void *&data ) noexcept{
-    data= _param.user_data;
-    return _param.user_fn_f;
+inline GSLFnFDF & GSLFnFDF::set_fn() noexcept {
+    return set_fn(user_fn_f_t(), user_fn_df_t(), user_fn_fdf_t());
+}
+
+inline auto GSLFnFDF::eval_f( value_t x ) const -> value_t {
+    return _user_fn_f(x);
+}
+inline auto GSLFnFDF::eval_df( value_t x ) const -> value_t {
+    return _user_fn_df(x);
+}
+inline void GSLFnFDF::eval_fdf( value_t x, value_t &f, value_t &df ) const {
+    _user_fn_fdf(x, f, df);
+}
+
+inline GSLFnFDF::user_fn_f_t & GSLFnFDF::get_user_fn_f() noexcept{
+    return _user_fn_f;
 }
 inline GSLFnFDF::user_fn_df_t & 
-GSLFnFDF::get_user_fn_df( void *&data ) noexcept{
-    data= _param.user_data;
-    return _param.user_fn_df;
+GSLFnFDF::get_user_fn_df() noexcept{
+    return _user_fn_df;
 }
 inline GSLFnFDF::user_fn_fdf_t & 
-GSLFnFDF::get_user_fn_fdf( void *&data ) noexcept{
-    data= _param.user_data;
-    return _param.user_fn_fdf;
+GSLFnFDF::get_user_fn_fdf() noexcept{
+    return _user_fn_fdf;
 }
 inline GSLFnFDF::gsl_fn_t & GSLFnFDF::get_gsl_fn( ) noexcept{
     return _gsl_fn;
 }
 
-inline double GSLFnFDF::_wrapper_fn_f( double x, void *param ){
-    param_t *p = (param_t *)param;
-    return p->user_fn_f( x, p->user_data );
+inline const GSLFnFDF::user_fn_f_t & GSLFnFDF::get_user_fn_f() const noexcept{
+    return _user_fn_f;
 }
-inline double GSLFnFDF::_wrapper_fn_df( double x, void *param ){
-    param_t *p = (param_t *)param;
-    return p->user_fn_df( x, p->user_data );
+inline const GSLFnFDF::user_fn_df_t & 
+GSLFnFDF::get_user_fn_df() const noexcept{
+    return _user_fn_df;
 }
-inline void GSLFnFDF::_wrapper_fn_fdf( double x, void *param, 
-    double *f, double *df )
-{
-    param_t *p = (param_t *)param;
-    return p->user_fn_fdf( x, p->user_data, *f, *df );
+inline const GSLFnFDF::user_fn_fdf_t & 
+GSLFnFDF::get_user_fn_fdf() const noexcept{
+    return _user_fn_fdf;
+}
+inline const GSLFnFDF::gsl_fn_t & GSLFnFDF::get_gsl_fn( ) const noexcept{
+    return _gsl_fn;
 }
 
-inline double GSLFnFDF::_null_user_fn_f( double x, void *param ){
-    ErrLogic::throw_( ErrLogic::eDEFAULT, emFLPFB,
-        " user function f not provided\n" );
-    return 0.;
+inline auto GSLFnFDF::_wrapper_fn_f( value_t x, void *param ) -> value_t {
+    const auto &f = *reinterpret_cast<const GSLFnFDF *>(param);
+    return f.eval_f(x);
 }
-inline double GSLFnFDF::_null_user_fn_df( double x, void *param ){
-    ErrLogic::throw_( ErrLogic::eDEFAULT, emFLPFB,
-        " user function df not provided\n" );
-    return 0.;
+inline auto GSLFnFDF::_wrapper_fn_df( value_t x, void *param ) -> value_t {
+    const auto &f = *reinterpret_cast<const GSLFnFDF *>(param);
+    return f.eval_df(x);
 }
-inline void GSLFnFDF::_null_user_fn_fdf( double x, void *param, 
-    double &f, double &df ){
-    ErrLogic::throw_( ErrLogic::eDEFAULT, emFLPFB,
-        " user function fdf not provided\n" );
+inline void GSLFnFDF::_wrapper_fn_fdf( value_t x, void *param, 
+    value_t *f, value_t *df )
+{
+    const auto &fn = *reinterpret_cast<const GSLFnFDF *>(param);
+    fn.eval_fdf(x, *f, *df);
 }
 
 

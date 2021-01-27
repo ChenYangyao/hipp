@@ -147,7 +147,13 @@ public:
      * collective communication
      */
     void barrier() const;
+    /**
+     * Broadcast calls
+     * Overloads:
+     * 2: use a datapacket specification
+     */
     void bcast(void *buf, int count, const Datatype &dtype, int root) const;
+    void bcast(const Datapacket &dpacket, int root) const;
     /** 
      * Gather calls 
      * Overloads: 
@@ -225,6 +231,7 @@ public:
     Requests ibarrier() const;
     Requests ibcast( 
         void *buf, int count, const Datatype &dtype, int root) const;
+    Requests ibcast(const Datapacket &dpacket, int root) const;
     Requests igather( 
         const void *sendbuf, int sendcount, const Datatype &sendtype, 
         void *recvbuf, int recvcount, const Datatype &recvtype, int root) const;

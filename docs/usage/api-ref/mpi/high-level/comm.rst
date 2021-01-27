@@ -24,7 +24,8 @@ Class Comm: the Communication Context
 
     The ``Comm`` object can be **copy-constructed**, **copy-assigned**, **move-constructed**
     and **move-assigned**. The copy operation gives a object that refers to the same 
-    commnicator (internally the same ``MPI_Comm``). The destructor is ``noexcept``.
+    commnicator (internally the same ``MPI_Comm``). 
+    The copy operations, move operations and destructor are ``noexcept``.
 
     .. type::   std::function<bool(Comm &oldcomm, int keyval, void *extra_state, \
                     void *attr_val, void *&attr_val_out)> copy_attr_fn_t
@@ -62,11 +63,11 @@ Class Comm: the Communication Context
         :arg fmt_cntl:  Control the display format. 0 for inline information and 1 for a verbose, multiple-line information. 2 for a exhausted priting, with lots of information to be printed.
         :return: The argument ``os`` is returned.
 
-        The overloaded `<<` operator is equivalent to ``info()`` with default 
+        The overloaded ``<<`` operator is equivalent to ``info()`` with default 
         ``fmt_cntl``.
 
         The returned reference of ``os`` allows you to chain the outputs, such as 
-        ``comm.info(cout) << " continue printing " << std::endl``.
+        ``comm.info(cout) << " continue printing " << endl``.
         
     .. function::    int size() const
                     int rank() const
@@ -747,7 +748,8 @@ Class Group: the Process Collection
 
     The ``Group`` object can be **copy-constructed**, **copy-assigned**, **move-constructed**
     and **move-assigned**. The copy operation gives a object that refers to the same 
-    process group (internally the same ``MPI_Group``). The destructor is ``noexcept``.
+    process group (internally the same ``MPI_Group``). 
+    The copy operations, move operations and destructor are ``noexcept``.
 
     .. function:: void free() noexcept
         
@@ -773,7 +775,7 @@ Class Group: the Process Collection
                  short and inline priting, 1 for a verbose, multi-line version.
         :return: The argument ``os`` is returned.
     
-        The overloaded `<<` operator is equivalent to ``info()`` with 
+        The overloaded ``<<`` operator is equivalent to ``info()`` with 
         default ``fmt_cntl``.
     
     .. function::   int size() const
@@ -885,7 +887,7 @@ Class Requests: the Non-blocking Handler
 
     The ``Requests`` object can be **copy-constructed**, **copy-assigned**, **move-constructed**
     and **move-assigned**. The copy operation gives a object that refers to the same 
-    array of requests. The destructor is ``noexcept``.
+    array of requests. The copy operations, move operations and destructor are ``noexcept``.
 
     .. function::       Requests()
 
@@ -914,7 +916,7 @@ Class Requests: the Non-blocking Handler
         :arg fmt_cntl:  Control the display format. 0 for inline information and 1 for a verbose, multiple-line information.
         :return: The argument ``os`` is returned.
 
-        The overloaded `<<` operator is equivalent to ``info()`` with default 
+        The overloaded ``<<`` operator is equivalent to ``info()`` with default 
         ``fmt_cntl``.
 
         The returned reference of ``os`` allows you to chain the outputs, such as 
@@ -1007,7 +1009,7 @@ Class Status: the Return Status
 
     The ``Status`` object can be **copy-constructed**, **copy-assigned**, **move-constructed**
     and **move-assigned**. The copy operation gives a object that has the same communication status 
-    record. The destructor is ``noexcept``.
+    record. The copy operations, move operations and destructor are ``noexcept``.
 
     The default constructor of ``Status`` gives an object with uninitialized status record.
     

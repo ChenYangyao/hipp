@@ -35,38 +35,38 @@ public:
     typedef Packed<int8_t, 32> pack_t;
     typedef _pi8_256_helper::AddrAligned addr_t;
     typedef _pi8_256_helper::CAddrAligned caddr_t;
-    typedef Vec<scal_t, 16> hc_t;
-    typedef Vec<int16_t, 16> hc_dp_t;
+    typedef Vec<scal_t, 16> VecHC;
+    typedef Vec<int16_t, 16> VecHC_DP;
 
-    Vec() noexcept                                              {}
-    explicit Vec(char_t a) noexcept                             : _val( pack_t::set1(a) ) {}
-    explicit Vec(caddr_t mem_addr) noexcept                     : _val( pack_t::load((const vec_t *)(mem_addr._addr)) ) {}
-    Vec( const vec_t &a ) noexcept                              : _val(a) {}
-    Vec( const Vec &a ) noexcept                                : _val(a._val) {}
-    Vec( Vec &&a ) noexcept                                     : _val(a._val) {}
-    Vec & operator=( const Vec &a ) noexcept                    { _val = a._val; }
-    Vec & operator=( Vec &&a ) noexcept                         { _val = a._val; }
-    ~Vec() noexcept                                             {}
+    Vec() noexcept                                                              {}
+    explicit Vec(char_t a) noexcept                                             : _val( pack_t::set1(a) ) {}
+    explicit Vec(caddr_t mem_addr) noexcept                                     : _val( pack_t::load((const vec_t *)(mem_addr._addr)) ) {}
+    Vec( const vec_t &a ) noexcept                                              : _val(a) {}
+    Vec( const Vec &a ) noexcept                                                : _val(a._val) {}
+    Vec( Vec &&a ) noexcept                                                     : _val(a._val) {}
+    Vec & operator=( const Vec &a ) noexcept                                    { _val = a._val; }
+    Vec & operator=( Vec &&a ) noexcept                                         { _val = a._val; }
+    ~Vec() noexcept                                                             {}
 
     ostream & info(ostream &os=cout, int fmt_cntl=1) const;
     friend ostream & operator<<( ostream &os, const Vec &v ); 
 
-    const vec_t & val() const noexcept                          { return _val; }
-    vec_t & val() noexcept                                      { return _val; }
-    const scal_t & operator[](int n) const noexcept             { return ((const scal_t *)&_val)[n]; }
-    scal_t & operator[](int n) noexcept                         { return ((scal_t *)&_val)[n]; }
+    const vec_t & val() const noexcept                                          { return _val; }
+    vec_t & val() noexcept                                                      { return _val; }
+    const scal_t & operator[](int n) const noexcept                             { return ((const scal_t *)&_val)[n]; }
+    scal_t & operator[](int n) noexcept                                         { return ((scal_t *)&_val)[n]; }
 
-    Vec & load(caddr_t mem_addr) noexcept                       { _val = pack_t::load( (const vec_t *)mem_addr._addr ); return *this; }
-    Vec & loadu(caddr_t mem_addr) noexcept                      { _val = pack_t::loadu( (const vec_t *)mem_addr._addr ); return *this; }
-    Vec & loaddqu(caddr_t mem_addr) noexcept                    { _val = pack_t::loaddqu( (const vec_t *)mem_addr._addr ); return *this; }
-    Vec & loadstream(caddr_t mem_addr) noexcept                 { _val = pack_t::loadstream( (const vec_t *)mem_addr._addr ); return *this; }
+    Vec & load(caddr_t mem_addr) noexcept                                       { _val = pack_t::load( (const vec_t *)mem_addr._addr ); return *this; }
+    Vec & loadu(caddr_t mem_addr) noexcept                                      { _val = pack_t::loadu( (const vec_t *)mem_addr._addr ); return *this; }
+    Vec & loaddqu(caddr_t mem_addr) noexcept                                    { _val = pack_t::loaddqu( (const vec_t *)mem_addr._addr ); return *this; }
+    Vec & loadstream(caddr_t mem_addr) noexcept                                 { _val = pack_t::loadstream( (const vec_t *)mem_addr._addr ); return *this; }
 
-    const Vec & store(addr_t mem_addr) const noexcept           { pack_t::store( (vec_t *)mem_addr._addr, _val ); return *this; }
-    const Vec & storeu(addr_t mem_addr) const noexcept          { pack_t::storeu( (vec_t *)mem_addr._addr, _val ); return *this; }
-    const Vec & stream(addr_t mem_addr) const noexcept          { pack_t::stream( (vec_t *)mem_addr._addr, _val ); return *this; }
-    Vec & store(addr_t mem_addr) noexcept                       { pack_t::store( (vec_t *)mem_addr._addr, _val ); return *this; }
-    Vec & storeu(addr_t mem_addr) noexcept                      { pack_t::storeu( (vec_t *)mem_addr._addr, _val ); return *this; }
-    Vec & stream(addr_t mem_addr) noexcept                      { pack_t::stream( (vec_t *)mem_addr._addr, _val ); return *this; }
+    const Vec & store(addr_t mem_addr) const noexcept                           { pack_t::store( (vec_t *)mem_addr._addr, _val ); return *this; }
+    const Vec & storeu(addr_t mem_addr) const noexcept                          { pack_t::storeu( (vec_t *)mem_addr._addr, _val ); return *this; }
+    const Vec & stream(addr_t mem_addr) const noexcept                          { pack_t::stream( (vec_t *)mem_addr._addr, _val ); return *this; }
+    Vec & store(addr_t mem_addr) noexcept                                       { pack_t::store( (vec_t *)mem_addr._addr, _val ); return *this; }
+    Vec & storeu(addr_t mem_addr) noexcept                                      { pack_t::storeu( (vec_t *)mem_addr._addr, _val ); return *this; }
+    Vec & stream(addr_t mem_addr) noexcept                                      { pack_t::stream( (vec_t *)mem_addr._addr, _val ); return *this; }
 
     Vec & set(char_t e31, char_t e30, char_t e29, char_t e28, char_t e27, char_t e26, char_t e25, char_t e24, char_t e23, char_t e22, char_t e21, char_t e20, char_t e19, char_t e18, char_t e17, char_t e16, 
         char_t e15, char_t e14, char_t e13, char_t e12, char_t e11, char_t e10, char_t e9, char_t e8, char_t e7, char_t e6, char_t e5, char_t e4, char_t e3, char_t e2, char_t e1, char_t e0) noexcept 
@@ -74,16 +74,16 @@ public:
     Vec & setr(char_t e31, char_t e30, char_t e29, char_t e28, char_t e27, char_t e26, char_t e25, char_t e24, char_t e23, char_t e22, char_t e21, char_t e20, char_t e19, char_t e18, char_t e17, char_t e16, 
         char_t e15, char_t e14, char_t e13, char_t e12, char_t e11, char_t e10, char_t e9, char_t e8, char_t e7, char_t e6, char_t e5, char_t e4, char_t e3, char_t e2, char_t e1, char_t e0) noexcept 
         { _val = pack_t::setr(e31, e30, e29, e28, e27, e26, e25, e24, e23, e22, e21, e20, e19, e18, e17, e16, e15, e14, e13, e12, e11, e10, e9, e8, e7, e6, e5, e4, e3, e2, e1, e0); return *this; }
-    Vec & set(const hc_t &hi, const hc_t &lo) noexcept          { _val = pack_t::set(hi._val, lo._val); return *this; }
-    Vec & setr(const hc_t &lo, const hc_t &hi) noexcept         { _val = pack_t::setr(lo._val, hi._val); return *this; }
+    Vec & set(const VecHC &hi, const VecHC &lo) noexcept          { _val = pack_t::set(hi._val, lo._val); return *this; }
+    Vec & setr(const VecHC &lo, const VecHC &hi) noexcept         { _val = pack_t::setr(lo._val, hi._val); return *this; }
     Vec & set1(char_t a) noexcept                               { _val = pack_t::set1(a); return *this; }
-    Vec & set1(const hc_t &a) noexcept                          { _val = pack_t::set1(a._val); return *this; }
-    Vec & set_hc(const hc_t &a) noexcept                        { _val = pack_t::bcast_hc(a._val); return *this; }      // repeat 128 bit
-    Vec & from_hc(const hc_t &a) noexcept                       { _val = pack_t::from_si_hc(a._val); return *this; }    // upper 128 bit undefined
-    hc_t to_hc() const noexcept                                 { return pack_t::to_si_hc(_val); }
+    Vec & set1(const VecHC &a) noexcept                          { _val = pack_t::set1(a._val); return *this; }
+    Vec & set_hc(const VecHC &a) noexcept                        { _val = pack_t::bcast_hc(a._val); return *this; }      // repeat 128 bit
+    Vec & from_hc(const VecHC &a) noexcept                       { _val = pack_t::from_si_hc(a._val); return *this; }    // upper 128 bit undefined
+    VecHC to_hc() const noexcept                                 { return pack_t::to_si_hc(_val); }
     int movemask() const noexcept                               { return pack_t::movemask(_val); }
-    Vec & packs(const hc_dp_t &a, const hc_dp_t &b) noexcept    { _val = pack_t::packs(a._val, b._val); return *this; }
-    Vec & packus(const hc_dp_t &a, const hc_dp_t &b) noexcept   { _val = pack_t::packus(a._val, b._val); return *this; }
+    Vec & packs(const VecHC_DP &a, const VecHC_DP &b) noexcept    { _val = pack_t::packs(a._val, b._val); return *this; }
+    Vec & packus(const VecHC_DP &a, const VecHC_DP &b) noexcept   { _val = pack_t::packus(a._val, b._val); return *this; }
     Vec & unpackhi(const Vec &a, const Vec &b) noexcept         { _val = pack_t::unpackhi(a._val, b._val); return *this; }
     Vec & unpacklo(const Vec &a, const Vec &b) noexcept         { _val = pack_t::unpacklo(a._val, b._val); return *this; }
     Vec & set() noexcept                                        { _val = pack_t::set(); return *this; }
@@ -91,8 +91,8 @@ public:
     Vec & undefined() noexcept                                  { _val = pack_t::undefined_si(); return *this; }
 
     Vec & insert(scal_t i, const int index) noexcept            { _val = pack_t::insert(_val, i, index); return *this; }
-    Vec & insertf( const hc_t &b, int imm8 ) noexcept           { _val = pack_t::insertf(_val, b._val, imm8); return *this; }
-    Vec & inserti( const hc_t &b, const int imm8 ) noexcept     { _val = pack_t::insertf(_val, b._val, imm8); return *this; }
+    Vec & insertf( const VecHC &b, int imm8 ) noexcept           { _val = pack_t::insertf(_val, b._val, imm8); return *this; }
+    Vec & inserti( const VecHC &b, const int imm8 ) noexcept     { _val = pack_t::insertf(_val, b._val, imm8); return *this; }
 
     friend Vec operator+(const Vec &a, const Vec &b) noexcept;
     friend Vec operator-(const Vec &a, const Vec &b) noexcept;
@@ -100,6 +100,8 @@ public:
     friend Vec operator==(const Vec &a, const Vec &b) noexcept;
     friend Vec operator>(const Vec &a, const Vec &b) noexcept;
     friend Vec operator<(const Vec &a, const Vec &b) noexcept;
+    int testz(const Vec &a) const noexcept                      { return pack_t::testz(_val, a._val); }
+    int testz() const noexcept                                  { return pack_t::testz(_val, _val); }
 
     friend Vec operator&(const Vec &a, const Vec &b) noexcept;
     Vec andnot(const Vec &b) const noexcept                     { return pack_t::andnot(_val, b._val); }

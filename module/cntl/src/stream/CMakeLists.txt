@@ -20,5 +20,6 @@ set_target_properties(${_libname}
 target_include_directories(${_libname}
     PRIVATE
         "${_headerdir}/${_submodid}"
+    PUBLIC
         "${_headerdir}"
 )

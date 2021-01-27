@@ -1,0 +1,6 @@
+#ifndef _HIPPALGORITHM_MATHOPS_BASE_H_
+#define _HIPPALGORITHM_MATHOPS_BASE_H_
+
+#include <hippcntl.h>
+
+#endif	//_HIPPALGORITHM_MATHOPS_BASE_H_

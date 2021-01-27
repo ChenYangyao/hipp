@@ -1,6 +1,6 @@
 # Fun with Data Types
 
-MPI Standard provides user-defined datatypes to allow both convinience and possibly communication performance. In this tutorial we introduce the `vector` datatype, and demonstrate the power of derived datatype with a matrix-transpose example. HIPP MPI defined all MPI standard datatype operations. A complete list can be found at the [User's Guide](../../users-guide.md).
+
 
 ## The Vector Datatype
 

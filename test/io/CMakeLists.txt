@@ -17,7 +17,6 @@ add_executable( "${_exename}"
 target_link_libraries( "${_exename}" 
     PRIVATE
         "${_exebase}"
-        "${_projectid}cntl"
         gtest-interface-lib
 )
 

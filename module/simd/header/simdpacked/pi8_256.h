@@ -70,6 +70,7 @@ public:
     
     static vec_t eq(vec_t a, vec_t b) noexcept                      { return _mm256_cmpeq_epi8(a, b); }
     static vec_t gt(vec_t a, vec_t b) noexcept                      { return _mm256_cmpgt_epi8(a, b); }
+    static int testz(vec_t a, vec_t b) noexcept                     { return _mm256_testz_si256(a, b); }
 
     static vec_t and_(vec_t a, vec_t b) noexcept                    { return _mm256_and_si256(a, b); }
     static vec_t or_(vec_t a, vec_t b) noexcept                     { return _mm256_or_si256(a, b); }

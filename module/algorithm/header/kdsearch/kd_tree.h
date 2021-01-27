@@ -57,11 +57,15 @@ public:
 
     _HIPP_RAWT(index_t)
     _HIPP_RAWT(float_t)
+    _HIPP_RAWT(size_t)
     _HIPP_RAWT(point_t)
     _HIPP_RAWT(node_t)
     _HIPP_RAWT(_p_point_t)
     _HIPP_RAWT(_p_node_t)
     _HIPP_RAWT(_p_2node_t)
+    typedef _p_point_t p_point_t;
+    typedef _p_node_t p_node_t;
+    typedef _p_2node_t p_2node_t;
     _HIPP_RAWT(ngb_t)
 
     /**
@@ -90,14 +94,22 @@ public:
 
     vector<ngb_t> nearest_k( const float_t pos[DIM], index_t k ) const;
     vector<ngb_t> nearest_k( const vector<float_t> &pos, index_t k ) const;
-
+    void nearest_k( const float_t pos[DIM], index_t k, 
+        vector<ngb_t> &ngbs) const;
+    
     vector<ngb_t> nearest_r( const float_t pos[DIM], float_t r ) const;
     vector<ngb_t> nearest_r( const vector<float_t> &pos, float_t r ) const;
-
+    void nearest_r(const float_t pos[DIM], float_t r, 
+        vector<ngb_t> &ngbs) const;
+    size_t count_r( const float_t pos[DIM], float_t r ) const;
+    
     vector<_p_node_t> nearest_rect( 
         const float_t pos[DIM], const float_t dx[DIM] ) const;
     vector<_p_node_t> nearest_rect( 
         const vector<float_t> &pos, const vector<float_t> &dx ) const;
+    void nearest_rect( const float_t pos[DIM], const float_t dx[DIM], 
+        vector<_p_node_t> &ngbs ) const;
+    size_t count_rect( const float_t pos[DIM], const float_t dx[DIM] ) const;
 
     bool empty() const noexcept;
     index_t size() const noexcept;
@@ -166,6 +178,12 @@ KDTree _HIPP_TEMPARG::nearest_k( const vector<float_t> &pos, index_t k ) const{
 }
 
 _HIPP_TEMPHD
+void KDTree _HIPP_TEMPARG::nearest_k( const float_t pos[DIM], index_t k, 
+    vector<ngb_t> &ngbs) const {
+    _obj_ptr->nearest_k(pos, k, ngbs);
+}
+
+_HIPP_TEMPHD
 vector<typename KDTree _HIPP_TEMPARG::ngb_t> 
 KDTree _HIPP_TEMPARG::nearest_r( const float_t pos[DIM], float_t r ) const{
     return _obj_ptr->nearest_r(pos, r);
@@ -175,6 +193,20 @@ _HIPP_TEMPHD
 vector<typename KDTree _HIPP_TEMPARG::ngb_t> 
 KDTree _HIPP_TEMPARG::nearest_r( const vector<float_t> &pos, float_t r ) const{
     return nearest_r(pos.data(), r);
+}
+
+_HIPP_TEMPHD
+void KDTree _HIPP_TEMPARG::nearest_r(const float_t pos[DIM], float_t r, 
+    vector<ngb_t> &ngbs) const 
+{
+    _obj_ptr->nearest_r(pos, r, ngbs);
+}
+
+_HIPP_TEMPHD
+auto KDTree _HIPP_TEMPARG::count_r( const float_t pos[DIM], 
+    float_t r ) const -> size_t 
+{
+    return _obj_ptr->count_r(pos, r);
 }
 
 _HIPP_TEMPHD
@@ -192,14 +224,30 @@ KDTree _HIPP_TEMPARG::nearest_rect(
 }
 
 _HIPP_TEMPHD
+void KDTree _HIPP_TEMPARG::nearest_rect( const float_t pos[DIM], 
+    const float_t dx[DIM], vector<_p_node_t> &ngbs ) const 
+{
+    _obj_ptr->nearest_rect(pos, dx, ngbs);    
+}
+
+_HIPP_TEMPHD
+auto KDTree _HIPP_TEMPARG::count_rect( const float_t pos[DIM], 
+    const float_t dx[DIM] ) const -> size_t 
+{
+    return _obj_ptr->count_rect(pos, dx);
+}
+
+_HIPP_TEMPHD
 bool KDTree _HIPP_TEMPARG::empty() const noexcept{
     return _obj_ptr->empty();
 }
+
 _HIPP_TEMPHD
 typename KDTree _HIPP_TEMPARG::index_t 
 KDTree _HIPP_TEMPARG::size() const noexcept{
     return _obj_ptr->size();
 }
+
 _HIPP_TEMPHD
 void KDTree _HIPP_TEMPARG::clear() noexcept{
     _obj_ptr->clear();

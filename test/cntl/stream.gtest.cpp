@@ -25,6 +25,28 @@ TEST_F(CntlStreamPStreamTest, MultipleType){
     ASSERT_EQ(os.str(), 
         "a=1, b=hello, c=no, d=2\ne=   3");
 }
+TEST_F(CntlStreamPStreamTest, ContainerType){
+    vector<int> a = {1,2,3};
+    std::array<int, 3> b = {4,5,6};
+    std::set<int> c = {7,8,9};
+    int d[3] = {10,11,12};
+    ps << a, ',', b, ',', c, ',', ps(d,d+3), '\n';
+    ASSERT_EQ(os.str(), 
+        "1,2,3,4,5,6,7,8,9,10,11,12\n");
+}
+TEST_F(CntlStreamPStreamTest, MapType){
+    std::map<int, string> m {{1,"foo"}, {2, "bar"}, {3, "baz"}};
+    ps << "The map is ", m, endl;
+    ASSERT_EQ(os.str(), "The map is 1:foo,2:bar,3:baz\n");
+}
+TEST_F(CntlStreamPStreamTest, TupleType){
+    std::tuple<int, long, string> tpl(1,2,"3s");
+    std::pair<int, string> pr(4,"5s");
+    std::tuple<int, decltype(tpl), decltype(pr), vector<int> >
+        comp(0, tpl, pr, {6, 7, 8});
+    ps << "Tpl=", tpl, ", pr=", pr, ", comp=", comp, endl;
+    ASSERT_EQ(os.str(), "Tpl=1:2:3s, pr=4:5s, comp=0:1:2:3s:4:5s:6,7,8\n");
+}
 
 /* PrtArray */
 class CntlStreamPrtArrayTest: public ::testing::Test {

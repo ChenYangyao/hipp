@@ -35,6 +35,7 @@ install(TARGETS ${_libname}
 install(DIRECTORY 
         "${_headerdir}/gsl_util"
         "${_headerdir}/function"
+        "${_headerdir}/random_number"
     DESTINATION include
 )
 install(FILES

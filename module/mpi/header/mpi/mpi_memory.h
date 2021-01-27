@@ -19,6 +19,22 @@ void free_mem(void *base){
         MPI_Free_mem(base), emFLPFB, "  ... free memory at ", base, '\n');
 }
 
+inline 
+void buffer_attach(void *buffer, int size){
+    ErrMPI::check(
+        MPI_Buffer_attach(buffer, size), emFLPFB, 
+        " ... failed to attach ", size, " bytes at ", buffer, '\n');
+}
+
+inline 
+std::pair<void *, int> buffer_detach(){
+    void *buffer_addr;
+    int size;
+    ErrMPI::check(MPI_Buffer_detach(&buffer_addr, &size), 
+        emFLPFB, "  ... detach failed\n");
+    return {buffer_addr, size};
+}
+
 } // namespace MPI
 } // namespace HIPP
 #endif	//_HIPPMPI_MPI_MEMORY_H_

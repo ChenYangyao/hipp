@@ -8,90 +8,95 @@ namespace NUMERICAL{
 
 class GSLFn{
 public:
-    typedef std::function< double(double x, void *data) > user_fn_t;
+    typedef double value_t;
+    typedef std::function< value_t(value_t x) > user_fn_t;
     typedef gsl_function gsl_fn_t;
 
-    GSLFn( user_fn_t user_fn = &_null_user_fn, void *data = nullptr );
-
+    GSLFn(user_fn_t user_fn = user_fn_t());
     GSLFn( const GSLFn & );
     GSLFn( GSLFn && );
+    ~GSLFn();
+    
     GSLFn & operator=( const GSLFn & );
     GSLFn & operator=( GSLFn && );
-    ~GSLFn() noexcept;
 
-    void set_fn( user_fn_t user_fn = &_null_user_fn, void *data = nullptr );
-    
-    double operator()( double x );
+    GSLFn & set_fn(user_fn_t user_fn = user_fn_t());
 
-    user_fn_t & get_user_fn( void *&data ) noexcept;
-    gsl_fn_t & get_gsl_fn( ) noexcept;
+    value_t operator()(value_t x) const;
+
+    user_fn_t & get_user_fn() noexcept;
+    gsl_fn_t & get_gsl_fn() noexcept;
+    const user_fn_t & get_user_fn() const noexcept;
+    const gsl_fn_t & get_gsl_fn() const noexcept;
+
+    bool empty() const noexcept;
+    explicit operator bool () const noexcept;
     
-    static double _wrapper_fn( double x, void *param );
-    static double _null_user_fn( double x, void *param );
+    static value_t _wrapper_fn(value_t x, void *param);
 protected:
-    struct param_t{
-        user_fn_t user_fn;
-        void *user_data;
-        param_t( user_fn_t _user_fn, void *_user_data)
-        :user_fn(_user_fn), user_data(_user_data){ }
-    };
-    param_t _param;
+    user_fn_t _user_fn;
     gsl_fn_t _gsl_fn;
 };
 
-inline double GSLFn::_wrapper_fn( double x, void *param ){
-    param_t *p = (param_t *)param;
-    return p->user_fn( x, p->user_data );
-}
-inline double GSLFn::_null_user_fn( double x, void *param ){
-    ErrLogic::throw_( ErrLogic::eDEFAULT, emFLPFB,
-        " user function not provided\n" );
-    return 0.;
+inline GSLFn::GSLFn( user_fn_t user_fn)
+: _user_fn( std::move(user_fn) ){
+    _gsl_fn.function = &_wrapper_fn;
+    _gsl_fn.params = this;
 }
 
-inline GSLFn::GSLFn( user_fn_t user_fn, void *data )
-:_param( user_fn, data ){
-    _gsl_fn.function = &_wrapper_fn;
-    _gsl_fn.params = &_param;
-}
-inline GSLFn::GSLFn( const GSLFn & fn) 
-:GSLFn( fn._param.user_fn, fn._param.user_data ){ }
+inline GSLFn::GSLFn(const GSLFn & fn) 
+:GSLFn(fn._user_fn){}
 
 inline GSLFn::GSLFn( GSLFn && fn)
-:GSLFn( std::move(fn._param.user_fn), fn._param.user_data ){ }
+:GSLFn( std::move(fn._user_fn) ){ }
 
 inline GSLFn & GSLFn::operator=( const GSLFn & fn){
-    if( this != &fn ){
-        _param = fn._param;
-    }
+    _user_fn = fn._user_fn;
     return *this;
 }
 
 inline GSLFn & GSLFn::operator=( GSLFn && fn){
-    if( this != &fn ){
-        _param.user_fn = std::move( fn._param.user_fn );
-        _param.user_data = fn._param.user_data;
-    }
+    _user_fn = std::move(fn._user_fn);
     return *this;
 }
 
-inline GSLFn::~GSLFn() noexcept{}
+inline GSLFn::~GSLFn(){}
 
-inline void GSLFn::set_fn( user_fn_t user_fn, void *data ){
-    _param.user_fn = user_fn;
-    _param.user_data = data;
+inline GSLFn & GSLFn::set_fn( user_fn_t user_fn ){
+    _user_fn = std::move(user_fn);
+    return *this;
 }
-inline double GSLFn::operator()( double x ){
-    return _param.user_fn(x, _param.user_data);
+
+inline auto GSLFn::operator()( value_t x ) const -> value_t {
+    return _user_fn(x);
 }
-inline GSLFn::user_fn_t & GSLFn::get_user_fn( void *&data ) noexcept{
-    data = _param.user_data;
-    return _param.user_fn;
+
+inline GSLFn::user_fn_t & GSLFn::get_user_fn() noexcept{
+    return _user_fn;
 }
-inline GSLFn::gsl_fn_t & GSLFn::get_gsl_fn( ) noexcept{
+
+inline GSLFn::gsl_fn_t & GSLFn::get_gsl_fn() noexcept{
     return _gsl_fn;
 }
 
+inline const GSLFn::user_fn_t & GSLFn::get_user_fn() const noexcept{
+    return _user_fn;
+}
+
+inline const GSLFn::gsl_fn_t & GSLFn::get_gsl_fn() const noexcept{
+    return _gsl_fn;
+}
+
+inline bool GSLFn::empty() const noexcept {
+    return ! static_cast<bool>(_user_fn);
+}
+inline GSLFn::operator bool () const noexcept {
+    return static_cast<bool>(_user_fn);
+}
+inline auto GSLFn::_wrapper_fn( value_t x, void *param ) -> value_t {
+    const auto &f = *reinterpret_cast<const GSLFn *>(param);
+    return f(x);
+}
 
 } // namespace NUMERICAL
 } // namespace HIPP

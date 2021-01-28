@@ -20,6 +20,10 @@ install(DIRECTORY
         "${_headerdir}/kdsearch"
     DESTINATION include
 )
+install(DIRECTORY 
+        "${_headerdir}/mathops"
+    DESTINATION include
+)
 install(FILES
         "${_headerdir}/${_libname}.h"
     DESTINATION include

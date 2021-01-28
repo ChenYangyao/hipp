@@ -1,6 +1,7 @@
 set(_modid algorithm)
 set(_src
     mathops_outer.gtest.cpp
+    mathops_vecinit.gtest.cpp
 )
 
 set(_exebase "${_projectid}${_modid}")

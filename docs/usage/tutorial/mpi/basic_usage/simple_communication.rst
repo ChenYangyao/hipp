@@ -211,3 +211,35 @@ buffer specifications. If ``TaskSpecification`` has different types of
 members, you may simply sends/receives it as a sequence of ``char`` 
 (valid in homegeneous system), or you construct new MPI datatypes using 
 the methods that we will introduce in later chapters.
+
+Applications
+-----------------
+
+Computing PI by Numerical Integration
+""""""""""""""""""""""""""""""""""""""
+
+In the following example, we use a numerical integration to approximately compute the value of :math:`\pi`.
+This example is taken from Ch-3.3 of [GroppW-UMPIv3]_.
+From calculus we know
+
+.. math::
+
+    \pi = \int_0^1 \frac{4}{1+x^2} \, \mathrm{d} x .
+
+We use trapezoid method to approximate this integration, i.e., the integration interval :math:`[0,\,1]` is divided
+into :math:`N` sub intervals with length :math:`h=1/N`. The integration value in the :math:`i`-th interval (0-indexed) is
+approximated by :math:`f( (i+0.5)h )h`, where :math:`f` is the integrand.
+
+This task is an ideal example for parallel computation. The following codes implement the algorithm.
+
+:download:`mpi/app-pi-computation.cpp </../example/tutorial/mpi/app-pi-computation.cpp>`
+
+.. include:: /../example/tutorial/mpi/app-pi-computation.cpp 
+    :code: cpp
+
+The result using 4 processes with :math:`N=100000` is 
+
+.. code-block:: text
+
+    Enter the no. of intervals: 100000
+    Find pi=3.141592653598117, error=8.323564060219724e-12

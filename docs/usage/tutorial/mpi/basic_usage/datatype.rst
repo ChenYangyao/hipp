@@ -112,7 +112,8 @@ to efficiently communicate data between procecsses.
 Matrix Transposition
 """""""""""""""""""""
 
-The following codes show how to transpose a maxtrix using MPI derived datatypes:
+The following codes show how to transpose a maxtrix using MPI derived datatypes. 
+Users can find more details in Ch-14.5 of [DuZH-MPIv2001]_. 
 
 :download:`mpi/dtype-matrix-transpose.cpp </../example/tutorial/mpi/dtype-matrix-transpose.cpp>`
 

@@ -138,6 +138,17 @@ public:
     template<typename ...Args>
     Requests irecv( int src, int tag, Args && ...args ) const;
 
+    /** 
+     * The second overload assumes the recv size and dtype are the same with 
+     * those of the sending 
+     */
+    Status sendrecv(const Datapacket &send_dpacket, int dest, int sendtag, 
+        const Datapacket &recv_dpacket, int src, int recvtag);
+    Status sendrecv(const Datapacket &send_dpacket, int dest, int sendtag, 
+        void *recvbuf, int src, int recvtag);
+    Status sendrecv_replace(const Datapacket &dpacket, int dest, int sendtag, 
+        int src, int recvtag);
+
     Status probe(int src, int tag) const;
     Status iprobe(int src, int tag, int &flag) const;
     std::pair<Status, Message> mprobe(int src, int tag) const;

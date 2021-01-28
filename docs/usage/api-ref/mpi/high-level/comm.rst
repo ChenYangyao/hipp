@@ -483,6 +483,22 @@ Class Comm: the Communication Context
         (i.e., a temporary variable) as ``v`` or ``s``, because, user must ensure not 
         using the buffer before the completion of communication.
 
+    .. function:: \
+        Status sendrecv(const Datapacket &send_dpacket, int dest, int sendtag, \
+            const Datapacket &recv_dpacket, int src, int recvtag)
+        Status sendrecv(const Datapacket &send_dpacket, int dest, int sendtag, \ 
+            void *recvbuf, int src, int recvtag)
+        Status sendrecv_replace(const Datapacket &dpacket, int dest, int sendtag, \ 
+            int src, int recvtag)
+
+        The sending and receiving calls, i.e., finish the sending and receiving operations in a 
+        single call.
+
+        The second overload assumes that the receiving buffer has the same count and datatype 
+        as the sending buffer.
+
+        The third overload uses a single buffer, i.e., received data replace the sending data.
+        The underlying implementation may use additional buffer.
 
     .. function::       Status probe(int src, int tag) const
                         Status iprobe(int src, int tag, int &flag) const
@@ -504,6 +520,7 @@ Class Comm: the Communication Context
     
     .. function::   void barrier() const
                     void bcast( void *buf, int count, const Datatype &dtype, int root) const
+                    void bcast(const Datapacket &dpacket, int root) const
                     void gather( const void *sendbuf, int sendcount, const Datatype &sendtype, \
                         void *recvbuf, int recvcount, const Datatype &recvtype, int root) const
                     void gather(const void *sendbuf, void *recvbuf, \
@@ -563,6 +580,7 @@ Class Comm: the Communication Context
                     Requests ibarrier() const
                     Requests ibcast( \
                         void *buf, int count, const Datatype &dtype, int root) const
+                    Requests ibcast(const Datapacket &dpacket, int root) const
                     Requests igather( \
                         const void *sendbuf, int sendcount, const Datatype &sendtype, \
                         void *recvbuf, int recvcount, const Datatype &recvtype, int root) const

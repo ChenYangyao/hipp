@@ -79,3 +79,7 @@ To avoid confusion, we list the conventions used in this API reference:
     :caption: Intermediate-level API
 
     intermediate-level/index
+
+.. rubric:: References 
+
+.. [GroppW-UMPIv3] William Gropp, Ewing Lusk, and Anthony Skjellum, Using MPI - Portable Parallel Programming with the Message-Passing Interface (3ed).

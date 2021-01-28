@@ -70,7 +70,8 @@ The N-body Problem
 Many simulations involve computing the interaction between pairs particles, which is called N-body 
 problem. Such a problem typically requires :math:`\mathcal{O}(N^2)` computation. Therefore, MPI 
 can help to distribute the computation among processes because the overhead is small relative to 
-the force computation. What we need is to determine how to send/recv data among processes.
+the force computation. What we need is to determine how to send/recv data among processes. The following 
+example is taken from Ch-5.2 of [GroppW-UMPIv3]_.
 
 In a C++ application, a particle is typically represented by a struct, and particles can be 
 stored in an array e.g.::

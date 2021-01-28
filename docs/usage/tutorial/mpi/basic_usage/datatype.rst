@@ -61,8 +61,11 @@ above send is equivalent to::
     comm.send(dest, tag, buff, 4, "double");
                     
 
-Application: The N-body Problem
+Applications 
 ---------------------------------
+
+The N-body Problem 
+"""""""""""""""""""
 
 Many simulations involve computing the interaction between pairs particles, which is called N-body 
 problem. Such a problem typically requires :math:`\mathcal{O}(N^2)` computation. Therefore, MPI 
@@ -104,6 +107,45 @@ This code has many problems: it does not scale; it may deadlock. We could use
 other sending modes to avoid the deadlock problem, but fortunately, MPI provides 
 routines for this common case. We will show how to use allgather and allgatherv 
 to efficiently communicate data between procecsses.
+
+Matrix Transposition
+"""""""""""""""""""""
+
+The following codes show how to transpose a maxtrix using MPI derived datatypes:
+
+:download:`mpi/dtype-matrix-transpose.cpp </../example/tutorial/mpi/dtype-matrix-transpose.cpp>`
+
+.. include:: /../example/tutorial/mpi/dtype-matrix-transpose.cpp 
+    :code: cpp
+
+The key operation is to define a new datatype ``col_type`` which represents 
+a column of the matrix ``mat``. This can be achieved by using the :func:`vector <HIPP::MPI::Datatype::vector>`
+method on an existing datatype (:var:`HIPP::MPI::DOUBLE` here). The vector type has 
+``nrow`` blocks. Each block has only 1 element. Adjacent blocks are strided by ``ncol`` elements.
+
+The next operation :func:`resized <HIPP::MPI::Datatype::resized>` is called on the vector 
+datatype to create a new datatype with correct extent ``sizeof(double)``, which means that adjacent 
+vectors are offset by a double value.
+
+The matrix ``mat`` is sent as ``ncol`` column vectors. It is received into ``mat_T`` directly, which means 
+the original columns are filled into the new rows. Because the sending and receiving are called 
+by the same process, we use :func:`sendrecv <HIPP::MPI::Comm::sendrecv>` method of the communicator 
+to avoid deadlock.  
+
+The output is (executed using 1 process):
+
+.. code-block:: text 
+
+    M =
+      0,  1,  2,  3,
+      4,  5,  6,  7,
+      8,  9, 10, 11
+    Transposed M =
+      0,  1,  2,
+      3,  4,  5,
+      6,  7,  8,
+      9, 10, 11
+
 
 
 

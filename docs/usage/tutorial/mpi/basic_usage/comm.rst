@@ -146,6 +146,16 @@ stop signal to the master::
         }
     }
 
+Finally, we can call the subroutines like::
+
+    long long chunk_size = 50000, max_n_points = 100000000; 
+    double eps = 1.0e-3;
+    if( rank == master_rank ){
+        master_do(chunk_size, world_comm);
+    }else {
+        slave_do(chunk_size, max_n_points, eps, world_comm, slaves_comm);
+    }
+
 Executing the code with 6 processes gives the output 
 
 .. code-block:: text 

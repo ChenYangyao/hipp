@@ -184,3 +184,15 @@ Memory Management
                 ``buffer_detach()`` detaches the buffer and returns its base address and size in bytes. 
                 This call will blocked until all messages currently in the buffer have been transmitted.
 
+Timer 
+-----------------------------
+
+.. function:: \
+    double wtime()
+    double wtick()
+
+    ``wtime()`` returns the wall-time in seconds. The zero-point is not changed in a process, 
+    but different nodes may have different zero-point.
+
+    ``wtick()`` returns the resolution of ``wtime()`` in seconds, i.e., the time between successive 
+    clock ticks.

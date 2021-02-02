@@ -4,9 +4,10 @@
 #include "../simdopcode/opcode.h"
 namespace HIPP{
 namespace SIMD{
+#ifdef __SSE__
 namespace _ps128_helper {
 
-class PackedBase {
+class Packs4Base {
 public:
     typedef float scal_t;
     typedef __m128 vec_t;
@@ -18,18 +19,20 @@ public:
     typedef typename TypeCvt<vec_t, 0, 0, 0>::ret ivec_t;
 
     typedef __mmask8 mask8_t;
-};
-} // namespace _ps128_helper
 
-template<> class Packed<float, 4>: public _ps128_helper::PackedBase {
     enum: size_t { 
         NPACK=4, 
         NBIT=128, 
         VECSIZE=sizeof(vec_t), 
         SCALSIZE=sizeof(scal_t) };
+};
+} // namespace _ps128_helper
+
+template<> class Packed<float, 4>: public _ps128_helper::Packs4Base {
+public:
+
     typedef ivec_t mask_t;
     typedef ivec_t index_t;
-    typedef u_int32_t imm_t;
 
     static vec_t load( const scal_t *mem_addr ) noexcept;
     static vec_t loadr( const scal_t *mem_addr ) noexcept;
@@ -131,6 +134,10 @@ template<> class Packed<float, 4>: public _ps128_helper::PackedBase {
     static vec_t min( vec_t a, vec_t b ) noexcept;
     static vec_t mins( vec_t a, vec_t b ) noexcept;
 
+#ifdef __AVX__
+    static int testz( vec_t a, vec_t b ) noexcept                               { return _mm_testz_ps(a, b); }
+#endif 
+
     /**
      * register move
      */
@@ -141,7 +148,7 @@ template<> class Packed<float, 4>: public _ps128_helper::PackedBase {
     static vec_t set1( vec_t a ) noexcept;                                      // broadcast a[0].
     static vec_t set() noexcept;                                                // set all zeros.
     static vec_t setzero() noexcept;                                            // same as set().
-    static vec_t shuffle( vec_t a, vec_t b, imm_t imm8) noexcept;
+    static vec_t shuffle( vec_t a, vec_t b, unsigned int imm8) noexcept;
     static vec_t unpackhi( vec_t a, vec_t b) noexcept;                          // convert a[3:0], b[3:0] into [ b[3] a[3] b[2] a[2] ].
     static vec_t unpacklo( vec_t a, vec_t b) noexcept;                          // convert a[3:0], b[3:0] into [ b[1] a[1] b[0] a[0] ].
     static vec_t undefined() noexcept;                                          // undefined elements.
@@ -155,13 +162,18 @@ template<> class Packed<float, 4>: public _ps128_helper::PackedBase {
     static iscal_t tot_iscal( vec_t a ) noexcept;               //                  ... truncate
     static iscal_t to_iscal_dp( vec_t a ) noexcept;             // cvt lower float-32 into dst int-64
     static iscal_t tot_iscal_dp( vec_t a ) noexcept;            //                  ... truncate
-    static scal_t to_scal( vec_t a ) noexcept;                  // cvt lowest float-32 into single float
+    static scal_t to_scal( vec_t a ) noexcept                                   { return _mm_cvtss_f32(a); }    // cvt lowest float-32 into single float
     static vec_t moves( vec_t a, vec_t b ) noexcept;
-    static vec_t movehl( vec_t a, vec_t b ) noexcept;           // higher 2 floats from a, lower from b
-    static vec_t movelh( vec_t a, vec_t b ) noexcept;           // lower ... ,higher...
+    static vec_t movehl( vec_t a, vec_t b ) noexcept;           // dst[3:2] = a[3:2], dst[1:0] = b[3:2].
+    static vec_t movelh( vec_t a, vec_t b ) noexcept;           //
     static int movemask( vec_t a ) noexcept;                    // move highest bit of each float into lowest 4 bits of dst.
-
-
+#ifdef __SSE2__
+    static ivec_t to_si(vec_t a) noexcept                                       { return _mm_castps_si128(a); }  
+#endif //__SSE2__
+#ifdef __SSE3__
+    static vec_t movehdup( vec_t a) noexcept                                    { return _mm_movehdup_ps(a); }
+    static vec_t moveldup( vec_t a ) noexcept                                   { return _mm_moveldup_ps(a); }
+#endif
     /**
      * the 's' version operates on the lower scalar, and copy the upper 3 
      * scalars from a
@@ -252,7 +264,7 @@ inline Packed<float, 4>::vec_t Packed<float, 4>::set1( scal_t a ) noexcept{ retu
 inline Packed<float, 4>::vec_t Packed<float, 4>::set1( vec_t a ) noexcept{ return _mm_broadcastss_ps(a); }
 inline Packed<float, 4>::vec_t Packed<float, 4>::set() noexcept{ return _mm_setzero_ps(); }
 inline Packed<float, 4>::vec_t Packed<float, 4>::setzero() noexcept{ return set(); }
-inline Packed<float, 4>::vec_t Packed<float, 4>::shuffle( vec_t a, vec_t b, imm_t imm8) noexcept{ return _mm_shuffle_ps(a,b,imm8); }
+inline Packed<float, 4>::vec_t Packed<float, 4>::shuffle( vec_t a, vec_t b, unsigned int imm8) noexcept{ return _mm_shuffle_ps(a,b,imm8); }
 inline Packed<float, 4>::vec_t Packed<float, 4>::unpackhi( vec_t a, vec_t b) noexcept{ return _mm_unpackhi_ps(a,b); }
 inline Packed<float, 4>::vec_t Packed<float, 4>::unpacklo( vec_t a, vec_t b) noexcept{ return _mm_unpacklo_ps(a,b); }
 inline Packed<float, 4>::vec_t Packed<float, 4>::undefined() noexcept{ return _mm_undefined_ps(); }
@@ -262,7 +274,6 @@ inline Packed<float, 4>::iscal_t Packed<float, 4>::to_iscal( vec_t a ) noexcept{
 inline Packed<float, 4>::iscal_t Packed<float, 4>::tot_iscal( vec_t a ) noexcept{ return _mm_cvtt_ss2si(a); }
 inline Packed<float, 4>::iscal_t Packed<float, 4>::to_iscal_dp( vec_t a ) noexcept{ return _mm_cvtss_si64(a); }
 inline Packed<float, 4>::iscal_t Packed<float, 4>::tot_iscal_dp( vec_t a ) noexcept{ return _mm_cvtss_si64(a); }
-inline Packed<float, 4>::scal_t Packed<float, 4>::to_scal( vec_t a ) noexcept{ return _mm_cvtss_f32(a); }
 inline Packed<float, 4>::vec_t Packed<float, 4>::moves( vec_t a, vec_t b ) noexcept{ return _mm_move_ss(a,b); }
 inline Packed<float, 4>::vec_t Packed<float, 4>::movehl( vec_t a, vec_t b ) noexcept{ return _mm_movehl_ps(a,b); }
 inline Packed<float, 4>::vec_t Packed<float, 4>::movelh( vec_t a, vec_t b ) noexcept{ return _mm_movelh_ps(a,b); }
@@ -274,6 +285,8 @@ inline Packed<float, 4>::vec_t Packed<float, 4>::rsqrt( vec_t a ) noexcept{ retu
 inline Packed<float, 4>::vec_t Packed<float, 4>::rsqrts( vec_t a ) noexcept{ return _mm_rsqrt_ss(a); }
 inline Packed<float, 4>::vec_t Packed<float, 4>::sqrt( vec_t a ) noexcept{ return _mm_sqrt_ps(a); }
 inline Packed<float, 4>::vec_t Packed<float, 4>::sqrts( vec_t a ) noexcept{ return _mm_sqrt_ss(a); }
+
+#endif
 
 } // namespace SIMD
 } // namespace HIPP

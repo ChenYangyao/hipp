@@ -1,7 +1,7 @@
 MPICXX = mpicxx 
 CXXFLAGS = -std=c++17 -O3 -Wall
 LDFLAGS = 
-LDLIBS = -lhippmpi -lhippcntl
+LDLIBS = -lhippmpi -lhippcntl -lhippnumerical -lgsl -lgslcblas
 
 %.mp.out: %.cpp
 	$(MPICXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $< $(LDLIBS)

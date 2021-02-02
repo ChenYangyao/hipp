@@ -12,6 +12,14 @@ namespace HIPP {
 namespace IO {
 class _H5Group: public _H5Obj {
 public:
+    typedef H5G_storage_type_t storage_type_t;
+    static constexpr storage_type_t 
+        STORAGE_TYPE_COMPACT = H5G_STORAGE_TYPE_COMPACT,
+        STORAGE_TYPE_DENSE = H5G_STORAGE_TYPE_DENSE,
+        STORAGE_TYPE_SYMBOL_TABLE = H5G_STORAGE_TYPE_SYMBOL_TABLE;
+
+    typedef H5G_info_t info_t;
+
     explicit _H5Group( id_t group, int state=stFREE ) 
         noexcept: _H5Obj( group, state ) { }
     static id_t create( id_t loc, const char *name, id_t lcprop = H5P_DEFAULT, 
@@ -26,6 +34,9 @@ public:
         id_t group = H5Gopen( loc, name, aprop );
         ErrH5::check(group, "  ... cannot open group named ", group, '\n');
         return group;
+    }
+    void get_info(info_t &info) const {
+        ErrH5::check(H5Gget_info(_obj, &info), emFLPFB);
     }
     id_t create_dataset( const char *name, id_t datatype, id_t dataspace, 
         id_t lcprop = H5P_DEFAULT, id_t dcprop = H5P_DEFAULT, 

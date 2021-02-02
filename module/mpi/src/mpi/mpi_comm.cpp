@@ -212,6 +212,30 @@ Win Comm::win_allocate_shared(void *&base_ptr,
         raw(), &base_ptr);
     return Win::_from_raw(win, Win::_obj_raw_t::stFREE);
 }
+Status Comm::sendrecv(const Datapacket &send_dpacket, int dest, int sendtag, 
+    const Datapacket &recv_dpacket, int src, int recvtag)
+{
+    const auto &sdp = send_dpacket;
+    const auto &rdp = recv_dpacket;
+    return _obj_ptr->sendrecv(
+        sdp._buff, sdp._size, sdp._dtype.raw(), dest, sendtag, 
+        rdp._buff, rdp._size, rdp._dtype.raw(), src, recvtag);
+}
+Status Comm::sendrecv(const Datapacket &send_dpacket, int dest, int sendtag, 
+    void *recvbuf, int src, int recvtag)
+{
+    const auto &dp = send_dpacket;
+    return _obj_ptr->sendrecv(
+        dp._buff, dp._size, dp._dtype.raw(), dest, sendtag,
+        recvbuf, dp._size, dp._dtype.raw(), src, recvtag);
+}
+Status Comm::sendrecv_replace(const Datapacket &dpacket, int dest, int sendtag, 
+    int src, int recvtag)
+{
+    const auto &dp = dpacket;
+    return _obj_ptr->sendrecv_replace(dp._buff, dp._size, dp._dtype.raw(), 
+        dest, sendtag, src, recvtag);
+}
 Status Comm::probe(int src, int tag) const{
     return _obj_ptr->probe(src, tag);
 }
@@ -233,6 +257,10 @@ void Comm::barrier() const{
 }
 void Comm::bcast( void *buf, int count, const Datatype &dtype, int root) const{
     _obj_ptr->bcast(buf, count, dtype.raw(), root);
+}
+void Comm::bcast(const Datapacket &dpacket, int root) const {
+    const auto &dp = dpacket;
+    bcast(dp._buff, dp._size, dp._dtype, root);
 }
 void Comm::gather( const void *sendbuf, int sendcount, const Datatype &sendtype, 
     void *recvbuf, int recvcount, const Datatype &recvtype, int root) const{
@@ -357,10 +385,18 @@ void Comm::exscan( const void *sendbuf, void *recvbuf,
 Requests Comm::ibarrier() const{
     return Requests::_from_raw( _obj_ptr->ibarrier(), 0);
 }
-Requests Comm::ibcast( void *buf, int count, const Datatype &dtype, int root) const{
-    return Requests::_from_raw( _obj_ptr->ibcast(buf, count, dtype.raw(), root), 0);
+Requests Comm::ibcast( void *buf, int count, const Datatype &dtype, 
+    int root) const
+{
+    return Requests::_from_raw( 
+        _obj_ptr->ibcast(buf, count, dtype.raw(), root), 0);
 }
-Requests Comm::igather( const void *sendbuf, int sendcount, const Datatype &sendtype, 
+Requests Comm::ibcast(const Datapacket &dpacket, int root) const {
+    const auto &dp = dpacket;
+    return ibcast(dp._buff, dp._size, dp._dtype, root);
+}
+Requests Comm::igather( 
+    const void *sendbuf, int sendcount, const Datatype &sendtype, 
     void *recvbuf, int recvcount, const Datatype &recvtype, int root) const{
     return Requests::_from_raw( _obj_ptr->igather(sendbuf, sendcount, 
         sendtype.raw(), recvbuf,

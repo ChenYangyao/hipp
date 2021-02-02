@@ -138,6 +138,17 @@ public:
     template<typename ...Args>
     Requests irecv( int src, int tag, Args && ...args ) const;
 
+    /** 
+     * The second overload assumes the recv size and dtype are the same with 
+     * those of the sending 
+     */
+    Status sendrecv(const Datapacket &send_dpacket, int dest, int sendtag, 
+        const Datapacket &recv_dpacket, int src, int recvtag);
+    Status sendrecv(const Datapacket &send_dpacket, int dest, int sendtag, 
+        void *recvbuf, int src, int recvtag);
+    Status sendrecv_replace(const Datapacket &dpacket, int dest, int sendtag, 
+        int src, int recvtag);
+
     Status probe(int src, int tag) const;
     Status iprobe(int src, int tag, int &flag) const;
     std::pair<Status, Message> mprobe(int src, int tag) const;
@@ -147,7 +158,13 @@ public:
      * collective communication
      */
     void barrier() const;
+    /**
+     * Broadcast calls
+     * Overloads:
+     * 2: use a datapacket specification
+     */
     void bcast(void *buf, int count, const Datatype &dtype, int root) const;
+    void bcast(const Datapacket &dpacket, int root) const;
     /** 
      * Gather calls 
      * Overloads: 
@@ -225,6 +242,7 @@ public:
     Requests ibarrier() const;
     Requests ibcast( 
         void *buf, int count, const Datatype &dtype, int root) const;
+    Requests ibcast(const Datapacket &dpacket, int root) const;
     Requests igather( 
         const void *sendbuf, int sendcount, const Datatype &sendtype, 
         void *recvbuf, int recvcount, const Datatype &recvtype, int root) const;

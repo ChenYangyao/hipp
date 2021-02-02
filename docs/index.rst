@@ -118,3 +118,4 @@ Contributors
    usage/api-ref/mpi/index
    usage/api-ref/io/index
    usage/api-ref/simd/index
+   usage/api-ref/algorithm/index

@@ -1,6 +1,30 @@
 #include <h5_obj_group.h>
+#include <h5_obj_raw_link.h>
 namespace HIPP {
 namespace IO{
+
+auto H5Group::get_info() const -> info_t {
+    info_t info;
+    _obj_ptr->get_info(info);
+    return info;
+}
+auto H5Group::n_links() const -> size_t {
+    info_t info;
+    _obj_ptr->get_info(info);
+    return info.nlinks;
+}
+vector<string> H5Group::keys(index_t index_field, iter_order_t order) const
+{
+    size_t _n_links = n_links();
+    vector<string> _keys; 
+    _keys.reserve(_n_links);
+    id_t lapl_id = H5Proplist::defaultval.raw();
+    for(size_t i=0; i<_n_links; ++i){
+        _keys.emplace_back( _H5Link::get_name_by_idx(
+                raw(), ".", index_field, order, i, lapl_id));
+    }
+    return _keys;
+}
 H5Dataset H5Group::create_dataset(
     const string &name, const H5Datatype &dtype, 
     const vector<hsize_t> &dims, const string &flag,

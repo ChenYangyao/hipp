@@ -17,7 +17,19 @@ class H5File;
 class H5Group: public H5Obj<_H5Group>{
 public:
     typedef H5Obj<_H5Group> _obj_base_t;
+    typedef _obj_raw_t::storage_type_t storage_type_t;
+    typedef _obj_raw_t::info_t info_t;
+    static constexpr storage_type_t
+        STORAGE_TYPE_COMPACT = _obj_raw_t::STORAGE_TYPE_COMPACT,
+        STORAGE_TYPE_DENSE = _obj_raw_t::STORAGE_TYPE_DENSE,
+        STORAGE_TYPE_SYMBOL_TABLE = _obj_raw_t::STORAGE_TYPE_SYMBOL_TABLE;
+    
     using _obj_base_t::_obj_base_t;
+
+    info_t get_info() const;
+    size_t n_links() const;
+    vector<string> keys(index_t index_field=INDEX_NAME, 
+        iter_order_t order=ITER_NATIVE) const;
 
     template<typename T>
     H5Dataset create_dataset( const string &name, const vector<hsize_t> &dims, 

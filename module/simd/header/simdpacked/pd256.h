@@ -16,7 +16,7 @@ public:
     typedef typename TypeCvt<vec_t, -1, 0, 1>::ret vec_hc_t;
     typedef typename TypeCvt<vec_t, 0, -1, 1>::ret vec_hp_t;
 
-    typedef int64_t iscal_t;
+    typedef long long iscal_t;
     typedef int32_t iscal_hp_t;
     typedef typename TypeCvt<vec_t, 0, 0, 0>::ret ivec_t;
     typedef typename TypeCvt<vec_t, 0, -1, 0>::ret ivec_hp_t;    
@@ -75,18 +75,24 @@ public:
      * The to_ivec_xx() use NEAR mode for conversion. While the tot_ivec_xx()
      * does the truncation.
      */
-    static ivec_t to_si( vec_t a) noexcept              { return _mm256_castpd_si256(a); }
-    static vec_t from_si(ivec_t a) noexcept             { return _mm256_castsi256_pd(a); }
+    static ivec_t to_si( vec_t a) noexcept                                      { return _mm256_castpd_si256(a); }
+    static vec_t from_si(ivec_t a) noexcept                                     { return _mm256_castsi256_pd(a); }
     static vec_t from_ivec_hp( ivec_hp_t a ) noexcept;
-    static ivec_hp_t to_ivec_hp( vec_t a ) noexcept;
-    static ivec_hp_t tot_ivec_hp( vec_t a ) noexcept;
+    static ivec_hp_t to_ivec_hp( vec_t a ) noexcept                             { return _mm256_cvtpd_epi32(a); }
+    static ivec_hp_t tot_ivec_hp( vec_t a ) noexcept                            { return _mm256_cvttpd_epi32(a); }
     static vec_t from_vec_hp( vec_hp_t a ) noexcept;
-    static vec_hp_t to_vec_hp( vec_t a ) noexcept;
+    static vec_hp_t to_vec_hp( vec_t a ) noexcept                               { return _mm256_cvtpd_ps(a); }
+    static vec_hc_t to_vec_hc( vec_t a ) noexcept                               { return _mm256_castpd256_pd128(a); }
 #ifdef __AVX2__
     static scal_t to_scal( vec_t a ) noexcept;
 #endif
+    static vec_hc_t extract_hc(vec_t a, const int imm8) noexcept                { return _mm256_extractf128_pd(a, imm8); }
+    static vec_t unpackhi(vec_t a, vec_t b) noexcept                            { return _mm256_unpackhi_pd(a, b); }
+    static vec_t unpacklo(vec_t a, vec_t b) noexcept                            { return _mm256_unpacklo_pd(a, b); }
+
     static int movemask( vec_t a ) noexcept;
     static vec_t movedup( vec_t a ) noexcept;
+
     static vec_t set( scal_t e3, scal_t e2, scal_t e1, scal_t e0 ) noexcept;
     static vec_t set1( scal_t a ) noexcept;
 
@@ -118,6 +124,7 @@ public:
     static vec_t gt( vec_t a, vec_t b ) noexcept;
     static vec_t ge( vec_t a, vec_t b ) noexcept;
     static vec_t cmp( vec_t a, vec_t b, const int op ) noexcept;
+    static int testz( vec_t a, vec_t b ) noexcept                               { return _mm256_testz_pd(a, b); }
 
     static vec_t and_( vec_t a, vec_t b ) noexcept;
     static vec_t andnot( vec_t a, vec_t b ) noexcept;  // (NOT a) AND b, bitwise
@@ -215,17 +222,8 @@ inline void Packed<double, 4>::scatterm_idxhp(void *base_addr, mask8_t k,
 inline Packed<double,4>::vec_t Packed<double,4>::from_ivec_hp( ivec_hp_t a ) noexcept{
     return _mm256_cvtepi32_pd( a );
 }
-inline Packed<double,4>::ivec_hp_t Packed<double,4>::to_ivec_hp( vec_t a ) noexcept{
-    return _mm256_cvtpd_epi32(a);
-}
-inline Packed<double,4>::ivec_hp_t Packed<double,4>::tot_ivec_hp( vec_t a ) noexcept{
-    return _mm256_cvttpd_epi32(a);
-}
 inline Packed<double,4>::vec_t Packed<double,4>::from_vec_hp( vec_hp_t a ) noexcept{
     return _mm256_cvtps_pd( a );
-}
-inline Packed<double,4>::vec_hp_t Packed<double,4>::to_vec_hp( vec_t a ) noexcept{
-    return _mm256_cvtpd_ps(a);
 }
 #ifdef __AVX2__
 inline Packed<double,4>::scal_t Packed<double,4>::to_scal( vec_t a ) noexcept{

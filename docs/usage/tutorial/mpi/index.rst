@@ -7,4 +7,5 @@ Process-level Parallelism with MPI
 
     basic_usage/simple_communication
     basic_usage/datatype
+    basic_usage/comm.rst
 

@@ -12,6 +12,7 @@ add_library(${_libname}
     SHARED 
         "$<TARGET_OBJECTS:${_libname}error>"
         "$<TARGET_OBJECTS:${_libname}stream>"
+        "$<TARGET_OBJECTS:${_libname}time>"
 )
 set_target_properties(${_libname}
     PROPERTIES
@@ -29,6 +30,7 @@ install(DIRECTORY
         "${_headerdir}/error"
         "${_headerdir}/memory"
         "${_headerdir}/stream"
+        "${_headerdir}/time"
     DESTINATION include
 )
 install(FILES

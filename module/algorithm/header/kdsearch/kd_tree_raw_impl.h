@@ -77,7 +77,8 @@ FLOAT_T node_t _HIPP_TEMPARG::r(
 _HIPP_TEMPHD
 ostream & node_t _HIPP_TEMPARG::info(
     ostream &os, int fmt_cntl) const{
-    os << size << ' ' << axis << " (";
+    HIPP::PStream ps(os);
+    ps << "size (", size, "), axis (", axis, "), location (";
     return prt_a(os, pos, pos+DIM) << ")";
 }
 
@@ -203,47 +204,102 @@ _KDTree _HIPP_TEMPARG::nearest( const float_t *pos ) const{
 }
 
 _HIPP_TEMPHD
-vector<typename _KDTree _HIPP_TEMPARG::ngb_t> 
-_KDTree _HIPP_TEMPARG::nearest_k( const float_t *pos, index_t k ) const{
+auto _KDTree _HIPP_TEMPARG::nearest_k( const float_t *pos, index_t k ) const 
+-> vector<ngb_t>
+{   
+    vector<ngb_t> ngbs;
+    nearest_k(pos, k, ngbs);
+    return ngbs;
+}
+
+_HIPP_TEMPHD
+void _KDTree _HIPP_TEMPARG::nearest_k( const float_t *pos, index_t k, 
+    vector<ngb_t> &ngbs ) const 
+{
     std::stack<_p_2node_t> stk;
     std::priority_queue<ngb_t> pq;
     if( !empty() )
         _nearest_k(pos, k, stk, pq);
     
-    vector<ngb_t> ans;
+    ngbs.clear();
     while( !pq.empty() ){
         const auto &t = pq.top();
         if( t.node )
-            ans.emplace_back( t.node, std::sqrt( t.r ) );
+            ngbs.emplace_back( t.node, std::sqrt( t.r ) );
         pq.pop();
     }
-    std::reverse( ans.begin(), ans.end() );
-    return ans;
+    std::reverse( ngbs.begin(), ngbs.end() );
 }
 
 _HIPP_TEMPHD
-vector<typename _KDTree _HIPP_TEMPARG::ngb_t> 
-_KDTree _HIPP_TEMPARG::nearest_r( const float_t *pos, float_t r ) const{
-    std::stack<_p_2node_t> stk;
+auto _KDTree _HIPP_TEMPARG::nearest_r( const float_t *pos, float_t r ) const
+-> vector<ngb_t>
+{
     vector<ngb_t> ngbs;
-    if( !empty() )
-        _nearest_r( pos, r*r, stk, ngbs );
-    for(auto &ngb: ngbs)
-        ngb.r = std::sqrt( ngb.r );
+    nearest_r(pos, r, ngbs);
     return ngbs;
 }
 
-_HIPP_TEMPHD 
-vector<typename _KDTree _HIPP_TEMPARG::_p_node_t> 
-_KDTree _HIPP_TEMPARG::nearest_rect( 
-    const float_t *pos, const float_t *dx ) const{
+_HIPP_TEMPHD
+void _KDTree _HIPP_TEMPARG::nearest_r( const float_t *pos, float_t r, 
+    vector<ngb_t> &ngbs) const 
+{
     std::stack<_p_2node_t> stk;
-    vector<_p_node_t> ngbs;
+    ngbs.clear();
+    auto f_visit = [&ngbs](const _p_node_t &pnode, float_t rsq)->void {
+        ngbs.emplace_back(pnode, std::sqrt(rsq));
+    };
     if( !empty() )
-        _nearest_rect(pos, dx, stk, ngbs);
-    return ngbs;
+        _nearest_r(pos, r*r, stk, f_visit);
 }
 
+_HIPP_TEMPHD
+auto _KDTree _HIPP_TEMPARG::count_r( const float_t *pos, float_t r) const 
+-> size_t
+{
+    std::stack<_p_2node_t> stk;
+    size_t cnt = 0;
+    auto f_visit = [&cnt](const _p_node_t &pnode, float_t rsq)->void {
+        ++cnt;
+    };
+    if( !empty() )
+        _nearest_r(pos, r*r, stk, f_visit);
+    return cnt;
+}
+_HIPP_TEMPHD 
+auto _KDTree _HIPP_TEMPARG::nearest_rect( 
+    const float_t *pos, const float_t *dx ) const
+-> vector<_p_node_t>    
+{
+    vector<_p_node_t> ngbs;
+    nearest_rect(pos, dx, ngbs);
+    return ngbs;
+}
+_HIPP_TEMPHD 
+void _KDTree _HIPP_TEMPARG::nearest_rect( const float_t *pos, const float_t *dx, 
+    vector<_p_node_t> &ngbs) const 
+{
+    std::stack<_p_2node_t> stk;
+    ngbs.clear();
+    auto f_visit = [&ngbs](const _p_node_t &pnode)->void {
+        ngbs.emplace_back(pnode);
+    };
+    if(!empty())
+        _nearest_rect(pos, dx, stk, f_visit);
+}
+_HIPP_TEMPHD 
+auto _KDTree _HIPP_TEMPARG::count_rect( const float_t *pos, 
+    const float_t *dx ) const -> size_t
+{
+    std::stack<_p_2node_t> stk;
+    size_t cnt = 0;
+    auto f_visit = [&cnt](const _p_node_t &pnode)->void {
+        ++cnt;
+    };
+    if(!empty())
+        _nearest_rect(pos, dx, stk, f_visit);
+    return cnt;
+}
 _HIPP_TEMPHD 
 bool _KDTree _HIPP_TEMPARG::empty() const noexcept{
     return _nodes.empty();
@@ -350,16 +406,7 @@ void _KDTree _HIPP_TEMPARG::_nearest(
     _p_node_t near = nullptr;
     float_t min_r2 = std::numeric_limits<FLOAT_T>().max();
     _p_node_t root = _nodes.data(), parent, sibl;
-#if defined(HIPPDEV) && defined(HIPPDEBUG) && defined(VERBOSE)
-    prt(cerr, emFLF, '\n');
-    prt(cerr, "pos=("); prt_a(cerr, pos, pos+DIM) << ')' << endl;
-#endif    
     while( root ){
-#if defined(HIPPDEV) && defined(HIPPDEBUG) && defined(VERBOSE)
-    prt(cerr, "  Best R-sq: ", min_r2);
-    if( near ) prt(cerr, ", node: ") << *near;
-    cerr << endl;
-#endif
         _walk_down(root, pos, stk, parent, sibl);
         do{
             int axis = parent->axis;
@@ -389,16 +436,7 @@ void _KDTree _HIPP_TEMPARG::_nearest_k( const float_t pos[DIM], const index_t k,
     for(index_t i=0; i<k; ++i) pq.emplace( nullptr, min_r2);
     
     _p_node_t root = _nodes.data(), parent, sibl;
-#if defined(HIPPDEV) && defined(HIPPDEBUG) && defined(VERBOSE)
-    prt(cerr, emFLF, '\n');
-    prt(cerr, "pos=("); prt_a(cerr, pos, pos+DIM) << "), k=" << k << endl;
-#endif
     while( root ){
-#if defined(HIPPDEV) && defined(HIPPDEBUG) && defined(VERBOSE)
-        prt(cerr, "  Currrent threshold R-sq: ", min_r2);
-        if( pq.top().node ) prt(cerr, ", farest node: ") << *pq.top().node;
-        cerr << endl;
-#endif
         _walk_down(root, pos, stk, parent, sibl);
         do{
             int axis = parent->axis;
@@ -420,29 +458,13 @@ void _KDTree _HIPP_TEMPARG::_nearest_k( const float_t pos[DIM], const index_t k,
         }while( parent );
     }
 }
-
 _HIPP_TEMPHD
+template<typename Op>
 void _KDTree _HIPP_TEMPARG::_nearest_r( const float_t pos[DIM], 
-    const float_t rsq,
-    std::stack<_p_2node_t> &stk, vector<ngb_t> &ngbs ) const
+    const float_t rsq, std::stack<_p_2node_t> &stk, Op op) const
 {
     _p_node_t root = _nodes.data(), parent, sibl;
-#if defined(HIPPDEV) && defined(HIPPDEBUG) && defined(VERBOSE)
-    prt(cerr, emFLF, '\n');
-    prt(cerr, "pos=("); prt_a(cerr, pos, pos+DIM) 
-        << "), R-sq limit=" << rsq << endl;
-#endif
     while( root ){
-
-#if defined(HIPPDEV) && defined(HIPPDEBUG) && defined(VERBOSE)
-        prt(cerr, "  Currrent found: ", ngbs.size(), " nodes") << endl;
-        if( !ngbs.empty() ){
-            prt(cerr, "    r, size, axis, pos:");
-            for(const auto &ngb: ngbs)
-                cerr << ' ' << std::sqrt(ngb.r) << *ngb.node;
-            cerr << endl;
-        }
-#endif
         _walk_down(root, pos, stk, parent, sibl);
         do{
             int axis = parent->axis;
@@ -450,7 +472,7 @@ void _KDTree _HIPP_TEMPARG::_nearest_r( const float_t pos[DIM],
             if( dx*dx < rsq ){
                 float_t r2 = node_t::r2( pos, parent->pos );
                 if( r2 < rsq ){
-                    ngbs.emplace_back( parent, r2 );
+                    op(parent, r2);
                 }
                 if( sibl ){ root = sibl; break; }
             }
@@ -464,10 +486,11 @@ void _KDTree _HIPP_TEMPARG::_nearest_r( const float_t pos[DIM],
 }
 
 _HIPP_TEMPHD
+template<typename Op>
 void _KDTree _HIPP_TEMPARG::_nearest_rect( 
     const float_t pos[DIM], const float_t dx[DIM],
-    std::stack<_p_2node_t> &stk, vector<_p_node_t> &ngbs ) const{
-
+    std::stack<_p_2node_t> &stk, Op op) const 
+{
     _p_node_t root = _nodes.data(), parent, sibl;
 #if defined(HIPPDEV) && defined(HIPPDEBUG) && defined(VERBOSE)
     prt(cerr, emFLF, '\n');
@@ -475,15 +498,6 @@ void _KDTree _HIPP_TEMPARG::_nearest_rect(
     prt_a(cerr, dx, dx+DIM) << ')' << endl;
 #endif
     while( root ){
-#if defined(HIPPDEV) && defined(HIPPDEBUG) && defined(VERBOSE)
-        prt(cerr, "  Currrent found: ", ngbs.size(), " nodes") << endl;
-        if( !ngbs.empty() ){
-            prt(cerr, "    size, axis, pos:");
-            for(const auto &ngb: ngbs)
-                cerr << ' ' << *ngb;
-            cerr << endl;
-        }
-#endif
         _walk_down(root, pos, stk, parent, sibl);
         do{
             int axis = parent->axis;
@@ -493,7 +507,11 @@ void _KDTree _HIPP_TEMPARG::_nearest_rect(
                     inters = inters && 
                         ( std::fabs(pos[i]-parent->pos[i]) < dx[i] );
                 if( inters ){
-                    ngbs.emplace_back( parent );
+#if defined(HIPPDEV) && defined(HIPPDEBUG) && defined(VERBOSE)
+    prt(cerr, emFLF, '\n');
+    prt(cerr, "Found") << endl;;
+#endif
+                    op(parent);
                 }
                 if( sibl ){ root = sibl; break; }
             }

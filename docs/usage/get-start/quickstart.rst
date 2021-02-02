@@ -63,7 +63,7 @@ several stream manipulation classes and functions.
 
 -   The "pretty" stream, :var:`pout <HIPP::pout>`, is just like ``std::cout``,
     but it accepts comma separated arguments, so that the code for printing is more concise.
--   The printing function :func:`prt_a <HIPP::prt_a>` prints an array of elements into a std stream.
+    It also accepts STL containers, i.e., ``std::vector``, ``std::map``, ``std::tuple``, etc. 
 -   The string constructing functions :func:`str <HIPP::str>` and :func:`str_a <HIPP::str_a>` construct
     ``std::string`` from a series of arguments and an array of elements, respectively.
 
@@ -79,9 +79,8 @@ The output for this simple example is:
 .. code-block:: text 
 
     The sum of 1 and 2 is 3
-    1,2,3,4,5
-    The sum of 1 and 2 is 3
-    1,2,3,4,5
+    arr is 1,2,3,4,5
+    The sum of 1 and 2 is 3, and arr is 1,2,3,4,5
 
 
 Using the MPI Module

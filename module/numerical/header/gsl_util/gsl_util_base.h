@@ -15,10 +15,10 @@
     classname & operator=( const classname & ) = delete;\
     classname & operator=( classname && ) = delete;
 
-#define _HIPPNUMERICAL_GSL_UTIL_MAKE_INIT \
-    if( ! ErrGSL::_has_init_gsl_env ){ \
-        ErrGSL::set_error_handler(); \
-        ErrGSL::_has_init_gsl_env = 1; \
-    } 
+namespace HIPP::NUMERICAL {
+
+typedef std::size_t size_t;
+
+} // namespace HIPP
 
 #endif	//_HIPPNUMERICAL_BASE_BASE_H_

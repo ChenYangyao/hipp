@@ -32,8 +32,8 @@ public:
     typedef Packed<long long,4> pack_t;
     typedef _pi64_256_helper::AddrAligned addr_t;
     typedef _pi64_256_helper::CAddrAligned caddr_t;
-    typedef Vec<scal_t, 2> hc_t;
-    typedef Vec<int32_t, 4> hp_t;
+    typedef Vec<scal_t, 2> VecHC;
+    typedef Vec<int32_t, 4> VecHP;
     
     Vec() noexcept                                              {}
     explicit Vec(scal_t a) noexcept                             : _val( pack_t::set1(a) ) {}
@@ -59,8 +59,8 @@ public:
     Vec & loaddqu(caddr_t mem_addr) noexcept                    { _val = pack_si_t::loaddqu( (const vec_t *)mem_addr._addr ); return *this; }
     Vec & loadstream(caddr_t mem_addr) noexcept                 { _val = pack_si_t::loadstream( (const vec_t *)mem_addr._addr ); return *this; }
     Vec & gather( const scal_t *base_addr, const Vec &vindex, const int scale=SCALSIZE ) noexcept       { _val = pack_t::gather(base_addr, vindex._val, scale); return *this; }
-    Vec & gather( const scal_t *base_addr, const hp_t &vindex, const int scale=SCALSIZE ) noexcept      { _val = pack_t::gather(base_addr, vindex._val, scale); return *this; }
-    Vec & gatherm( const Vec &src, const scal_t *base_addr, const hp_t &vindex, const Vec &mask, const int scale=SCALSIZE ) noexcept    { _val = pack_t::gatherm(src._val, base_addr, vindex._val, mask._val, scale); return *this; }
+    Vec & gather( const scal_t *base_addr, const VecHP &vindex, const int scale=SCALSIZE ) noexcept;
+    Vec & gatherm( const Vec &src, const scal_t *base_addr, const VecHP &vindex, const Vec &mask, const int scale=SCALSIZE ) noexcept;
     Vec & gatherm( const Vec &src, const scal_t *base_addr, const Vec &vindex, const Vec &mask, const int scale=SCALSIZE ) noexcept     { _val = pack_t::gatherm(src._val, base_addr, vindex._val, mask._val, scale); return *this; }
 
     const Vec & store(addr_t mem_addr) const noexcept           { pack_si_t::store( (vec_t *)mem_addr._addr, _val ); return *this; }
@@ -72,12 +72,14 @@ public:
     Vec & storem(addr_t mem_addr, const Vec &mask) noexcept     { pack_t::storem( mem_addr._addr, mask._val, _val ); return *this; }
     Vec & stream(addr_t mem_addr) noexcept                      { pack_si_t::stream( (vec_t *)mem_addr._addr, _val ); return *this; }
 
+    Vec & set() noexcept                                                        { return setzero(); }
+    Vec & setzero() noexcept                                                    { _val = pack_si_t::setzero(); return *this; }
     Vec & set(scal_t e3, scal_t e2, scal_t e1, scal_t e0) noexcept 
         { _val = pack_t::set(e3, e2, e1, e0); return *this; }
     Vec & setr(scal_t e3, scal_t e2, scal_t e1, scal_t e0) noexcept 
         { _val = pack_t::setr(e3, e2, e1, e0); return *this; }
     Vec & set1(scal_t a) noexcept                               { _val = pack_t::set1(a); return *this; }
-    Vec & set1(const hc_t &a) noexcept                          { _val = pack_t::set1(a._val); return *this; }
+    Vec & set1(const VecHC &a) noexcept;
     Vec & unpackhi(const Vec &a, const Vec &b) noexcept         { _val = pack_t::unpackhi(a._val, b._val); return *this; }
     Vec & unpacklo(const Vec &a, const Vec &b) noexcept         { _val = pack_t::unpacklo(a._val, b._val); return *this; }
     Vec & insert(scal_t i, const int index) noexcept            { _val = pack_t::insert(_val, i, index); return *this; }
@@ -85,22 +87,31 @@ public:
     friend Vec operator+(const Vec &a, const Vec &b) noexcept;
     friend Vec operator-(const Vec &a, const Vec &b) noexcept;
 
+    Vec & operator+=(const Vec &a) noexcept                     { _val = pack_t::add(_val, a._val); return *this; }
+    Vec & operator-=(const Vec &a) noexcept                     { _val = pack_t::sub(_val, a._val); return *this; }
+
     friend Vec operator==(const Vec &a, const Vec &b) noexcept;
     friend Vec operator>(const Vec &a, const Vec &b) noexcept;
     friend Vec operator<(const Vec &a, const Vec &b) noexcept;
+    int testz(const Vec &a) const noexcept                      { return pack_si_t::testz(_val, a._val); }
+    int testz() const noexcept                                  { return pack_si_t::testz(_val, _val); }
 
     friend Vec operator&(const Vec &a, const Vec &b) noexcept;
-    Vec andnot(const Vec &b) const noexcept                     { return pack_si_t::andnot(_val, b._val); }
     friend Vec operator|(const Vec &a, const Vec &b) noexcept;
     friend Vec operator^(const Vec &a, const Vec &b) noexcept;
+    Vec andnot(const Vec &b) const noexcept                     { return pack_si_t::andnot(_val, b._val); }
+
+    Vec & operator&=(const Vec &a) noexcept                     { _val = pack_si_t::and_(_val, a._val); return *this; }
+    Vec & operator|=(const Vec &a) noexcept                     { _val = pack_si_t::or_(_val, a._val); return *this; }
+    Vec & operator^=(const Vec &a) noexcept                     { _val = pack_si_t::xor_(_val, a._val); return *this; }
 
     Vec sli_si(const int imm8) const noexcept                   { return pack_si_t::sli_si(_val, imm8); }
     Vec sli(const int imm8) const noexcept                      { return pack_t::sli(_val, imm8); }
-    Vec sl(const hc_t &count) const noexcept                    { return pack_t::sl(_val, count._val); }
+    Vec sl(const VecHC &count) const noexcept;
     Vec sl(const Vec &count) const noexcept                     { return pack_t::sl(_val, count._val); }
     Vec sri_si(const int imm8) const noexcept                   { return pack_si_t::sri_si(_val, imm8); }
     Vec sri(const int imm8) const noexcept                      { return pack_t::sri(_val, imm8); }
-    Vec sr(const hc_t &count) const noexcept                    { return pack_t::sr(_val, count._val); }
+    Vec sr(const VecHC &count) const noexcept;
     Vec sr(const Vec &count) const noexcept                     { return pack_t::sr(_val, count._val); }
 protected:
     vec_t _val;
@@ -142,6 +153,8 @@ inline Vec<long long,4> operator|(const Vec<long long,4> &a, const Vec<long long
 inline Vec<long long,4> operator^(const Vec<long long,4> &a, const Vec<long long,4> &b) noexcept{
     return Vec<long long,4>::pack_si_t::xor_(a._val, b._val);
 }
+
+#endif
 
 } // namespace SIMD
 } // namespace HIPP

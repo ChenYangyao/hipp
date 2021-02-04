@@ -16,6 +16,7 @@ typedef MPI_Aint aint_t;
 typedef MPI_Offset offset_t;
 typedef MPI_Count count_t;
 typedef std::size_t size_t;
+typedef std::ptrdiff_t ptrdiff_t;
 
 const int 
     UNDEFINED = MPI_UNDEFINED,

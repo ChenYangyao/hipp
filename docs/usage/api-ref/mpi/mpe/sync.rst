@@ -1,4 +1,4 @@
-Synchronization
+Synchronizations
 ====================================================
 
 The following classes are all defined within namespace ``HIPP::MPI``.

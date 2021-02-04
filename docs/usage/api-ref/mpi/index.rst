@@ -73,6 +73,7 @@ To avoid confusion, we list the conventions used in this API reference:
     mpe/sync
     mpe/master-slave
     mpe/symm
+    mpe/work-decomp
     
 .. toctree::
     :maxdepth: 2

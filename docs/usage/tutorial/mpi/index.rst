@@ -2,7 +2,7 @@
 Process-level Parallelism with MPI
 *************************************
 .. toctree:: 
-    :maxdepth: 3
+    :maxdepth: 2
     :caption: Basic Usage
 
     basic_usage/simple_communication
@@ -12,7 +12,7 @@ Process-level Parallelism with MPI
     basic_usage/file_io
 
 .. toctree::
-    :maxdepth: 3
+    :maxdepth: 2
     :caption: Advanced Topics 
 
     advanced/comm_mode

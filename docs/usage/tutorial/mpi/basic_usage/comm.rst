@@ -53,7 +53,7 @@ The communicators and communication calls can be described by the following figu
     :align: center
 
     **The "world" communicator and the "slave" communicator.** Each open circle represents 
-    a single process.
+    a single process. 
 
 
 As before, we get the world communicator from the :class:`HIPP::MPI::Env` object. We
@@ -216,7 +216,6 @@ implement the above tasks one by one.
 
 .. _fig-tutor-mpi-cartsian-topology-poisson-solver:
 .. figure:: img/cartsian-topology-poisson-solver.png
-    :align: center
 
     **Left:** the domain decomposition of a 2-D grids. Each proces is responsible 
     for a sub-domain. Processes have a Cartesian virtual topology. The local grids 
@@ -417,3 +416,191 @@ and the result is returned by ``result()``::
 
 The result field :math:`u` is plotted in the right panel of :numref:`fig-tutor-mpi-cartsian-topology-poisson-solver`.
 
+Attribute Caching
+-------------------
+Attribute caching is a mechanism that allows attaching communicator-specific data to the commnicator handler (i.e., ``MPI_Comm``
+in the Standard MPI or :class:`HIPP::MPI::Comm` object in HIPP).
+Such a mechanism is particularly useful in the development of MPI-based parallel library. Although you can cache 
+data using members of any C++ class, the attribute caching mechanism provides more persistent data life-time
+and easier data sharing among library subroutines that use the same communicator. 
+
+In this section, we use an example, the **Sequential Operations**, to demonstrate how to use the attribute 
+caching calls.
+This example is taken from Ch-6.2 of [GroppW-UMPIv3]_. The following implementation of Sequential Operations can be 
+downloaded at :download:`mpi/seq-op-library.cpp </../example/tutorial/mpi/seq-op-library.cpp>`.
+
+Many calls in MPI can be used for sychronization, but there is still something missing. A very common 
+task is to do works sequentially on processes, i.e., works are done on one process at a time, following a 
+well-defined order. We call this task **Sequential Operations**. Two possible implementations are described 
+in the two panels of :numref:`fig-tutor-mpi-basic-comm-seq-op`. We will describe their details in the following.
+
+
+.. _fig-tutor-mpi-basic-comm-seq-op:
+.. figure:: img/comm-seq-op.png 
+
+    **Models for Sequential Operations.** Works are executed sequentially, i.e., on one process at a time.
+    **Left:** implement using barriers. 
+    **Right:** implement using point-to-point communications.
+
+The left panel of :numref:`fig-tutor-mpi-basic-comm-seq-op` shows simply using barriers to implement the 
+Sequential Operations. All processes in a communicator sequentially call ``n_procs`` times of :func:`barrier <HIPP::MPI::Comm::barrier>`,
+where ``n_procs`` is the number processes in the communicator. The process ranked ``rank`` does its work 
+between the ``rank-1`` and ``rank`` barriers. The code is as simple as::
+
+    for(int i=0; i<n_procs; ++i){
+        if( rank == i ){
+            // ... code to execute on one process at a time,
+            // e.g.,
+            HIPP::pout << "This is process ", rank, endl;
+        }
+        comm.barrier();
+    }
+
+However, the above implementation with barriers is far from optimized. The main reason for that is the 
+overhead of barrier. A single barrier typically has a time overhead :math:`\log N_{\rm procs}`
+for each participating process, which means a full set of Sequential Operations has overhead :math:`N_{\rm procs}\times\log N_{\rm procs}`.
+
+A more optimized implementation would use only point-to-point comunications, which is described in the right 
+panel of :numref:`fig-tutor-mpi-basic-comm-seq-op`. The first process does its work and then sends a message
+to the second process to transfer the control. The second process waits to receive the message. Once the 
+receiving is done, it does the work, and thens send another message to the third process. This chain of 
+messages continues to extend until the final process receives the message and gets the work done.
+
+To implement such a chain of messages, we need a communicator. Of course, the user of the library must provide 
+a communicator which specifies the participating processes and the order of them. But our Sequential Operations 
+library may not able to use the input communicator. The reason is that the point-to-point messages of 
+the library may conflict with the messages started by the user and pending on that commnicator. 
+One way out is to predefine a set of "tags" that can only be used by the library. However, it puts
+uncomfortable constraints on the user's code. It may also conflict with other libraries that 
+use the same commnicators.
+
+A better way is to create a new commnicator which is a duplication of the user-input commnicator. 
+Because a commnicator provides a isolated communication context, such a design is much safer and 
+avoids any potential problem. The only drawback is the overhead in the contruction of the new 
+communicator. To overcome this drawback, we can cache the new communicator and attach it with the 
+user input communicator. Then, if user calls the Sequential Operations multiple times on the 
+same communicator, the library just constructs the new commnicator in the first call. The subsequent 
+calls will use the caching. MPI provides attribute caching mechanism for that purpose.
+
+To use the attribute caching mechanism, we first define the data to be cached. MPI allows
+caching a single data item of type ``void *`` on a communicator, which means we can allocate 
+a heap object of any type, convert the pointer of it to ``void *``, and save this pointer 
+on a communicator. For the Sequential Operations library, we define the following ``SeqAttr``
+class as the cached object type::
+
+    struct SeqAttr {
+        int _prev, _next;
+        std::optional<Comm> _comm;
+        
+        SeqAttr(const Comm &comm) {
+            int rank = comm.rank(), n_procs = comm.size();
+            _prev = (rank==0) ? HIPP::MPI::PROC_NULL : (rank-1);
+            _next = (rank==n_procs-1) ? HIPP::MPI::PROC_NULL : (rank+1);
+            _comm.emplace( comm.dup() );
+        }
+        SeqAttr(const SeqAttr &o) : 
+            _prev(o._prev), _next(o._next), _comm(std::nullopt) { }
+    };
+
+The ``SeqAttr`` object can be constructed using an user-input communicator which specifies the 
+participating procecess and the order of them. The object consists of a duplication of 
+the input communicator, and two members ``_prev`` and ``_next`` which give the ranks of previous 
+and next procecess in the communicator.
+
+Two things that must be defined for a cached attribute are: (1) how it gets copied when 
+the host commnicator is duplicated by the user. (2) how it gets deleted when the host 
+commnicator is destroyed by the user. By default, HIPP MPI uses the copy-constructor 
+for (1) and the destructor for (2). In the above example, we define the copy-constructor 
+which does not copy the internal commnicator, because the user may hardly use the 
+Sequential Operations on a new commnicator. Such an "empty" internal commnicator
+can be represented by the standard type ``std::optional``. We do not self-define
+the destructor, the library will use the default one synthesized by the compiler. 
+
+Now we can define the interface of the Sequential Operations library. We use the RAII idiom, i.e.,
+to start the target sequential operations, we define a new ``Seq`` object in each process. 
+Then, each process does its work. Finally, on the destruction of the ``Seq`` object, the 
+sequential operations are marked as finished and the library is responsible for proper 
+synchronizations. The interface of ``Seq`` class is::
+
+    class Seq {
+    public:
+        Seq(Comm &comm); 
+        ~Seq();    
+    private:   
+        inline static int _keyval = HIPP::MPI::KEYVAL_INVALID;
+        SeqAttr *_attr;
+    };
+
+
+The implementation of the constructor is::
+
+    Seq::Seq(Comm &comm) {
+        if( _keyval == HIPP::MPI::KEYVAL_INVALID )
+            _keyval = Comm::create_keyval<SeqAttr>();
+        if( !comm.get_attr(_keyval, _attr) ){
+            _attr = new SeqAttr(comm);
+            comm.set_attr(_keyval, _attr);
+        }
+        auto &seq_comm = _attr->_comm;
+        if( !seq_comm)
+            seq_comm.emplace(comm.dup());
+        seq_comm->recv(_attr->_prev, 0, NULL, 0, "int");
+    }
+
+Here, we first check whether the key value for the attribute caching is allocated.
+If it is not, we allocate it using :func:`create_keyval <HIPP::MPI::Comm::create_keyval>`.
+The reason for using the key value is that multiple libraries may cache different 
+attributes on the same commnicator. Hence, each library needs a specific key value 
+which identifies the attribute of it. 
+
+Then, using the key value, we get the cached attribute on the input commnicator 
+by calling :func:`get_attr <HIPP::MPI::Comm::get_attr>` method of the commnicator. 
+This method accepts the key value as the first argument and returns the attribute 
+by the second argument. If the attribute is not set yet, it returns false so that 
+we can check for that, create a new attribute by ``new``, and set the caching using 
+:func:`set_attr <HIPP::MPI::Comm::set_attr>`.
+
+Finally, we get the internal commnicator from the attribute. If it is not set yet (i.e., the 
+``std::optional`` is in an empty state), we duplicate the input commnicator and 
+save it in the attribute. Using this internal commnicator, we can wait for the 
+message from the previous process. Once the constructor returns, the current process 
+can do its work.
+
+In the destructor, we just transfer the control to the next process by sending a message::
+
+    Seq::~Seq() {
+        auto &seq_comm = _attr->_comm;
+        seq_comm->send(_attr->_next, 0, NULL, 0, "int");
+        seq_comm->barrier();
+    };
+
+To use the Sequential Operations library, we just create a C++ block ``{}`` and put 
+codes in it. We create a ``Seq`` object, and after that we do some work.
+On the exit of the block, the objects in the block are destroyed automatically
+so that the destructor of ``Seq`` object is called. For example, in the following codes,
+a message is printed from one process at a time:: 
+
+    HIPP::MPI::Env env;
+    auto comm = env.world();
+    int rank = comm.rank();
+
+    {
+        Seq seq(comm);
+        // ... code to execute on one process at a time, 
+        // e.g.,
+        HIPP::pout << "This is process ", rank, endl;
+    }
+
+The output is (run with 6 processes)
+
+.. code-block:: text 
+
+    This is process 0
+    This is process 1
+    This is process 2
+    This is process 3
+    This is process 4
+    This is process 5
+
+Because Sequential Operations are frequently used, HIPP provides an interface :class:`HIPP::MPI::SeqBlock` 
+for that.

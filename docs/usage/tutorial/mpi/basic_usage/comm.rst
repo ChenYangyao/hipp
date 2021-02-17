@@ -488,6 +488,8 @@ a heap object of any type, convert the pointer of it to ``void *``, and save thi
 on a communicator. For the Sequential Operations library, we define the following ``SeqAttr``
 class as the cached object type::
 
+    using HIPP::MPI::Comm;
+
     struct SeqAttr {
         int _prev, _next;
         std::optional<Comm> _comm;

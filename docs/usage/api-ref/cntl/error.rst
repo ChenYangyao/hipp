@@ -1,7 +1,6 @@
 Exception Handling
 =======================
 
-
 **Macros** are defined for formated error priting:
 
 .. c:macro::    emFF
@@ -54,6 +53,8 @@ Exception Handling
 
 
 The following variables, functions and classes are all defined within the namespace ``HIPP``.
+
+.. _api-cntl-exception-layers:
 
 Overview of the Exception Layers
 ------------------------------------

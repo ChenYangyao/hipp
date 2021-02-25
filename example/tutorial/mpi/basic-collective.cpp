@@ -28,13 +28,12 @@ int main(int argc, char const *argv[]){
     /* Make reduction of local summations to a total value. */
     if( rank == 0 ){
         int sum = 0;
-        comm.reduce({&local_sum, 1, "int"}, 
-            &sum, "+", 0);                      // [2] Reduce from "local_sum" into "sum". 
+        comm.reduce(local_sum, &sum, "+", 0);   // [2] Reduce from "local_sum" into "sum". 
 
         HIPP::pout << "Result of sum is ", sum, 
             " (found by ", n_procs, " processes)", endl; 
     }else{
-        comm.reduce({&local_sum, 1, "int"}, NULL, "+", 0);
+        comm.reduce(local_sum, NULL, "+", 0);
     }
 
     return 0;

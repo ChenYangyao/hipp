@@ -207,6 +207,7 @@ are set to 1-s by default.
             vec.push_back(i);
         auto ds = o_file.create_dataset<double>("data", {4, 5});
         ds.write((double *)vec.data());
+        o_file = HIPP::IO::H5File(nullptr);
 
         // read the part of the data and put it in a small vector
         HIPP::IO::H5File i_file("./test.h5", "r");

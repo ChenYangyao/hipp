@@ -13,19 +13,6 @@ Datapacket::Datapacket( const void *buff, int size, const string &dtype )
             "  ... cannot find datatype ", dtype, '\n');
     _dtype = *it->second;
 }
-
-Datapacket::Datapacket( const string &buff ) noexcept
-    :Datapacket( buff.data(), buff.size(), CHAR ){ }
-Datapacket::Datapacket(const Datapacket &p) noexcept
-    :Datapacket( p._buff, p._size, p._dtype ){ }
-Datapacket::Datapacket(Datapacket &&p) noexcept
-    :Datapacket( p._buff, p._size, std::move(p._dtype) ){ }
-Datapacket::Datapacket(aint_t disp, int size, Datatype dtype) noexcept
-:Datapacket((char *)(0)+disp, size, dtype)
-{}
-Datapacket::Datapacket(aint_t disp, int size, const string &dtype)
-:Datapacket((char *)(0)+disp, size, dtype)
-{}
 Datapacket & Datapacket::operator=(const Datapacket &p) noexcept{
     if( this != &p ){
         _buff = p._buff;

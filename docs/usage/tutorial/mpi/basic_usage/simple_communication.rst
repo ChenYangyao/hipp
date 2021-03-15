@@ -68,35 +68,43 @@ Thanks to the meta-programming support of C++, we can pass different combination
 to the same send/recv function call. 
 Depending on the types of the arguments, the function call gives different semantics.
 
-HIPP supports **four** types of arguments passed to send/recv calls. They are listed below:
+HIPP supports many forms of arguments passed to send/recv calls. See API reference for 
+:class:`HIPP::MPI::Datapacket` for the details.
 
 .. _tutor-mpi-buff-spec:
 
-========================================================== ===================================================================================
-Arguments                                                   Semantics
-========================================================== ===================================================================================
-``const vector<T, A> &buff``                                a vector of any numeric type T and allocator A.
-``const string &buff``                                      a ``std::string`` (only valid for send call).
-``const void *buff, int n, Datatype dtype``                 raw buffer, starting at ``buff``, |br| consisting of ``n`` elements of type ``dtype``. 
-``const void *buff, int n, const string &dtype``            describe the element type by a string.
-========================================================== ===================================================================================
-
-Therefore, the following calls are valid::
+Therefore, the following calls for send (or recv) are valid and equivalent when using a ``std::vector`` as the buffer::
 
     vector<int> send_buff(10), recv_buff(10);
-    string send_str = "content to send";
-    vector<char> recv_str(128);
 
     comm.send(dest, tag, send_buff);
-    comm.send(dest, tag, send_str);
     comm.send(dest, tag, &send_buff[0], 10, HIPP::MPI::INT);
     comm.send(dest, tag, &send_buff[0], 10, "int");
 
     comm.recv(src, tag, recv_buff);
-    comm.recv(src, tag, recv_str);
     comm.recv(src, tag, &recv_buff[0], 10, HIPP::MPI::INT);
     comm.recv(src, tag, &recv_buff[0], 10, "int");
 
+Note that using the triple ``(buffer, size, datatype)`` is the most universal way in MPI to specify a data buffer.
+But in HIPP, you have different ways to implement the same functional, much more convenient in some cases.
+Internally, HIPP converts all these forms into an unifield :class:`HIPP::MPI::Datapacket` type which hosts the standard triplet
+Then, data described by the data packet are used in send/recv.
+
+Strings, arithmetic scalars and arrays of arithmetic scalars can be directly used as arguments::
+
+    string send_str = "content to send";
+    vector<char> recv_str(128);
+
+    comm.send(dest, tag, send_str);
+    comm.recv(src, tag, recv_str);
+
+    int x,
+        arr[3],
+        *buff = new int [3];
+
+    comm.send(dest, tag, x);
+    comm.send(dest, tag, arr);
+    comm.send(dest, tag, buff, 3);
 
 Collective Communication
 --------------------------------------------------------------
@@ -145,12 +153,16 @@ After the call of :func:`scatter() <HIPP::MPI::Comm::scatter>` (``[1]`` in the c
 task. 
 
 Again, :func:`scatter() <HIPP::MPI::Comm::scatter>` has sevaral overloads. The simplest 
-arguments are: ``(const void *sendbuf, const Datapacket &recv_dpacket, int root)``. The ``sendbuf``
-is the starting address of the sending buffer, the ``recv_dpacket`` can be constructed by 
+form has three arguments: 
+
+- ``const void *sendbuf``: the starting address of the sending buffer;
+- ``const Datapacket &recv_dpacket``: the receiving buffer (described using ``HIPP::MPI::Datapacket``);
+- ``int root``: the root process of the scatter operation, i.e., source of scattered data (not significant at destination processes, therefore set as ``NULL``).
+
+``recv_dpacket`` can be constructed by 
 ways like in the :ref:`Point-to-point Communication <tutor-mpi-buff-spec>`. We use a single 
-vector in the ``[1]`` of the code. Equivalently, we may use ``comm.scatter(&edges[0], {&local_edges[0], 2, "int"}, 0)``.
-The ``root`` argument specifies the source of the data 
-(not significant at destination processes, therefore set as ``NULL``).
+vector in the ``[1]`` of the code. 
+Equivalently, we may use the standard triple ``{&local_edges[0], 2, "int"}``.
 
 Then, each process finishes its task by simply adding all numbers between the edges::
 
@@ -163,18 +175,20 @@ makes summation, and put it in the ``sum`` of the root process (process 0)::
 
     if( rank == 0 ){
         int sum = 0;
-        comm.reduce({&local_sum, 1, "int"}, 
-            &sum, "+", 0);                      // [2] Reduce from "local_sum" into "sum" 
+        comm.reduce(local_sum, &sum, "+", 0);   // [2] Reduce from "local_sum" into "sum". 
 
         HIPP::pout << "Result of sum is ", sum, 
             " (found by ", n_procs, " processes)", endl; 
     }else{
-        comm.reduce({&local_sum, 1, "int"}, NULL, "+", 0);
+        comm.reduce(local_sum, NULL, "+", 0);
     }
 
-The simplest arguments of :func:`reduce() <HIPP::MPI::Comm::reduce>` is ``(const Datapacket &send_dpacket, void *recvbuf,
-const Oppacket &op, int root)``. Where we use the ``op``-code ``"+"`` to make summation. ``root`` specifies 
-the target process in which the result is put (process 0 here).
+The simplest form of :func:`reduce() <HIPP::MPI::Comm::reduce>` has four arguments:
+
+- ``const Datapacket &send_dpacket``: the sending buffer; We use a single value ``local_sum`` here;
+- ``void *recvbuf``: the starting address of the receiving buffer;
+- ``const Oppacket &op``: the operation on data. We use "+" for summation here;
+- ``int root``: the destination process where the reduction result is put. It is process 0 here.
 
 The output of the program (run with 4 processes) is 
 
@@ -236,6 +250,10 @@ This task is an ideal example for parallel computation. The following codes impl
 
 .. include:: /../example/tutorial/mpi/app-pi-computation.cpp 
     :code: cpp
+
+Note that for the :func:`reduce <HIPP::MPI::Comm::reduce>` call, the first argument is a data packet type which describes 
+the sending buffer. You can construct it by many ways like just using a scalar ``my_pi``. The second argument is 
+the starting address of the receiving buffer.
 
 The result using 4 processes with :math:`N=100000` is 
 

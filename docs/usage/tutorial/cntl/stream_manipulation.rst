@@ -40,8 +40,9 @@ this is much easier::
         "f = ", f, '\n',
         "g = ", g, '\n';
 
-Here, :var:`HIPP::pout` is a static variable which writes to the standard output stream 
-(like ``std::cout``). The output is 
+Here, :var:`HIPP::pout` is a static instance of :class:`HIPP::PStream` 
+which is directed to the standard output stream 
+(just like what ``std::cout`` does). The output is 
 
 .. code-block:: text 
 
@@ -61,9 +62,10 @@ priting utilities for them. For example, you have the 1-d and 2-d arrays::
 
 Then you can format them as::
 
-    "arr1d = ", HIPP::pout(arr1d, arr1d+5), '\n',
-    "arr1d = ", HIPP::PrtArray(arr1d, arr1d+5), '\n',
-    "arr2d = \n", HIPP::PrtArray(arr2d[0], arr2d[0]+6).ncol(3).width(4), endl;
+    HIPP::pout << 
+        "arr1d = ", HIPP::pout(arr1d, arr1d+5), '\n',
+        "arr1d = ", HIPP::PrtArray(arr1d, arr1d+5), '\n',
+        "arr2d = \n", HIPP::PrtArray(arr2d[0], arr2d[0]+6).ncol(3).width(4), endl;
 
 which produces output 
 
@@ -82,6 +84,35 @@ For the 1-d range ``[b, e)``, just use ``HIPP::PrtArray(b, e)`` to
 format it. For a 2-d range, use :func:`ncol <HIPP::PrtArray::ncol>` to 
 specify the number of columns, and use :func:`width <HIPP::PrtArray::width>` 
 to limit the field width so that elements in the same column are aligned.
+
+Printing User-defined Classes 
+"""""""""""""""""""""""""""""
+For any user-defined class, if you want to print it to a Pretty Stream, just 
+overload the ``operator<<`` on ``std::ostream``. For example, if you have 
+a ``Person`` class, you may define the ``operator<<`` like::
+
+    struct Person {
+        string first_name, last_name;
+        int age;
+    };
+    ostream & operator<< (ostream &os, const Person &person) {
+        os << person.first_name << ' ' << person.last_name 
+            << " (" << person.age << ")";
+        return os;
+    } 
+
+Then, any ``Person`` instance can be printed into a Pretty Stream. For example, 
+you may print it into :var:`HIPP::pout`::
+
+    Person albert = {"Albert", "Einstein", 120},
+        edwin = {"Edwin", "Hubble", 100};
+    HIPP::pout << albert, " and ", edwin, endl;
+
+This gives the output 
+
+.. code-block::
+
+    Albert Einstein (120) and Edwin Hubble (100)
 
 Using Pretty Stream for Files and Strings
 """""""""""""""""""""""""""""""""""""""""""
@@ -123,8 +154,9 @@ The content in that string stream can be obtained by its ``str()`` method::
 C-style Formatted Output
 --------------------------
 
-Some people think that the C-style formatted output (e.g., ``printf``, ``printf``, ``sprintf``) 
-is more convenient. In C++ applications, standard streams have type ``std::ostream`` and we cannot 
+Some people think that the C-style formatted print calls (e.g., ``printf``, ``sprintf``) 
+are more convenient. In C++ applications, standard streams have type 
+``std::ostream`` and we cannot 
 call the C-style functions on them. 
 
 HIPP provides some shortcuts for C-style output. 
@@ -137,7 +169,7 @@ C++ stream using C-style formattor. For example::
 
 Which has the same effect as calling ``printf``. :func:`HIPP::prt_f` also works
 when using other streams, like ``std::ofstream`` and ``std::ostringstream``. The output 
-is 
+of above codes is 
 
 .. code-block:: text 
 

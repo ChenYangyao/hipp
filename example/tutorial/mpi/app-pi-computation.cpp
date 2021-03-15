@@ -24,7 +24,7 @@ int main(int argc, char const *argv[]) {
         sum += 4. / ( 1. + x*x );
     }
     double my_pi = h * sum, pi;
-    comm.reduce({&my_pi, 1, "double"}, &pi, "+", 0);
+    comm.reduce(my_pi, &pi, "+", 0);
 
     if( rank == 0 ){
         cout << "Find pi=" << std::setprecision(16) << pi << 

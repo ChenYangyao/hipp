@@ -60,7 +60,7 @@ For multi-dimensional array (stored in row-major order in contiguous memory),
 the only difference is that when ``create_dataset()``, you specify each of the dimensions
 of that array. Then the write/read operations are the same as those of one-dimensional array
 
-.. code-block::
+.. code-block:: cpp
     :emphasize-lines: 3
 
     const size_t n0=2, n1=3, n2=4;
@@ -121,3 +121,112 @@ each dataset
         dset.write((double *)&vector_of_arrays[0]);
         dset.write((float *)&vector_of_structs[0]);
         dset.write(&raw_array[0][0]);
+
+
+Using hyperslab
+--------------------------------------------------------------
+
+When dealing with very large dataset, sometimes we just want to take part of
+the data. To do that, we need to use the hyperslab feature in hdf5. The `read`
+member function for Dataset type has two parameters, `memspace` and
+`filespace`, as type of dataspace. These two parameters describe what `read`
+do: to move data from `filespace` to `memspace` (`write` has similar member
+functions). The hyperslab works by attach some information on these two
+parameters using function `select_hyperslab`.
+
+The supported data selection of hyperslab can be described by four parameters,
+start, stride, count and block.  For example, in a two dimension array with
+shape = (8, 12), we want to select data marked with *
+
+.. code-block:: Text
+
+    0, *, *, 0, *, *, 0, *, *, 0, *, *,
+    0, *, *, 0, *, *, 0, *, *, 0, *, *,
+    0, *, *, 0, *, *, 0, *, *, 0, *, *,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, *, *, 0, *, *, 0, *, *, 0, *, *,
+    0, *, *, 0, *, *, 0, *, *, 0, *, *,
+    0, *, *, 0, *, *, 0, *, *, 0, *, *,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+This hyperslab is specified by
+
+* start = (0, 1): starting location of the hyperslab
+* stride = (4, 3): number of elememts to separate each block selected
+* count = (2, 4): number of blocks to select 
+* block = (3, 2): size of block selected
+
+In the following example, we show how to use the hyperslab feature to select
+part of the data from a file and how to put it into another buffer with another
+hyperslab. Here we want to select a rectangular region, so the stride and block
+are set to 1-s by default.
+
+.. code-block:: cpp
+
+    /*
+     * In this code, we will show how to use the hyperslab feature in hdf5
+     *
+     * We have an dataset with shape= (4, 5), and data is
+     * 0,  1,  2,  3,  4,
+     * 5,  6,  7,  8,  9,
+     * 10, 11, 12, 13, 14,
+     * 15, 16, 17, 18, 19
+     * We only want to take part of the data, the mask is
+     * 0, 0, 0, 0, 0,
+     * 0, *, *, *, 0,
+     * 0, *, *, *, 0,
+     * 0, 0, 0, 0, 0
+     * This hyperslab can be characterized as start=(1, 1), count=(2, 3)
+     * So the data we read is 6, 7, 8, 11, 12, 13
+     *
+     * Then, we want to put it in a vector with shape = (4, 5) (or equivalently, length=20)
+     * And we want to put them in the following way
+     * 0, 0, 0, 0, 0,
+     * 0, 0, 0, 0, 0
+     * 0, 0, *, *, *,
+     * 0, 0, *, *, *,
+     * So the result should be
+     * 0, 0, 0,  0,  0,
+     * 0, 0, 0,  0,  0,
+     * 0, 0, 6,  7,  8,
+     * 0, 0, 11, 12, 13
+     *
+    */
+    #include <hippio.h>
+    #include <iostream>
+    #include <vector>
+
+    using namespace std;
+    using hsize_t=unsigned long long; // default type for index and count in HIPP
+    int main(void)
+    {
+        // create a h5 file with dataset of shape (4, 5)
+        HIPP::IO::H5File o_file("./test.h5", "w");
+        vector<double> vec;
+        for (int i = 0; i < 20; ++i)
+            vec.push_back(i);
+        auto ds = o_file.create_dataset<double>("data", {4, 5});
+        ds.write((double *)vec.data());
+
+        // read the part of the data and put it in a small vector
+        HIPP::IO::H5File i_file("./test.h5", "r");
+        auto dset = i_file.open_dataset("data");
+        // create the file_dataspace from the dataset in the file
+        auto dspace_file = dset.dataspace();
+        vector<hsize_t> offset_file{1, 1}, shape_file{2, 3};
+        // create the hyperslab for the file_dataspace with offset and shape
+        dspace_file.select_hyperslab(offset_file, shape_file);
+        // create the memory dataspace to accept the data
+        auto dspace_mem = HIPP::IO::H5Dataspace({4, 5});
+        vector<hsize_t> offset_mem{2, 2}, shape_mem{2, 3};
+        dspace_mem.select_hyperslab(offset_mem, shape_mem);
+        // you can also 
+        int vec_size = 20;
+        vector<double> vec_recv(vec_size, 0);
+        dset.read((double *)vec_recv.data(), dspace_mem, dspace_file);
+        for (int i = 0; i < vec_size; ++i) {
+            cout << vec_recv[i] << ", " << endl;
+        }
+        return 0;
+    }
+

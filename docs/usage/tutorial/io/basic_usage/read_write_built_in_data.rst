@@ -123,110 +123,122 @@ each dataset
         dset.write(&raw_array[0][0]);
 
 
-Using hyperslab
---------------------------------------------------------------
+Select a Subset of a Dataset
+-------------------------------
 
-When dealing with very large dataset, sometimes we just want to take part of
-the data. To do that, we need to use the hyperslab feature in hdf5. The `read`
-member function for Dataset type has two parameters, `memspace` and
-`filespace`, as type of dataspace. These two parameters describe what `read`
-do: to move data from `filespace` to `memspace` (`write` has similar member
-functions). The hyperslab works by attach some information on these two
-parameters using function `select_hyperslab`.
+With very large dataset in a file, sometimes we just want to take a part of
+the whole dataset. HDF5 "hyperslab" selection allows reading/writing a part 
+of the dataset in file to/from a part of the data array in memory. 
 
-The supported data selection of hyperslab can be described by four parameters,
-start, stride, count and block.  For example, in a two dimension array with
-shape = (8, 12), we want to select data marked with *
+For example, The :func:`read <HIPP::IO::H5Dataset::read>` member function of a :class:`H5Dataset <HIPP::IO::H5Dataset>` 
+instance has two extra arguments, the ``memspace`` and
+the ``filespace``, both typed :class:`H5Dataspace <HIPP::IO::H5Dataspace>`. 
+They describe the data layout in the source dataset of the file and 
+the data layout in the target memory array. 
+By properly setting these two arguments, 
+user informs the HDF5 library which part of data are going to be touched.
+The member function :func:`write <HIPP::IO::H5Dataset::write>` has similar 
+arguments for dataspaces. 
 
-.. code-block:: Text
+To describe a subset of the whole array (in either file or memory), you 
+first create a :class:`H5Dataspace <HIPP::IO::H5Dataspace>` instance which 
+gives the dimensions of the whole dataset. Then you call the 
+method :func:`select_hyperslab <HIPP::IO::H5Dataspace::select_hyperslab>` on 
+the dataspace instance to select a subset of the whole array.
+In the reading/writing process, only the selected portion is touched.
 
-    0, *, *, 0, *, *, 0, *, *, 0, *, *,
-    0, *, *, 0, *, *, 0, *, *, 0, *, *,
-    0, *, *, 0, *, *, 0, *, *, 0, *, *,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, *, *, 0, *, *, 0, *, *, 0, *, *,
-    0, *, *, 0, *, *, 0, *, *, 0, *, *,
-    0, *, *, 0, *, *, 0, *, *, 0, *, *,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+A "hyperslab" of an array is a series of chunks of data elements. Each chunk 
+has logically contiguous elements in all dimensions. Chunks may have regular gaps 
+between them. The following :numref:`fig-tutor-io-hyperslab-select.png` show a typically hyperslab:
 
-This hyperslab is specified by
+.. _fig-tutor-io-hyperslab-select.png:
+.. figure:: img/hyperslab-select.png
+    :figwidth: 70%
+    :align: center
 
-* start = (0, 1): starting location of the hyperslab
-* stride = (4, 3): number of elememts to separate each block selected
-* count = (2, 4): number of blocks to select 
-* block = (3, 2): size of block selected
+    **A hyperslab (blue-shaded areas) of the whole array.**
 
-In the following example, we show how to use the hyperslab feature to select
-part of the data from a file and how to put it into another buffer with another
-hyperslab. Here we want to select a rectangular region, so the stride and block
-are set to 1-s by default.
+A "hyperslab" is decribed by four parameters (all in the unit of array element, 
+and in row-major order):
 
-.. code-block:: cpp
+- ``start``: starting location of the "hyperslab", i.e., location of the first  
+  element of the "hyperslab" in the whole array. 
+- ``stride``: offset from each chunk to the next.
+- ``count``: number of chunks in each dimension.
+- ``block``: size of each chunk. 
 
-    /*
-     * In this code, we will show how to use the hyperslab feature in hdf5
-     *
-     * We have an dataset with shape= (4, 5), and data is
-     * 0,  1,  2,  3,  4,
-     * 5,  6,  7,  8,  9,
-     * 10, 11, 12, 13, 14,
-     * 15, 16, 17, 18, 19
-     * We only want to take part of the data, the mask is
-     * 0, 0, 0, 0, 0,
-     * 0, *, *, *, 0,
-     * 0, *, *, *, 0,
-     * 0, 0, 0, 0, 0
-     * This hyperslab can be characterized as start=(1, 1), count=(2, 3)
-     * So the data we read is 6, 7, 8, 11, 12, 13
-     *
-     * Then, we want to put it in a vector with shape = (4, 5) (or equivalently, length=20)
-     * And we want to put them in the following way
-     * 0, 0, 0, 0, 0,
-     * 0, 0, 0, 0, 0
-     * 0, 0, *, *, *,
-     * 0, 0, *, *, *,
-     * So the result should be
-     * 0, 0, 0,  0,  0,
-     * 0, 0, 0,  0,  0,
-     * 0, 0, 6,  7,  8,
-     * 0, 0, 11, 12, 13
-     *
-    */
-    #include <hippio.h>
-    #include <iostream>
-    #include <vector>
+In the above example in the figure, the whole array has dimensions ``{8, 12}``, and 
+the "hyperslab" have ``start={0, 1}``, ``stride={4, 3}``, 
+``count={2, 4}`` and ``block={3, 2}``
+ 
+In the following example, we show how to use the "hyperslab" feature to select
+a part of the dataset of a file and how to put it into a part of a memory buffer.
+Here we want to select a single rectangular region, so the ``stride`` and ``block``
+are ``1`` in all dimensions. ``count`` is the size of the region. Since this 
+selection is frequently used, HIPP provides a "hyperslab" selection function
+which defaults ``stride`` and ``block`` to ``1``.
 
-    using namespace std;
-    using hsize_t=unsigned long long; // default type for index and count in HIPP
-    int main(void)
-    {
-        // create a h5 file with dataset of shape (4, 5)
-        HIPP::IO::H5File o_file("./test.h5", "w");
-        vector<double> vec;
-        for (int i = 0; i < 20; ++i)
-            vec.push_back(i);
-        auto ds = o_file.create_dataset<double>("data", {4, 5});
-        ds.write((double *)vec.data());
+The subsets of arrays in the file and in the memory are decribed in the following 
+:numref:`fig-tutor-io-hyperslab-select.png`:
 
-        // read the part of the data and put it in a small vector
-        HIPP::IO::H5File i_file("./test.h5", "r");
-        auto dset = i_file.open_dataset("data");
-        // create the file_dataspace from the dataset in the file
-        auto dspace_file = dset.dataspace();
-        vector<hsize_t> offset_file{1, 1}, shape_file{2, 3};
-        // create the hyperslab for the file_dataspace with offset and shape
-        dspace_file.select_hyperslab(offset_file, shape_file);
-        // create the memory dataspace to accept the data
-        auto dspace_mem = HIPP::IO::H5Dataspace({4, 5});
-        vector<hsize_t> offset_mem{2, 2}, shape_mem{2, 3};
-        dspace_mem.select_hyperslab(offset_mem, shape_mem);
-        // you can also 
-        int vec_size = 20;
-        vector<double> vec_recv(vec_size, 0);
-        dset.read((double *)vec_recv.data(), dspace_mem, dspace_file);
-        for (int i = 0; i < vec_size; ++i) {
-            cout << vec_recv[i] << ", " << endl;
-        }
-        return 0;
-    }
+.. _fig-tutor-read-subset.png:
+.. figure:: img/read-subset.png
+    :figwidth: 60%
+    :align: center
 
+    **Read a subset of a 2D dataset in file to a subset of 2D array in memory.** 
+    The subsets in file and in memory both have ``count={2, 3}``, but their 
+    starting locations are different.
+
+Where we want to move a ``count={2, 3}`` subset from a ``file_dims={4, 5}`` 
+dataset to a ``mem_dims={4, 6}`` memory buffer 
+(i.e., only ``{6,7,8,9,10,11,12,13}`` are moved).
+
+First, we create the whole dataset, writing it to a file::
+
+    using HIPP::IO::hsize_t;
+
+    /* Write a 2D array into a HDF5 file. */
+    vector<hsize_t> file_dims = {4, 5}; 
+    vector<int> file_data = HIPP::ALGORITHM::LinSpaced(0, 4*5).get();
+    HIPP::pout << "2Darray (file)=\n", 
+        HIPP::PrtArray(file_data).ncol(5).width(3), endl;
+    HIPP::IO::H5File("data.h5", "w").create_dataset<int>("2Darray", file_dims)
+        .write(file_data);
+
+Where we use :class:`HIPP::ALGORITHM::LinSpaced` to generate a linearly-spaced 
+sequence.
+
+Then, we properly select the "hyperslabs" of the filespace and memspace and pass 
+them to :func:`read <HIPP::IO::H5Dataset::read>` method which transfers the 
+data from file to memory::
+
+    /* Specify the dataspace for file and memory arrays. */
+    vector<hsize_t> mem_dims = {4, 6}, 
+        file_start = {1, 1}, mem_start = {2, 3},
+        count = {2, 3};
+    HIPP::IO::H5Dataspace file_space(file_dims), mem_space(mem_dims);
+    file_space.select_hyperslab(file_start, count);
+    mem_space.select_hyperslab(mem_start, count);
+
+    /* Read a subset from the HDF5 file into a subset of mem_data. */
+    vector<int> mem_data(4*6);
+    HIPP::IO::H5File("data.h5", "r").open_dataset("2Darray")
+        .read(mem_data, mem_space, file_space);
+    HIPP::pout << "2Darray (memory)=\n", 
+        HIPP::PrtArray(mem_data).ncol(6).width(3), endl;
+
+The output of the example is
+
+.. code-block:: text 
+
+    2Darray (file)=
+      0,  1,  2,  3,  4,
+      5,  6,  7,  8,  9,
+      10, 11, 12, 13, 14,
+      15, 16, 17, 18, 19
+    2Darray (memory)=
+      0,  0,  0,  0,  0,  0,
+      0,  0,  0,  0,  0,  0,
+      0,  0,  0,  6,  7,  8,
+      0,  0,  0, 11, 12, 13

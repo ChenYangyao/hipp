@@ -54,6 +54,8 @@ Exception Handling
 
 The following variables, functions and classes are all defined within the namespace ``HIPP``.
 
+.. namespace:: HIPP 
+
 .. _api-cntl-exception-layers:
 
 Overview of the Exception Layers

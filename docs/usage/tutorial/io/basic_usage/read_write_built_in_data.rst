@@ -230,7 +230,7 @@ data from file to memory::
 
 The output of the example is
 
-
+.. code-block:: text
 
     2Darray (file)=
       0,  1,  2,  3,  4,

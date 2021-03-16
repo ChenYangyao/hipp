@@ -167,7 +167,7 @@ and in row-major order):
 - ``count``: number of chunks in each dimension.
 - ``block``: size of each chunk. 
 
-In the above example in the figure, the whole array has dimensions ``{8, 12}``, and 
+In the above example :numref:`fig-tutor-io-hyperslab-select.png`, the whole array has dimensions ``{8, 12}``, and 
 the "hyperslab" have ``start={0, 1}``, ``stride={4, 3}``, 
 ``count={2, 4}`` and ``block={3, 2}``
  
@@ -179,7 +179,7 @@ selection is frequently used, HIPP provides a "hyperslab" selection function
 which defaults ``stride`` and ``block`` to ``1``.
 
 The subsets of arrays in the file and in the memory are decribed in the following 
-:numref:`fig-tutor-io-hyperslab-select.png`:
+:numref:`fig-tutor-read-subset.png`:
 
 .. _fig-tutor-read-subset.png:
 .. figure:: img/read-subset.png

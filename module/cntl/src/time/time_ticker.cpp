@@ -9,6 +9,12 @@ ostream & Ticker::record_t::info(ostream &os, int fmt_cntl) const {
     return os;
 }
 
+ostream & Ticker::summary_t::info(ostream &os, int fmt_cntl) const {
+    PStream ps(os);
+    ps << n_recs, " records, duration ", dur_mean, " +/- ", dur_sd;
+    return os;
+}
+
 Ticker::Ticker(): _last_point(clock_t::now())
 {}
 Ticker::~Ticker(){ }
@@ -64,6 +70,22 @@ auto Ticker::query_last( ) const -> const record_t & {
 auto Ticker::query_all() const noexcept -> const vector<record_t> & {
     return _records;
 }
+auto Ticker::summary() const noexcept -> summary_t {
+    index_t n_recs = 0; 
+    double dur_total = 0., dur_sq_total = 0.;
+    for(auto &r: _records){
+        double dur = r.dur.count();
+        ++n_recs;
+        dur_total += dur;
+        dur_sq_total += dur*dur;
+    }
+    double dur_mean = 0., dur_sd = 0.;
+    if( n_recs > 0 ){
+        dur_mean = dur_total / double(n_recs);
+        dur_sd = dur_sq_total / double(n_recs) - dur_mean*dur_mean;
+    }
+    return {n_recs, dur_total, dur_mean, dur_sd};
+}
 
 ostream & Ticker::info(ostream &os, int fmt_cntl) const {
     HIPP::PStream ps(os);
@@ -72,8 +94,7 @@ ostream & Ticker::info(ostream &os, int fmt_cntl) const {
                 _records.size(), " records found.";
         return os;
     }
-    ps << HIPPCNTL_CLASS_INFO(Ticker),
-        _records.size(), " records found.\n";
+    ps << HIPPCNTL_CLASS_INFO(Ticker), summary(), '\n';
     for(std::size_t i=0; i<_records.size(); ++i){
         ps << std::setw(4), i, ": ";
         _records[i].info(os) << '\n';

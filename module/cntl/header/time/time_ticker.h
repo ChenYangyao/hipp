@@ -18,6 +18,12 @@ public:
         ostream & info(ostream &os = cout, int fmt_cntl=1) const;
         friend ostream & operator<<(ostream &os, const record_t &r);
     };
+    struct summary_t {
+        index_t n_recs;
+        double dur_total, dur_mean, dur_sd;
+        ostream & info(ostream &os = cout, int fmt_cntl=1) const;
+        friend ostream & operator<<(ostream &os, const summary_t &s);
+    };
     
     Ticker();
     ~Ticker();
@@ -37,6 +43,14 @@ public:
     const record_t & query(index_t index) const;
     const record_t & query_last( ) const;
     const vector<record_t> & query_all() const noexcept;
+
+    /**
+     * Return a printable summary instance for statistics.
+     * e.g., 
+     * Ticker tk;
+     * cout << tk.summary() << endl;
+     */
+    summary_t summary() const noexcept;
     
     ostream & info(ostream &os = cout, int fmt_cntl=1) const;
     friend ostream & operator<<(ostream &os, const Ticker &ticker);
@@ -50,6 +64,9 @@ inline ostream & operator<<(ostream &os, const Ticker &ticker)
 
 inline ostream & operator<<(ostream &os, const Ticker::record_t &r) 
 { return r.info(os); }
+
+inline ostream & operator<<(ostream &os, const Ticker::summary_t &s) 
+{ return s.info(os); }
 
 } // namespace HIPP
 #endif	//_HIPPCNTL_TIME_TICKER_H_

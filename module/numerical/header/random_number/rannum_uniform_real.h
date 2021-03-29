@@ -43,11 +43,22 @@ public:
     rng_t & rng();
     const rng_t & rng() const;
 
+    /**
+     * Get a single random number.
+     * 1. using current parameters.
+     * 2. using new parameters 'param'.
+     * 3. using new parameters 'a' and 'b'.
+     */
     result_t operator()();
     result_t get(const param_t &param);
     result_t get(result_t a, result_t b);
 
-    
+    /**
+     * Get a series of random numbers.
+     * 1. Get 'n' numbers, returned a container (must have push back).
+     * 2. Directly pushing back into container 'c' (clear() is not called).
+     * 3. Write into a range specified by a pair of iterator.
+     */
     template<template<typename> typename Container = std::vector>
     Container<result_t> operator()(std::size_t n);
 

@@ -81,4 +81,84 @@ The output of above codes is
     rank=3, buff=(2,0)
 
 We see that every process gets the ranks of its two neighbor processes. Full 
-code sample can be found at :download:`mpi/rma-win-creation.cpp </../example/tutorial/mpi/rma-win-creation.cpp>`.
+code sample can be found at 
+:download:`mpi/rma-win-creation.cpp </../example/tutorial/mpi/rma-win-creation.cpp>`.
+
+
+
+Passive-target RMA with Lock/Unlock 
+-------------------------------------
+Passive-target RMA operations are real "one-side", because they do 
+not require the participation of remote process. Passive-target RMA uses 
+the same data access subroutines as active-target RMA, 
+like :func:`get <HIPP::MPI::Win::get>`, :func:`put <HIPP::MPI::Win::put>` and 
+:func:`accumulate <HIPP::MPI::Win::accumulate>`. The difference is the synchronization - 
+passive-target RMA uses lock/unlock operation to synthesize the data access.
+
+In the following example, we use passive-target RMA to transfer data multiple 
+times from one process to another. The code can be found at 
+:download:`mpi/rma-passive-target.cpp </../example/tutorial/mpi/rma-passive-target.cpp>`.
+
+We start with initialization of MPI environment, get the rank of self. We will 
+pass 5 pieces of data from procece 0 to procece 1 (``n_RMAs=5``)::
+
+    HIPP::MPI::Env env;
+    auto comm = env.world();
+    int rank = comm.rank(), n_RMAs = 5;
+
+Process 0 and process 1 have different things to do, we separate them into 
+two parts. In process 0, we just create the window by 
+:func:`win_create <HIPP::MPI::Comm::win_create>` method of the communicator, 
+where the memory of one integer is attached. Then we repeatedly assign a value 
+to the local window, each protected with a pair of 
+:func:`lock <HIPP::MPI::Win::lock>` and :func:`unlock <HIPP::MPI::Win::unlock>`
+methods of the window object.
+The lock/unlock operations ensure the content in private and public memories
+are synchronized. After the first barrier, process 1 will get the data, 
+and process 0 does not need to do anything. After the second barrier, 
+the current loop of RMA ends and the next begins. The codes process 0 are::
+
+    int val, buff_size = sizeof(int), disp_unit = 1;
+    auto win = comm.win_create(&val, buff_size, disp_unit);
+
+    for(int i=0; i<n_RMAs; ++i){
+        win.lock(win.LOCK_EXCLUSIVE, 0);
+        val = i;
+        win.unlock(0);
+        comm.barrier();
+        comm.barrier();
+    }
+
+In process 1, we create the window but attach no data, because procece 1 just 
+visits the memory of process 1 but does not share any of its own data. 
+Then, it repeatedly get a integer from process 0 
+(i.e., from process ranked ``src_rank=0``, 
+memory address started at ``offset=0``).
+Each :func:`get <HIPP::MPI::Win::get>` must be called after the first barrier to 
+ensure the new value has been set by process 0. The :func:`get <HIPP::MPI::Win::get>`
+call should also be protected by a pair of lock and unlock calls which start 
+and end the access epoch, respectively, to the remote window. 
+The value got by process 1 is printed at each loop.
+The codes for process 1 are::
+
+    auto win = comm.win_create(NULL, 0, 1);
+    int val, src_rank = 0, offset = 0;
+    for(int i=0; i<n_RMAs; ++i){
+        comm.barrier();
+        win.lock(win.LOCK_EXCLUSIVE, src_rank);
+        win.get(src_rank, val, offset);
+        win.unlock(src_rank);
+        comm.barrier();
+        HIPP::pout << "Get ", val, endl;
+
+The output of the code is:
+
+.. code-block:: text 
+
+    Get 0
+    Get 1
+    Get 2
+    Get 3
+    Get 4
+
+

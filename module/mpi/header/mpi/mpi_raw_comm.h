@@ -264,6 +264,23 @@ public:
         return rq;
     }
 
+    MPI_Status sendrecv(const void *sendbuff, int sendcount, 
+        MPI_Datatype sendtype, int dest, int sendtag, void *recvbuff, 
+        int recvcount, MPI_Datatype recvtype, int src, int recvtag) {
+        MPI_Status st;
+        ErrMPI::check( MPI_Sendrecv(sendbuff, sendcount, sendtype, 
+            dest, sendtag, recvbuff, recvcount, recvtype, 
+            src, recvtag, _val, &st), emFLPFB);
+        return st;
+    }
+    MPI_Status sendrecv_replace(void *buff, int count, MPI_Datatype dtype, 
+        int dest, int sendtag, int src, int recvtag) {
+        MPI_Status st;
+        ErrMPI::check( MPI_Sendrecv_replace(buff, count, dtype, dest, 
+            sendtag, src, recvtag, _val, &st), emFLPFB );
+        return st;
+    }
+
     MPI_Status iprobe(int src, int tag, int &flag) const;
     MPI_Status probe(int src, int tag) const;
     MPI_Status improbe(int src, int tag, int &flag, MPI_Message &message) const;

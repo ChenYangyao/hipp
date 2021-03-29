@@ -68,35 +68,43 @@ Thanks to the meta-programming support of C++, we can pass different combination
 to the same send/recv function call. 
 Depending on the types of the arguments, the function call gives different semantics.
 
-HIPP supports **four** types of arguments passed to send/recv calls. They are listed below:
+HIPP supports many forms of arguments passed to send/recv calls. See API reference for 
+:class:`HIPP::MPI::Datapacket` for the details.
 
 .. _tutor-mpi-buff-spec:
 
-========================================================== ===================================================================================
-Arguments                                                   Semantics
-========================================================== ===================================================================================
-``const vector<T, A> &buff``                                a vector of any numeric type T and allocator A.
-``const string &buff``                                      a ``std::string`` (only valid for send call).
-``const void *buff, int n, Datatype dtype``                 raw buffer, starting at ``buff``, |br| consisting of ``n`` elements of type ``dtype``. 
-``const void *buff, int n, const string &dtype``            describe the element type by a string.
-========================================================== ===================================================================================
-
-Therefore, the following calls are valid::
+Therefore, the following calls for send (or recv) are valid and equivalent when using a ``std::vector`` as the buffer::
 
     vector<int> send_buff(10), recv_buff(10);
-    string send_str = "content to send";
-    vector<char> recv_str(128);
 
     comm.send(dest, tag, send_buff);
-    comm.send(dest, tag, send_str);
     comm.send(dest, tag, &send_buff[0], 10, HIPP::MPI::INT);
     comm.send(dest, tag, &send_buff[0], 10, "int");
 
     comm.recv(src, tag, recv_buff);
-    comm.recv(src, tag, recv_str);
     comm.recv(src, tag, &recv_buff[0], 10, HIPP::MPI::INT);
     comm.recv(src, tag, &recv_buff[0], 10, "int");
 
+Note that using the triple ``(buffer, size, datatype)`` is the most universal way in MPI to specify a data buffer.
+But in HIPP, you have different ways to implement the same functional, much more convenient in some cases.
+Internally, HIPP converts all these forms into an unifield :class:`HIPP::MPI::Datapacket` type which hosts the standard triplet
+Then, data described by the data packet are used in send/recv.
+
+Strings, arithmetic scalars and arrays of arithmetic scalars can be directly used as arguments::
+
+    string send_str = "content to send";
+    vector<char> recv_str(128);
+
+    comm.send(dest, tag, send_str);
+    comm.recv(src, tag, recv_str);
+
+    int x,
+        arr[3],
+        *buff = new int [3];
+
+    comm.send(dest, tag, x);
+    comm.send(dest, tag, arr);
+    comm.send(dest, tag, buff, 3);
 
 Collective Communication
 --------------------------------------------------------------
@@ -145,12 +153,16 @@ After the call of :func:`scatter() <HIPP::MPI::Comm::scatter>` (``[1]`` in the c
 task. 
 
 Again, :func:`scatter() <HIPP::MPI::Comm::scatter>` has sevaral overloads. The simplest 
-arguments are: ``(const void *sendbuf, const Datapacket &recv_dpacket, int root)``. The ``sendbuf``
-is the starting address of the sending buffer, the ``recv_dpacket`` can be constructed by 
+form has three arguments: 
+
+- ``const void *sendbuf``: the starting address of the sending buffer;
+- ``const Datapacket &recv_dpacket``: the receiving buffer (described using ``HIPP::MPI::Datapacket``);
+- ``int root``: the root process of the scatter operation, i.e., source of scattered data (not significant at destination processes, therefore set as ``NULL``).
+
+``recv_dpacket`` can be constructed by 
 ways like in the :ref:`Point-to-point Communication <tutor-mpi-buff-spec>`. We use a single 
-vector in the ``[1]`` of the code. Equivalently, we may use ``comm.scatter(&edges[0], {&local_edges[0], 2, "int"}, 0)``.
-The ``root`` argument specifies the source of the data 
-(not significant at destination processes, therefore set as ``NULL``).
+vector in the ``[1]`` of the code. 
+Equivalently, we may use the standard triple ``{&local_edges[0], 2, "int"}``.
 
 Then, each process finishes its task by simply adding all numbers between the edges::
 
@@ -163,18 +175,20 @@ makes summation, and put it in the ``sum`` of the root process (process 0)::
 
     if( rank == 0 ){
         int sum = 0;
-        comm.reduce({&local_sum, 1, "int"}, 
-            &sum, "+", 0);                      // [2] Reduce from "local_sum" into "sum" 
+        comm.reduce(local_sum, &sum, "+", 0);   // [2] Reduce from "local_sum" into "sum". 
 
         HIPP::pout << "Result of sum is ", sum, 
             " (found by ", n_procs, " processes)", endl; 
     }else{
-        comm.reduce({&local_sum, 1, "int"}, NULL, "+", 0);
+        comm.reduce(local_sum, NULL, "+", 0);
     }
 
-The simplest arguments of :func:`reduce() <HIPP::MPI::Comm::reduce>` is ``(const Datapacket &send_dpacket, void *recvbuf,
-const Oppacket &op, int root)``. Where we use the ``op``-code ``"+"`` to make summation. ``root`` specifies 
-the target process in which the result is put (process 0 here).
+The simplest form of :func:`reduce() <HIPP::MPI::Comm::reduce>` has four arguments:
+
+- ``const Datapacket &send_dpacket``: the sending buffer; We use a single value ``local_sum`` here;
+- ``void *recvbuf``: the starting address of the receiving buffer;
+- ``const Oppacket &op``: the operation on data. We use "+" for summation here;
+- ``int root``: the destination process where the reduction result is put. It is process 0 here.
 
 The output of the program (run with 4 processes) is 
 
@@ -194,7 +208,7 @@ any other kinds of tasks::
         vector<TaskSpecification> tasks;
 
         /* Use collective call or simply send call to 
-           spread tasks to workder processes. */
+           spread tasks to worker processes. */
         comm.scatter(...); 
         for(...) comm.send(...); 
     }else {
@@ -211,3 +225,164 @@ buffer specifications. If ``TaskSpecification`` has different types of
 members, you may simply sends/receives it as a sequence of ``char`` 
 (valid in homegeneous system), or you construct new MPI datatypes using 
 the methods that we will introduce in later chapters.
+
+Applications
+-----------------
+
+Computing PI by Numerical Integration
+""""""""""""""""""""""""""""""""""""""
+
+In the following example, we use a numerical integration to approximately compute the value of :math:`\pi`.
+This example is taken from Ch-3.3 of [GroppW-UMPIv3]_.
+From calculus we know
+
+.. math::
+
+    \pi = \int_0^1 \frac{4}{1+x^2} \, \mathrm{d} x .
+
+We use trapezoid method to approximate this integration, i.e., the integration interval :math:`[0,\,1]` is divided
+into :math:`N` sub intervals with length :math:`h=1/N`. The integration value in the :math:`i`-th interval (0-indexed) is
+approximated by :math:`f( (i+0.5)h )h`, where :math:`f` is the integrand.
+
+This task is an ideal example for parallel computation. The following codes implement the algorithm.
+
+:download:`mpi/app-pi-computation.cpp </../example/tutorial/mpi/app-pi-computation.cpp>`
+
+.. include:: /../example/tutorial/mpi/app-pi-computation.cpp 
+    :code: cpp
+
+Note that for the :func:`reduce <HIPP::MPI::Comm::reduce>` call, the first argument is a data packet type which describes 
+the sending buffer. You can construct it by many ways like just using a scalar ``my_pi``. The second argument is 
+the starting address of the receiving buffer.
+
+The result using 4 processes with :math:`N=100000` is 
+
+.. code-block:: text
+
+    Enter the no. of intervals: 100000
+    Find pi=3.141592653598117, error=8.323564060219724e-12
+
+
+A Self-Scheduling Example: Matrix-Vector Multiplication
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+In the following example, we use multiple processes to compute the multiplication of a matrix :math:`A` and a vector :math:`b`,
+whose shapes are :math:`(n_{\rm row},\, n_{\rm col})` and :math:`(n_{\rm col},\,1)`. The result is a vector :math:`c` of shape :math:`(n_{\rm row},\,1)`.
+This example can be found in Ch3.6 of [GroppW-UMPIv3]_. 
+The codes can be found at :download:`mpi/app-matrix-vec-dot.cpp </../example/tutorial/mpi/app-matrix-vec-dot.cpp>`.
+
+The matrix-vector multiplication is defined as 
+
+.. math::
+
+    c_i = \sum_{j=0}^{n_{\rm col}} A_{ij} b_j.
+
+The simplest parallel algorithm is to split :math:`A` into rows. Each process is responsible for some rows.
+Because the actual computation and communication time may be different for rows, self-scheduling algorithm 
+may be necessary for balacing the tasks of procecess.
+
+The following codes show how to use a master-slave algorithm for this purpose. We have one master process,
+which splits and sends tasks to other slave procecess. Once all slaves have their tasks, the master waits
+the answer from any slave, and assigns a new task to it.
+Hence, we write the codes for the master as::
+
+    void master_do(int n_rows, int n_cols, 
+        const double *A, const double *b, double *c,
+        HIPP::MPI::Comm &comm)
+    {
+        const int root = 0, n_procs = comm.size(); 
+
+        comm.bcast({b, n_cols, "double"}, root);
+
+        /* Assign task to each slave. */
+        int n_sent = 0;
+        for(int i=0; i<std::min(n_rows, n_procs-1); ++i){
+            comm.send(i+1, n_sent, A+n_sent*n_cols, n_cols, "double");
+            ++n_sent;
+        }
+
+        /* Wait reply from any slave, and assign a new task to it. */
+        for(int i=0; i<n_rows; ++i){
+            double ans;
+            auto status = comm.recv(HIPP::MPI::ANY_SOURCE, HIPP::MPI::ANY_TAG, 
+                &ans, 1, "double");
+            c[status.tag()] = ans;
+
+            const double *buff = A + n_sent*n_cols; 
+            int count = n_cols;
+            if( n_sent == n_rows ){    // All tasks were finished. Send stop signal.
+                buff = NULL; count = 0; 
+            }
+            comm.send(status.source(), n_sent, buff, count, "double");
+            if( n_sent < n_rows ) ++n_sent;
+        }
+    }
+
+First, the master broadcasts :math:`b` to all workers. Then, the master assigns one row of :math:`A` to 
+each slave. Finally, the master waits using :func:`recv <HIPP::MPI::Comm::recv>`, and send back 
+a new task using :func:`send <HIPP::MPI::Comm::send>`. Note that here we use the communication ``tag``
+to represent the row index, with ``tag=n_rows`` indicating a stop signal. 
+This may fail for large tasks because the valid tag values have an upper bound.
+The MPI standard requires :math:`[0,\, 32767]` to be a valid range. The actual upper bound can be 
+found by :func:`tag_ub <HIPP::MPI::Env::tag_ub>` method of :class:`HIPP::MPI::Env`.
+
+The slave just waits for the task, finishes it and sends the answer back to the master::
+
+    void slave_do(int n_rows, int n_cols, HIPP::MPI::Comm &comm){
+        const int root = 0;
+        vector<double> row(n_cols), b(n_cols);
+        comm.bcast(b, root);
+
+        if( comm.rank() > n_rows ) return;
+
+        /* Wait for assigned task, finish it, and send back the answer. */
+        while(true){
+            int tag = comm.recv(root, HIPP::MPI::ANY_TAG, row).tag();
+            if( tag == n_rows ) break;  // Stop working on a stop signal.
+            
+            double ans = 0.;
+            for(int i=0; i<n_cols; ++i) ans += row[i]*b[i];
+            comm.send(root, tag, &ans, 1, "double");
+        }
+    }
+
+For following codes show how to call these two subroutines::
+
+    int main(int argc, char const *argv[]) {    
+        HIPP::MPI::Env env;
+        auto comm = env.world();
+        int rank = comm.rank();
+
+        const int n_rows = 5, n_cols = 8, n_elems = n_rows*n_cols;
+        if( rank == 0 ){
+            vector<double> A(n_elems), b(n_cols, 1.0), c(n_rows);
+            HIPP::ALGORITHM::LinSpaced(0., n_elems) >> A.data();
+            master_do(n_rows, n_cols, A.data(), b.data(), c.data(), comm);
+
+            HIPP::pout << "A =[\n", 
+                HIPP::PrtArray(A.begin(), A.end()).ncol(n_cols).width(3), "]\n",
+                "b = [", b, "]\n",
+                "c = [", c, "]\n"; 
+        }else{
+            slave_do(n_rows, n_cols, comm);
+        }
+
+        return 0;
+    }
+
+The master (``rank == 0``) creates a :math:`5\times 8` matrix :math:`A` filled with 
+linear spaced data by :class:`HIPP::ALGORITHM::LinSpaced`. The whole task :math:`c=A b`
+is finished by all procecess in the commnicator ``comm``. Then, the master prints the 
+results into the standard output using the pretty stream :var:`HIPP::pout`. The output 
+is 
+
+.. code-block:: text 
+
+    A =[
+      0,  1,  2,  3,  4,  5,  6,  7,
+      8,  9, 10, 11, 12, 13, 14, 15,
+     16, 17, 18, 19, 20, 21, 22, 23,
+     24, 25, 26, 27, 28, 29, 30, 31,
+     32, 33, 34, 35, 36, 37, 38, 39]
+    b = [1,1,1,1,1,1,1,1]
+    c = [28,92,156,220,284]

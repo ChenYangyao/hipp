@@ -1,4 +1,4 @@
-User-defined datatype
+User-defined Datatype
 ================================================
 
 Please write the tutorial using the following APIs:

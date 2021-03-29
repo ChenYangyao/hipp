@@ -15,7 +15,7 @@ int main(int argc, char const *argv[]){
         for (int i = 0; i < n_procs; i++) 
             edges.emplace_back(i*num_per_proc, (i+1)*num_per_proc);
         edges.back().second = total_num;
-        comm.scatter(&edges[0], local_edges, 0); // [1] Scatter "edges" into "local_edges"
+        comm.scatter(&edges[0], local_edges, 0); // [1] Scatter "edges" into "local_edges".
     }else{
         comm.scatter(NULL, local_edges, 0);                   
     }
@@ -28,13 +28,12 @@ int main(int argc, char const *argv[]){
     /* Make reduction of local summations to a total value. */
     if( rank == 0 ){
         int sum = 0;
-        comm.reduce({&local_sum, 1, "int"}, 
-            &sum, "+", 0);                      // [2] Reduce from "local_sum" into "sum" 
+        comm.reduce(local_sum, &sum, "+", 0);   // [2] Reduce from "local_sum" into "sum". 
 
         HIPP::pout << "Result of sum is ", sum, 
             " (found by ", n_procs, " processes)", endl; 
     }else{
-        comm.reduce({&local_sum, 1, "int"}, NULL, "+", 0);
+        comm.reduce(local_sum, NULL, "+", 0);
     }
 
     return 0;

@@ -217,6 +217,10 @@ Class Datapacket: the Data Buffer Descriptor
     triplet ``(addr, size, datatype)``.  ``Datapacket`` encapsulates these three 
     into a single object to make the communication calls more elegant.
 
+    HIPP provides a variety of ways to specify a data packet, including using the Standard MPI 
+    triplet, using a scalar variable, or using an array-like variable. See the constructors 
+    below for the details.
+
     **Memory management methods:**
     
     =================================================== ==================================================
@@ -231,35 +235,54 @@ Class Datapacket: the Data Buffer Descriptor
 
     .. function::   Datapacket(const void *buff, int size, Datatype dtype) noexcept
                     Datapacket(const void *buff, int size, const string &dtype)
-                    Datapacket( const string &buff ) noexcept
-                    template<typename T, typename A>\
-                    Datapacket( const vector<T,A> &buff ) noexcept
+                    Datapacket(const string &buff) noexcept
+                    template<typename T, std::enable_if_t<_is_intern_dtype<T>(), int> =0> \
+                    Datapacket(const T &buff) noexcept
+                    template<typename T, std::enable_if_t<_is_intern_dtype<T>(), size_t> N> \
+                    Datapacket(const T (&buff)[N]) noexcept
+                    template<typename T, std::enable_if_t<_is_intern_dtype<T>(), int> =0> \
+                    Datapacket(const T *buff, size_t n) noexcept
+                    template<typename T, std::enable_if_t<_is_intern_dtype<T>(), size_t> N> \
+                    Datapacket(const std::array<T, N> &buff) noexcept
+                    template<typename T, typename A, std::enable_if_t<_is_intern_dtype<T>(), int> =0> \
+                    Datapacket(const vector<T,A> &buff) noexcept
 
-        Data packet constructors.
+        Data packet constructors. A variety of ways can be used to construct a data packet, by providing the 
+        following arguments:
+
+        .. table::
+            :class: fix-width-table
+            :widths: 30 70
+            
+            =================================================== ===========================================================================================
+            Arguments                       Description 
+            =================================================== ===========================================================================================
+            Standard triplet                                    ``(buff, size, dtype)``, where ``buff`` is the starting address, ``size``
+                                                                is the number of elements and ``dtype`` is the datatype of each element. |br|
+                                                                ``dtype`` can be either :class:`Datatype` or ``std::string`` (automatically converted to 
+                                                                :class:`Datatype`; see below for valid strings for datatype).
+            A string or a arithmetic scalar variable            ``std::string`` or any arithmetic scalar (see below for valid scalars). In C++, 
+                                                                a ``std::string`` is not writable, so that it can not be used in any receiving call.
+            An array-like object of arithmetic scalars          raw array (e.g., ``int [3]``), raw buffer
+                                                                (e.g., a ``int *`` that points to ``n`` integers), ``std::array`` or ``std::vector``
+            =================================================== ===========================================================================================
         
-        (1) formally specify the buffer as a triplet, i.e., starting address, number of elements and datatype.
+        When constructing a data packet with the standard triplet, a ``std::string`` can be used to specify the datatype. Valid 
+        strings are:
         
-        (2) same with (1), but use a string to describe the datatype. It can be 
-             
-            - ``"byte"``, ``"char"`` or ``"bool"``;
-            - ``"X"``, ``"signed X"`` or ``"unsigned X"``, where ``X`` can be ``char``, ``short``, ``int``, ``long`` or ``long long``;
-            - ``"intX_t"`` or ``"uintX_t"``, where ``X`` can be ``8``, ``16``, ``32`` or ``64``;
-            - ``"float"``, ``"double"``, ``"long double"``.
-        
-        (3) use a string ``buff`` -  equivalent to specify the triplet as ``(void *)buff.data(), buff.size(), "char"``.
-            Note that the buffer in ``std::string`` cannot be modified, so, do not use it in data-receiving calls. 
-        
+        - ``"byte"``, ``"char"`` or ``"bool"``;
+        - ``"X"``, ``"signed X"`` or ``"unsigned X"``, where ``X`` can be ``char``, ``short``, ``int``, ``long`` or ``long long``;
+        - ``"intX_t"`` or ``"uintX_t"``, where ``X`` can be ``8``, ``16``, ``32`` or ``64``;
+        - ``"float"``, ``"double"``, ``"long double"``.
+
         .. _api-mpi-dpacket-predefined-type:
 
-        (4) use a vector ``buff`` of type ``T`` - equivalent to specify the triplet as ``(void *)buff.data(), buff.size(), datadype_for_T`` 
-            Note that ``T`` can be any of the following predefined numeric types  
+        Where the "arithmetic scalar" are referred, we mean one of the following C++ types:
 
-            - ``bool``, ``char``, ``signed char`` or ``unsigned char``;
-            - ``X`` or  ``unsigned X``, where ``X`` can be ``short``, ``int``, ``long`` or ``long long``;
-            - ``float``, ``double`` or ``long double``;
-            - ``std::complex<float>``, ``std::complex<double>`` or ``std::complex<long double>``.
-
-    
+        - ``bool``, ``char``, ``signed char`` or ``unsigned char``;
+        - ``X`` or  ``unsigned X``, where ``X`` can be ``short``, ``int``, ``long`` or ``long long``;
+        - ``float``, ``double`` or ``long double``;
+        - ``std::complex<float>``, ``std::complex<double>`` or ``std::complex<long double>``.
     
     .. function::   Datapacket(aint_t disp, int size, Datatype dtype) noexcept
                     Datapacket(aint_t disp, int size, const string &dtype)
@@ -271,30 +294,49 @@ Class Datapacket: the Data Buffer Descriptor
         The ``Datapacket`` type can represent such triplets, too. Internally, the
         displacement is stored by casting into a ``void *``.
 
-    **Example:**
+    **Examples:**
 
     In the point-to-point communication, the send/recv call needs data buffer as argument.
     Traditionally, MPI uses triplet ``(addr, size, datatype)`` to describe the data buffer.
-    In HIPP, the following calls are valid::
+    In HIPP, the following send (or recv) calls are valid and equivalent for ``std::vector``::
 
         vector<int> send_buff(10), recv_buff(10);
-        string send_str = "content to send";
-        vector<char> recv_str(128);
 
         comm.send(dest, tag, send_buff);
-        comm.send(dest, tag, send_str);
         comm.send(dest, tag, &send_buff[0], 10, HIPP::MPI::INT);
         comm.send(dest, tag, &send_buff[0], 10, "int");
 
         comm.recv(src, tag, recv_buff);
-        comm.recv(src, tag, recv_str);
         comm.recv(src, tag, &recv_buff[0], 10, HIPP::MPI::INT);
         comm.recv(src, tag, &recv_buff[0], 10, "int");
 
-    HIPP uses the arguments after ``src`` (or ``dest``) and ``tag`` to construct a 
+    Note that in a send (or recv) call, HIPP uses the arguments after ``src`` (or ``dest``) and ``tag`` to construct a 
     ``Datapacket`` instance, and uses members in this data packet as the buffer arguments
     to the underlying MPI library.
 
+    ``std::string`` can be used as a sending buffer, but not a receiving buffer. You must provide a buffer by 
+    yourself in the receiving call, like using a ``std::vector``::
+
+        string send_str = "content to send";
+        vector<char> recv_str(128);
+
+        comm.send(dest, tag, send_str);
+        comm.recv(src, tag, recv_str);
+
+    Arithematic scalars and raw arrays (or raw buffers) of them can be easily send/recv, like::
+
+        int x,
+            arr[3],
+            *buff = new int [3];
+
+        comm.send(dest, tag, x);
+        comm.send(dest, tag, arr);
+        comm.send(dest, tag, buff, 3);
+
+        // Or equivalently, using the standard triplet as buffer descriptor
+        comm.send(dest, tag, &x, 1, HIPP::MPI::INT);
+        comm.send(dest, tag, arr, 3, HIPP::MPI::INT);
+        comm.send(dest, tag, buff, 3, HIPP::MPI::INT);
 
 
 Class Op: the Operation

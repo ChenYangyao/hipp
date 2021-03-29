@@ -73,9 +73,15 @@ To avoid confusion, we list the conventions used in this API reference:
     mpe/sync
     mpe/master-slave
     mpe/symm
+    mpe/work-decomp
     
 .. toctree::
     :maxdepth: 2
     :caption: Intermediate-level API
 
     intermediate-level/index
+
+.. rubric:: References 
+
+.. [GroppW-UMPIv3] William Gropp, Ewing Lusk, and Anthony Skjellum, Using MPI - Portable Parallel Programming with the Message-Passing Interface (3ed).
+.. [DuZH-MPIv2001] Zhihui Du, 高性能计算之并行编程技术 - MPI并行程序设计 (2001年版).

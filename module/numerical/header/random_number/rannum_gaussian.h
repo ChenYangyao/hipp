@@ -65,7 +65,7 @@ public:
     /**
      * Get a series of random numbers.
      * 1. Get 'n' numbers, returned a container (must have push back).
-     * 2. Directly put into container 'c'.
+     * 2. Directly pushing back into container 'c' (clear() is not called).
      * 3. Write into a range specified by a pair of iterator.
      */
     template<template<typename> typename Container = std::vector>

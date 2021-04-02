@@ -14,6 +14,8 @@ class Comm;
 class File;
 class Win;
 class Message;
+class Pack;
+class ExternalPack;
 
 /**
  * a datapacked is defined, in the high-level interface, as a triplet 
@@ -100,10 +102,13 @@ protected:
     void *_buff;
     int _size;
     Datatype _dtype;
+
     friend class Comm;
     friend class File;
     friend class Win;
     friend class Message;
+    friend class Pack;
+    friend class ExternalPack;
 };
 
 

@@ -19,6 +19,7 @@ define_colors()
 
 add_subdirectory(module)
 
+option(BUILD_TESTING "Build testing" OFF)
 include(CTest)
 if(BUILD_TESTING)
     add_subdirectory(test)

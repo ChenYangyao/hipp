@@ -1,7 +1,7 @@
 CXX = mpicxx
-CXXFLAGS = -std=c++17 -O2 -Wall -I../../include
+CXXFLAGS = -std=c++17 -O3 -Wall
 LDFLAGS = 
-LDLIBS = -L../../lib -lhippmpi -lhippcntl -lmymathCC
+LDLIBS = -lhippmpi -lhippcntl
 
 all: run_test
 .PHONY: all run_test

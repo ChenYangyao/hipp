@@ -240,6 +240,21 @@ _HIPPMPI_MPI_TYPECVT(std::complex<long double>, LDOUBLE_COMPLEX, MPI_CXX_LONG_DO
 
 const std::unordered_map<string, const Datatype *> _typecvt = {
     {"byte", &BYTE},
+    {"wchar", &WCHAR},
+    {"bool", &BOOL},
+    {"float complex", &FLOAT_COMPLEX},
+    {"double complex", &DOUBLE_COMPLEX},
+    {"long double complex", &LDOUBLE_COMPLEX},
+    {"packed", &PACKED},
+    {"aint", &AINT},
+    {"offset", &OFFSET},
+    {"count", &COUNT},
+    {"float int", &FLOAT_INT},
+    {"double int", &DOUBLE_INT},
+    {"long double int", &LDOUBLE_INT},
+    {"short int", &SHORT_INT},
+    {"int int", &INT_INT},
+    {"long int", &LONG_INT},
 
     {"char", &CHAR},
     {"unsigned char", &UNSIGNED_CHAR},
@@ -272,9 +287,7 @@ const std::unordered_map<string, const Datatype *> _typecvt = {
     
     {"float", &FLOAT},
     {"double", &DOUBLE},
-    {"long double", &LDOUBLE},
-
-    {"bool", &BOOL}
+    {"long double", &LDOUBLE}
 };
 
 

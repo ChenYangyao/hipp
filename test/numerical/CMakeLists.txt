@@ -19,7 +19,7 @@ target_link_libraries( "${_exename}"
     PRIVATE
         "${_exebase}"
         "${_projectid}cntl"
-        gtest-interface-lib
+        gtest_main
 )
 
 add_test(NAME "${_exename}" COMMAND "${_exename}")
@@ -37,4 +37,5 @@ target_link_libraries( "${_objname}"
     PUBLIC
         "${_exebase}"
         "${_projectid}cntl"
+        gtest_main
 )

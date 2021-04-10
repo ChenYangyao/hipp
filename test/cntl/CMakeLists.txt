@@ -15,7 +15,7 @@ add_executable( "${_exename}"
 target_link_libraries( "${_exename}" 
     PRIVATE
         "${_exebase}"
-        gtest-interface-lib
+        gtest_main
 )
 
 add_test(NAME "${_exename}" COMMAND "${_exename}")
@@ -32,4 +32,5 @@ target_sources("${_objname}"
 target_link_libraries( "${_objname}" 
     PRIVATE
         "${_exebase}"
+        gtest_main
 )

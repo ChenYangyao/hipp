@@ -19,8 +19,13 @@ define_colors()
 
 add_subdirectory(module)
 
-option(BUILD_TESTING "Build testing" OFF)
 include(CTest)
 if(BUILD_TESTING)
+    # Compile googletest as part of the project
+    message(STATUS "${BoldGreen}Test enabled ... will compile googletest${ColourReset}")
+    set(BUILD_GMOCK OFF CACHE BOOL "")
+    set(INSTALL_GTEST OFF CACHE BOOL "")
+    add_subdirectory("third-party/googletest" "third-party/googletest" EXCLUDE_FROM_ALL)
+    
     add_subdirectory(test)
 endif()

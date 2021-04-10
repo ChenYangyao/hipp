@@ -138,7 +138,7 @@ extern const Datatype COUNT;
 
 extern const Datatype FLOAT_INT;
 extern const Datatype DOUBLE_INT;
-extern const Datatype LONG_DOUBLE_INT;
+extern const Datatype LDOUBLE_INT;
 extern const Datatype SHORT_INT;
 extern const Datatype INT_INT;
 extern const Datatype LONG_INT;

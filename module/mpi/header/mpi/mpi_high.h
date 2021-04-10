@@ -12,6 +12,7 @@
 #include "mpi_datatype.h"
 #include "mpi_datapacket.h"
 #include "mpi_status.h"
+#include "mpi_pack.h"
 #include "mpi_requests.h"
 #include "mpi_op.h"
 #include "mpi_info.h"

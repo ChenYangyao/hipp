@@ -12,6 +12,7 @@ set(_src
     mpi_raw_comm.cpp 
     mpi_raw_file.cpp
     mpi_requests.cpp
+    mpi_pack.cpp
 )
 set(_libname "${_projectid}${_modid}${_submodid}")
 set(_headerdir "${_moddir}/header")

@@ -13,4 +13,5 @@
 #include "mpi_raw_info.h"
 #include "mpi_raw_file.h"
 #include "mpi_raw_win.h"
+#include "mpi_raw_pack.h"
 #endif	//_HIPPMPI_MPI_INTERMEDIATE_H_

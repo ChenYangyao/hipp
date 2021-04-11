@@ -9,7 +9,7 @@ set(_src
 set(_exebase "${_projectid}${_modid}")
 set(_exename "${_exebase}.out")
 set(_objname "${_exebase}.obj")
-message(STATUS "Test on module: ${_projectid}${_modid}")
+prtkeyproc("Test on module: ${_projectid}${_modid}")
 message("   Sources: ${_src}")
 
 add_executable( "${_exename}"
@@ -18,7 +18,6 @@ add_executable( "${_exename}"
 target_link_libraries( "${_exename}" 
     PRIVATE
         "${_exebase}"
-        "${_projectid}cntl"
         gtest_main
 )
 
@@ -36,6 +35,5 @@ target_sources("${_objname}"
 target_link_libraries( "${_objname}" 
     PUBLIC
         "${_exebase}"
-        "${_projectid}cntl"
         gtest_main
 )

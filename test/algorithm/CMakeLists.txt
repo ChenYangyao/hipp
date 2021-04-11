@@ -7,7 +7,7 @@ set(_src
 set(_exebase "${_projectid}${_modid}")
 set(_exename "${_exebase}.out")
 set(_objname "${_exebase}.obj")
-message(STATUS "Test on module: ${_projectid}${_modid}")
+prtkeyproc("Test on module: ${_projectid}${_modid}")
 message("   Sources: ${_src}")
 
 add_executable( "${_exename}"

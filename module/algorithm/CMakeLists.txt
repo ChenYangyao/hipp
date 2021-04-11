@@ -1,12 +1,13 @@
 set(_modid algorithm)
-set(_moddir "${CMAKE_CURRENT_SOURCE_DIR}")
-
 set(_libname "${_projectid}${_modid}")
+
+set(_moddir "${CMAKE_CURRENT_SOURCE_DIR}")
 set(_headerdir "${_moddir}/header")
-message(STATUS "Module: ${_projectid}${_modid}")
-message("   Source at: ${_moddir}")
 
+prtkeyproc("Module: ${_libname}")
+message("  Source at: ${_moddir}")
 
+# Pure header interface library
 add_library(${_libname} INTERFACE)
 target_link_libraries(${_libname}
     INTERFACE
@@ -16,6 +17,8 @@ target_include_directories(${_libname}
     INTERFACE 
         "${_headerdir}"
 )
+
+
 install(DIRECTORY 
         "${_headerdir}/kdsearch"
     DESTINATION include

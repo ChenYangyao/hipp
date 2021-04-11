@@ -1,9 +1,9 @@
 set(_modid simd)
-set(_moddir "${CMAKE_CURRENT_SOURCE_DIR}")
-
 set(_libname "${_projectid}${_modid}")
+
+set(_moddir "${CMAKE_CURRENT_SOURCE_DIR}")
 set(_headerdir "${_moddir}/header")
-message(STATUS "Module: ${_libname}")
+prtkeyproc("Module: ${_libname}")
 message("   Source at: ${_moddir}")
 
 add_library(${_libname} INTERFACE)

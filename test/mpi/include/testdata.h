@@ -1,7 +1,8 @@
+#ifndef HIPPMPI_TEST_TESTDATA_H_
+#define HIPPMPI_TEST_TESTDATA_H_
 #include <hippmpi.h>
 
 namespace HIPP::MPI {
-
 class TestData {
 public:
     void init() {
@@ -34,3 +35,4 @@ public:
 };
 
 } // namespace HIPP::MPI
+#endif	//HIPPMPI_TEST_TESTDATA_H_

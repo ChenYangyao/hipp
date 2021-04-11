@@ -1,18 +1,24 @@
-if(NOT CMAKE_CXX_FLAGS MATCHES "-pthread")
-    set(CMAKE_CXX_FLAGS "-pthread ${CMAKE_CXX_FLAGS}")
-endif()
+#if(NOT CMAKE_CXX_FLAGS MATCHES "-pthread")
+#    set(CMAKE_CXX_FLAGS "-pthread ${CMAKE_CXX_FLAGS}")
+#endif()
 
-message(STATUS "Test on ${BoldGreen}cntl required${ColourReset}")
+prtkeyproc("Test on cntl required")
 add_subdirectory(cntl)
-message(STATUS "Test on ${BoldGreen}algorithm required${ColourReset}")
+
+prtkeyproc("Test on algorithm required")
 add_subdirectory(algorithm)
 
 if(enable-hdf5)
-    message(STATUS "Test on ${BoldGreen}IO enabled${ColourReset}")
+    prtkeyproc("Test on IO enabled")
     add_subdirectory(io)
 endif()
 
 if(enable-gsl)
-    message(STATUS "Test on ${BoldGreen}NUMERICAL enabled${ColourReset}")
+    prtkeyproc("Test on NUMERICAL enabled")
     add_subdirectory(numerical)
+endif()
+
+if(enable-mpi)
+    prtkeyproc("Test on MPI enabled")
+    add_subdirectory(mpi)
 endif()

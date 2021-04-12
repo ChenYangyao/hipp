@@ -1,8 +1,13 @@
-#include "testdata.h"
+#include <testdata.h>
+#include <testmacro.h>
+
 namespace HIPP::MPI {
 
 void test_pack(Comm &comm) {
     int rank = comm.rank(), n_procs = comm.size();
+    if( rank == 1 )
+        HIPPMPI_TEST_ENTERF
+
     assert(n_procs >= 2);
     if( rank == 0 ){
         TestData td; td.init();
@@ -24,7 +29,7 @@ void test_pack(Comm &comm) {
         pk.pop(td.z);
 
         td_targ.compare(td);
-        pout << "t_pack ... test_pack\n  -- Recv 1 has been finished.", endl;
+        HIPPMPI_TEST_PROGRESS, "receive 1 OK", endl;
 
         pk.set_position(0).set_size(comm.probe(0, 1).count("packed"));
         comm.recv(0, 1, pk.as_recvbuf());
@@ -34,13 +39,15 @@ void test_pack(Comm &comm) {
         pk.pop(td.z).pop(td.y).pop(td.x);
 
         td_targ.compare(td);
-        pout << "  -- Recv 2 has been finished.", endl;
-        pout << "  -- Successfully exit", endl;
+        HIPPMPI_TEST_PROGRESS, "receive 2 OK", endl;
     }
 }
 
 void test_external_pack(Comm &comm) {
     int rank = comm.rank(), n_procs = comm.size();
+    if( rank == 1 )
+        HIPPMPI_TEST_ENTERF
+
     assert(n_procs >= 2);
     if( rank == 0 ){
         TestData td; td.init();
@@ -62,8 +69,7 @@ void test_external_pack(Comm &comm) {
         pk.pop(td.z);
 
         td_targ.compare(td);
-        pout << "t_pack ... test_external_pack\n", 
-            "  -- Recv 1 has been finished.", endl;
+        HIPPMPI_TEST_PROGRESS,  "receive 1 OK", endl;
 
         pk.set_position(0).set_size(comm.probe(0, 1).count("packed"));
         comm.recv(0, 1, pk.as_recvbuf());
@@ -73,8 +79,7 @@ void test_external_pack(Comm &comm) {
         pk.pop(td.z).pop(td.y).pop(td.x);
 
         td_targ.compare(td);
-        pout << "  -- Recv 2 has been finished.", endl;
-        pout << "  -- Successfully exit", endl;
+        HIPPMPI_TEST_PROGRESS,  "receive 2 OK", endl;
     }
 }
 

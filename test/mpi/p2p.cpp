@@ -1,22 +1,29 @@
-#include "testdata.h"
+#include <testdata.h>
+#include <testmacro.h>
 
 namespace HIPP::MPI {
     
 void test_comm_info(Comm &comm){
     int rank, n_procs;
     MPI_Comm_rank(comm.raw(), &rank);
+    if( rank == 0 )
+        HIPPMPI_TEST_ENTERF
+
     assert(comm.rank() == rank);
+    if( rank == 0 )
+        HIPPMPI_TEST_PROGRESS, "rank OK", endl;
 
     MPI_Comm_size(comm.raw(), &n_procs);
     assert(comm.size() == n_procs);
-
-    if( rank == 0 ){
-        pout << "t_p2p ... test_comm_info\n  -- finished successful", endl;
-    }
+    if( rank == 0 )
+        HIPPMPI_TEST_PROGRESS, "size OK", endl;
 }
 
 void test_send(Comm &comm){
     int rank = comm.rank(), n_procs = comm.size();
+    if( rank == 0 )
+        HIPPMPI_TEST_ENTERF
+
     assert(n_procs >= 2);
 
     TestData td, td_targ; td_targ.init(); 
@@ -34,7 +41,7 @@ void test_send(Comm &comm){
     }
     comm.barrier();
     if( rank == 0 )
-        pout << "t_p2p ... test_send\n  -- finished succesful", endl;
+        HIPPMPI_TEST_PROGRESS, "send OK", endl;
 }
 
 } // namespace HIPP::MPI

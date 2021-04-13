@@ -54,7 +54,7 @@ endif()
 # Make MPI interface target, if enabled.
 # mpi-interface target is defined.
 if(enable-mpi)
-    prtkeyproc("MPI feature detectin ...")
+    prtkeyproc("MPI feature detection ...")
     add_library(mpi-interface INTERFACE)
     find_package(MPI REQUIRED)
     target_link_libraries(mpi-interface

@@ -78,5 +78,5 @@ Here are some good examples of why to choose HIPP.
 Contributors
 ----------------
 
-- Yangyao Chen (Tsinghua, DOA, [yangyaochen.astro@foxmail.com](mailto:yangyaochen.astro@foxmail.com), [kosmoswalker.com](https://www.kosmoswalker.com/))
-- Kai Wang (Tsinghua, DOA, [wkcosmology@gmail.com](mailto:wkcosmology@gmail.com), [chenyangyao.com](https://www.chenyangyao.com/))
+- Yangyao Chen (Tsinghua, DOA, [yangyaochen.astro@foxmail.com](mailto:yangyaochen.astro@foxmail.com), [chenyangyao.com](https://www.chenyangyao.com/))
+- Kai Wang (Tsinghua, DOA, [wkcosmology@gmail.com](mailto:wkcosmology@gmail.com), [kosmoswalker.com](https://www.kosmoswalker.com/))

@@ -61,6 +61,109 @@ above send is equivalent to::
     comm.send(dest, tag, buff, 4, "double");
                     
 
+Pack and Unpack
+----------------
+If communications of a large number of small messages are necessary in a application, 
+it may be better to pack them into a single message buffer, and send the buffer by 
+one MPI call. Possible reasons for that include 
+
+- To be compatible with old communication libraries where pack/unpack is manually done 
+  by the user.
+- Multiple pieces of data may depend on each other. In this case a derived datatype 
+  does not help.
+- Controlling the buffer manually to override the default buffering strategy used by 
+  the MPI implementation. This is useful when developping a communication library 
+  on the top of MPI.
+
+In the following of this section, we show how to pack different data items into a 
+single buffer, send them to another procecss, and unpack it. 
+The full code can be downloaded at :download:`mpi/dtype-pack.cpp </../example/tutorial/mpi/dtype-pack.cpp>`.
+
+As usual, we define the MPI environment at the entry of the program::
+    
+    HIPP::MPI::Env env;
+    auto comm = env.world();
+    int rank = comm.rank();
+    int tag = 0;
+
+Here, ``tag`` will be used to match the point-to-point communication.
+
+Assume, at process 0, we have different data items to be sent. They may be scalar, vector, or 
+any other data layout that can be used in MPI communications::
+
+        int x = 0; 
+        double y[3] = {1.,2.,3.}; 
+        vector<float> z = {4.0f, 5.0f, 6.0f};
+        string s = "Hello World";
+        int nz = z.size(), ns = s.size();
+
+Here we have a integer scalar ``x``, a fixed-length array ``y``, a variable length vector ``z``, and 
+a string ``s``. Because the lengths of ``z`` and ``s`` are usually determined at runtime, we 
+have to also send their lengths to another process.
+
+To send them by one call of MPI, we have to pack them. We first declare a :class:`Pack <HIPP::MPI::Pack>`
+instance, and then :func:`push <HIPP::MPI::Pack::push>` data items into it, and finally we send it 
+by a single :func:`send <HIPP::MPI::Comm::send>` call::
+
+        HIPP::MPI::Pack pack(comm);
+        pack.push(x).push(y).push(nz).push(z).push(ns).push(s);
+        comm.send(1, tag, pack.as_sendbuf());
+
+Here, the ``comm`` argument is necessary for the :class:`Pack <HIPP::MPI::Pack>`, because 
+different commnicator may use different data representation in the commnication. Note that 
+the :func:`push <HIPP::MPI::Pack::push>` call can be chained to push data items one by one.
+Each data item passed into :func:`push <HIPP::MPI::Pack::push>` is converted to 
+a :class:`Datapacket <HIPP::MPI::Datapacket>` instance, like for the data buffer
+we used in the point-to-point or collective commnication. Finally, 
+by calling :func:`as_sendbuf <HIPP::MPI::Pack::as_sendbuf>`
+we convert the packed data items into a instance that can be used in any MPI commnication, 
+and send it to process 1.
+
+In process 1, we first prepare the data items into which the message is unpacked::
+
+    int x; double y[3]; vector<float> z;
+    vector<char> s;
+    int nz, ns;
+
+Then, we :func:`probe <HIPP::MPI::Comm::probe>` the message length, and use
+this length to initialize the :class:`Pack <HIPP::MPI::Pack>` instance. This 
+allows the :class:`Pack <HIPP::MPI::Pack>` instance pre-allocates space 
+for the incoming message. By calling :func:`as_recvbuf <HIPP::MPI::Pack::as_recvbuf>`, 
+the :class:`Pack <HIPP::MPI::Pack>` instance is converted to a receiving buffer 
+that can be used in any commnication::
+
+    HIPP::MPI::Pack pack(comm.probe(0, tag).count("packed"), comm);
+    comm.recv(0, tag, pack.as_recvbuf());
+
+Once the receiving call is finished, we unpack the buffer into data items by 
+:func:`pop <HIPP::MPI::Pack::pop>`. Note that ``z`` and ``s`` both have variable lengths,
+so we have to unpack their lengths first, resize them, and unpack the real data into them::
+
+    pack.pop(x).pop(y);
+            
+    pack.pop(nz);
+    z.resize(nz);
+    pack.pop(z);
+
+    pack.pop(ns);
+    s.resize(ns+1);
+    pack.pop(s); 
+    s.back() = '\0';
+
+We can print the received data items by::
+
+    HIPP::pout << "x=", x, 
+        ", y=(", HIPP::pout(y,y+3), ")", 
+        ", z=(", z, ")", 
+        ", s='", s.data(), "'\n";
+
+The output is
+
+.. code-block:: text 
+
+    x=0, y=(1,2,3), z=(4,5,6), s='Hello World'
+
+
 Applications 
 ---------------------------------
 

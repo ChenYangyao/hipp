@@ -339,6 +339,195 @@ Class Datapacket: the Data Buffer Descriptor
         comm.send(dest, tag, buff, 3, HIPP::MPI::INT);
 
 
+
+Class Pack and ExternalPack
+---------------------------------
+
+.. class:: Pack 
+
+    ``Pack`` provides, with static methods, the pack/unpack operations like the 
+    standard MPI.
+    
+    A ``Pack`` instance has a buffer (represented by a **base** address + a **size** in 
+    bytes) and a **position** pointer indicating the byte offset of the next 
+    available location which has not been used.
+    On intialization, the buffer has a preallocated size, where position is 
+    set to 0.
+    
+    A ``Pack`` instance encapsulates the buffer and the pack/unpack operations. 
+    By using :func:`push` method, the buffer is automatically enlarged to fit the
+    need before data are packed into it. The position pointer is also 
+    automatically moved forward. The :func:`pop` method, on the other hand, unpack 
+    the buffer and move the position pointer also forward. 
+
+    Be cautious to resize the ``Pack`` instance to suitable length before 
+    receiving, and to reset the position to 0 before unpacking.
+
+    **Memory management methods:**
+    
+    =================================================== ==================================================
+    Method                                              Detail 
+    =================================================== ==================================================
+    default constructor                                 Not available.
+    copy constructor |br| and ``operator=(const &)``    Defined; deep-copy.
+    move constructor |br| and ``operator=(&&)``         Defined; ``noexcept``.
+    =================================================== ==================================================
+
+    The copy operation uses deep-copy, i.e., all information (include 
+    the buffer content, buffer size, position pointer and communicator)
+    gets copied.
+    The move operator is a cheap move, i.e., the moved object cannot be 
+    used any more.
+
+    .. function:: \
+        Pack(Comm comm)
+        Pack(size_t size_prealloc, Comm comm)
+
+        Initialize the instance with ``size_prealloc`` bytes buffer allocated, 
+        used for packing/unpacking in the communicator ``comm``.
+        The position pointer is set to 0.
+
+        :arg comm: communicator that would be used in packing/unpacking.
+        :arg size_prealloc: preallocated bytes for buffer - not necessary to be 
+                            large because :func:`push` automatically resize it or 
+                            because it can be adjusted by :func:`set_size`.
+
+    .. function:: \
+        Pack & push(const Datapacket &in_dpacket)
+        Pack & pop(const Datapacket &out_dpacket)
+
+        ``push()`` packs ``in_dpacket`` into the buffer. It automatically resizes the
+        buffer if memory is not enough to hold ``in_dpacket``. The position pointer
+        is increased after ``push()``.
+        
+        ``pop()`` perfoms oppisite operation - unpack from the current position 
+        to ``out_dpacket``, and move the position pointer forward.
+
+        ``*this`` is returned which enables chain of methods on the same instance.
+
+    .. function:: \
+        Datapacket as_sendbuf() const
+        Datapacket as_recvbuf()
+
+        ``as_sendbuf()`` returns a buffer descriptor that can be used in sending operations. 
+        The value of the position pointer is used as the size attribute in the descriptor.
+
+        ``as_recvbuf()`` returns a buffer descriptor that can be used in receiving operations.
+        The buffer size that has been allocated is used as the size attribute in the descriptor.
+
+
+    .. function:: \
+        const void * get_base() const noexcept
+        void * get_base() noexcept
+        size_t get_size() const noexcept
+        aint_t get_position() const noexcept
+        const Comm & get_comm() const noexcept
+        Comm & get_comm() noexcept
+
+        Attribute getters. 
+
+        ``get_base()``, ``get_size()`` and ``get_position()`` return the buffer information - 
+        its base address, size, and byte offset of the position pointer (points to 
+        next available location that has not been used), respectively.
+
+        ``get_comm()`` returns the commnicator. The commnicator is that passed 
+        in the constructor or method :func:`set_comm`.
+
+    .. function:: \
+        Pack & set_size(size_t s)
+        Pack & set_position(aint_t p) noexcept
+        Pack & set_comm(Comm comm) noexcept
+
+        Attribute setters.
+
+        ``set_size()`` adjusts the size of the buffer to ``s`` (in byte). If ``s`` is than 
+        the current buffer size, the tail is truncated. Otherwise the original content 
+        is preserved.
+
+        ``set_position()`` adjusts the position pointer to ``p`` measured as the byte offset 
+        from the base address of the buffer.
+
+        ``set_comm()`` adjusts the communicator that will be used in packing/unpacking.
+
+        ``*this`` is returned which enables chain of methods on the same instance.
+
+    .. function:: \
+        void pack(const Datapacket &in_dpacket,  \
+            void *outbuf, int outsize, int &position, const Comm &comm)
+        void unpack(const void *inbuf, int insize, int &position, \
+            const Datapacket &out_dpacket, const Comm &comm)
+        int size(int incount, const Datatype &dtype, const Comm &comm)
+        int size(const Datapacket &in_dpacket, const Comm &comm)
+
+        The functions mapped to the standard MPI calls.
+
+        ``pack()`` packs data described by ``in_dpacket`` to the output buffer ``outbuf`` sized ``outsize`` at 
+        the position ``position``. The buffer will be used in the communication in the commnicator ``comm``.
+        ``position`` is updated to the next location that can be used for the next packing operation.
+
+        ``upack()`` upacks data in the buffer ``inbuf`` into the user buffer described by ``out_dpacket``.
+
+        ``size()`` returns the maximal buffer size in byte that may be used in ``pack()``.
+
+
+.. class:: ExternalPack
+
+    ``ExternalPack`` is the same with :class:`Pack`, except that it uses "canonical packing/unpacking" 
+    which gives buffer with no header and following predefined standard format.
+
+    ``ExternalPack`` does not accept any commnicator because the buffer format is universal and does not
+    depend on the commnicator. Instead, it accepts a ``datarep`` argument in the constructor indicating
+    which standard data format is used. The only avaiable ``datarep`` is ``"external32"``.
+
+    .. function:: \
+        ExternalPack(const string &datarep="external32")
+        ExternalPack(size_t size_prealloc, const string &datarep="external32")
+
+        Constructors.
+
+    .. function:: \
+        ExternalPack & push(const Datapacket &in_dpacket)
+        ExternalPack & pop(const Datapacket &out_dpacket)
+
+        Pack/unpack data into/from the current buffer.
+
+    .. function:: \
+        Datapacket as_sendbuf() const
+        Datapacket as_recvbuf()
+
+        Return buffer descriptor that may be used in sending/recving calls.
+
+    .. function:: \
+        const void * get_base() const noexcept
+        void * get_base() noexcept            
+        size_t get_size() const noexcept      
+        aint_t get_position() const noexcept  
+        const string & get_datarep() const noexcept
+
+        Attribute getters.
+
+    .. function:: \
+        ExternalPack & set_size(size_t s)
+        ExternalPack & set_position(aint_t p) noexcept
+        ExternalPack & set_datarep(const string &datarep)
+
+        Attribute setters.
+
+    .. function:: \
+        static void pack(const Datapacket &in_dpacket, \
+            void *outbuf, aint_t outsize, aint_t &position, \ 
+            const string &datarep="external32")
+        static void unpack(const void *inbuf, aint_t insize, \
+            aint_t &position, const Datapacket &out_dpacket, \
+            const string &datarep="external32")
+        static aint_t size(int incount, const Datatype &dtype,  \
+            const string &datarep="external32")
+        static aint_t size(const Datapacket &in_dpacket, \
+            const string &datarep="external32")
+
+        Methods mapped to the standard MPI calls.
+
+
 Class Op: the Operation
 ---------------------------
 
@@ -353,8 +542,8 @@ Class Op: the Operation
     Method                                              Detail 
     =================================================== ==================================================
     default constructor                                 Not available.
-    copy constructor |br| and ``operator=(&&)``         Defined; ``noexcept``.
-    move constructor |br| and ``operator=(const &)``    Defined; ``noexcept``.
+    copy constructor |br| and ``operator=(const &)``    Defined; ``noexcept``.
+    move constructor |br| and ``operator=(&&)``         Defined; ``noexcept``.
     =================================================== ==================================================
 
     .. type::   MPI_User_function user_fn_t

@@ -7,15 +7,18 @@ int main(int argc, char const *argv[]){
     auto comm = env.world();                            
     int rank = comm.rank(), n_procs = comm.size();
 
-    /* Process 0 prepares task edges for each process and scatters it to them. */
-    vector<int> local_edges(2);                 // Each process will get its task edges.
+    /* Process 0 prepares task edges and scatters them to local edges of each 
+       process. */
+    int local_edges[2];
     if( rank == 0 ){
         int total_num = 10000, num_per_proc = total_num/n_procs;
-        vector<pair<int, int>> edges; 
-        for (int i = 0; i < n_procs; i++) 
-            edges.emplace_back(i*num_per_proc, (i+1)*num_per_proc);
-        edges.back().second = total_num;
-        comm.scatter(&edges[0], local_edges, 0); // [1] Scatter "edges" into "local_edges".
+        vector<int> edges;
+        for (int i = 0; i < n_procs; i++){
+            edges.push_back(i*num_per_proc);
+            edges.push_back((i+1)*num_per_proc);
+        } 
+        edges.back() = total_num;
+        comm.scatter(edges.data(), local_edges, 0);
     }else{
         comm.scatter(NULL, local_edges, 0);                   
     }
@@ -28,8 +31,7 @@ int main(int argc, char const *argv[]){
     /* Make reduction of local summations to a total value. */
     if( rank == 0 ){
         int sum = 0;
-        comm.reduce(local_sum, &sum, "+", 0);   // [2] Reduce from "local_sum" into "sum". 
-
+        comm.reduce(local_sum, &sum, "+", 0);
         HIPP::pout << "Result of sum is ", sum, 
             " (found by ", n_procs, " processes)", endl; 
     }else{

@@ -93,7 +93,7 @@ All of the following are defined within the namespace ``HIPP::MPI``.
 
 
 
-Class Env: the MPI Environment handler 
+Class Env: the MPI Environment manager
 ----------------------------------------
 
 .. class:: Env

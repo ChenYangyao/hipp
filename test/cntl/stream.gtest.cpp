@@ -48,6 +48,145 @@ TEST_F(CntlStreamPStreamTest, TupleType){
     ASSERT_EQ(os.str(), "Tpl=1:2:3s, pr=4:5s, comp=0:1:2:3s:4:5s:6,7,8\n");
 }
 
+/* PLogStream */
+class CntlStreamPLogStreamTest: public ::testing::Test {
+protected:
+    CntlStreamPLogStreamTest(): pls(os){}
+    
+    ostringstream os;
+    PLogStream pls;
+};
+
+
+TEST_F(CntlStreamPLogStreamTest, PlainLog) {
+    int x = 1;
+    vector<int> v {1,2,3};
+    pls << "x=", x, ", v={", v, "}", endl;
+
+    string s = "foo, bar, baz";
+    long arr[3] = {-1,-2,-3};
+    pls << "s=", s, ", arr={", pls(arr, arr+3), "}\n";
+
+    string target = 
+R"*(x=1, v={1,2,3}
+s=foo, bar, baz, arr={-1,-2,-3}
+)*";
+    ASSERT_EQ(os.str(), target);
+}
+
+TEST_F(CntlStreamPLogStreamTest, LogWithPushPop) {
+    pls << "Outermost environment", endl;
+    ASSERT_EQ(pls.stack_height(), 0);
+    {
+        auto g = pls.push_g("Enter", " main subroutine");
+        int x = 1;
+        vector<int> v {1,2,3};
+        pls << "Begin processing main\n";
+        pls << "x=", x, ", v={", v, "}", endl;
+        ASSERT_EQ(pls.stack_height(), 1);
+        {
+            auto g = pls.push_g("Enter sub subroutine");
+            g.hint_pop_on();
+            string s = "foo, bar, baz";
+            long arr[3] = {-1,-2,-3};
+            pls << "Begin processing sub\n";
+            pls << "s=", s, ", arr={", pls(arr, arr+3), "}\n";
+            pls << "End processing sub", endl;
+            ASSERT_EQ(pls.stack_height(), 2);
+        }
+        pls << "End processing main", endl;
+    }
+    pls << "Return to outermost environment", endl;
+
+    string target = 
+R"*(Outermost environment
+Enter main subroutine
+  |- Begin processing main
+  |- x=1, v={1,2,3}
+  Enter sub subroutine
+    |- Begin processing sub
+    |- s=foo, bar, baz, arr={-1,-2,-3}
+    |- End processing sub
+    |- Exit (stack=2)
+  |- End processing main
+Return to outermost environment
+)*";
+    ASSERT_EQ(os.str(), target);
+}
+
+TEST_F(CntlStreamPLogStreamTest, ChangePrefixStyle) {
+    pls.set_indent(4).set_entry_prefix("-- ");
+    pls << "Outermost environment", endl;
+    {
+        auto g = pls.push_g("Enter", " main subroutine");
+        int x = 1;
+        vector<int> v {1,2,3};
+        pls << "Begin processing main\n";
+        pls << "x=", x, ", v={", v, "}", endl;
+
+        {
+            auto g = pls.push_g("Enter sub subroutine");
+            g.hint_pop_on();
+            string s = "foo, bar, baz";
+            long arr[3] = {-1,-2,-3};
+            pls << "Begin processing sub\n";
+            pls << "s=", s, ", arr={", pls(arr, arr+3), "}\n";
+            pls << "End processing sub", endl;
+        }
+        pls << "End processing main", endl;
+    }
+    pls << "Return to outermost environment", endl;
+
+    string target = 
+R"*(Outermost environment
+Enter main subroutine
+    -- Begin processing main
+    -- x=1, v={1,2,3}
+    Enter sub subroutine
+        -- Begin processing sub
+        -- s=foo, bar, baz, arr={-1,-2,-3}
+        -- End processing sub
+        -- Exit (stack=2)
+    -- End processing main
+Return to outermost environment
+)*";
+    ASSERT_EQ(os.str(), target);
+}
+
+TEST_F(CntlStreamPLogStreamTest, AddFilter) {
+    pls.set_level_used(pls.LV_INFO);
+    pls << "Outermost environment", endl;
+    {
+        auto g = pls.push_at(pls.LV_INFO, "Enter", " main subroutine");
+        int x = 1;
+        vector<int> v {1,2,3};
+        pls << "Begin processing main\n";
+        pls << "x=", x, ", v={", v, "}", endl;
+
+        {
+            auto g = pls.push_at(pls.LV_DEBUG, "Enter sub subroutine");
+            g.hint_pop_on();
+            string s = "foo, bar, baz";
+            long arr[3] = {-1,-2,-3};
+            pls << "Begin processing sub\n";
+            pls << "s=", s, ", arr={", pls(arr, arr+3), "}\n";
+            pls << "End processing sub", endl;
+        }
+        pls << "End processing main", endl;
+    }
+    pls << "Return to outermost environment", endl;
+
+    string target = 
+R"*(Outermost environment
+Enter main subroutine
+  |- Begin processing main
+  |- x=1, v={1,2,3}
+  |- End processing main
+Return to outermost environment
+)*";
+    ASSERT_EQ(os.str(), target);
+}
+
 /* PrtArray */
 class CntlStreamPrtArrayTest: public ::testing::Test {
 protected:

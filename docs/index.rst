@@ -90,8 +90,8 @@ Here are some good examples of why to choose HIPP.
 Contributors
 ----------------
 
-- Yangyao Chen (Tsinghua, DOA, `yangyaochen.astro@foxmail.com <mailto:yangyaochen.astro@foxmail.com>`_, `kosmoswalker.com <https://www.kosmoswalker.com/>`_)
-- Kai Wang (Tsinghua, DOA, `wkcosmology@gmail.com <mailto:wkcosmology@gmail.com>`_, `chenyangyao.com <https://www.chenyangyao.com/>`_)
+- Yangyao Chen (Tsinghua, DOA, `yangyaochen.astro@foxmail.com <mailto:yangyaochen.astro@foxmail.com>`_, `chenyangyao.com <https://www.chenyangyao.com/>`_)
+- Kai Wang (Tsinghua, DOA, `wkcosmology@gmail.com <mailto:wkcosmology@gmail.com>`_, `kosmoswalker.com <https://www.kosmoswalker.com/>`_)
 
 
 .. toctree::

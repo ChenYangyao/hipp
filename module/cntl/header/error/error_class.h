@@ -1,16 +1,16 @@
 /**
- * creat: Yangyao CHEN, 2019/12/28
- *      [write   ] ErrClass - parent class for error-number based exceptions.
- */ 
+create: Yangyao CHEN, 2019/12/28
+    [write   ] ErrClass - parent class for error-number based exceptions.
+*/ 
 #ifndef _HIPPCNTL_ERROR_CLASS_H_
 #define _HIPPCNTL_ERROR_CLASS_H_
 #include "../incl/incl.h"
 namespace HIPP{
 
 /**
- * parent class for error-number based exceptions.
- * Should not be used directly.
- */
+Parent class for error-number based exceptions.
+Should not be used directly.
+*/
 class ErrClass: virtual public std::exception {
 public:
     typedef std::uint16_t errno_t;

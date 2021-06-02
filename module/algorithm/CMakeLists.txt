@@ -5,7 +5,7 @@ set(_moddir "${CMAKE_CURRENT_SOURCE_DIR}")
 set(_headerdir "${_moddir}/header")
 
 prtkeyproc("Module: ${_libname}")
-message("  Source at: ${_moddir}")
+message("   Source at: ${_moddir}")
 
 # Pure header interface library
 add_library(${_libname} INTERFACE)

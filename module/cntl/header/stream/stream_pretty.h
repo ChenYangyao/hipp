@@ -111,7 +111,7 @@ public:
 
     /**
     Objects in an iterable range defined by iterators [b, e) can be printed 
-    by, e..g, 
+    by, e.g., 
     pout << "{", pout(b, e), "}", endl;
 
     This is particularly useful for the raw array, like 

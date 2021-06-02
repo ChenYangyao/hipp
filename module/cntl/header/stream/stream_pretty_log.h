@@ -126,7 +126,7 @@ public:
     @os:    which the log output are directed to.
     @level: the current priority level.
     @level_used:    under which level the information should be printed.
-    @stack_height:  the depth of nesting/
+    @stack_height:  the depth of nesting.
     */
     PLogStream(ostream &os, int level=LV_NOTICE, int level_used=LV_NOTICE, 
         int stack_height=0) noexcept;

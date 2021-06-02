@@ -1,7 +1,11 @@
+/**
+create: Yangyao CHEN, 2021/06/01
+    [write   ] PStream - the pretty stream.
+*/
+
 #ifndef _HIPPCNTL_STREAM_PRETTY_H_
 #define _HIPPCNTL_STREAM_PRETTY_H_
-#include "../incl/incl.h"
-#include "../error/error.h"
+#include "stream_base.h"
 #include "stream_fmt_io.h"
 namespace HIPP {
 
@@ -61,7 +65,8 @@ public:
         return _prt_pair_range(std::begin(v), std::end(v));
     }
     template<typename K, typename T, typename Hash, typename Comp, typename A>
-    StreamOperand & operator,(const std::unordered_multimap<K,T,Hash,Comp,A> &v) {
+    StreamOperand & operator,(const std::unordered_multimap<K,T,Hash,Comp,A> &v) 
+    {
         return _prt_pair_range(std::begin(v), std::end(v));
     }
     template<typename T, typename Hash, typename Comp, typename A>
@@ -136,7 +141,16 @@ private:
 }; 
 } // namespace _hippcntl_stream_pretty_helper
 
+/**
+PStream - the pretty stream.
+A replacement for `std::ostream`. PStream provides shortcuts which enable 
+elegant output.
 
+Features:
+- Comma separated output sequence, e.g., pout << x, " = ", 1, endl;
+- `Print anything`, like that for `std::vector` we can use 
+  pout << std::vector {1,2,3}, endl;
+*/
 class PStream {
 public:
     typedef _hippcntl_stream_pretty_helper::StreamOperand stream_op_t;
@@ -158,9 +172,19 @@ public:
         return _op, std::forward<T>(x);
     }
 
+    /**
+    Objects in an iterable range defined by iterators [b, e) can be printed 
+    by, e..g, 
+    pout << "{", pout(b, e), "}", endl;
+
+    This is particularly useful for the raw array, like 
+    int a[N];
+    int *a = new int [N];
+    */
     template<typename It>
     stream_op_t::it_pair_t<It> operator()(It b, It e){ return {b, e}; }
     
+    /* Return a reference to the internal std::ostream object. */
     ostream & get_stream() const noexcept { return _op.get_stream(); }
 protected:
     stream_op_t _op;

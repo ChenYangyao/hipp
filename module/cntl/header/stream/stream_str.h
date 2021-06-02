@@ -1,3 +1,8 @@
+/**
+create: Yangyao CHEN, 2021/06/01
+    [write   ] String manupulation functions.
+*/
+
 #ifndef _HIPPCNTL_STREAM_STR_H_
 #define _HIPPCNTL_STREAM_STR_H_
 #include "../incl/incl.h"
@@ -14,23 +19,24 @@ namespace _hippcntl_STREAM_str_helper{
 } // namespace _hippcntl_STREAM_str_helper
 
 /**
- * split string `s` into segments, separated by `sep`.
- * `sep` can be any one of the following:
- * (1)  a single `char` type.
- * (2)  a single `std::string` type.
- * (3)  a single `const char *` type.
- * (4)  `const char *` and `std::size_t n`, where the first n characters of the 
- *      c-style string are used as the separator.
- * 
- * Examples
- * ----------
- *  auto substrs = str_split( "hello, world", ',' );
- *  // After returning, substrs is a std::vector<std::string> composed of two 
- *  // string "hello" and " world".
- * 
- *  substrs = str_split( "/usr/lib:/usr/local/lib:", ":" );
- *  // After returning, substrs is like { "/usr/lib", "/usr/local/lib", "" }.
- */
+Split string `s` into segments, separated by `sep`.
+`sep` can be any one of the following:
+(1)  a single `char` type.
+(2)  a single `std::string` type.
+(3)  a single `const char *` type.
+(4)  `const char *` and `std::size_t n`, where the first n characters of the 
+     c-style string are used as the separator.
+
+Examples
+----------
+ auto substrs = str_split( "hello, world", ',' );
+ // After returning, substrs is a std::vector<std::string> composed of two 
+ // string "hello" and " world".
+
+ substrs = str_split( "/usr/lib:/usr/local/lib:", ":" );
+ // After returning, substrs is like { "/usr/lib", "/usr/local/lib", "" }.
+
+*/
 template<typename ...Sep>
 vector<string> str_split( const string &s, Sep && ...sep ){
     size_t sepsize = 

@@ -1,11 +1,12 @@
 /**
- * creat: Yangyao CHEN, 2019/12/28
- *      [write   ] prt, prt_f, prt_a, str, str_f, str_a - formatted writes
- *                  and string constructors.
- */ 
+create: Yangyao CHEN, 2019/12/28
+    [write   ] prt, prt_f, prt_a, str, str_f, str_a - formatted writes
+        and string constructors.
+*/ 
 
 #ifndef _HIPPCNTL_STREAM_FMT_IO_H_
 #define _HIPPCNTL_STREAM_FMT_IO_H_
+#include "stream_base.h"
 #include "stream_array.h"
 
 #define HIPPCNTL_CLASS_INFO(class_name) \

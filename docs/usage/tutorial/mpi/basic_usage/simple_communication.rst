@@ -107,9 +107,7 @@ Strings, arithmetic scalars and arrays of arithmetic scalars can be directly use
     comm.send(dest, tag, buff, 3);
 
 Collective Communication
---------------------------------------------------------------
-
-:download:`mpi/basic-collective.cpp </../example/tutorial/mpi/basic-collective.cpp>`
+--------------------------
 
 Collective communication is useful when all of the processes in a communicator 
 are involved in the communication. In the below, we show how to use HIPP MPI 
@@ -119,9 +117,14 @@ collective calls to calculate the summation
 
     S = \sum_{i=0}^{N-1} i.
 
-We will use :func:`scatter() <HIPP::MPI::Comm::scatter>` method to spread task to 
-each process, let each process finish its own part of task, and then use :func:`reduce() <HIPP::MPI::Comm::reduce>`
-method to collectively sum the results from all parts.
+The example code can be found at :download:`mpi/basic-collective.cpp </../example/tutorial/mpi/basic-collective.cpp>`.
+In this example, we 
+
+- Use :func:`scatter() <HIPP::MPI::Comm::scatter>` method to spread task to 
+  each process
+- Let each process finish its own part of task. 
+- Then use :func:`reduce() <HIPP::MPI::Comm::reduce>`
+  method to collectively sum the results from all parts.
 
 Let's first initialize the MPI environment and define some helpful variables::
 
@@ -129,66 +132,59 @@ Let's first initialize the MPI environment and define some helpful variables::
     auto comm = env.world();                            
     int rank = comm.rank(), n_procs = comm.size();
 
-Each process gets its rank in the communicator and the number of processes.
-
-Now, let process 0 prepares the tasks for all processes and spreads it into other process by 
+Each process gets its rank in the communicator and the number of processes. Now, 
+let process 0 prepares the tasks for all processes and spreads it into other process by 
 :func:`scatter() <HIPP::MPI::Comm::scatter>`::
 
-    vector<int> local_edges(2);                 // Each process will get its task edges.
+    int local_edges[2];
     if( rank == 0 ){
         int total_num = 10000, num_per_proc = total_num/n_procs;
-        vector<pair<int, int>> edges; 
-        for (int i = 0; i < n_procs; i++) 
-            edges.emplace_back(i*num_per_proc, (i+1)*num_per_proc);
-        edges.back().second = total_num;
-        comm.scatter(&edges[0], local_edges, 0); // [1] Scatter "edges" into "local_edges"
+        vector<int> edges;
+        for (int i = 0; i < n_procs; i++){
+            edges.push_back(i*num_per_proc);
+            edges.push_back((i+1)*num_per_proc);
+        } 
+        edges.back() = total_num;
+        comm.scatter(edges.data(), local_edges, 0);
     }else{
         comm.scatter(NULL, local_edges, 0);                   
     }
 
-We distribute the tasks in such a way: each process gets a contiguous chunk to sum. The edges
-for each chunk can be represented by two integers, so we use a ``std::pair`` to describe 
-the task for each processes. Process 0 then uses a ``std::vector`` to hold all tasks. 
-After the call of :func:`scatter() <HIPP::MPI::Comm::scatter>` (``[1]`` in the code), each process gets its local 
-task. 
+We distribute the tasks in such a way: each process gets a contiguous chunk to sum. 
+The edges for each chunk can be represented by two integers. 
+Process 0 first uses a ``std::vector`` to hold all task edges and then 
+:func:`scatter() <HIPP::MPI::Comm::scatter>` each pair of edges to other 
+processes.
 
-Again, :func:`scatter() <HIPP::MPI::Comm::scatter>` has sevaral overloads. The simplest 
-form has three arguments: 
+Note that :func:`scatter() <HIPP::MPI::Comm::scatter>` has three arguments: the 
+starting address of the sending buffer, the receiving buffer (two integers here),
+and the rank of root process which provides the data to spread.
+The receiving buffer is a data packet instance, which can be constructed like 
+in :ref:`Point-to-point Communication <tutor-mpi-buff-spec>`.
 
-- ``const void *sendbuf``: the starting address of the sending buffer;
-- ``const Datapacket &recv_dpacket``: the receiving buffer (described using ``HIPP::MPI::Datapacket``);
-- ``int root``: the root process of the scatter operation, i.e., source of scattered data (not significant at destination processes, therefore set as ``NULL``).
-
-``recv_dpacket`` can be constructed by 
-ways like in the :ref:`Point-to-point Communication <tutor-mpi-buff-spec>`. We use a single 
-vector in the ``[1]`` of the code. 
-Equivalently, we may use the standard triple ``{&local_edges[0], 2, "int"}``.
-
-Then, each process finishes its task by simply adding all numbers between the edges::
+Each process then finishes its task by simply adding all numbers between the edges::
 
     int local_sum = 0;
     for(int i=local_edges[0]; i<local_edges[1]; ++i)
         local_sum += i;
 
-Then a :func:`reduce() <HIPP::MPI::Comm::reduce>` call (``[2]`` in the code) gathers the results in all processes, 
-makes summation, and put it in the ``sum`` of the root process (process 0)::
+Finally, a :func:`reduce() <HIPP::MPI::Comm::reduce>` call gathers the results in all processes, 
+makes summation, and put it in the ``sum`` of the root process::
 
     if( rank == 0 ){
         int sum = 0;
-        comm.reduce(local_sum, &sum, "+", 0);   // [2] Reduce from "local_sum" into "sum". 
-
+        comm.reduce(local_sum, &sum, "+", 0);
         HIPP::pout << "Result of sum is ", sum, 
             " (found by ", n_procs, " processes)", endl; 
     }else{
         comm.reduce(local_sum, NULL, "+", 0);
     }
 
-The simplest form of :func:`reduce() <HIPP::MPI::Comm::reduce>` has four arguments:
+The :func:`reduce() <HIPP::MPI::Comm::reduce>` call has four arguments:
 
-- ``const Datapacket &send_dpacket``: the sending buffer; We use a single value ``local_sum`` here;
-- ``void *recvbuf``: the starting address of the receiving buffer;
-- ``const Oppacket &op``: the operation on data. We use "+" for summation here;
-- ``int root``: the destination process where the reduction result is put. It is process 0 here.
+The simplest form of :func:`reduce() <HIPP::MPI::Comm::reduce>` has four arguments: 
+the sending buffer, the receiving buffer, the operation ("+" here), and the root process.
+
 
 The output of the program (run with 4 processes) is 
 
@@ -225,6 +221,34 @@ buffer specifications. If ``TaskSpecification`` has different types of
 members, you may simply sends/receives it as a sequence of ``char`` 
 (valid in homegeneous system), or you construct new MPI datatypes using 
 the methods that we will introduce in later chapters.
+
+
+More on Collective Data-moving
+"""""""""""""""""""""""""""""""
+We give more examples of data-moving collective calls in this section. Those source codes
+can be found at :download:`mpi/more-collective-data-moving.cpp </../example/tutorial/mpi/more-collective-data-moving.cpp>`.
+
+In the above example of calculating :math:`\pi`, 
+"scatter" operation moves data from one "root" process to all other procecess
+(includes the root itself). "Gather" operation, on the other hand, collects data 
+from all procecess and concatenates them into a buffer in the root process::
+
+    double x = rank;
+    if( rank == 0 ){
+        vector<double> all_x(n_procs);
+        comm.gather(x, all_x.data(), 0);
+        HIPP::pout << "Process 0 gathered (", all_x, ")", endl;
+    }else{
+        comm.gather(x, NULL, 0);
+    }
+
+Here, ecah process has a single floating-point value "x". 
+They are gathered into one buffer "all_x" by calling :func:`gather() <HIPP::MPI::Comm::gather>`.
+The output is:
+
+.. code-block:: text
+
+    Process 0 gathered (0,1,2,3)
 
 Applications
 -----------------

@@ -1,12 +1,16 @@
+/**
+create: Yangyao CHEN, 2021/06/01
+    [write   ] PrtArray - formatted printing for array-like containers.
+*/
+
 #ifndef _HIPPCNTL_STREAM_ARRAY_H_
 #define _HIPPCNTL_STREAM_ARRAY_H_
-#include "../incl/incl.h"
-#include "../error/error.h"
+#include "stream_base.h"
 namespace HIPP{
 
 /**
- * PrtArray - formatted printing for array-like containers.
- */
+PrtArray - formatted printing for array-like containers.
+*/
 template<typename InputIterator> class PrtArray;
 template<typename InputIterator>
 ostream & operator<<( ostream &os, const PrtArray<InputIterator> &arr );

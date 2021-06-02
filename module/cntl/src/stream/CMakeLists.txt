@@ -1,6 +1,7 @@
 set(_submodid stream)
 set(_src 
-    stream_pretty.cpp)
+    stream_pretty.cpp
+    stream_pretty_log.cpp)
 
 set(_libname "${_projectid}${_modid}${_submodid}")
 set(_headerdir "${_moddir}/header")

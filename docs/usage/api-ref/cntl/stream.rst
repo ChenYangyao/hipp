@@ -1,6 +1,8 @@
 Stream Manipulation
 ==========================
 
+.. include:: /global.rst
+
 The following variables, functions and classes are all defined within the namespace ``HIPP``.
 
 .. namespace:: HIPP 
@@ -13,8 +15,12 @@ Predefined Variables
 
     Pretty output streams for standard output and standard error. See below :class:`PStream` for the detail.
 
+.. var::    extern PLogStream plog
 
-Classes for formated IO
+    Stream for producing pretty log records. See below :class:`PLogStream` for the detail.
+
+
+Formatted IO
 --------------------------
 
 .. class:: PStream
@@ -101,7 +107,7 @@ Classes for formated IO
 
 .. class:: template<typename InputIterator> PrtArray
 
-    ``PrtArray`` handles the formated IO for array-like objects (e.g., 
+    ``PrtArray`` handles the formatted IO for array-like objects (e.g., 
     raw array, ``std::vector``, etc.).
 
     ``PrtArray`` can be copy/move-constructed, copy/move-assigned, where the 
@@ -250,11 +256,307 @@ Classes for formated IO
 
         ``reset_fmt()`` resets all the format specifiers to their default values.
 
+Logger
+---------
+
+.. class:: PLogStream: protected PStream
+
+    ``PLogStream`` - pretty stream for producing log.
+
+    ``PLogStream`` is like PStream, has overloaded ``<<`` operator which can then be 
+    chained using the comma operator.
+
+    ``PLogStream`` has extra methods to produce log records. Its features include
+
+    - Log entries are nested with indents hinting the stack height, i.e., ``PLogStream`` 
+      allows entering/leaving scopes, and produces extra indents in the more inner
+      scope.
+    - The type of information is printed can be controlled, i.e., log entries can be 
+      filtered according to its priority level.
+
+
+    **Memory management methods:**
+    
+    =================================================== ==================================================
+    Method                                              Detail 
+    =================================================== ==================================================
+    default constructor                                 Not available.
+    copy and move constructors                          Defined; deep-copy.
+    ``operator=(&&)`` |br| and ``operator=(const &)``   Deleted.
+    destructor                                          Noexcept.
+    =================================================== ==================================================
+
+    .. type:: _hippcntl_stream_pretty_log_helper::Guard guard_t
+    .. type:: _hippcntl_stream_pretty_log_helper::StreamOperand stream_op_t
+
+    .. enum:: @priority_level_enum : int
+
+        .. enumerator:: \
+            LV_EMERG=0
+            LV_ALERT=1  
+            LV_CRIT=2 
+            LV_ERR=3 
+            LV_WARNING=4
+            LV_NOTICE=5 
+            LV_INFO=6
+            LV_DEBUG=7 
+            LV_MIN=-1
+            LV_MAX=100
+
+    .. enum :: @other_constants : size_t
+
+        .. enumerator:: ENTRY_PREFIX_MAXLEN=32
+
+    .. function:: \ 
+        PLogStream(ostream &os, int level=LV_NOTICE, int level_used=LV_NOTICE, int stack_height=0) noexcept
+
+        Constructor.
+
+        :arg os: which the log output are directed to.
+        :arg level:         the current priority level.
+        :arg level_used:    under which level the information should be printed.
+        :arg stack_height:  the depth of nesting.
+    
+    .. function:: \
+        PLogStream & set_level(int level=LV_NOTICE) noexcept
+        PLogStream & set_level_used(int level_used=LV_NOTICE) noexcept
+        PLogStream & set_indent(int indent=2) noexcept
+        PLogStream & set_entry_prefix(const string &entry_prefix="|- ") noexcept
+
+        Attribute setters.
+        
+        - ``set_level()`` - current priority level.
+        - ``set_level_used()`` - used priority level. Log entries with 
+          `level <= level_used` will be printed.
+        - ``set_indent()`` - number of extra spaces padded at the front of each log entry.
+        - ``set_entry_prefix()`` - prefix padded at the front of each log entry. The 
+          prefix should be no longer than :enumerator:`ENTRY_PREFIX_MAXLEN`-1. Otherwise
+          it is truncated.
+    
+    .. function:: \
+        int level() const noexcept
+        int level_used() const noexcept
+        int indent() const noexcept
+        string entry_prefix() const noexcept
+        int stack_height() const noexcept
+
+        Attribute getters.
+        
+        - ``stack_height()`` - current stack height. If the height is non-zero,
+          ``indent*stack_height`` spaces and ``entry_prefix`` are printed for each 
+          entry. Otherwise nothing is padded.
+
+        Other attributes are explained in the corresponding setters.
+
+    .. function:: \
+        stream_op_t operator<< (ostream& (*pf)(ostream&))
+        stream_op_t operator<< (std::ios& (*pf)(std::ios&))
+        stream_op_t operator<< (std::ios_base& (*pf)(std::ios_base&))
+        template<typename T> stream_op_t operator<<(T &&x)
+
+        Output an object to this stream.
+        The object can be an standard formatter ``pf``, or any object ``x`` that is 
+        printable to PStream.
+    
+        The returned :type:`stream_op_t` object allows chaining the subsequent outputs
+        using comma operator, e.g., ``plog << "the object ", x, endl;``.
+    
+        The contents output by ``<<`` and ``,`` in a single statement is viewed as 
+        a single log entry. Paddings, as controlled by ``indent`` and ``entry_prefix``
+        is added.
+        
+    .. function:: \
+        template<typename ...Args> void push(Args &&...args)
+        void pop(bool hint=false)
+
+        ``push()`` increases the stack height by 1, while ``pop()`` decreases it by 1.
+        These two operations are used to increse the indent of log entry.
+
+        It is always recommended to use the guarded version :func:`push_g()` and 
+        :func:`push_at()` instead of the direct ``push()`` and ``pop()``. (RAII style)
+
+        For ``push()``, if ``args`` are non-empty, they are ouput into the stream, with
+        ``indent*stack_height`` spaces padding at front. Then, stack height is 
+        increased.
+
+        For ``pop()``, if `hint` is true, an entry is output, and then the stack height
+        is decreased.
+    
+    .. function:: \
+        template<typename ...Args> guard_t push_g(Args &&...args)
+        template<typename ...Args> guard_t push_at(int level, Args &&...args)
+
+        The guarded versions of :func:`push()`
+        
+        ``push_g()`` - call :func:`push()` and returns a guard.
+        
+        ``push_at()`` - change the level to ``level``, call :func:`push()`, and returns a guard.
+
+        The guard is responsible for restoring the ``stack_height`` on its destruction
+        (similar to calling :func:`pop()`). The ``level`` is also restored if its was changed.
+
+    .. function:: template<typename It> stream_op_t::it_pair_t<It> operator()(It b, It e)
+
+        Objects in an iterable range defined by iterators [b, e) can be printed 
+        by, e.g., ``pout << "{", pout(b, e), "}", endl;``
+
+        This is particularly useful for the raw array, like::
+
+            int a[N];
+            int *a = new int [N];
+
+    .. function:: ostream & get_stream() const noexcept
+
+        Return a reference to the internal ``std::ostream`` object.
+
+
+    **Examples:**
+
+    To perform logging, just use ``<<`` to put content into the stream, and chain 
+    the subsequent contents with ``,``::
+
+        plog << "Begin computation", endl;
+        int sum = 0;
+        for(int i=0; i<5; ++i)
+            sum += i;
+        plog << "Sum from 0 to 4 is ", sum, endl;
+
+    The output is 
+
+    .. code-block:: text
+
+        Begin computation
+        Sum from 0 to 4 is 10
+
+    To enter a new scope, call :func:`push_g()` and name the returned guard object. 
+    On the destruction of the guard object, we automatically leave the scope. The 
+    following codes show a function ``outer()``, with a nested ``inner()`` inside 
+    it::
+
+        double inner(double x) {
+            auto g = plog.push_g(emFF);
+            plog << "Begin computation for x=", x, "", endl;
+            double y = std::sin(x);
+            plog << "Got result ", y, endl;
+            return x;
+        }
+
+        void outer() {
+            auto g = plog.push_g(emFF, "- the outer loop");
+            vector<double> xs = {1., 2., 3.}, ys;
+            plog << "Begin computation for ", xs.size(), " values" , endl;
+            plog << "Inputs = {", xs, "}", endl;
+            for(size_t i=0; i<xs.size(); ++i){
+                ys.push_back(inner(xs[i]));
+            }
+            plog << "Got all results {", ys, "}", endl;
+        }
+
+    Here ``inner()`` just computes the sine of the input. :c:macro:`emFF` is 
+    a shortcut macro which gives the current source file name ("plog.cpp") and the function name ("outer").
+
+    A call of ``outer()`` then outputs
+
+    .. code-block:: text 
+
+        [file] plog.cpp, [func] outer - the outer loop
+          |- Begin computation for 3 values
+          |- Inputs = {1,2,3}
+          [file] plog.cpp, [func] inner 
+            |- Begin computation for x=1
+            |- Got result 0.841471
+          [file] plog.cpp, [func] inner 
+            |- Begin computation for x=2
+            |- Got result 0.909297
+          [file] plog.cpp, [func] inner 
+            |- Begin computation for x=3
+            |- Got result 0.14112
+          |- Got all results {1,2,3}
+
+    To specify the priority level in the scope, call :func:`push_at()` with the 
+    first argument specifying the desired level. The default level is :enumerator:`LV_NOTICE`.
+    The following codes show how to enter the :enumerator:`LV_INFO` and :enumerator:`LV_DEBUG` 
+    levels, respectively. Those two levels have lower priority than the NOTICE level::
+
+        void log_with_filter() {    
+            plog << "With filter", endl;
+            plog << "Log entries with low priority levels are not printed", endl;
+            {
+                auto _ = plog.push_at(plog.LV_INFO, "Lower-priority block");
+                plog << "Printed only when the INFO level is required", endl;
+                plog << "Begin execution", endl;
+                /* work on a task */
+                {
+                    auto _ = plog.push_at(plog.LV_DEBUG, "Even lower-priority block");
+                    plog << "Printed only when the DEBUG level is required", endl;
+                    plog << "Begin more detail of the task", endl;
+                    /* work on detail */
+                    plog << "End successfully", endl;
+                }
+                plog << "End execution", endl;
+            }
+            plog << "End of subroutine", endl;
+        }
+
+    A call of ``log_with_filter()`` outputs 
+
+    .. code-block:: text
+
+        With filter
+        Log entries with low priority levels are not printed
+        End of subroutine
+
+    Where the log entries with priority lower than :enumerator:`LV_NOTICE` are not printed.
+    To allow printing the INFO entries, call :func:`set_level_used()`::
+
+        plog.set_level_used(plog.LV_INFO);
+        log_with_filter();
+
+    Then the output give all logs with priority equal or higher than the INFO level:
+
+    .. code-block:: text
+    
+        With filter
+        Log entries with low priority levels are not printed
+        Lower-priority block
+        |- Begin execution
+        |- End execution
+        End of subroutine
+
+
+    If the :enumerator:`LV_DEBUG` is turned on::
+
+        plog.set_level_used(plog.LV_DEBUG);
+        log_with_filter();
+
+    Then, more logs are printed
+
+    .. code-block:: text
+
+        With filter
+        Log entries with low priority levels are not printed
+        Lower-priority block
+        |- Printed only when the INFO level is required
+        |- Begin execution
+        Even lower-priority block
+            |- Printed only when the DEBUG level is required
+            |- Begin more detail of the task
+            |- End successfully
+        |- End execution
+        End of subroutine
+
+
+
+
+
+
+
     
 
 
-Formated IO Shortcuts and String Factories
---------------------------------------------------
+
+Shortcuts for formatted IO and Factories of Strings 
+----------------------------------------------------
 
 .. function::   template<typename ...Args> \
                     ostream & prt(ostream &os, Args &&... args)

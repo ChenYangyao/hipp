@@ -75,6 +75,7 @@ public:
     StreamOperand(StreamOperand &&) noexcept = default;
     StreamOperand & operator=(const StreamOperand &) noexcept = default;
     StreamOperand & operator=(StreamOperand &&) noexcept = default;
+    ~StreamOperand() noexcept {}
 
     StreamOperand & operator, (ostream& (*pf)(ostream&));
     StreamOperand & operator, (std::ios& (*pf)(std::ios&)) ;
@@ -230,6 +231,12 @@ protected:
     stream_op_t _prt_indent();
     bool _prt_is_on() const noexcept;
 };
+
+
+/**
+Global static variable
+*/
+extern PLogStream plog;
 
 /**
 Implementation

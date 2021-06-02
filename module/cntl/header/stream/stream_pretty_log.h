@@ -21,6 +21,10 @@ restored.
 */
 class Guard {
 public:
+    /**
+    Constructor. Get a guard to the current scope for a stream `pls`.
+    @hint_pop: see the attribute setter `hint_pop_on()` and `hint_pop_off()`.
+    */
     Guard(PLogStream &pls, bool hint_pop=false);
     
     Guard(Guard &&) noexcept;
@@ -68,6 +72,13 @@ public:
     typedef PStream::stream_op_t parent_t;
     using parent_t::it_pair_t;
 
+    /**
+    Constructor.
+    @os: the operand refers to that stream and the comma operator outputs 
+        conntent into it.
+    @op: the operand refers to the same stream as `op`.
+    @eanbled: if true, output will show. Otherwise no output is shown.
+    */
     StreamOperand(ostream &os, bool enabled) noexcept;
     StreamOperand(const parent_t & op, bool enabled) noexcept;
 
@@ -77,6 +88,9 @@ public:
     StreamOperand & operator=(StreamOperand &&) noexcept = default;
     ~StreamOperand() noexcept {}
 
+    /**
+    The comma operator allows chaining outputs.
+    */
     StreamOperand & operator, (ostream& (*pf)(ostream&));
     StreamOperand & operator, (std::ios& (*pf)(std::ios&)) ;
     StreamOperand & operator, (std::ios_base& (*pf)(std::ios_base&));
@@ -84,6 +98,7 @@ public:
     template<typename T>
     StreamOperand & operator,(T &&x);
 
+    /* Return a reference to the internal std::ostream object. */
     ostream & get_stream() const noexcept;
 private:
     bool _enabled;

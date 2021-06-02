@@ -283,7 +283,7 @@ Logger
     default constructor                                 Not available.
     copy and move constructors                          Defined; deep-copy.
     ``operator=(&&)`` |br| and ``operator=(const &)``   Deleted.
-    destructor                                          Noexcept.
+    destructor                                          ``noexcept``.
     =================================================== ==================================================
 
     .. type:: _hippcntl_stream_pretty_log_helper::Guard guard_t
@@ -546,15 +546,6 @@ Logger
         End of subroutine
 
 
-
-
-
-
-
-    
-
-
-
 Shortcuts for formatted IO and Factories of Strings 
 ----------------------------------------------------
 
@@ -646,4 +637,103 @@ Shortcuts for formatted IO and Factories of Strings
 
     
 
+Helpers
+--------------
+
+The following classes are defined as helpers for the main classes. 
+Users generally do not use them directly, and should get access to 
+them by calling the methods of the main classes.
+
+
+.. class:: _hippcntl_stream_pretty_log_helper::Guard
+
+    Guard of the push operation of :class:`PLogStream`.
+
+    On the calling of a guarded push, the :class:`PLogStream` releases a guard object. 
+    On the destruction of the guard object, the side effect of push operation is
+    restored.
+
+    **Memory management methods:**
+
+    =================================================== ====================================================
+    Method                                              Detail 
+    =================================================== ====================================================
+    default constructor                                 Not avaiable.
+    copy constructor |br| and ``operator=(&&)``         Deleted.
+    move constructor |br| and ``operator=(const &)``    Available; ``noexcept``.
+    destructor                                          ``noexcept``.
+    =================================================== ====================================================
+
+    .. function:: Guard(PLogStream &pls, bool hint_pop=false)
+
+        Constructor. Get a guard to the current scope for a stream ``pls``.
+        
+        :arg hint_pop: see the attribute setter :func:`hint_pop_on()` and :func:`hint_pop_off()`.
+
+    .. function::: \
+        void hint_pop_on() noexcept
+        void hint_pop_off() noexcept
+        
+        Switch on/off the hint on pop.
+
+        If on, an extra entry is output to the :class:`PLogStream` at the destruction of 
+        the guard, similar to calling :func:`PLogStream::pop(true)`.
+
+    .. function:: \
+        bool hint_pop() const noexcept
     
+        Attribute getter - whether the hint on pop is turned on.
+
+    .. function:: \
+        void set_level(int level, bool scoped=true) noexcept
+
+        Change the `level` of the :class:`PLogStream`. 
+        
+        :arg scoped: if true, the guard object is responsible for restoring the old 
+            ``level``. Otherwise the ``level`` is really changed - the guard does not
+            restore it.
+
+
+.. class:: StreamOperand: protected PStream::stream_op_t
+
+    The stream operand of PLogStream. See the description of 
+    :func:`PLogStream::operator<<` for the detail usage of the stream operand.
+
+    **Memory management methods:**
+
+    =================================================== ====================================================
+    Method                                              Detail 
+    =================================================== ====================================================
+    default constructor                                 Not avaiable.
+    copy constructor |br| and ``operator=(&&)``         Deleted. ``noexcept``. The copied one refers to 
+                                                        the same stream object.
+    move constructor |br| and ``operator=(const &)``    Available; ``noexcept``.
+    destructor                                          ``noexcept``.
+    =================================================== ====================================================
+
+    .. type:: PStream::stream_op_t parent_t
+    .. type:: parent_t::it_pair_t
+
+    .. function:: \
+        StreamOperand(ostream &os, bool enabled) noexcept
+        StreamOperand(const parent_t & op, bool enabled) noexcept
+
+        Constructor.
+        
+        :arg os: the operand refers to that stream and the comma operator outputs 
+            conntent into it.
+        :arg op: the operand refers to the same stream as `op`.
+        :arg eanbled: if true, output will show. Otherwise no output is shown.
+
+    .. function:: \
+        StreamOperand & operator, (ostream& (*pf)(ostream&))
+        StreamOperand & operator, (std::ios& (*pf)(std::ios&)) 
+        StreamOperand & operator, (std::ios_base& (*pf)(std::ios_base&))
+        template<typename T> StreamOperand & operator,(T &&x)
+
+        The comma operator allows chaining outputs.
+
+    .. function:: \
+        ostream & get_stream() const noexcept
+
+        Return a reference to the internal std::ostream object.

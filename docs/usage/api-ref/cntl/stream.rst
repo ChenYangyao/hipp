@@ -670,7 +670,7 @@ them by calling the methods of the main classes.
         
         :arg hint_pop: see the attribute setter :func:`hint_pop_on()` and :func:`hint_pop_off()`.
 
-    .. function::: \
+    .. function:: \
         void hint_pop_on() noexcept
         void hint_pop_off() noexcept
         

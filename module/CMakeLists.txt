@@ -1,29 +1,28 @@
-add_subdirectory(cntl)
+add_subdirectory("${_projectid}cntl")
 
-add_subdirectory(algorithm)
-
+add_subdirectory("${_projectid}algorithm")
 
 if(enable-mpi)
     message(STATUS "${BoldGreen}MPI enabled${ColourReset}")
-    add_subdirectory(mpi)
+    add_subdirectory("${_projectid}mpi")
 else()
-    message(STATUS "${BoldRed}MPI disabled${ColourReset}. Module mpi will not be built")
+    message(STATUS "${BoldRed}MPI disabled${ColourReset}. Module ${_projectid}mpi will not be built")
 endif()
 
 
 if(enable-hdf5)
     message(STATUS "${BoldGreen}HDF5 enabled${ColourReset}")
-    add_subdirectory(io)
+    add_subdirectory("${_projectid}io")
 else()
-    message(STATUS "${BoldRed}HDF5 disabled${ColourReset}. Module IO will not be built")
+    message(STATUS "${BoldRed}HDF5 disabled${ColourReset}. Module ${_projectid}io will not be built")
 endif()
 
 
 if(enable-simd)
     message(STATUS "${BoldGreen}SIMD enabled${ColourReset}")
-    add_subdirectory(simd)
+    add_subdirectory("${_projectid}simd")
 else()
-    message(STATUS "${BoldRed}SIMD disabled${ColourReset}. Module SIMD will not be built")
+    message(STATUS "${BoldRed}SIMD disabled${ColourReset}. Module ${_projectid}simd will not be built")
 endif()
 
 
@@ -35,8 +34,8 @@ if(enable-gsl)
     if(gsl_lib_dir)
         message(STATUS "GSL library dir is specified: ${gsl_lib_dir}")
     endif()
-    add_subdirectory(numerical)
+    add_subdirectory("${_projectid}numerical")
 else()
-    message(STATUS "${BoldRed}GSL disabled${ColourReset}. Module numerical will not be built")
+    message(STATUS "${BoldRed}GSL disabled${ColourReset}. Module ${_projectid}numerical will not be built")
 endif()
 

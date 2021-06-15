@@ -1,15 +1,19 @@
 /**
- * creat: Yangyao CHEN, 2020/12/22
- *      [write   ] 
- *      UniformRealRandomNumber - generator of floating-point random numbers of 
- *          uniform distribution
- */ 
+create: Yangyao CHEN, 2020/12/22
+    [write   ] 
+    UniformRealRandomNumber - generator of floating-point random numbers of 
+          uniform distribution
+*/ 
 
 #ifndef _HIPPNUMERICAL_RANNUM_UNIFORM_REAL_H_
 #define _HIPPNUMERICAL_RANNUM_UNIFORM_REAL_H_
 #include "rannum_base.h"
 namespace HIPP::NUMERICAL {
 
+/**
+UniformRealRandomNumber - generator of floating-point random numbers of 
+uniform distribution
+*/
 template<typename RealT = double, typename EngineT = DefaultRandomEngine>
 class UniformRealRandomNumber {
 public:
@@ -19,12 +23,21 @@ public:
     typedef typename rng_t::param_type param_t;
     typedef typename engine_t::result_type seed_t;
 
+    /**
+    @a, b: the minimum and maximum of the distribution. Instead a param_t can
+        be passed.
+    @engine: an engine of random number. A pointer is passed, and its lifetime
+        is controlled by the user.
+    */
     explicit UniformRealRandomNumber(result_t a = 0., result_t b = 1.,
         engine_t *engine = &global_random_engine);
     explicit UniformRealRandomNumber(const param_t &param, 
         engine_t *engine = &global_random_engine);
     ~UniformRealRandomNumber();
 
+    /** 
+    The copy for parameter is deep, but engine is shared. 
+    */
     UniformRealRandomNumber(const UniformRealRandomNumber &o);
     UniformRealRandomNumber(UniformRealRandomNumber &&o);
     UniformRealRandomNumber & operator=(const UniformRealRandomNumber &o);
@@ -36,9 +49,21 @@ public:
     UniformRealRandomNumber & reset_engine(engine_t *engine);
     UniformRealRandomNumber & seed(seed_t seed = engine_t::default_seed);
 
+    /**
+    Geters
+    a(), b() - the parameter a, b.
+    min(), max() - minimum and maximum value that can be returned by the random
+        number generator. Equal to a and b, respectively.
+    range() - the pair {min(), max()}.
+    engine() - the random engine. 
+    rng() - the internal random number generator.
+    */
     result_t a() const;
     result_t b() const;
     param_t param() const;
+    result_t min() const;
+    result_t max() const;
+    std::pair<result_t, result_t> range() const;
     engine_t *engine() const;
     rng_t & rng();
     const rng_t & rng() const;
@@ -161,6 +186,18 @@ auto _HIPP_TEMPARG b() const -> result_t {
 _HIPP_TEMPHD
 auto _HIPP_TEMPARG param() const -> param_t {
     return _rng.param();
+}
+_HIPP_TEMPHD
+auto _HIPP_TEMPARG min() const -> result_t {
+    return _rng.min();
+}
+_HIPP_TEMPHD
+auto _HIPP_TEMPARG max() const -> result_t {
+    return _rng.max();
+}
+_HIPP_TEMPHD
+auto _HIPP_TEMPARG range() const -> std::pair<result_t, result_t> {
+    return {min(), max()};
 }
 _HIPP_TEMPHD
 auto _HIPP_TEMPARG engine() const -> engine_t *{

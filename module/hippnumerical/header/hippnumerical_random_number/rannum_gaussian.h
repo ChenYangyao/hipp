@@ -20,12 +20,22 @@ public:
     typedef typename rng_t::param_type param_t;
     typedef typename engine_t::result_type seed_t;
 
+    /**
+    @mean, stddev: parameters of normal distribution. Instead a param_t can
+        be passed.
+    @engine: an engine of random number. A pointer is passed, and its lifetime
+        is controlled by the user.
+    */
     explicit GaussianRandomNumber(
         result_t mean = 0., result_t stddev = 1., 
         engine_t *engine = &global_random_engine);
     explicit GaussianRandomNumber(const param_t &param, 
         engine_t *engine = &global_random_engine);
     ~GaussianRandomNumber();
+
+    /** 
+    The copy for parameter is deep, but engine is shared. 
+    */
     GaussianRandomNumber(const GaussianRandomNumber &o);
     GaussianRandomNumber(GaussianRandomNumber &&o);
     GaussianRandomNumber & operator=(const GaussianRandomNumber &o);
@@ -48,6 +58,9 @@ public:
     result_t mean() const;
     result_t stddev() const;
     param_t param() const;
+    result_t min() const;
+    result_t max() const;
+    std::pair<result_t, result_t> range() const;
     engine_t * engine() const;
     rng_t & rng();
     const rng_t & rng() const;
@@ -173,7 +186,18 @@ _HIPP_TEMPHD
 auto _HIPP_TEMPARG param() const -> param_t {
     return _rng.param();
 }
-
+_HIPP_TEMPHD
+auto _HIPP_TEMPARG min() const -> result_t {
+    return _rng.min();
+}
+_HIPP_TEMPHD
+auto _HIPP_TEMPARG max() const -> result_t {
+    return _rng.max();
+}
+_HIPP_TEMPHD
+auto _HIPP_TEMPARG range() const -> std::pair<result_t, result_t> {
+    return {min(), max()};
+}
 _HIPP_TEMPHD
 auto _HIPP_TEMPARG engine() const -> engine_t * { return _engine; }
 

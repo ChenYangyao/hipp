@@ -6,5 +6,4 @@
 #include "hippnumerical_random_number/randist.h"
 #include "hippnumerical_random_number/rannum.h"
 
-
 #endif	//_HIPPNUMERICAL_H_

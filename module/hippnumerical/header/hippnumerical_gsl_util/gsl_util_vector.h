@@ -1,8 +1,8 @@
 /**
- * creat: Yangyao CHEN, 2021/01/04
- *      [write   ] 
- *      GSLVector - wrapper of gsl_vector.
- */ 
+create: Yangyao CHEN, 2021/01/04
+    [write   ] 
+    GSLVector - wrapper of gsl_vector.
+*/ 
 
 #ifndef _HIPPNUMERICAL_GSL_UTIL_VECTOR_H_
 #define _HIPPNUMERICAL_GSL_UTIL_VECTOR_H_
@@ -40,7 +40,7 @@ public:
      *      @ref: can be 
      *      - BORROW_REF: the new object does not free the vector on 
      *        desrtruction.
-     *      - OWN_REF: free is called on destruction, i.e., owner is transfered.
+     *      - OWN_REF: free is called on destruction, i.e., owner is transferred.
      *      - COPY: deep copy the vector.
      * (3)  deep copy, i.e., by creating a new vector and copying original 
      *      content.

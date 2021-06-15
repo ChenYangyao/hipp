@@ -4,6 +4,7 @@ set(_src
     gsl_util_multimin_fn.gtest.cpp 
     function_min.gtest.cpp
     function_multimin.gtest.cpp
+    random_number.gtest.cpp
 )
 
 set(_exebase "${_projectid}${_modid}")

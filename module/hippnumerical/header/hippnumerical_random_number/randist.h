@@ -10,6 +10,10 @@
 #include "randist_exponential.h"
 #include "randist_laplace.h"
 
+#include "randist_cauchy.h"
+#include "randist_rayleigh.h"
+#include "randist_rayleigh_tail.h"
+
 #include "randist_uniform_real.h"
 
 #endif	//_HIPPNUMERICAL_RANDIST_H_

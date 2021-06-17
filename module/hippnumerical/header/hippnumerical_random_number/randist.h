@@ -6,6 +6,10 @@
 #include "randist_bivariate_gaussian.h"
 #include "randist_lognormal.h"
 
+#include "randist_exp_pow.h"
+#include "randist_exponential.h"
+#include "randist_laplace.h"
+
 #include "randist_uniform_real.h"
 
 #endif	//_HIPPNUMERICAL_RANDIST_H_

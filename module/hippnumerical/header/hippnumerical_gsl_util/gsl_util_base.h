@@ -1,5 +1,5 @@
-#ifndef _HIPPNUMERICAL_BASE_BASE_H_
-#define _HIPPNUMERICAL_BASE_BASE_H_
+#ifndef _HIPPNUMERICAL_GSL_UTIL_BASE_H_
+#define _HIPPNUMERICAL_GSL_UTIL_BASE_H_
 #include <hippcntl.h>
 #include <gsl/gsl_errno.h>
 
@@ -21,4 +21,4 @@ typedef std::size_t size_t;
 
 } // namespace HIPP
 
-#endif	//_HIPPNUMERICAL_BASE_BASE_H_
+#endif	//_HIPPNUMERICAL_GSL_UTIL_BASE_H_

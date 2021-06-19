@@ -6,5 +6,6 @@
 #include "interp.h"
 #include "min.h"
 #include "multimin.h"
+#include "special_function.h"
 
 #endif	//_HIPPNUMERICAL_FUNCTION_H_

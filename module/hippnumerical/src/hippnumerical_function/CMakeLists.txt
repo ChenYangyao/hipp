@@ -2,6 +2,7 @@ set(_submodid "function")
 set(_src 
     integration.cpp
     interp.cpp
+    special_function.cpp
 )
 set(_libname "${_projectid}${_modid}_${_submodid}")
 set(_headerdir "${_moddir}/header")

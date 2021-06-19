@@ -3,6 +3,7 @@ set(_src
     gsl_util_vector.gtest.cpp 
     gsl_util_multimin_fn.gtest.cpp 
     function_min.gtest.cpp
+    function_special_function.gtest.cpp
     function_multimin.gtest.cpp
     random_number.gtest.cpp
 )

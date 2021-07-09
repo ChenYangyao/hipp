@@ -17,6 +17,14 @@ public:
     typedef logger_t::msg_t msg_t;
     typedef logger_t::guard_t guard_t;
 
+    /**
+    The indices of predefined states in the state array.
+    The state id can be obtained from _state_name2id[index], such as 
+    _state_name2id[SEND]. However, this should be managed and accessed only
+    internally.
+    
+    @MAX_STATE_ID: the maximal possible index of the state array.
+    */
     enum predefined_state : int { 
         SEND=0, BSEND=1, SSEND=2, RSEND=3, 
         ISEND=10,IBSEND=11, ISSEND=12, IRSEND=13,
@@ -41,6 +49,16 @@ public:
 
         MAX_STATE_ID=127 };
 
+    /**
+    Constructor
+    Start a default logger in a communicator `global_comm`. P2P and collective
+    events are defined within this communicator.
+
+    The constructor is a collective call for `global_comm` - all involved 
+    processes must call it with the same `logfilename`.
+
+    @logfilename: file name of where the log records are dumpped.
+    */
     DefaultLogger(Comm global_comm, const string &logfilename);
     ~DefaultLogger();
 
@@ -49,6 +67,28 @@ public:
     DefaultLogger & operator=(const DefaultLogger &) = delete;
     DefaultLogger & operator=(DefaultLogger &&) = delete;
 
+    /**
+    The default logger defines the following events. A call to any of them 
+    produces a new log record for a specific event. If the call returns a 
+    guard (which means the event is a duration, not a time-point), the record
+    is further modified to save the end of this event at the destruction of the 
+    guard.
+
+    All the events have a `msg` argument, which allows store extra user 
+    information for later inspection.
+
+    tick() and duration() - sequential events for a single process. `tick()` is 
+        a time-point event, `duration()` is a duration event.
+
+    ticksend() and tickrecv() - p2p time-point events for the sender and 
+        receiver, respectively.
+    durationsend() and durationrecv() - p2p duration event.
+    
+    alltick() and allduration() - collective time-point and duration events.
+
+    Other functions are either p2p or collective duration event. They 
+    correspond to MPI calls.
+    */
     void tick(const msg_t &msg=msg_t::empty_msg);
     guard_t duration(const msg_t &msg=msg_t::empty_msg);
 
@@ -69,7 +109,6 @@ public:
     guard_t recv(int dest, int tag, const msg_t &msg=msg_t::empty_msg);
     guard_t irecv(int dest, int tag, const msg_t &msg=msg_t::empty_msg);
     
-
     void alltick(const msg_t &msg=msg_t::empty_msg);
     guard_t allduration(const msg_t &msg=msg_t::empty_msg);
     

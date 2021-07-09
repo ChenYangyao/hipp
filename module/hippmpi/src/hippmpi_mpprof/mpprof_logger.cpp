@@ -244,6 +244,7 @@ Logger::~Logger() {
         _sm->store(g_st.create_group("end"));
     }
 }
+
 ostream & Logger::info(ostream &os, int fmt_cntl) const {
     PStream p(os);
     if( fmt_cntl <= 0 ) {
@@ -260,7 +261,8 @@ ostream & Logger::info(ostream &os, int fmt_cntl) const {
         "  |- buff size=", buff_size(), "\n";
     return os;
 }
-void Logger::store() {
+
+void Logger::store(bool shrink_buff) {
     auto &comm = _sm->global_comm();
     auto &mtx = _sm->global_mtx();
     int rank = comm.rank();
@@ -284,6 +286,11 @@ void Logger::store() {
     _events.clear();
     _stored_events.clear();
     _event_msgs.clear();
+    if( shrink_buff ) {
+        _events.shrink_to_fit();
+        _stored_events.shrink_to_fit();
+        _event_msgs.shrink_to_fit();
+    }
 }
 
 

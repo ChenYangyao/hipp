@@ -246,6 +246,19 @@ private:
 
 } // namespace _mpprof_logger_helper    
 
+/**
+The logger for profiling.
+
+Logger takes a set of predefined group and states (defined by the state 
+manager) as meta infomation and produces corresponding log records for events.
+
+The records are saved in memory first but can be moved to file by calling 
+`store()` or `check_and_store()`. 
+
+Logger is responsible for saving required information, like the start and end 
+time of each event, the initialization time of the logger system, and other 
+information that may be useful for profiling.
+*/
 class Logger {
 public:
     typedef _mpprof_logger_helper::state_manager_t state_manager_t;
@@ -259,31 +272,86 @@ public:
     typedef std::chrono::high_resolution_clock clk_t;
     typedef std::chrono::duration<double> sec_t;
 
+    /** 
+    Constructor 
+    Start a logger with state manager `sm`. `sm` is not owned by the logger, 
+    so that you can still add new group/state to it.
+    
+    @logfilename: file name of where the log records are dumpped.
+    */
     Logger(std::shared_ptr<state_manager_t> sm, const string &logfilename);
+    
     ~Logger();
+
+    /**
+    The Logger cannot be copied or moved, since those may invalidate the 
+    guards.
+    */
     Logger(const Logger &) = delete;
     Logger(Logger &&) = delete;
     Logger & operator=(const Logger &) = delete;
     Logger & operator=(Logger &&) = delete;
 
+    /**
+    Print some information os this logger to the stream `os`.
+    @fmt_cntl: 0 for a short and inline information. 1 for a verbose and block 
+        version.
+
+    The operator<< is equivalent to `info()` with `fmt_cntl = 1`.
+    */
     ostream & info(ostream &os=cout, int fmt_cntl=1) const;
     friend ostream & operator<<(ostream &os, const Logger &lg);
 
+    /**
+    Add a new log record.
+    @state_id: meta info describing this log record.
+    @msg_t: extra information to be held by this record.
+    @dest: @tag: for a P2P event, must provide a valid dest and tag as in the 
+        communication calls - those will be used by the profiling tools.
+    
+    An event id is returned, which can be passed into `end_push()` to end 
+    the record, if the event is a duration.
+    For a time point event, `event_t::INVALID_ID` is returned, and should never
+    be passed to `end_push()`.
+
+    To avoid any manual error, use the guarded version instead.
+    */
     long long push_sequential(int state_id, const msg_t &msg=msg_t::empty_msg);
     long long push_p2p(int state_id, int dest, int tag, 
         const msg_t &msg=msg_t::empty_msg);
     long long push_collective(int state_id, const msg_t &msg=msg_t::empty_msg);
     void end_push(long long event_id);
 
+    /**
+    The guarded version of push calls, i.e., RAII idiom is adopted.
+    The returned guard is responsible for endding the record at its destruction.
+    */
     guard_t push_sequential_g(int state_id, const msg_t &msg=msg_t::empty_msg);
     guard_t push_p2p_g(int state_id, int dest, int tag, 
         const msg_t &msg=msg_t::empty_msg);
     guard_t push_collective_g(int state_id, const msg_t &msg=msg_t::empty_msg);
 
-    size_t buff_size() const noexcept;
-    void store();
-    void check_and_store(size_t max_buff_size=1024*1024*32);
+    /**
+    buff_size() - Get the used buffer size (in byte) in memory for log records.
+    store() - Save the records into file. This can be called even when some 
+        guards are still active.
+    check_and_store() - Check if the used buffer size (in byte) exceeds
+        `max_buff_size` (by default, it is 32M). If so, store them into file.
 
+    @shrink_buff: if true, the buffer is shrunk after storing. Otherwise they 
+        are preserved to accelerate later recording.
+    */
+    size_t buff_size() const noexcept;
+    void store(bool shrink_buff=false);
+    void check_and_store(size_t max_buff_size=1024*1024*32, 
+        bool shrink_buff=false);
+
+    /**
+    Getters.
+    state_manager() returns the current state manager. 
+    clock_tick() returns the current value of the clock (in second) used by the 
+        logger.
+    */
     const state_manager_t & state_manager() const { return *_sm; }
     state_manager_t & state_manager() { return *_sm; }
     double clock_tick() const { return _clock_tick(); }
@@ -444,9 +512,9 @@ inline size_t Logger::buff_size() const noexcept {
         _stored_events.size()*sizeof(stored_event_t) +
         _event_msgs.size();   
 }
-inline void Logger::check_and_store(size_t max_buff_size) {
+inline void Logger::check_and_store(size_t max_buff_size, bool shrink_buff) {
     if( buff_size() > max_buff_size ) 
-        store();
+        store(shrink_buff);
 }
 
 } // namespace HIPP::MPI

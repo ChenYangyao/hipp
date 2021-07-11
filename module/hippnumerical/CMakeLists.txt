@@ -32,6 +32,7 @@ install(DIRECTORY
         "${_headerdir}/${_libname}_gsl_util"
         "${_headerdir}/${_libname}_function"
         "${_headerdir}/${_libname}_random_number"
+        "${_headerdir}/${_libname}_linalg"
     DESTINATION include
 )
 install(FILES

@@ -12,6 +12,14 @@ class CounterS{
 public:
     typedef ValueT value_t;
 
+    /** 
+    Contructor
+    Create a set of `n_counters` counters in the communicator `comm`.
+    This is a collective call over `comm`.
+    The counter is unbound, i.e., its maximal allowed value is determined by 
+    `ValueT`.
+    The counters are initialized with 0.
+    */
     CounterS(const Comm &comm, int n_counters=1);
     ~CounterS() noexcept;
     CounterS( const CounterS & ) = delete;
@@ -20,7 +28,15 @@ public:
     CounterS( CounterS && )  noexcept;
     CounterS & operator=( CounterS && )  noexcept;
 
+    /**
+    Get a value from the counter indexed `counter_id`.
+    The counter is then increased by 1.
+    */
     value_t get(int counter_id=0);
+
+    /**
+    Reset the counters to 0. Each process sets only the counters host by itself.
+    */
     void reset();
 protected:
     Win _win;

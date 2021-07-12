@@ -44,6 +44,7 @@ if(enable-hdf5)
     target_link_libraries(${_libname}
         PUBLIC
             "${_projectid}io"
+            "${_projectid}algorithm"
     )
     install(DIRECTORY 
             "${_headerdir}/${_libname}_mpprof"

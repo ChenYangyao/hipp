@@ -23,5 +23,6 @@ target_link_libraries(${_libname}
     PRIVATE
         "${_projectid}cntl"
         "${_projectid}io"
+        "${_projectid}algorithm"
         mpi-interface
 )

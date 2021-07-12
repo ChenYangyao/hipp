@@ -1,5 +1,5 @@
 #include <time_ticker.h>
-#include <stream/stream.h>
+#include <hippcntl_stream/stream.h>
 namespace HIPP {
 
 ostream & Ticker::record_t::info(ostream &os, int fmt_cntl) const {

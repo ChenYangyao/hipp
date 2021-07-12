@@ -103,6 +103,13 @@ public:
         vector<ngb_t> &ngbs) const;
     size_t count_r( const float_t pos[DIM], float_t r ) const;
     
+    /**
+    Query all points in the neighbor rectangular region.
+    @pos: center of the rectangle.
+    @dx: criteria, i.e., ngb with position |pos_ngb[i] - pos[i]| < dx[i] is 
+        selected.
+    Return a vector of pointers, each pointing to a tree node selected.
+    */
     vector<_p_node_t> nearest_rect( 
         const float_t pos[DIM], const float_t dx[DIM] ) const;
     vector<_p_node_t> nearest_rect( 

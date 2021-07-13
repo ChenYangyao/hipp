@@ -7,56 +7,20 @@ create: Yangyao CHEN, 2021/05/28
 #define _HIPPNUMERICAL_LINALG_SVEC_H_
 #include "linalg_base.h"
 #include <limits>
+#include <type_traits>
 #include <tuple>
 
 #define _HIPP_TEMPHD template<typename ValueT, size_t N>
 #define _HIPP_TEMPARG <ValueT, N>
-#define _HIPP_TEMPRET _HIPP_TEMPHD inline auto SVec _HIPP_TEMPARG::
-#define _HIPP_TEMPNORET _HIPP_TEMPHD inline SVec _HIPP_TEMPARG::
+#define _HIPP_TEMPCLS SVec _HIPP_TEMPARG
+#define _HIPP_TEMPCLS_B SVec <bool, N>
+#define _HIPP_TEMPRET _HIPP_TEMPHD inline auto _HIPP_TEMPCLS::
+#define _HIPP_TEMPNORET _HIPP_TEMPHD inline _HIPP_TEMPCLS::
 
 namespace HIPP::NUMERICAL {
 
 /* Forward declarations. */
 _HIPP_TEMPHD class SVec;
-
-_HIPP_TEMPHD 
-SVec _HIPP_TEMPARG operator+ (const typename SVec _HIPP_TEMPARG::value_t &lhs, 
-    const SVec _HIPP_TEMPARG &rhs) noexcept;
-_HIPP_TEMPHD 
-SVec _HIPP_TEMPARG operator- (const typename SVec _HIPP_TEMPARG::value_t &lhs, 
-    const SVec _HIPP_TEMPARG &rhs) noexcept;
-_HIPP_TEMPHD 
-SVec _HIPP_TEMPARG operator* (const typename SVec _HIPP_TEMPARG::value_t &lhs, 
-    const SVec _HIPP_TEMPARG &rhs) noexcept;
-_HIPP_TEMPHD 
-SVec _HIPP_TEMPARG operator/ (const typename SVec _HIPP_TEMPARG::value_t &lhs, 
-    const SVec _HIPP_TEMPARG &rhs) noexcept;
-
-_HIPP_TEMPHD 
-SVec _HIPP_TEMPARG operator+ (const SVec _HIPP_TEMPARG &lhs, 
-    const typename SVec _HIPP_TEMPARG::value_t &rhs) noexcept;
-_HIPP_TEMPHD 
-SVec _HIPP_TEMPARG operator- (const SVec _HIPP_TEMPARG &lhs, 
-    const typename SVec _HIPP_TEMPARG::value_t &rhs) noexcept;
-_HIPP_TEMPHD 
-SVec _HIPP_TEMPARG operator* (const SVec _HIPP_TEMPARG &lhs, 
-    const typename SVec _HIPP_TEMPARG::value_t &rhs) noexcept;
-_HIPP_TEMPHD 
-SVec _HIPP_TEMPARG operator/ (const SVec _HIPP_TEMPARG &lhs, 
-    const typename SVec _HIPP_TEMPARG::value_t &rhs) noexcept;
-
-_HIPP_TEMPHD 
-SVec _HIPP_TEMPARG operator+ (const SVec _HIPP_TEMPARG &lhs, 
-    const SVec _HIPP_TEMPARG &rhs) noexcept;
-_HIPP_TEMPHD 
-SVec _HIPP_TEMPARG operator- (const SVec _HIPP_TEMPARG &lhs, 
-    const SVec _HIPP_TEMPARG &rhs) noexcept;
-_HIPP_TEMPHD 
-SVec _HIPP_TEMPARG operator* (const SVec _HIPP_TEMPARG &lhs, 
-    const SVec _HIPP_TEMPARG &rhs) noexcept;
-_HIPP_TEMPHD 
-SVec _HIPP_TEMPARG operator/ (const SVec _HIPP_TEMPARG &lhs, 
-    const SVec _HIPP_TEMPARG &rhs) noexcept;
 
 _HIPP_TEMPHD 
 ostream & operator<<(ostream &os, const SVec _HIPP_TEMPARG &);
@@ -68,7 +32,8 @@ SVec - static/small vector with fixed length.
 
 Template arguments
 ------------------
-@ValueT: element type, usually a numerical scalar.
+@ValueT: element type, usually a numerical scalar (integer or floating-point 
+    number).
 @N: length of the vector.
 
 Description
@@ -81,6 +46,12 @@ Tuple-like API is defined for SVec, so that structural binding can be used.
 e.g., 
 SVec3d v {1.,2.,3.};
 auto [x,y,z] = v; 
+
+A particle in a N-body simulation may use SVec to find its grid index, simply 
+by:
+SVec<double, 3> v {-3.1, 0.1, 10.1};
+double grid_sz = 0.5;
+auto ids = (v / grid_sz).floor();           // => SVec<int, 3> {-7, 0, 20}
 */
 template<typename ValueT, size_t N>
 class SVec {
@@ -92,15 +63,21 @@ public:
     typedef value_t *iter_t;               /* Iterator pointing to an element */
     typedef const value_t *citer_t;        /* const ... */
 
+    inline static constexpr bool IS_INT = 
+        std::is_integral_v<value_t> || std::is_pointer_v<value_t>;
+    typedef std::conditional_t<IS_INT, value_t, int> int_value_t;
+
     /**
     (1) Default initialization of all elements. Caution for numeric types.
     (2) All members are initialized with `value`.
     (3) Copy from a range starting from `b`, with `n` elements.
     (4) From an initializer list.
+    (5) Cast from another svec.
     In (3) and (4), `n` and `il.size()` may be less than `SIZE`, leaving 
     the tail un-initialized.
     */
     SVec() noexcept {}
+
     explicit SVec(const value_t &value) noexcept;
     
     template<typename InputValue>
@@ -108,6 +85,9 @@ public:
     
     template<typename InputValue>
     SVec(std::initializer_list<InputValue> il) noexcept;
+
+    template<typename InputValue>
+    explicit SVec(const SVec<InputValue, SIZE> &v) noexcept;
 
     SVec(const SVec &) noexcept = default;
     SVec(SVec &&)  noexcept = default;
@@ -144,54 +124,55 @@ public:
 
     /**
     Linear algebra operations. All are element-wise operations.
-    Possible combinations for unary RMW are:
-    (1) vec Op= scalar;
-    (2) vec Op= vec;
-    Possible combinations for binary operation are:
-    (1) vec Op scalar;
-    (2) scalar Op vec;
-    (3) vec Op vec;
+
+    Unary RMW operations:
+    (1) vec op= scalar;
+    (2) vec op= vec;
+    Where op is 
+        +, -, *, /, %           - arithmetic -> SVec &
+        &, |, ^                 - bit-wise for each element -> SVec &
+
+    Binary operations:
+    (1) vec op scalar;
+    (2) scalar op vec;
+    (3) vec op vec;
+    Where op is 
+        +, -, *, /, %           - arithmetic -> SVec
+        &, |, ^                 - bit-wise for each element -> SVec
+        <, <=, >, >=, ==, !=    - comparison/logic -> SVec<bool, SIZE>
+
+    Unary operations: 
+    op vec;
+    Where op is
+        ~, +, -                 - bit-wise NOT, arithmetic positate, negate. 
+    
+    Caution: interger-lift is used intermediately for small integers, like 
+    `int`, `char`, etc., so that ~true != false. But &, |, ^ work just as
+    expected.
     */
     SVec & operator+=(const value_t &rhs) noexcept;
     SVec & operator-=(const value_t &rhs) noexcept;
     SVec & operator*=(const value_t &rhs) noexcept;
     SVec & operator/=(const value_t &rhs) noexcept;
+    SVec & operator%=(const value_t &rhs) noexcept;
+    SVec & operator&=(const value_t &rhs) noexcept;
+    SVec & operator|=(const value_t &rhs) noexcept;
+    SVec & operator^=(const value_t &rhs) noexcept;
 
     SVec & operator+=(const SVec &rhs) noexcept;
     SVec & operator-=(const SVec &rhs) noexcept;
     SVec & operator*=(const SVec &rhs) noexcept;
     SVec & operator/=(const SVec &rhs) noexcept;
+    SVec & operator%=(const SVec &rhs) noexcept;
+    SVec & operator&=(const SVec &rhs) noexcept;
+    SVec & operator|=(const SVec &rhs) noexcept;
+    SVec & operator^=(const SVec &rhs) noexcept;
 
-    friend SVec operator+ <ValueT, N> (const value_t &lhs, 
-        const SVec &rhs) noexcept;
-    friend SVec operator- <ValueT, N> (const value_t &lhs, 
-        const SVec &rhs) noexcept;
-    friend SVec operator* <ValueT, N> (const value_t &lhs, 
-        const SVec &rhs) noexcept;
-    friend SVec operator/ <ValueT, N> (const value_t &lhs, 
-        const SVec &rhs) noexcept;
-    
-    friend SVec operator+ <ValueT, N> (const SVec &lhs, 
-        const value_t &rhs) noexcept;
-    friend SVec operator- <ValueT, N> (const SVec &lhs, 
-        const value_t &rhs) noexcept;
-    friend SVec operator* <ValueT, N> (const SVec &lhs, 
-        const value_t &rhs) noexcept;
-    friend SVec operator/ <ValueT, N> (const SVec &lhs, 
-        const value_t &rhs) noexcept;
-
-    friend SVec operator+ <ValueT, N> (const SVec &lhs, 
-        const SVec &rhs) noexcept;
-    friend SVec operator- <ValueT, N> (const SVec &lhs, 
-        const SVec &rhs) noexcept;
-    friend SVec operator* <ValueT, N> (const SVec &lhs, 
-        const SVec &rhs) noexcept;
-    friend SVec operator/ <ValueT, N> (const SVec &lhs, 
-        const SVec &rhs) noexcept;
+    SVec operator+() const noexcept;
+    SVec operator-() const noexcept;
+    SVec operator~() const noexcept;
 
     /**
-    `normalize()` or `normalized()` for an integer vector are ill-defined. 
-    With caution to use.
     norm() - 2-norm.
     norm(p) - p-norm.
     squared_norm() - square of 2-norm.
@@ -199,10 +180,18 @@ public:
     normalize(int p) - normalize itself, according to p-norm.
     normalized() - returns a normalized (according to 2-norm) copy.
     normalized(int p) - returns a normalized (according to p-norm) copy.
+
+    `normalize()` or `normalized()` for an integer vector are ill-defined. 
+    `norm()` with `ResT` != floting-point type may have truncation.
+    With caution to use.
     */
-    double norm() const noexcept;
-    double norm(int p) const noexcept;
-    double squared_norm() const noexcept;
+    template<typename ResT = double> 
+    ResT norm() const noexcept;
+    template<typename ResT = double> 
+    ResT norm(int p) const noexcept;
+    template<typename ResT = double> 
+    ResT squared_norm() const noexcept;
+    
     SVec & normalize() noexcept;
     SVec & normalize(int p) noexcept;
     SVec normalized() const noexcept;
@@ -210,33 +199,74 @@ public:
 
     /**
     Reduction operations.
-    sum(), prod() - the summation or product of all elements.
-    mean(), min(), max(), minmax() - as you expect. The indexed-version returns
-        the element index if the corresponding result.
+    sum(), prod(), mean() - the summation, product, and mean of all elements.
     dot(), cross() - dot product and cross product.
+    
+    min(), max(), minmax() - as you expect. 
+    The indexed-version returns the element index if the corresponding result.
+
+    all(), any() - all true or any true.
     */
-    value_t sum() const noexcept;
-    value_t prod() const noexcept; 
-    value_t mean() const noexcept;
+    template<typename ResT = value_t>
+    ResT sum() const noexcept;
+    template<typename ResT = value_t>
+    ResT prod() const noexcept; 
+    template<typename ResT = value_t>
+    ResT mean() const noexcept;
+
+    template<typename ResT = value_t>
+    ResT dot(const SVec &rhs) const noexcept;
+    template<typename ResT = value_t>
+    SVec<ResT, SIZE> cross(const SVec &rhs) const noexcept;
+
     value_t min() const noexcept;
     value_t max() const noexcept;
     std::pair<value_t, value_t> minmax() const noexcept;
-    value_t dot(const SVec &rhs) const noexcept;
-    SVec cross(const SVec &rhs) const noexcept;
     
     size_t min_index() const noexcept;
     size_t max_index() const noexcept;
     std::pair<size_t, size_t> minmax_index() const noexcept;
 
+    bool all() const noexcept;
+    bool any() const noexcept;
+
     /**
-    Map reduce operations.
+    Map and visit operations.
     map() - for each i, self[i] = op(self[i]).
     mapped() - returns a mapped copy.
+    visit() - for each size_t(i), call op(i, self[i]).
     */
     template<typename UnaryOp>
     SVec & map(UnaryOp op);
-    template<typename UnaryOp>
-    SVec mapped(UnaryOp op) const;
+
+    template<typename UnaryOp, 
+        typename ResT = std::invoke_result_t<UnaryOp, value_t> >
+    SVec<ResT, SIZE> mapped(UnaryOp op) const;
+
+    template<typename BinaryOp>
+    void visit(BinaryOp op) const;
+    
+    template<typename BinaryOp>
+    void visit(BinaryOp op);
+
+    /** 
+    Round to floor, ceil, trunc toward zero, and absolute value.
+    `ResT` can be floating-point or integral type.
+
+    By default, if `value_t` is integer or pointer, `ResT` is `value_t` itself,
+    no conversion bappens. Otherwise `ResT` is `int`, and the conversion is made
+    by std::floor, ceil, trunc and then cast.
+    */
+    template<typename ResT = int_value_t>
+    SVec<ResT, SIZE> floor() const noexcept;
+
+    template<typename ResT = int_value_t>
+    SVec<ResT, SIZE> ceil() const noexcept;
+
+    template<typename ResT = int_value_t>
+    SVec<ResT, SIZE> trunc() const noexcept;
+
+    SVec abs() const noexcept;
 protected:
     value_t _data[SIZE];
 };
@@ -276,17 +306,23 @@ SVec(const value_t &value) noexcept { std::fill_n(_data, SIZE, value); }
 
 _HIPP_TEMPHD
 template<typename InputValue>
-SVec _HIPP_TEMPARG::SVec(const InputValue *b, size_t n) noexcept {
+_HIPP_TEMPCLS::SVec(const InputValue *b, size_t n) noexcept {
     std::copy_n(b, n, _data);
 }
 
 _HIPP_TEMPHD
 template<typename InputValue>
-SVec _HIPP_TEMPARG::SVec(std::initializer_list<InputValue> il) noexcept {
+_HIPP_TEMPCLS::SVec(std::initializer_list<InputValue> il) noexcept {
     auto b = il.begin(), e = il.end();
     size_t i = 0;
     while( b != e )
         _data[i++] = *b++;
+}
+
+_HIPP_TEMPHD
+template<typename InputValue>
+_HIPP_TEMPCLS::SVec(const SVec<InputValue, SIZE> &v) noexcept {
+    std::copy_n(v.data(), SIZE, _data);
 }
 
 _HIPP_TEMPHD
@@ -310,7 +346,7 @@ _HIPP_TEMPRET info(ostream &os, int fmt_cntl) const -> ostream & {
 }
 
 _HIPP_TEMPHD
-void swap(SVec _HIPP_TEMPARG &lhs, SVec _HIPP_TEMPARG &rhs) noexcept {
+void swap(_HIPP_TEMPCLS &lhs, _HIPP_TEMPCLS &rhs) noexcept {
     std::swap_ranges(lhs.begin(), lhs.end(), rhs.begin());
 }
 
@@ -323,12 +359,12 @@ _HIPP_TEMPRET data() const noexcept -> const value_t * {
 }
 
 _HIPP_TEMPHD 
-constexpr size_t SVec _HIPP_TEMPARG::size() noexcept {
+constexpr size_t _HIPP_TEMPCLS::size() noexcept {
     return SIZE;
 }
 
 _HIPP_TEMPHD
-constexpr bool SVec _HIPP_TEMPARG::empty() noexcept {
+constexpr bool _HIPP_TEMPCLS::empty() noexcept {
     return SIZE == 0;
 }
 
@@ -378,156 +414,132 @@ _HIPP_TEMPRET cend() const noexcept -> citer_t {
     return _data+SIZE;
 }
 
-_HIPP_TEMPRET operator+=(const value_t &rhs) noexcept -> SVec & {
-    for(size_t i=0; i<SIZE; ++i) _data[i] += rhs;
-    return *this;
+#define _HIPP_UNARY_OP_DEF(op) \
+_HIPP_TEMPRET operator op (const value_t &rhs) noexcept -> SVec & { \
+    for(size_t i=0; i<SIZE; ++i) _data[i]  op  rhs; \
+    return *this; \
+} \
+_HIPP_TEMPRET operator op (const SVec &rhs) noexcept -> SVec & { \
+    for(size_t i=0; i<SIZE; ++i) _data[i]  op  rhs._data[i]; \
+    return *this; \
 }
 
-_HIPP_TEMPRET operator-=(const value_t &rhs) noexcept -> SVec & {
-    for(size_t i=0; i<SIZE; ++i) _data[i] -= rhs;
-    return *this;
+_HIPP_UNARY_OP_DEF(+=)
+_HIPP_UNARY_OP_DEF(-=)
+_HIPP_UNARY_OP_DEF(*=)
+_HIPP_UNARY_OP_DEF(/=)
+_HIPP_UNARY_OP_DEF(%=)
+_HIPP_UNARY_OP_DEF(&=)
+_HIPP_UNARY_OP_DEF(|=)
+_HIPP_UNARY_OP_DEF(^=)
+
+#undef _HIPP_UNARY_OP_DEF
+
+#define _HIPP_UNARY_OP_DEF(op) \
+_HIPP_TEMPRET operator op () const noexcept -> SVec { \
+    SVec ret; \
+    for(size_t i=0; i<SIZE; ++i) ret[i] = op _data[i]; \
+    return ret; \
+} \
+
+_HIPP_UNARY_OP_DEF(+)
+_HIPP_UNARY_OP_DEF(-)
+_HIPP_UNARY_OP_DEF(~)
+
+#undef _HIPP_UNARY_OP_DEF
+
+#define _HIPP_BIN_OP_DEF(op)  \
+_HIPP_TEMPHD \
+_HIPP_TEMPCLS operator op (const typename _HIPP_TEMPCLS::value_t &lhs,  \
+    const _HIPP_TEMPCLS &rhs) noexcept  \
+{ \
+    _HIPP_TEMPCLS ret; \
+    for(size_t i=0; i<N; ++i) ret[i] = lhs op rhs[i]; \
+    return ret; \
+} \
+_HIPP_TEMPHD \
+_HIPP_TEMPCLS operator op (const _HIPP_TEMPCLS &lhs,  \
+    const typename _HIPP_TEMPCLS::value_t& rhs) noexcept { \
+    _HIPP_TEMPCLS ret; \
+    for(size_t i=0; i<N; ++i) ret[i] = lhs[i] op rhs; \
+    return ret; \
+} \
+_HIPP_TEMPHD \
+_HIPP_TEMPCLS operator op (const _HIPP_TEMPCLS &lhs,  \
+    const _HIPP_TEMPCLS &rhs) noexcept { \
+    _HIPP_TEMPCLS ret; \
+    for(size_t i=0; i<N; ++i) ret[i] = lhs[i] op rhs[i]; \
+    return ret; \
 }
 
-_HIPP_TEMPRET operator*=(const value_t &rhs) noexcept -> SVec & {
-    for(size_t i=0; i<SIZE; ++i) _data[i] *= rhs;
-    return *this;
+_HIPP_BIN_OP_DEF(+)
+_HIPP_BIN_OP_DEF(-)
+_HIPP_BIN_OP_DEF(*)
+_HIPP_BIN_OP_DEF(/)
+_HIPP_BIN_OP_DEF(%)
+_HIPP_BIN_OP_DEF(&)
+_HIPP_BIN_OP_DEF(|)
+_HIPP_BIN_OP_DEF(^)
+
+#undef _HIPP_BIN_OP_DEF
+
+#define _HIPP_BIN_OP_DEF(op) \
+_HIPP_TEMPHD \
+_HIPP_TEMPCLS_B operator op (const typename _HIPP_TEMPCLS::value_t &lhs,  \
+    const _HIPP_TEMPCLS &rhs) noexcept  \
+{ \
+    _HIPP_TEMPCLS_B ret; \
+    for(size_t i=0; i<N; ++i) ret[i] = lhs op rhs[i]; \
+    return ret; \
+} \
+_HIPP_TEMPHD \
+_HIPP_TEMPCLS_B operator op (const _HIPP_TEMPCLS &lhs,  \
+    const typename _HIPP_TEMPCLS::value_t& rhs) noexcept { \
+    _HIPP_TEMPCLS_B ret; \
+    for(size_t i=0; i<N; ++i) ret[i] = lhs[i] op rhs; \
+    return ret; \
+} \
+_HIPP_TEMPHD \
+_HIPP_TEMPCLS_B operator op (const _HIPP_TEMPCLS &lhs,  \
+    const _HIPP_TEMPCLS &rhs) noexcept { \
+    _HIPP_TEMPCLS_B ret; \
+    for(size_t i=0; i<N; ++i) ret[i] = lhs[i] op rhs[i]; \
+    return ret; \
 }
 
-_HIPP_TEMPRET operator/=(const value_t &rhs) noexcept -> SVec & {
-    for(size_t i=0; i<SIZE; ++i) _data[i] /= rhs;
-    return *this;
-}
+_HIPP_BIN_OP_DEF(<)
+_HIPP_BIN_OP_DEF(<=)
+_HIPP_BIN_OP_DEF(>)
+_HIPP_BIN_OP_DEF(>=)
+_HIPP_BIN_OP_DEF(==)
+_HIPP_BIN_OP_DEF(!=)
 
-_HIPP_TEMPRET operator+=(const SVec &rhs) noexcept -> SVec & {
-    for(size_t i=0; i<SIZE; ++i) _data[i] += rhs._data[i];
-    return *this;
-}
+#undef _HIPP_BIN_OP_DEF
 
-_HIPP_TEMPRET operator-=(const SVec &rhs) noexcept -> SVec & {
-    for(size_t i=0; i<SIZE; ++i) _data[i] -= rhs._data[i];
-    return *this;
-}
-
-_HIPP_TEMPRET operator*=(const SVec &rhs) noexcept -> SVec & {
-    for(size_t i=0; i<SIZE; ++i) _data[i] *= rhs._data[i];
-    return *this;
-}
-
-_HIPP_TEMPRET operator/=(const SVec &rhs) noexcept -> SVec & {
-    for(size_t i=0; i<SIZE; ++i) _data[i] /= rhs._data[i];
-    return *this;
+_HIPP_TEMPHD
+template<typename ResT>
+ResT _HIPP_TEMPCLS::norm() const noexcept {
+    return static_cast<ResT>(std::sqrt( squared_norm<ResT>() ));
 }
 
 _HIPP_TEMPHD
-SVec _HIPP_TEMPARG operator+ (const typename SVec _HIPP_TEMPARG::value_t &lhs, 
-    const SVec _HIPP_TEMPARG &rhs) noexcept {
-    SVec _HIPP_TEMPARG ret;
-    for(size_t i=0; i<N; ++i) ret._data[i] = lhs + rhs._data[i];
-    return ret;
+template<typename ResT>
+ResT _HIPP_TEMPCLS::norm(int p) const noexcept {
+    ResT ret {0};
+    for(size_t i=0; i<SIZE; ++i) {
+        ret += std::pow(_data[i], p);
+    }
+    return std::pow(ret, 1.0/static_cast<double>(p));
 }
 
 _HIPP_TEMPHD
-SVec _HIPP_TEMPARG operator- (const typename SVec _HIPP_TEMPARG::value_t &lhs, 
-    const SVec _HIPP_TEMPARG &rhs) noexcept {
-    SVec _HIPP_TEMPARG ret;
-    for(size_t i=0; i<N; ++i) ret._data[i] = lhs - rhs._data[i];
-    return ret;
-}
-
-_HIPP_TEMPHD
-SVec _HIPP_TEMPARG operator* (const typename SVec _HIPP_TEMPARG::value_t &lhs, 
-    const SVec _HIPP_TEMPARG &rhs) noexcept {
-    SVec _HIPP_TEMPARG ret;
-    for(size_t i=0; i<N; ++i) ret._data[i] = lhs * rhs._data[i];
-    return ret;
-}
-
-_HIPP_TEMPHD
-SVec _HIPP_TEMPARG operator/ (const typename SVec _HIPP_TEMPARG::value_t &lhs, 
-    const SVec _HIPP_TEMPARG &rhs) noexcept {
-    SVec _HIPP_TEMPARG ret;
-    for(size_t i=0; i<N; ++i) ret._data[i] = lhs / rhs._data[i];
-    return ret;
-}
-
-_HIPP_TEMPHD
-SVec _HIPP_TEMPARG operator+ (const SVec _HIPP_TEMPARG &lhs, 
-    const typename SVec _HIPP_TEMPARG::value_t& rhs) noexcept {
-    SVec _HIPP_TEMPARG ret;
-    for(size_t i=0; i<N; ++i) ret._data[i] = lhs._data[i] + rhs;
-    return ret;
-}
-
-_HIPP_TEMPHD
-SVec _HIPP_TEMPARG operator- (const SVec _HIPP_TEMPARG &lhs, 
-    const typename SVec _HIPP_TEMPARG::value_t& rhs) noexcept {
-    SVec _HIPP_TEMPARG ret;
-    for(size_t i=0; i<N; ++i) ret._data[i] = lhs._data[i] - rhs;
-    return ret;
-}
-
-_HIPP_TEMPHD
-SVec _HIPP_TEMPARG operator* (const SVec _HIPP_TEMPARG &lhs, 
-    const typename SVec _HIPP_TEMPARG::value_t& rhs) noexcept {
-    SVec _HIPP_TEMPARG ret;
-    for(size_t i=0; i<N; ++i) ret._data[i] = lhs._data[i] * rhs;
-    return ret;
-}
-
-_HIPP_TEMPHD
-SVec _HIPP_TEMPARG operator/ (const SVec _HIPP_TEMPARG &lhs, 
-    const typename SVec _HIPP_TEMPARG::value_t& rhs) noexcept {
-    SVec _HIPP_TEMPARG ret;
-    for(size_t i=0; i<N; ++i) ret._data[i] = lhs._data[i] / rhs;
-    return ret;
-}
-
-_HIPP_TEMPHD
-SVec _HIPP_TEMPARG operator+ (const SVec _HIPP_TEMPARG &lhs, 
-    const SVec _HIPP_TEMPARG &rhs) noexcept {
-    SVec _HIPP_TEMPARG ret;
-    for(size_t i=0; i<N; ++i) ret._data[i] = lhs._data[i] + rhs._data[i];
-    return ret;
-}
-
-_HIPP_TEMPHD
-SVec _HIPP_TEMPARG operator- (const SVec _HIPP_TEMPARG &lhs, 
-    const SVec _HIPP_TEMPARG &rhs) noexcept {
-    SVec _HIPP_TEMPARG ret;
-    for(size_t i=0; i<N; ++i) ret._data[i] = lhs._data[i] - rhs._data[i];
-    return ret;
-}
-
-_HIPP_TEMPHD
-SVec _HIPP_TEMPARG operator* (const SVec _HIPP_TEMPARG &lhs, 
-    const SVec _HIPP_TEMPARG &rhs) noexcept {
-    SVec _HIPP_TEMPARG ret;
-    for(size_t i=0; i<N; ++i) ret._data[i] = lhs._data[i] * rhs._data[i];
-    return ret;
-}
-
-_HIPP_TEMPHD
-SVec _HIPP_TEMPARG operator/ (const SVec _HIPP_TEMPARG &lhs, 
-    const SVec _HIPP_TEMPARG &rhs) noexcept {
-    SVec _HIPP_TEMPARG ret;
-    for(size_t i=0; i<N; ++i) ret._data[i] = lhs._data[i] / rhs._data[i];
-    return ret;
-}
-
-
-_HIPP_TEMPRET norm() const noexcept -> double {
-    return std::sqrt(squared_norm());
-}
-
-_HIPP_TEMPRET norm(int p) const noexcept -> double {
-    double ret = 0.;
-    for(size_t i=0; i<SIZE; ++i) ret += std::pow(_data[i], p);
-    return std::pow(ret, 1.0/static_cast<double>(p) );
-}
-
-_HIPP_TEMPRET squared_norm() const noexcept -> double {
-    double ret = 0.;
-    for(size_t i=0; i<SIZE; ++i) ret += _data[i]*_data[i];
+template<typename ResT>
+ResT _HIPP_TEMPCLS::squared_norm() const noexcept {
+    ResT ret {0};
+    for(size_t i=0; i<SIZE; ++i){
+        auto x = static_cast<ResT>(_data[i]);
+        ret += x*x;
+    }
     return ret;
 }
 
@@ -551,20 +563,48 @@ _HIPP_TEMPRET normalized(int p) const noexcept -> SVec{
     return (*this) * static_cast<value_t>(scale);
 }
 
-_HIPP_TEMPRET sum() const noexcept -> value_t {
-    value_t ret {0};
+_HIPP_TEMPHD 
+template<typename ResT> 
+auto _HIPP_TEMPCLS::sum() const noexcept -> ResT {
+    ResT ret {0};
     for(size_t i=0; i<SIZE; ++i) ret += _data[i];
     return ret;
 }
 
-_HIPP_TEMPRET prod() const noexcept -> value_t {
-    value_t ret {1};
+_HIPP_TEMPHD 
+template<typename ResT> 
+auto _HIPP_TEMPCLS::prod() const noexcept -> ResT {
+    ResT ret {1};
     for(size_t i=0; i<SIZE; ++i) ret *= _data[i];
 }
 
-_HIPP_TEMPRET mean() const noexcept -> value_t {
-    assert(SIZE != 0);
-    return sum() / static_cast<value_t>(SIZE);
+_HIPP_TEMPHD 
+template<typename ResT> 
+auto _HIPP_TEMPCLS::mean() const noexcept -> ResT {
+    static_assert(SIZE != 0);
+    return sum<ResT>() / static_cast<ResT>(SIZE);
+}
+
+_HIPP_TEMPHD 
+template<typename ResT> 
+auto _HIPP_TEMPCLS::dot(const SVec &rhs) const noexcept -> ResT {
+    ResT ret {0};
+    for(size_t i=0; i<SIZE; ++i){
+        ret += static_cast<ResT>(_data[i])*static_cast<ResT>(rhs._data[i]);  
+    } 
+    return ret;
+}
+
+_HIPP_TEMPHD 
+template<typename ResT> 
+auto _HIPP_TEMPCLS::cross(const SVec &rhs) const noexcept -> SVec<ResT, SIZE> {
+    SVec<ResT, SIZE> ret;
+    for(size_t i=0; i<SIZE; ++i){
+        size_t j = (i+1)%SIZE, k = (i+2)%SIZE;
+        ret[i] = static_cast<ResT>(_data[j])*static_cast<ResT>(rhs._data[k]) 
+            - static_cast<ResT>(_data[k])*static_cast<ResT>(rhs._data[j]);
+    }
+    return ret;
 }
 
 _HIPP_TEMPRET min() const noexcept -> value_t {
@@ -581,21 +621,6 @@ _HIPP_TEMPRET max() const noexcept -> value_t {
     value_t ret { std::numeric_limits<value_t>::lowest() };
     for(size_t i=0; i<SIZE; ++i){
         if( _data[i] > ret ) ret = _data[i];
-    }
-    return ret;
-}
-
-_HIPP_TEMPRET dot(const SVec &rhs) const noexcept -> value_t {
-    value_t ret {0};
-    for(size_t i=0; i<SIZE; ++i) ret += _data[i]*rhs._data[i];
-    return ret;
-}
-
-_HIPP_TEMPRET cross(const SVec &rhs) const noexcept -> SVec {
-    SVec ret;
-    for(size_t i=0; i<SIZE; ++i){
-        size_t j = (i+1)%SIZE, k = (i+2)%SIZE;
-        ret[i] = _data[j]*rhs._data[k] - _data[k]*rhs._data[j];
     }
     return ret;
 }
@@ -631,9 +656,23 @@ _HIPP_TEMPRET minmax_index() const noexcept -> std::pair<size_t, size_t>{
         static_cast<size_t>(it_max-_data) };
 }
 
+_HIPP_TEMPRET all() const noexcept -> bool {
+    for(size_t i=0; i<SIZE; ++i){
+        if( !_data[i] ) return false;
+    }
+    return true;
+}
+
+_HIPP_TEMPRET any() const noexcept -> bool {
+    for(size_t i=0; i<SIZE; ++i){
+        if( _data[i] ) return true;
+    }
+    return false;
+}
+
 _HIPP_TEMPHD
 template<typename UnaryOp>
-auto SVec _HIPP_TEMPARG::map(UnaryOp op) -> SVec & {
+auto _HIPP_TEMPCLS::map(UnaryOp op) -> SVec & {
     for(size_t i=0; i<SIZE; ++i){
         _data[i] = op(_data[i]);
     }
@@ -641,12 +680,72 @@ auto SVec _HIPP_TEMPARG::map(UnaryOp op) -> SVec & {
 }
 
 _HIPP_TEMPHD
-template<typename UnaryOp>
-auto SVec _HIPP_TEMPARG::mapped(UnaryOp op) const -> SVec {
-    SVec ret;
+template<typename UnaryOp, typename ResT>
+auto _HIPP_TEMPCLS::mapped(UnaryOp op) const -> SVec<ResT, SIZE> {
+    SVec<ResT, SIZE> ret;
     for(size_t i=0; i<SIZE; ++i){
-        ret._data[i] = op(_data[i]);
+        ret[i] = op(_data[i]);
     }
+    return ret;
+}
+
+_HIPP_TEMPHD
+template<typename BinaryOp>
+void _HIPP_TEMPCLS::visit(BinaryOp op) const {
+    for(size_t i=0; i<SIZE; ++i) op(i, _data[i]);
+}
+
+_HIPP_TEMPHD
+template<typename BinaryOp>
+void _HIPP_TEMPCLS::visit(BinaryOp op) {
+    for(size_t i=0; i<SIZE; ++i) op(i, _data[i]);
+}
+
+_HIPP_TEMPHD
+template<typename ResT>
+auto _HIPP_TEMPCLS::floor() const noexcept -> SVec<ResT, SIZE> 
+{
+    SVec<ResT, SIZE> res;
+    if constexpr ( IS_INT ) {
+        for(size_t i=0; i<SIZE; ++i) res[i] = static_cast<ResT>(_data[i]);
+    } else {
+        for(size_t i=0; i<SIZE; ++i) 
+            res[i] = static_cast<ResT>(std::floor(_data[i]));
+    }
+    return res;
+}
+
+_HIPP_TEMPHD
+template<typename ResT>
+auto _HIPP_TEMPCLS::ceil() const noexcept -> SVec<ResT, SIZE> 
+{
+    SVec<ResT, SIZE> res;
+    if constexpr ( IS_INT ) {
+        for(size_t i=0; i<SIZE; ++i) res[i] = static_cast<ResT>(_data[i]);
+    } else {
+        for(size_t i=0; i<SIZE; ++i) 
+            res[i] = static_cast<ResT>(std::ceil(_data[i]));
+    }
+    return res;
+}
+
+_HIPP_TEMPHD
+template<typename ResT>
+auto _HIPP_TEMPCLS::trunc() const noexcept -> SVec<ResT, SIZE> 
+{
+    SVec<ResT, SIZE> res;
+    if constexpr ( IS_INT ) {
+        for(size_t i=0; i<SIZE; ++i) res[i] = static_cast<ResT>(_data[i]);
+    } else {
+        for(size_t i=0; i<SIZE; ++i) 
+            res[i] = static_cast<ResT>(std::trunc(_data[i]));
+    }
+    return res;
+}
+
+_HIPP_TEMPRET abs() const noexcept -> SVec {
+    SVec ret;
+    for(size_t i=0; i<SIZE; ++i) ret[i] = std::abs(_data[i]);
     return ret;
 }
 
@@ -661,19 +760,33 @@ ValueT && get(SVec _HIPP_TEMPARG &&v) noexcept { return std::move(v[I]); }
 
 } // namespace HIPP::NUMERICAL
 
+
+/** The tuple-like API. */
+namespace std {
+
 template<typename ValueT, size_t N>
-struct std::tuple_size<HIPP::NUMERICAL::SVec _HIPP_TEMPARG > {
+struct std::tuple_size<HIPP::NUMERICAL::_HIPP_TEMPCLS >;
+
+template<size_t I, typename ValueT, size_t N>
+struct std::tuple_element<I, HIPP::NUMERICAL::_HIPP_TEMPCLS >;
+
+} // namespace std
+
+template<typename ValueT, size_t N>
+struct std::tuple_size<HIPP::NUMERICAL::_HIPP_TEMPCLS > {
     inline static constexpr size_t value = N;
 };
 
 template<size_t I, typename ValueT, size_t N>
-struct std::tuple_element<I, HIPP::NUMERICAL::SVec _HIPP_TEMPARG > {
+struct std::tuple_element<I, HIPP::NUMERICAL::_HIPP_TEMPCLS > {
     using type = ValueT;
 };
 
 
 #undef _HIPP_TEMPNORET
 #undef _HIPP_TEMPRET
+#undef _HIPP_TEMPCLS
+#undef _HIPP_TEMPCLS_B
 #undef _HIPP_TEMPARG
 #undef _HIPP_TEMPHD
 

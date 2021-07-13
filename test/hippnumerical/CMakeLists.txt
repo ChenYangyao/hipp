@@ -6,6 +6,7 @@ set(_src
     function_special_function.gtest.cpp
     function_multimin.gtest.cpp
     random_number.gtest.cpp
+    linalg_svec.gtest.cpp
 )
 
 set(_exebase "${_projectid}${_modid}")

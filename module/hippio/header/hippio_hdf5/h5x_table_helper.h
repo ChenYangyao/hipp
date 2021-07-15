@@ -1,8 +1,14 @@
 /**
- * creat: Yangyao CHEN, 2020/11/29
- *      [write   ]
- *      @_H5XTable_helper: helper defs for H5XTable. Internally used only.
- */ 
+create: Yangyao CHEN, 2020/11/29
+    [write   ] 
+    _H5XTable_helper: helper defs for H5XTable. Internally used only.
+update: Yangyao CHEN, 2021/07/15
+    [modify  ]
+    Change _H5XTable_helper implementation - using HIPP generic library
+    for Raw Array Concept.
+    Extent it to any raw-array-like type.
+*/
+
 
 #ifndef _HIPPIO_H5X_TABLE_HELPER_H_
 #define _HIPPIO_H5X_TABLE_HELPER_H_
@@ -32,6 +38,10 @@ struct Field {
     virtual void write(H5Dataset &dset, const record_t *buff, size_t n) =0;
     virtual void insert_comp(const string &name, H5Datatype &dtype) =0;
 
+    /** 
+    Allocate enough buffer for n elements of scalar type `scalar_t`. Return
+    the pointer to the buffer.
+    */
     template<typename scalar_t>
     scalar_t *get_buff(size_t n){
         size_t size_need = sizeof(scalar_t)*n;
@@ -75,31 +85,54 @@ struct ScalarField: public Field {
     }
 };
 
+/**
+ArrayField - IO helper for an array field of the record type.
+*/
 template<typename field_t>
 struct ArrayField: public Field {
+    
     typedef field_t record_t::*pfield_t;
-    typedef std::remove_all_extents_t<field_t> scalar_t;
 
-    static constexpr size_t n_scalar = sizeof(field_t)/sizeof(scalar_t);
+    typedef RawArrayTraits<field_t> traits_t;
+    typedef typename traits_t::value_t scalar_t;
+    
+    static constexpr size_t n_scalar = traits_t::size;
+    
     pfield_t _p;
 
+    /**
+    Constructor
+    @p: pointer to the array member.
+    @pbuff: pointer to the buffer.
+    */
     ArrayField(pfield_t p, _buff_t *pbuff): Field(pbuff), _p(p){}
+    
     virtual ~ArrayField() noexcept {}
+    
+    /** 
+    Return the total number of elements of the array, providing `n` records. 
+    */
     size_t mem_size( size_t n ) const override {
         return n*n_scalar;
     }
-    H5Dataset create_or_open(H5Group &h5g, 
-        const string &name, size_t n) const override {
+    
+    /**
+    Create a data set named `name` under `h5g` group, for fields in `n` records. 
+    */
+    H5Dataset create_or_open(H5Group &h5g, const string &name, 
+        size_t n) const override 
+    {
         vector<hsize_t> dims = {n};
         auto idims = get_dims();
         dims.insert(dims.end(), idims.begin(), idims.end());
         return h5g.create_dataset<scalar_t>(name, dims);
     }
+
     void read(H5Dataset &dset, record_t *buff, size_t n)  override {
         scalar_t *tempbuff = this->template get_buff<scalar_t>(mem_size(n));
         dset.read(tempbuff);
         for(size_t i=0; i<n; ++i){
-            scalar_t *pmem = reinterpret_cast<scalar_t *>(buff[i].*_p);
+            scalar_t *pmem = reinterpret_cast<scalar_t *>( &( buff[i].*_p ) );
             for(size_t j=0; j<n_scalar; ++j)
                 pmem[j] = *tempbuff++;
         }
@@ -108,7 +141,7 @@ struct ArrayField: public Field {
         scalar_t *tempbuff = this->template get_buff<scalar_t>(mem_size(n)),
             *b = tempbuff;
         for(size_t i=0; i<n; ++i){
-            auto pmem = reinterpret_cast<const scalar_t *>(buff[i].*_p);
+            auto pmem = reinterpret_cast<const scalar_t *>( &(buff[i].*_p) );
             for(size_t j=0; j<n_scalar; ++j)
                 *b++ = pmem[j];
         }
@@ -117,6 +150,11 @@ struct ArrayField: public Field {
     void insert_comp(const string &name, H5Datatype &dtype) override {
         dtype.insert(name, _p);
     }
+
+    /**
+    push_dims() - push cumulative dimensions of `arr` into dims.
+    get_dims() - return the actual dimensions of the field.
+    */
     template<typename array_t>
     static void push_dims( const array_t &arr, vector<hsize_t> &dims ) {
         constexpr size_t n_elem = sizeof(array_t)/sizeof(scalar_t);
@@ -126,12 +164,9 @@ struct ArrayField: public Field {
         }
     }
     static vector<hsize_t> get_dims(){
-        field_t tempvar {};
-        vector<hsize_t> dims;
-        push_dims(tempvar, dims);
-        for(size_t i=0; i+1<dims.size(); ++i)
-            dims[i] /= dims[i+1];
-        return dims;
+        auto dims = traits_t::extents;
+        vector<hsize_t> out(dims.begin(), dims.end());
+        return out;
     }
 };
 

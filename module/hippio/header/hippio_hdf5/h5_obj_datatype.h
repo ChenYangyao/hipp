@@ -110,17 +110,27 @@ _HIPPIO_H5_PRE_OBJ(IEEE_F64BE_T)
 #undef _HIPPIO_H5_PRE_OBJ
 
 namespace _h5_obj_datatype_helper {
+
+/**
+@T: record_type.
+@M: field type.
+*/
 template<typename T, typename M>
 struct Field {
-    typedef std::remove_all_extents_t<M> scalar_t;
+    typedef RawArrayTraits<M> traits_t;
+    static constexpr bool is_array = traits_t::is_array;
+    typedef std::conditional_t<is_array, typename traits_t::value_t, M>
+        scalar_t;
     static constexpr size_t n_scalar = sizeof(M) / sizeof(scalar_t);
-    static constexpr bool is_array = std::is_array_v<M>;
 
+    /** Initialize by a member pointer. */
     explicit Field(M T::* mem_ptr) noexcept: _mem_ptr(mem_ptr){}
+    
     static H5Datatype get_dtype() {
         typedef H5Datatype::_obj_raw_t _obj_raw_t;
 
         id_t raw_dtype = H5TypeNative<scalar_t>::h5_id;
+        
         if constexpr( is_array ){
             auto dims = get_dims();
             id_t new_type = _obj_raw_t::create_array(
@@ -132,29 +142,22 @@ struct Field {
                 std::make_shared<_obj_raw_t>(raw_dtype, 0) };
         }
     }
+    
     size_t get_offset() const {
         return (size_t)(ptrdiff_t)(void *)&( ((T *)(NULL))->*_mem_ptr );
     }
+
     static vector<hsize_t> get_dims() {
-        vector<hsize_t> dims;
-        _push_dims<M>(dims);
-        for(size_t i=0; i+1<dims.size(); ++i)
-            dims[i] /= dims[i+1];
-        return dims;
+        if constexpr(is_array) {
+            auto dims = traits_t::extents;
+            vector<hsize_t> out(dims.begin(), dims.end());
+            return out;
+        }else {
+            return vector<hsize_t> {1};
+        }
     }
 
     const M T::*_mem_ptr;
-
-    template<typename MIter>
-    static void _push_dims(vector<hsize_t> &dims){
-        constexpr hsize_t n1 = sizeof(MIter),
-            n2 = sizeof(scalar_t),
-            n_elem =  n1/n2; 
-        if constexpr( n_elem > 1 ){
-            dims.push_back(n_elem);
-            _push_dims<decltype(std::declval<MIter>()[0])>(dims);
-        }
-    }
 };
 } // namespace _h5_obj_datatype_helper
 

@@ -3,6 +3,7 @@ set(_src
     h5dataset.gtest.cpp
     h5datatype.gtest.cpp
     h5group.gtest.cpp
+    h5xtable.gtest.cpp
 )
 
 set(_exebase "${_projectid}${_modid}")

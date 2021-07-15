@@ -6,9 +6,6 @@ create: Yangyao CHEN, 2021/05/28
 #ifndef _HIPPNUMERICAL_LINALG_SVEC_H_
 #define _HIPPNUMERICAL_LINALG_SVEC_H_
 #include "linalg_base.h"
-#include <limits>
-#include <type_traits>
-#include <tuple>
 
 #define _HIPP_TEMPHD template<typename ValueT, size_t N>
 #define _HIPP_TEMPARG <ValueT, N>
@@ -19,13 +16,14 @@ create: Yangyao CHEN, 2021/05/28
 
 namespace HIPP::NUMERICAL {
 
-/* Forward declarations. */
+/** Forward declarations. */
 _HIPP_TEMPHD class SVec;
+template<size_t N> class SBoolFilter;
+template<typename ValueT, size_t N, typename FilterT> class SVecView;
+template<typename ValueT, size_t N, typename FilterT> class SVecConstView;
 
-_HIPP_TEMPHD 
-ostream & operator<<(ostream &os, const SVec _HIPP_TEMPARG &);
-_HIPP_TEMPHD 
-void swap(SVec _HIPP_TEMPARG &lhs, SVec _HIPP_TEMPARG &rhs) noexcept;
+_HIPP_TEMPHD ostream & operator<<(ostream &os, const _HIPP_TEMPCLS &);
+_HIPP_TEMPHD void swap(_HIPP_TEMPCLS &lhs, _HIPP_TEMPCLS &rhs) noexcept;
 
 /**
 SVec - static/small vector with fixed length.
@@ -33,7 +31,7 @@ SVec - static/small vector with fixed length.
 Template arguments
 ------------------
 @ValueT: element type, usually a numerical scalar (integer or floating-point 
-    number).
+         number).
 @N: length of the vector.
 
 Description
@@ -49,19 +47,59 @@ auto [x,y,z] = v;
 
 A particle in a N-body simulation may use SVec to find its grid index, simply 
 by:
-SVec<double, 3> v {-3.1, 0.1, 10.1};
+SVec3d v {-3.1, 0.1, 10.1};
 double grid_sz = 0.5;
-auto ids = (v / grid_sz).floor();           // => SVec<int, 3> {-7, 0, 20}
+auto ids = (v / grid_sz).floor();   // => SVec<int, 3> {-7, 0, 20}.
+
+Filter can be applied to SVec to give a "view" of it. The "view" is defined 
+with a subset of SVec operations which applied to the selected elements 
+of the viewed SVec.
+e.g.,
+SVec3i x {-3,1,2};
+auto view = x[x>-6];                // => bool_view_t {true, true, true}.
+x.view(x>-6);                       // the same as x[x>6].
+x.cview(x>-6);                      // => the const version of the view
+                                    // which cannot used to change x.
+
+x[x>-6].sum();                      // => int {0}.
+x[x>0].sum();                       // => int {3}.
+
+x[x>0] + 1;                         // => a new SVec3i {-3, 2, 3}.
+x[x>0] += 1;                        // x itself is changed to {-3, 2, 3}.
+
+Note that a view cannot be further viewed. Its filter object and bool array mask 
+can be obtained by, e.g.,
+auto view = x[x>0];
+view.vec();                         // => a ref to x.
+view.filter();                      // => a ref to bool_filter_t(x>0).
+view.filter().mask();               // => a ref to bool SVec x>0.
 */
 template<typename ValueT, size_t N>
 class SVec {
 public:
-    typedef ValueT value_t;                     /* Element type. */
-    inline static constexpr size_t SIZE = N;    /* Vector length. */
-    typedef value_t & ref_t;               /* Reference to an element. */
-    typedef const value_t & cref_t;        /* const ... */
-    typedef value_t *iter_t;               /* Iterator pointing to an element */
-    typedef const value_t *citer_t;        /* const ... */
+    /**
+    Basic aliases - The type and number of elements.
+    */
+    typedef ValueT value_t;
+    inline static constexpr size_t SIZE = N;
+
+    /** 
+    Aliases for member access.
+    ret_t and cref_t - reference type to the vector element, and its const 
+        counterpart.
+    iter_t and citer_t - iterator type to the vector element, and its const
+        counterpart.
+    */
+    typedef value_t & ref_t;
+    typedef const value_t & cref_t;
+    typedef value_t *iter_t;
+    typedef const value_t *citer_t;
+
+    /** Aliases for Boolean filter. */
+    typedef SVec<bool, SIZE> bool_mask_t;
+    typedef SBoolFilter<SIZE> bool_filter_t;
+    typedef SVecView<value_t, SIZE, bool_filter_t> bool_view_t;
+    typedef SVecConstView<value_t, SIZE, bool_filter_t> cbool_view_t; 
 
     inline static constexpr bool IS_INT = 
         std::is_integral_v<value_t> || std::is_pointer_v<value_t>;
@@ -94,17 +132,25 @@ public:
     SVec & operator=(const SVec &) noexcept = default;
     SVec & operator=(SVec &&)  noexcept = default;
     ~SVec() noexcept {}
+    /**
+    Deep, all elements are swapped.
+    */
+    friend void swap <ValueT, N> (SVec &lhs, SVec &rhs) noexcept;
 
     friend ostream & operator<< <ValueT, N> (ostream &os, const SVec &);
     ostream & info(ostream &os=cout, int fmt_cntl=1) const;
 
     /**
     STL-conforming definitions - semantics are like std::vector.
-    `swap()` - deep, all elements are swapped.
-    `size()` - always returns `SIZE`.
-    `empty()` - returns true only if `SIZE == 0`.
+    data() - return a pointer to the internal storage.
+    size() - always returns `SIZE`.
+    empty() - returns true only if `SIZE == 0`.
+
+    operator[] and at() - element access. 
+        - at() throws on the out-of-range.
+        - operator [] can accept a Boolean mask, return a view.
+    begin(), end and their const counterparts - iterators.
     */
-    friend void swap <ValueT, N> (SVec &lhs, SVec &rhs) noexcept;
     value_t * data() noexcept;
     const value_t * data() const noexcept;
     static constexpr size_t size() noexcept;
@@ -112,8 +158,12 @@ public:
 
     ref_t operator[](size_t pos) noexcept;
     cref_t operator[](size_t pos) const noexcept;
+    
     ref_t at(size_t pos);
     cref_t at(size_t pos) const;
+
+    bool_view_t operator[](const bool_mask_t &mask) noexcept;
+    cbool_view_t operator[](const bool_mask_t &mask) const noexcept;
 
     iter_t begin() noexcept;
     citer_t begin() const noexcept;
@@ -124,28 +174,24 @@ public:
 
     /**
     Linear algebra operations. All are element-wise operations.
-
-    Unary RMW operations:
-    (1) vec op= scalar;
-    (2) vec op= vec;
+    1. Unary RMW operations:
+        (1) vec op= scalar;
+        (2) vec op= vec;
     Where op is 
         +, -, *, /, %           - arithmetic -> SVec &
         &, |, ^                 - bit-wise for each element -> SVec &
-
-    Binary operations:
-    (1) vec op scalar;
-    (2) scalar op vec;
-    (3) vec op vec;
+    2. Binary operations:
+        (1) vec op scalar;
+        (2) scalar op vec;
+        (3) vec op vec;
     Where op is 
         +, -, *, /, %           - arithmetic -> SVec
         &, |, ^                 - bit-wise for each element -> SVec
         <, <=, >, >=, ==, !=    - comparison/logic -> SVec<bool, SIZE>
-
-    Unary operations: 
-    op vec;
+    3. Unary operations: 
+        op vec;
     Where op is
         ~, +, -                 - bit-wise NOT, arithmetic positate, negate. 
-    
     Caution: interger-lift is used intermediately for small integers, like 
     `int`, `char`, etc., so that ~true != false. But &, |, ^ work just as
     expected.
@@ -267,6 +313,10 @@ public:
     SVec<ResT, SIZE> trunc() const noexcept;
 
     SVec abs() const noexcept;
+
+    bool_view_t view(const bool_mask_t &mask) noexcept;
+    cbool_view_t view(const bool_mask_t &mask) const noexcept;
+    cbool_view_t cview(const bool_mask_t &mask) const noexcept;
 protected:
     value_t _data[SIZE];
 };
@@ -326,6 +376,11 @@ _HIPP_TEMPCLS::SVec(const SVec<InputValue, SIZE> &v) noexcept {
 }
 
 _HIPP_TEMPHD
+void swap(_HIPP_TEMPCLS &lhs, _HIPP_TEMPCLS &rhs) noexcept {
+    std::swap_ranges(lhs.begin(), lhs.end(), rhs.begin());
+}
+
+_HIPP_TEMPHD
 ostream & operator<< (ostream &os, const SVec _HIPP_TEMPARG & v) {
     PStream ps(os);
     ps << "SVec{", ps(v.begin(), v.end()), "}";
@@ -343,11 +398,6 @@ _HIPP_TEMPRET info(ostream &os, int fmt_cntl) const -> ostream & {
             "  |- values = {", ps(cbegin(), cend()), "}\n";
     }
     return os;
-}
-
-_HIPP_TEMPHD
-void swap(_HIPP_TEMPCLS &lhs, _HIPP_TEMPCLS &rhs) noexcept {
-    std::swap_ranges(lhs.begin(), lhs.end(), rhs.begin());
 }
 
 _HIPP_TEMPRET data() noexcept -> value_t * {
@@ -374,6 +424,14 @@ _HIPP_TEMPRET operator[](size_t pos) noexcept -> ref_t {
 
 _HIPP_TEMPRET operator[](size_t pos) const noexcept -> cref_t {
     return _data[pos];
+}
+
+_HIPP_TEMPRET operator[](const bool_mask_t &mask) noexcept -> bool_view_t { 
+    return view(mask); 
+}
+
+_HIPP_TEMPRET operator[](const bool_mask_t &mask) const noexcept -> cbool_view_t { 
+    return view(mask); 
 }
 
 _HIPP_TEMPRET at(size_t pos) -> ref_t {
@@ -747,6 +805,18 @@ _HIPP_TEMPRET abs() const noexcept -> SVec {
     SVec ret;
     for(size_t i=0; i<SIZE; ++i) ret[i] = std::abs(_data[i]);
     return ret;
+}
+
+_HIPP_TEMPRET view(const bool_mask_t &mask) noexcept -> bool_view_t { 
+    return bool_view_t(*this, bool_filter_t(mask) ); 
+}
+
+_HIPP_TEMPRET view(const bool_mask_t &mask) const noexcept -> cbool_view_t { 
+    return cbool_view_t(*this, bool_filter_t(mask) ); 
+}
+
+_HIPP_TEMPRET cview(const bool_mask_t &mask) const noexcept -> cbool_view_t { 
+    return cbool_view_t(*this, bool_filter_t(mask) ); 
 }
 
 template<size_t I, typename ValueT, size_t N>

@@ -7,5 +7,6 @@
 #include "hippnumerical_random_number/rannum.h"
 
 #include "hippnumerical_linalg/linalg_svec.h"
+#include "hippnumerical_linalg/linalg_svec_view.h"
 
 #endif	//_HIPPNUMERICAL_H_

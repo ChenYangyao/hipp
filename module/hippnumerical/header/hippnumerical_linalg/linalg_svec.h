@@ -73,6 +73,9 @@ auto view = x[x>0];
 view.vec();                         // => a ref to x.
 view.filter();                      // => a ref to bool_filter_t(x>0).
 view.filter().mask();               // => a ref to bool SVec x>0.
+
+SVec has a RawArrayTraits support, which enables compile-time feature 
+detection.
 */
 template<typename ValueT, size_t N>
 class SVec {
@@ -835,10 +838,10 @@ ValueT && get(SVec _HIPP_TEMPARG &&v) noexcept { return std::move(v[I]); }
 namespace std {
 
 template<typename ValueT, size_t N>
-struct std::tuple_size<HIPP::NUMERICAL::_HIPP_TEMPCLS >;
+struct tuple_size<HIPP::NUMERICAL::_HIPP_TEMPCLS >;
 
 template<size_t I, typename ValueT, size_t N>
-struct std::tuple_element<I, HIPP::NUMERICAL::_HIPP_TEMPCLS >;
+struct tuple_element<I, HIPP::NUMERICAL::_HIPP_TEMPCLS >;
 
 } // namespace std
 
@@ -851,6 +854,18 @@ template<size_t I, typename ValueT, size_t N>
 struct std::tuple_element<I, HIPP::NUMERICAL::_HIPP_TEMPCLS > {
     using type = ValueT;
 };
+
+
+/** Specialization of the HIPP RawArrayTraits API */
+
+namespace HIPP {
+
+template<typename ValueT, size_t N> 
+class RawArrayTraits< HIPP::NUMERICAL::SVec<ValueT, N> > 
+: public RawArrayTraits< ValueT[N] > {};
+
+
+} // namespace HIPP
 
 
 #undef _HIPP_TEMPNORET

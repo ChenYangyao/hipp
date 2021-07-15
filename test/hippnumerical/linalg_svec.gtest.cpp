@@ -105,6 +105,76 @@ TEST_F(SVecIntTest, MathOp) {
     chk_eq(xtrunc, x);
 }
 
+TEST_F(SVecIntTest, BoolView) {
+    /** Unary RMW. */
+    vec_t x {-3, 1, 2};
+    auto v1 = x[x>0], v2 = x[{false, true, true}];
+    chk_eq(v1.vec(), v2.vec());
+    chk_eq(v1.filter().mask(), v1.filter().mask());
+    v1 += 1;
+    chk_eq(v1.vec(), x);
+    chk_eq(x, {-3, 2, 3});
+
+    x[x!=2] *= 2;
+    chk_eq(x, {-6, 2, 6});
+
+    /** Binary. */
+    vec_t y {-300, 0, 200};
+    auto z = y[y>0] + 10;
+    chk_type_eq(decltype(y)::value_t{}, decltype(z)::value_t{});
+    chk_eq(z, {-300, 0, 210});
+
+    z = 10 + y[y<0];
+    chk_eq(z, {-290, 0, 200});
+
+    z = y[y<=1] - y;
+    chk_eq(z, {0, 0, 200});
+
+    z = vec_t{2,3,4} * y[y<=1];
+    chk_eq(z, {-600, 0, 200});
+
+    z = -y[y<=1];
+    chk_eq(z, {300, 0, 200});
+
+    /** Visit */
+    y[y!=0].visit( [&z](size_t i, int x){ z[i] = x; } );
+    chk_eq(z, y);
+}
+
+TEST_F(SVecIntTest, ConstBoolView) {
+    /** Unary RMW. */
+    const vec_t x {-3, 1, 2};
+    auto v1 = x[x>0], v2 = x[{false, true, true}];
+    chk_eq(v1.vec(), v2.vec());
+    chk_eq(v1.filter().mask(), v1.filter().mask());
+    auto y1 = v1 + 1;
+    chk_eq(y1, {-3, 2, 3});
+
+    auto v3 = x.cview(x>0), v4 = x.cview({false, true, true});
+    chk_eq(v3.vec(), v4.vec());
+    chk_eq(v3.filter().mask(), v4.filter().mask());
+    auto y3 = v3 + 1;
+    chk_eq(y3, {-3, 2, 3});
+}
+
+TEST_F(SVecIntTest, BoolViewReduction) {
+    vec_t x {-3,1,2};
+    EXPECT_EQ( x[x>-6].sum(), 0);
+    EXPECT_EQ( x[x>0].sum(), 3);
+    EXPECT_EQ( x[x>1].sum(), 2);
+    EXPECT_EQ( x[x>2].sum(), 0);
+
+    vec_t y {-300, 0, 100};
+    EXPECT_EQ( y[y>-301].all(), false);
+    EXPECT_EQ( y[y>-301].any(), true);
+    EXPECT_EQ( y[y>-209].all(), false);
+    EXPECT_EQ( y[y>-209].any(), true);
+    EXPECT_EQ( y[y>0].all(), true);
+    EXPECT_EQ( y[y>0].any(), true);
+    EXPECT_EQ( y[y>100].all(), true);
+    EXPECT_EQ( y[y>100].any(), false);
+}
+
 class SVecDoubleTest: public SVecIntTest {
 protected:
 };
@@ -155,7 +225,6 @@ TEST_F(SVecDoubleTest, Reduction) {
     EXPECT_EQ( x2.any(), true );
     EXPECT_EQ( x01.any(), true );
     EXPECT_EQ( x012.any(), true );
-
 
     auto mean_f = x01.mean();
     chk_type_eq(mean_f, double {});
@@ -230,6 +299,24 @@ TEST_F(SVecBoolTest, Logic) {
     chk_eq(cmp1 ^ true, cmp1_neg);
     chk_eq(false ^ cmp1, cmp1);
     chk_eq(true ^ cmp1, cmp1_neg);
+}
+
+TEST_F(SVecBoolTest, Reduction) {
+    bvec_t b0(false), b1 {true,false,false}, b2 {true,true,false}, b3(true);
+    EXPECT_EQ(b0.sum<int>(), 0);
+    EXPECT_EQ(b1.sum<int>(), 1);
+    EXPECT_EQ(b2.sum<int>(), 2);
+    EXPECT_EQ(b3.sum<int>(), 3);
+
+    EXPECT_EQ(b0.any(), false);
+    EXPECT_EQ(b1.any(), true);
+    EXPECT_EQ(b2.any(), true);
+    EXPECT_EQ(b3.any(), true);
+
+    EXPECT_EQ(b0.all(), false);
+    EXPECT_EQ(b1.all(), false);
+    EXPECT_EQ(b2.all(), false);
+    EXPECT_EQ(b3.all(), true);
 }
 
 

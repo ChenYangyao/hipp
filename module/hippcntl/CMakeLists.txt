@@ -30,6 +30,7 @@ install(DIRECTORY
         "${_headerdir}/${_libname}_memory"
         "${_headerdir}/${_libname}_stream"
         "${_headerdir}/${_libname}_time"
+        "${_headerdir}/${_libname}_generic"
     DESTINATION include
 )
 install(FILES "${_headerdir}/${_libname}.h"

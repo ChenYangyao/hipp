@@ -1,6 +1,7 @@
 set(_modid cntl)
 set(_src
     stream.gtest.cpp
+    generic_concept.gtest.cpp
 )
 
 set(_exebase "${_projectid}${_modid}")

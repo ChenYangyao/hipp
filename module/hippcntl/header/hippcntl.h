@@ -10,5 +10,6 @@
 #include "hippcntl_memory/mem.h"
 #include "hippcntl_stream/stream.h"
 #include "hippcntl_time/time_utils.h"
+#include "hippcntl_generic/generic.h"
 
 #endif	//_HIPPCNTL_H_

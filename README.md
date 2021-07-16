@@ -13,7 +13,7 @@ If you love C++ programming and scientific computation, you
 are welcome to join us. We are happy to receive any comment or suggestion from you. 
 
 The codes are hosted on [Github](https://github.com/ChenYangyao/hipp). 
-The documentation is available at [Read-the-doc](https://hipp.readthedocs.io/), which includes
+The documentation is available at [Read-the-docs](https://hipp.readthedocs.io/), which includes
 how to install and get started with HIPP.
 
 Main Features 

@@ -1,0 +1,6 @@
+#ifndef _HIPPMPI_CONFIG_H_
+#define _HIPPMPI_CONFIG_H_
+
+#cmakedefine _HIPPMPI_CONFIG_NO_MPPROF
+
+#endif	//_HIPPMPI_CONFIG_H_

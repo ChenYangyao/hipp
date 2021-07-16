@@ -20,7 +20,7 @@ simple to complex:
 
 .. table:: 
     :widths:    25 75
-    :class:     fix-width-table
+    :class:     fix-width-table tight-table
 
     ======================= ===========================================================================
     Datatype Constructor        Description

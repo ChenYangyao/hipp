@@ -4,6 +4,9 @@ SIMD Module
 
 .. _api-simd-usage:
 
+SIMD Module Overview
+======================
+
 The ``HIPP::SIMD`` module includes the templated version of SIMD instrunctions.
 Currently it only supports the Intel x86 platform where AVX vector instructions are implemented 
 (see `Intel's Guide <https://software.intel.com/sites/landingpage/IntrinsicsGuide/>`_ 
@@ -32,9 +35,12 @@ To avoid confusion, we list the conventions used in this API reference:
   a global ``using namespace std`` is used). This is not good in practice, but makes the example code more compact.
 
 
+
+API References
+================
+
 .. toctree::
     :maxdepth: 2
-    :caption: Template SIMD Classes
 
     common-def
     avx

@@ -4,6 +4,9 @@ IO Module
 
 .. _api-io-usage:
 
+IO Module Overview
+====================
+
 All the definitions in the IO module can be accessed by including the header file **<hippio.h>**.
 Classes, functions and variables are all defined within the ``HIPP::IO`` namespace. 
 Code that uses the IO module would be like ::
@@ -41,9 +44,15 @@ To avoid confusion, we list the convetions used in this API reference:
 * The example code that uses C++ standard library may ignore the ``std::`` namespace specifier (namely, assume 
   a global ``using namespace std`` is used). This is not good in practice, but makes the example code more compact. 
 
+
+API References
+================
+
+High-level API 
+---------------
+
 .. toctree::
     :maxdepth: 2
-    :caption: High-level API 
 
     high-level/global-def
     high-level/error
@@ -51,15 +60,20 @@ To avoid confusion, we list the convetions used in this API reference:
     high-level/dataset 
     high-level/attr
 
+Extended API 
+--------------
+
 .. toctree::
     :maxdepth: 2
-    :caption: Extended API 
 
     ext/tabular
 
+
+Intermediate-level API
+------------------------
+
 .. toctree::
     :maxdepth: 2
-    :caption: Intermediate-level API
 
     intermediate-level/index 
 

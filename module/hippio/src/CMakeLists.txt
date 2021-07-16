@@ -1,0 +1,1 @@
+add_subdirectory("${_libname}_hdf5")

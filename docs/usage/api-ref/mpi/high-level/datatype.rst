@@ -18,14 +18,17 @@ Class Datatype: the Type of Data Element
     
     **Memory management methods:**
     
-    =================================================== ====================================================
-    Method                                              Detail 
-    =================================================== ====================================================
-    default constructor                                 Available; ``noexcept``; constructs a null value 
-                                                        |br| as returned by :func:`nullval`.
-    copy constructor |br| and ``operator=(&&)``         Available; ``noexcept``; shallow copy.
-    move constructor |br| and ``operator=(const &)``    Available; ``noexcept``.
-    =================================================== ====================================================
+    .. table::
+        :class: tight-table
+
+        =================================================== ====================================================
+        Method                                              Detail 
+        =================================================== ====================================================
+        default constructor                                 Available; ``noexcept``; constructs a null value 
+                                                            |br| as returned by :func:`nullval`.
+        copy constructor |br| and ``operator=(&&)``         Available; ``noexcept``; shallow copy.
+        move constructor |br| and ``operator=(const &)``    Available; ``noexcept``.
+        =================================================== ====================================================
 
 
     .. function::   ostream &info( ostream &os = cout, int fmt_cntl = 1 ) const
@@ -223,13 +226,16 @@ Class Datapacket: the Data Buffer Descriptor
 
     **Memory management methods:**
     
-    =================================================== ==================================================
-    Method                                              Detail 
-    =================================================== ==================================================
-    default constructor                                 Not available.
-    copy constructor |br| and ``operator=(&&)``         Defined; ``noexcept``.
-    move constructor |br| and ``operator=(const &)``    Defined; ``noexcept``.
-    =================================================== ==================================================
+    .. table::
+        :class: tight-table
+        
+        =================================================== ==================================================
+        Method                                              Detail 
+        =================================================== ==================================================
+        default constructor                                 Not available.
+        copy constructor |br| and ``operator=(&&)``         Defined; ``noexcept``.
+        move constructor |br| and ``operator=(const &)``    Defined; ``noexcept``.
+        =================================================== ==================================================
 
     .. _api-mpi-dpacket-constructor:
 
@@ -251,11 +257,11 @@ Class Datapacket: the Data Buffer Descriptor
         following arguments:
 
         .. table::
-            :class: fix-width-table
+            :class: fix-width-table tight-table
             :widths: 30 70
             
             =================================================== ===========================================================================================
-            Arguments                       Description 
+            Arguments                                           Description 
             =================================================== ===========================================================================================
             Standard triplet                                    ``(buff, size, dtype)``, where ``buff`` is the starting address, ``size``
                                                                 is the number of elements and ``dtype`` is the datatype of each element. |br|
@@ -365,13 +371,16 @@ Class Pack and ExternalPack
 
     **Memory management methods:**
     
-    =================================================== ==================================================
-    Method                                              Detail 
-    =================================================== ==================================================
-    default constructor                                 Not available.
-    copy constructor |br| and ``operator=(const &)``    Defined; deep-copy.
-    move constructor |br| and ``operator=(&&)``         Defined; ``noexcept``.
-    =================================================== ==================================================
+    .. table::
+        :class: tight-table
+    
+        =================================================== ==================================================
+        Method                                              Detail 
+        =================================================== ==================================================
+        default constructor                                 Not available.
+        copy constructor |br| and ``operator=(const &)``    Defined; deep-copy.
+        move constructor |br| and ``operator=(&&)``         Defined; ``noexcept``.
+        =================================================== ==================================================
 
     The copy operation uses deep-copy, i.e., all information (include 
     the buffer content, buffer size, position pointer and communicator)

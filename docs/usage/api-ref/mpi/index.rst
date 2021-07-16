@@ -6,6 +6,9 @@ MPI Module
 
 .. _api-mpi-usage:
 
+MPI Module Overview
+=====================
+
 The ``HIPP::MPI`` module includes high-level OOP APIs that encapsulates **Standard** Message Passing Interface 
 (MPI) library. 
 It also provides non-standard extensions of MPI, which are useful in synchronization, task management and 
@@ -57,13 +60,16 @@ To avoid confusion, we list the conventions used in this API reference:
   a global ``using namespace std`` is used). This is not good in practice, but makes the example code more compact. 
 
 
+List of Module Components 
+===========================
+
 All functions and classes avaiable in the HIPP MPI module is listed below. The "Standard MPI counterpart" gives 
 the MPI type defined by the MPI standard on the top of which HIPP is built.
 
 .. namespace:: HIPP::MPI
 
 .. table::
-    :class:   fix-width-table
+    :class:   fix-width-table tight-table
     :widths:  20 15 63
 
     ======================================= =================================== ================================================================================
@@ -97,11 +103,14 @@ the MPI type defined by the MPI standard on the top of which HIPP is built.
     :func:`wtick`                           ``MPI_Wtick``                       Clock interval.
     ======================================= =================================== ================================================================================
 
-The API-reference is organized by topics:
+API References
+=================
+
+High-level API
+------------------
 
 .. toctree::
     :maxdepth: 2
-    :caption: High-level API
 
     high-level/env
     high-level/error
@@ -111,18 +120,23 @@ The API-reference is organized by topics:
     high-level/file
     high-level/other
     
+MPI Extensions
+------------------
+
 .. toctree::
     :maxdepth: 2
-    :caption: MPI Extensions
 
     mpe/sync
     mpe/master-slave
     mpe/symm
     mpe/work-decomp
     
+
+Intermediate-level API
+-----------------------
+
 .. toctree::
     :maxdepth: 2
-    :caption: Intermediate-level API
 
     intermediate-level/index
 

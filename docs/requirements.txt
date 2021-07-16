@@ -1,1 +1,3 @@
 six
+sphinx-rtd-theme
+sphinx_book_theme

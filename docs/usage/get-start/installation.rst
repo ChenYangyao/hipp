@@ -65,23 +65,27 @@ Allowed options are listed below.
 
 HIPP supports a set of optional modules for MPI, IO, etc.
 
-+--------------------------+-----------------------------+------------------------------+---------------------------+
-| Module                   | CMake Option                |  Description                 |    System Requirement     |
-+==========================+=============================+==============================+===========================+
-| MPI                      | -Denable-mpi=ON             | Message Passing Interface    |  MPI environment |br|     |
-|                          |                             |                              |  (standard >= 3.0)        |
-+--------------------------+-----------------------------+------------------------------+---------------------------+                                                                                       
-| IO                       | -Denable-hdf5=ON            | IO library                   |  HDF5 C library |br|      |
-|                          |                             |                              |  (version >=1.8.0)        |
-+--------------------------+-----------------------------+------------------------------+---------------------------+                                                                                    
-| SIMD                     | -Denable-simd=ON            | Template SIMD library        | x86 Arch |br|             |
-|                          |                             |                              | (supporting SIMD)         |
-+--------------------------+-----------------------------+------------------------------+---------------------------+
-| NUMERICAL                | -Denable-gsl=ON             | The scientific library       |  GSL (version >=2.6)      |
-+--------------------------+-----------------------------+------------------------------+---------------------------+
-| ALGORITHM                | Automatically |br|          | The algorithms               |                           |
-|                          | installed                   |                              |                           |
-+--------------------------+-----------------------------+------------------------------+---------------------------+
+.. table::
+  :class: tight-table
+
+  +--------------------------+-----------------------------+------------------------------+---------------------------+
+  | Module                   | CMake Option                |  Description                 |    System Requirement     |
+  +==========================+=============================+==============================+===========================+
+  | MPI                      | ``-Denable-mpi=ON``         | Message Passing Interface    |  MPI environment |br|     |
+  |                          |                             |                              |  (standard >= 3.0)        |
+  +--------------------------+-----------------------------+------------------------------+---------------------------+                                                                                       
+  | IO                       | ``-Denable-hdf5=ON``        | IO library                   |  HDF5 C library |br|      |
+  |                          |                             |                              |  (version >=1.8.0)        |
+  +--------------------------+-----------------------------+------------------------------+---------------------------+                                                                                    
+  | SIMD                     | ``-Denable-simd=ON``        | Template SIMD library        | x86 Arch |br|             |
+  |                          |                             |                              | (supporting SIMD)         |
+  +--------------------------+-----------------------------+------------------------------+---------------------------+
+  | NUMERICAL                | ``-Denable-gsl=ON``         | The scientific library       |  GSL (version >=2.6)      |
+  +--------------------------+-----------------------------+------------------------------+---------------------------+
+  | ALGORITHM                | Automatically |br|          | The algorithms               |                           |
+  |                          | installed                   |                              |                           |
+  +--------------------------+-----------------------------+------------------------------+---------------------------+
+
 
 Note that 
 
@@ -94,15 +98,19 @@ Note that
 
 Other options that can be specified by :bash:`-D` in the invode of :bash:`cmake` are 
 
-======================================= ======================================================================================
-Option                                  Description                     
-======================================= ======================================================================================
--DCMAKE_C_COMPILER=/path/to/compiler    The C compiler used to compile third-party libraries. |br| (default: detected by CMake)
--DCMAKE_CXX_COMPILER=/path/to/compiler  The C++ compiler (must support standard 17). |br| (default: detected by CMake)
--DMPI_CXX_COMPILER=/path/to/compiler    The MPI compiler wrapper. |br| (default: detected by CMake)
--DCMAKE_CXX_FLAGS="flag1 flag2 ..."     Compiling and linking flags. |br| (default: "-O3 -Wall")
--DBUILD_TESTING=ON|OFF                  Whether to build test cases. |br| (default: ON)
-======================================= ======================================================================================
+.. table::
+  :class: tight-table
+
+  =========================================== ======================================================================================
+  Option                                       Description                     
+  =========================================== ======================================================================================
+  ``CMAKE_C_COMPILER=/path/to/compiler``       The C compiler used to compile third-party libraries. |br| (default: detected by CMake)
+  ``CMAKE_CXX_COMPILER=/path/to/compiler``     The C++ compiler (must support standard 17). |br| (default: detected by CMake)
+  ``MPI_CXX_COMPILER=/path/to/compiler``       The MPI compiler wrapper. |br| (default: detected by CMake)
+  ``CMAKE_CXX_FLAGS="flag1 flag2 ..."``        Compiling and linking flags. |br| (default: "-O3 -Wall")
+  ``BUILD_TESTING=ON|OFF``                     Whether to build test cases. |br| (default: ON)
+  =========================================== ======================================================================================
+
 
 
 

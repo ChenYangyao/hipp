@@ -30,3 +30,24 @@ html.writer-html5 .rst-content table.docutils td>p {
 .fix-width-table td {
     white-space:        normal !important;
 }
+
+/* class: table.tighr-table */
+table.tight-table thead th, 
+table.tight-table tbody td {
+    padding:            4px 8px; 
+}
+
+table.tight-table td>p {
+    line-height:        0.95rem;
+    font-size:          0.8rem;
+}
+
+table.tight-table th>p {
+    line-height:        1rem;
+    font-size:          0.85rem;
+    font-weight:        bold;
+}
+table.tight-table td>p,
+table.tight-table th>p {
+    margin-bottom:      0.1rem;
+}

@@ -2,7 +2,11 @@
 CNTL Module
 *************************************
 
+
 .. _api-cntl-usage:
+
+CNTL Module Overview
+======================
 
 The CNTL module of HIPP defines a bunch of extensions for the C++ standard library to make 
 the development easier.
@@ -21,9 +25,11 @@ To avoid confusion, we list the conventions used in this API reference:
 * The example code that uses C++ standard library may ignore the ``std::`` namespace specifier (namely, assume 
   a global ``using namespace std`` is used). This is not good in practice, but makes the example code more compact. 
 
+API References
+================
+
 .. toctree::
     :maxdepth: 2
-    :caption: API References for the CNTL Module 
 
     stream
     error

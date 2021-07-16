@@ -101,34 +101,28 @@ Contributors
 - Kai Wang (Tsinghua, DOA, `wkcosmology@gmail.com <mailto:wkcosmology@gmail.com>`_, `kosmoswalker.com <https://www.kosmoswalker.com/>`_)
 
 
-Documentation
----------------
-
-Getting Started
-""""""""""""""""
-
 .. toctree::
    :maxdepth: 1
+   :caption: Getting Started
+   :hidden:
 
    usage/get-start/installation
    usage/get-start/quickstart
 
-Tutorial
-""""""""""
-
 .. toctree::
    :maxdepth: 1
+   :caption: Tutorial
+   :hidden:
 
    usage/tutorial/cntl/index
    usage/tutorial/simd/index
    usage/tutorial/mpi/index
    usage/tutorial/io/index
 
-API Reference
-""""""""""""""
-
 .. toctree::
    :maxdepth: 1
+   :caption: Getting Started
+   :hidden:
 
    usage/api-ref/cntl/index
    usage/api-ref/mpi/index

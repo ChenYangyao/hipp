@@ -22,6 +22,15 @@ option(enable-simd "install SIMD extension?" OFF)
 option(enable-gsl "install GSL numerical component?" OFF)
 set(GSL_ROOT_DIR "" CACHE STRING "gsl root directory")
 
+option(enable-all-module "install all module components?" OFF)
+
+if(enable-all-module)
+    set(enable-mpi ON)
+    set(enable-hdf5 ON)
+    set(enable-simd ON)
+    set(enable-gsl ON)
+endif()
+
 # Make GSL interface target, if enabled.
 # gsl-interface target is defined.
 if(enable-gsl)

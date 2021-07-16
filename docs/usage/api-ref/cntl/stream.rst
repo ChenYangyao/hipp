@@ -670,14 +670,14 @@ them by calling the methods of the main classes.
         
         :arg hint_pop: see the attribute setter :func:`hint_pop_on()` and :func:`hint_pop_off()`.
 
-    .. function::: \
+    .. function:: \
         void hint_pop_on() noexcept
         void hint_pop_off() noexcept
         
         Switch on/off the hint on pop.
 
         If on, an extra entry is output to the :class:`PLogStream` at the destruction of 
-        the guard, similar to calling :func:`PLogStream::pop(true)`.
+        the guard, similar to calling :func:`PLogStream::pop()` with ``true``.
 
     .. function:: \
         bool hint_pop() const noexcept

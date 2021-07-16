@@ -13,7 +13,8 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
-import sphinx_rtd_theme
+# import sphinx_rtd_theme
+import sphinx_book_theme
 
 # -- Project information -----------------------------------------------------
 
@@ -34,6 +35,7 @@ primary_domain = 'cpp'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [    
+    #"sphinx_book_theme",
     "sphinx_rtd_theme",
     "sphinx.ext.graphviz"
 ]
@@ -52,10 +54,11 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "sphinx_rtd_theme"
-html_theme_options = {
-    "navigation_depth": -1
-}
+# html_theme = "sphinx_rtd_theme"
+# html_theme_options = {
+#     "navigation_depth": -1
+# }
+
 #html_theme = 'bootstrap-astropy'
 #html_theme_options = {
 #    'logotext1': 'packagename',  # white,  semi-bold
@@ -64,6 +67,13 @@ html_theme_options = {
 #    'astropy_project_menubar': True
 #}
 
+html_theme = 'sphinx_book_theme'
+html_theme_options = {
+    "repository_url": "https://github.com/ChenYangyao/hipp",
+    "use_repository_button": True,
+    "use_issues_button": True,
+    "home_page_in_toc": True,   
+}
 
 # Graphviz options
 graphviz_output_format = "svg"

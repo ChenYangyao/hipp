@@ -42,9 +42,34 @@ public:
     }
 
     /**
+    Get raw array type from from the extents list.
+    e.g.,
+    int, 3, 4, 5 => int[3][4][5].
+    int => int.
+    */
+    template<typename T, size_t ...Ds> 
+    struct extents_to_array
+    {};
+
+    template<typename T> 
+    struct extents_to_array<T>
+    {
+        typedef T type;
+    };
+
+    template<typename T, size_t D1, size_t ...Ds> 
+    struct extents_to_array<T, D1, Ds...>
+    {
+        typedef typename extents_to_array<T, Ds...>::type type[D1];
+    };
+
+    template<typename T, size_t ...Ds>
+    using extents_to_array_t = typename extents_to_array<T, Ds...>::type;
+
+    /**
     Determine if T is a std::array.
     e.g., std::array< std::array<int, 3>, 4 > => true.
-        std::array<int [3]> => false.
+        int [3] => false;
     */
     template<typename T, typename _V = void>
     struct is_std_array : std::false_type {};

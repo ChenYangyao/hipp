@@ -7,8 +7,9 @@ create: Yangyao CHEN, 2021/07/14
 
 #ifndef _HIPPNUMERICAL_LINALG_SFILTER_H_
 #define _HIPPNUMERICAL_LINALG_SFILTER_H_
-#include "linalg_base.h"
-#include "linalg_svec.h"
+#include "linalg_sarray.h"
+#include "linalg_sarray1d.h"
+
 namespace HIPP::NUMERICAL {
 
 class SFilter {};
@@ -16,10 +17,10 @@ class SFilter {};
 /**
 SBoolFilter - Filter that selects elements using static Boolean array.
 */
-template<size_t N>
+template<size_t ...Ds>
 class SBoolFilter : public SFilter {
 public:
-    typedef SVec<bool, N> mask_t;
+    typedef SArray<bool, Ds...> mask_t;
     inline static constexpr size_t SIZE = mask_t::SIZE;
 
     /** 
@@ -56,6 +57,11 @@ public:
     /** Return true or false, if i-th element is or is not selected. */
     bool operator[](size_t i) noexcept;
     bool operator[](size_t i) const noexcept;
+
+    template<typename ...SizeTs>
+    bool operator()(SizeTs &&...ids) noexcept;
+    template<typename ...SizeTs>
+    bool operator()(SizeTs &&...ids) const noexcept;
 
     /** Get the mask array. */
     mask_t & mask() noexcept;
@@ -118,9 +124,9 @@ protected:
 };
 
 #define _HIPP_TEMPHD \
-    template<size_t N>
+    template<size_t ...Ds>
 #define _HIPP_TEMPARG \
-    <N>
+    <Ds...>
 #define _HIPP_TEMPRET \
     _HIPP_TEMPHD \
     inline auto SBoolFilter _HIPP_TEMPARG::
@@ -142,6 +148,10 @@ _HIPP_TEMPCLS::SBoolFilter(const mask_t &mask) noexcept
 _HIPP_TEMPHD 
 _HIPP_TEMPCLS::~SBoolFilter() noexcept {}
 
+_HIPP_TEMPRET to_bool() const noexcept -> SBoolFilter {
+    return *this;
+}
+
 _HIPP_TEMPRET info(ostream &os, int fmt_cntl) const -> ostream &  {
     PStream ps(os);
     if(fmt_cntl == 0) {
@@ -149,8 +159,11 @@ _HIPP_TEMPRET info(ostream &os, int fmt_cntl) const -> ostream &  {
             "{", ps(_mask.cbegin(), _mask.cend()), "}";
     }else {
         ps << HIPPCNTL_CLASS_INFO(SBoolFilter), 
-            "  |- size = ", SIZE, "\n"
-            "  |- values = {", ps(_mask.cbegin(), _mask.cend()), "}\n";
+            "  |- size = ", SIZE;
+        if constexpr(sizeof...(Ds)>=2) {
+            ps << ", extents = {", mask_t::traits_t::extents, "}";
+        }
+        ps << "\n  |- values = {", ps(_mask.cbegin(), _mask.cend()), "}\n";
     }
     return os;
 }
@@ -163,8 +176,16 @@ _HIPP_TEMPRET operator[](size_t i) const noexcept -> bool {
     return _mask[i];
 }
 
-_HIPP_TEMPRET to_bool() const noexcept -> SBoolFilter {
-    return *this;
+_HIPP_TEMPHD
+template<typename ...SizeTs>
+bool _HIPP_TEMPCLS::operator()(SizeTs &&...ids) noexcept {
+    return _mask(std::forward<SizeTs>(ids)...);
+}
+
+_HIPP_TEMPHD
+template<typename ...SizeTs>
+bool _HIPP_TEMPCLS::operator()(SizeTs &&...ids) const noexcept {
+    return _mask(std::forward<SizeTs>(ids)...);
 }
 
 _HIPP_TEMPRET mask() noexcept -> mask_t & {

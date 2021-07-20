@@ -6,7 +6,8 @@
 #include "hippnumerical_random_number/randist.h"
 #include "hippnumerical_random_number/rannum.h"
 
-#include "hippnumerical_linalg/linalg_svec.h"
-#include "hippnumerical_linalg/linalg_svec_view.h"
+#include "hippnumerical_linalg/linalg_sarray.h"
+#include "hippnumerical_linalg/linalg_sarray1d.h"
+#include "hippnumerical_linalg/linalg_sarray_view.h"
 
 #endif	//_HIPPNUMERICAL_H_

@@ -20,15 +20,15 @@ protected:
         ASSERT_TRUE( (x - y == 0).all() );
     }
     void chk_eq(const bvec_t &x, const bvec_t &y) {
-        for(size_t i=0; i<vec_t::SIZE; ++i) {
+        for(size_t i=0; i<bvec_t::SIZE; ++i) {
             ASSERT_EQ(x[i], y[i]);
         }
         ASSERT_TRUE( (x == y).all() );
         ASSERT_TRUE( !(x != y).any() );
     }
     void chk_eq(const fvec_t &x, const fvec_t &y, double eps=1.0e-4) {
-        for(size_t i=0; i<vec_t::SIZE; ++i) {
-            chk_eq(x[i], y[i]);
+        for(size_t i=0; i<fvec_t::SIZE; ++i) {
+            chk_eq(x[i], y[i], eps);
         }
         ASSERT_TRUE(((x-y).abs() < eps).all());
     }
@@ -109,10 +109,10 @@ TEST_F(SVecIntTest, BoolView) {
     /** Unary RMW. */
     vec_t x {-3, 1, 2};
     auto v1 = x[x>0], v2 = x[{false, true, true}];
-    chk_eq(v1.vec(), v2.vec());
+    chk_eq(v1.array(), v2.array());
     chk_eq(v1.filter().mask(), v1.filter().mask());
     v1 += 1;
-    chk_eq(v1.vec(), x);
+    chk_eq(v1.array(), x);
     chk_eq(x, {-3, 2, 3});
 
     x[x!=2] *= 2;
@@ -145,13 +145,13 @@ TEST_F(SVecIntTest, ConstBoolView) {
     /** Unary RMW. */
     const vec_t x {-3, 1, 2};
     auto v1 = x[x>0], v2 = x[{false, true, true}];
-    chk_eq(v1.vec(), v2.vec());
+    chk_eq(v1.array(), v2.array());
     chk_eq(v1.filter().mask(), v1.filter().mask());
     auto y1 = v1 + 1;
     chk_eq(y1, {-3, 2, 3});
 
     auto v3 = x.cview(x>0), v4 = x.cview({false, true, true});
-    chk_eq(v3.vec(), v4.vec());
+    chk_eq(v3.array(), v4.array());
     chk_eq(v3.filter().mask(), v4.filter().mask());
     auto y3 = v3 + 1;
     chk_eq(y3, {-3, 2, 3});

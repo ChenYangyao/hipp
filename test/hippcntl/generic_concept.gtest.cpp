@@ -51,15 +51,16 @@ TEST_F(ConceptRawArrayTest, HelperExtentsToRawArray) {
     struct A {};
     using t0 = helper_t::extents_to_array_t<double>;
     using t0A = helper_t::extents_to_array_t<A>;
-    using t1 = helper_t::extents_to_array_t<int,3>;
+    using t1 = helper_t::extents_to_array_t<double,3>;
     using t1A = helper_t::extents_to_array_t<A,3>;
-    using t3 = helper_t::extents_to_array_t<int,3, 4, 5>;
+    using t3 = helper_t::extents_to_array_t<double,3, 4, 5>;
     using t3A = helper_t::extents_to_array_t<A,3, 4, 5>;
-    chk_type_eq<t0, int>();
+
+    chk_type_eq<t0, double>();
     chk_type_eq<t0A, A>();
-    chk_type_eq<t1, int[3]>();
+    chk_type_eq<t1, double[3]>();
     chk_type_eq<t1A, A[3]>();
-    chk_type_eq<t3, int[3][4][5]>();
+    chk_type_eq<t3, double[3][4][5]>();
     chk_type_eq<t3A, A[3][4][5]>();
 }
 

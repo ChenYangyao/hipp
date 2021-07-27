@@ -33,4 +33,5 @@ API References
 
     stream
     error
+    time
 

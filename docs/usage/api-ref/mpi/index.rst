@@ -140,7 +140,8 @@ Intermediate-level API
 
     intermediate-level/index
 
-.. rubric:: References 
+References 
+-----------
 
 .. [MPIForum-STDv31] `Message Passing Interface Forum <https://www.mpi-forum.org/docs/>`_, MPI: A Message Passing Interface Standard (version 3.1).
 .. [GroppW-UMPIv3] William Gropp, Ewing Lusk, and Anthony Skjellum, Using MPI - Portable Parallel Programming with the Message-Passing Interface (3ed).

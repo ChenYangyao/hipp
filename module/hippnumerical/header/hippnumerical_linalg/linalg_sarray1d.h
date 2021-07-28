@@ -15,7 +15,37 @@ create: Yangyao CHEN, 2021/05/28
 #define _HIPP_TEMPRET _HIPP_TEMPHD inline auto _HIPP_TEMPCLS::
 #define _HIPP_TEMPNORET _HIPP_TEMPHD inline _HIPP_TEMPCLS::
 
+
+namespace std {
+
+/** The tuple-like API. */
+template<typename ValueT, size_t N>
+struct tuple_size<HIPP::NUMERICAL::_HIPP_TEMPCLS > {
+    /* The number of tuple elements, namely the vector length. */
+    inline static constexpr size_t value = N;
+};
+
+template<size_t I, typename ValueT, size_t N>
+struct tuple_element<I, HIPP::NUMERICAL::_HIPP_TEMPCLS > {
+    /* The type of each tuple element, namely a scalar. */
+    using type = ValueT;
+};
+
+} // namespace std
+
 namespace HIPP::NUMERICAL {
+
+
+template<size_t I, typename ValueT, size_t N>
+const ValueT & get(const _HIPP_TEMPCLS &v) noexcept { return v[I]; }
+
+template<size_t I, typename ValueT, size_t N>
+ValueT & get(_HIPP_TEMPCLS &v) noexcept { return v[I]; }
+
+template<size_t I, typename ValueT, size_t N>
+ValueT && get(_HIPP_TEMPCLS &&v) noexcept { return std::move(v[I]); }
+
+
 
 /**
 SArray specialization for 1D case - aliased as SVec<ValueT, N>.
@@ -61,10 +91,10 @@ SVec has a RawArrayTraits support, which enables compile-time feature
 detection.
 */
 template<typename ValueT, size_t N>
-class SArray<ValueT, N> {
+class SArray<ValueT, N> : public SArrayBase  {
 public:
     /**
-    Basic aliases.
+    Basic aliases and properties.
     value_t - type of the array element.
     raw_array_t - type of the internal storage of the array, i.e., a raw array.
     traits_t - type traits for SArray.
@@ -93,6 +123,17 @@ public:
     typedef SArrayView<bool_filter_t, ValueT, N> bool_view_t;
     typedef SArrayConstView<bool_filter_t, ValueT, N> cbool_view_t; 
 
+    /** Aliases for stride filter. */
+    typedef SStrideFilter<N> stride_filter_t;
+    typedef SArrayView<stride_filter_t, ValueT, N> stride_view_t;
+    typedef SArrayConstView<stride_filter_t, ValueT, N> cstride_view_t; 
+
+    /**
+    ``IS_INT`` tells whether the value type is integer-like 
+    (i.e., integer or pointer). 
+    ``int_value_t`` is defined as ``int`` for non-integer-like, and defined as 
+    itself for integer-like.
+    */
     inline static constexpr bool IS_INT = 
         std::is_integral_v<ValueT> || std::is_pointer_v<ValueT>;
     typedef std::conditional_t<IS_INT, ValueT, int> int_value_t;
@@ -146,10 +187,13 @@ public:
     operator[] and at() - element access. 
         - at() throws on the out-of-range.
         - operator [] can accept a Boolean mask, return a view.
+        - operator [] can accept a stride filter, return a view.
     begin(), end() and their const counterparts - iterators.
     */
     value_t * data() noexcept;
     const value_t * data() const noexcept;
+    raw_array_t & raw() noexcept;
+    const raw_array_t & raw() const noexcept;
     static constexpr size_t size() noexcept;
     static constexpr bool empty() noexcept;
 
@@ -161,6 +205,9 @@ public:
 
     bool_view_t operator[](const bool_mask_t &mask) noexcept;
     cbool_view_t operator[](const bool_mask_t &mask) const noexcept;
+
+    stride_view_t operator[](const stride_filter_t &s) noexcept;
+    cstride_view_t operator[](const stride_filter_t &s) const noexcept;
 
     iter_t begin() noexcept;
     citer_t begin() const noexcept;
@@ -315,9 +362,35 @@ public:
 
     SArray abs() const noexcept;
 
+    /**
+    Views - get a "view" object of the instance.
+    The view object holds a reference to the SArray instance that generates it.
+    Any modifications to the view is reflected to the SArray.
+    A constant view cannot be used to modify the SArray.
+
+    view() - get a view object. 
+    cview() - get constant view object.
+    
+    @mask: generate a boolean view according to the mask for each element. E.g.,
+        if mask[i, ...] is true, then the view contains (*this)[i, ...].
+    @stride_filter: generate a stride view according to the stride filter.
+    
+    If the `s_stride_t` function is matched, `args` are forwarded to construct a 
+    stride filter and then it is used for the view.
+    */
     bool_view_t view(const bool_mask_t &mask) noexcept;
     cbool_view_t view(const bool_mask_t &mask) const noexcept;
     cbool_view_t cview(const bool_mask_t &mask) const noexcept;
+
+    stride_view_t view(const stride_filter_t &s) noexcept;
+    cstride_view_t view(const stride_filter_t &s) const noexcept;
+    cstride_view_t cview(const stride_filter_t &s) const noexcept;
+    template<typename Arg>
+    stride_view_t view(s_stride_t, Arg &&arg) noexcept;
+    template<typename Arg>
+    cstride_view_t view(s_stride_t, Arg &&arg) const noexcept;
+    template<typename Arg>
+    cstride_view_t cview(s_stride_t, Arg &&arg) const noexcept;
 protected:
     raw_array_t _data;
 };
@@ -377,6 +450,14 @@ _HIPP_TEMPRET data() const noexcept -> const value_t * {
     return _data;
 }
 
+_HIPP_TEMPRET raw() noexcept -> raw_array_t & {
+    return _data;
+}
+
+_HIPP_TEMPRET raw() const noexcept -> const raw_array_t & {
+    return _data;
+}
+
 _HIPP_TEMPHD 
 constexpr size_t _HIPP_TEMPCLS::size() noexcept {
     return SIZE;
@@ -401,6 +482,16 @@ _HIPP_TEMPRET operator[](const bool_mask_t &mask) noexcept -> bool_view_t {
 
 _HIPP_TEMPRET operator[](const bool_mask_t &mask) const noexcept -> cbool_view_t { 
     return view(mask); 
+}
+
+_HIPP_TEMPRET operator[](const stride_filter_t &s) noexcept
+-> stride_view_t {
+    return view(s);
+}
+
+_HIPP_TEMPRET operator[](const stride_filter_t &s) const noexcept
+-> cstride_view_t {
+    return view(s);
 }
 
 _HIPP_TEMPRET at(size_t pos) -> ref_t {
@@ -611,6 +702,7 @@ template<typename ResT>
 auto _HIPP_TEMPCLS::prod() const noexcept -> ResT {
     ResT ret {1};
     for(size_t i=0; i<SIZE; ++i) ret *= _data[i];
+    return ret;
 }
 
 _HIPP_TEMPHD 
@@ -798,32 +890,47 @@ _HIPP_TEMPRET cview(const bool_mask_t &mask) const noexcept -> cbool_view_t {
     return cbool_view_t(*this, bool_filter_t(mask)); 
 }
 
-template<size_t I, typename ValueT, size_t N>
-const ValueT & get(const _HIPP_TEMPCLS &v) noexcept { return v[I]; }
+_HIPP_TEMPRET
+view(const stride_filter_t &s) noexcept -> stride_view_t {
+    return stride_view_t(*this, s);
+}
 
-template<size_t I, typename ValueT, size_t N>
-ValueT & get(_HIPP_TEMPCLS &v) noexcept { return v[I]; }
+_HIPP_TEMPRET
+view(const stride_filter_t &s) const noexcept -> cstride_view_t {
+    return cview(s);
+}
 
-template<size_t I, typename ValueT, size_t N>
-ValueT && get(_HIPP_TEMPCLS &&v) noexcept { return std::move(v[I]); }
+_HIPP_TEMPRET
+cview(const stride_filter_t &s) const noexcept -> cstride_view_t {
+    return cstride_view_t(*this, s);
+}
+
+_HIPP_TEMPHD
+template<typename Arg>
+auto _HIPP_TEMPCLS::view(s_stride_t, Arg &&arg) noexcept 
+-> stride_view_t 
+{
+    return view( stride_filter_t(std::forward<Arg>(arg)) );
+}
+
+_HIPP_TEMPHD
+template<typename Arg>
+auto _HIPP_TEMPCLS::view(s_stride_t, Arg &&arg) const noexcept 
+-> cstride_view_t 
+{
+    return view( stride_filter_t(std::forward<Arg>(arg)) );
+}
+
+_HIPP_TEMPHD
+template<typename Arg>
+auto _HIPP_TEMPCLS::cview(s_stride_t, Arg &&arg) const noexcept 
+-> cstride_view_t 
+{
+    return cview( stride_filter_t(std::forward<Arg>(arg)) );
+}
 
 } // namespace HIPP::NUMERICAL
 
-
-/** The tuple-like API. */
-namespace std {
-
-template<typename ValueT, size_t N>
-struct tuple_size<HIPP::NUMERICAL::_HIPP_TEMPCLS > {
-    inline static constexpr size_t value = N;
-};
-
-template<size_t I, typename ValueT, size_t N>
-struct tuple_element<I, HIPP::NUMERICAL::_HIPP_TEMPCLS > {
-    using type = ValueT;
-};
-
-} // namespace std
 
 #undef _HIPP_TEMPNORET
 #undef _HIPP_TEMPRET

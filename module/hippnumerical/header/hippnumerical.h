@@ -8,6 +8,7 @@
 
 #include "hippnumerical_linalg/linalg_sarray.h"
 #include "hippnumerical_linalg/linalg_sarray1d.h"
+#include "hippnumerical_linalg/linalg_sfilter.h"
 #include "hippnumerical_linalg/linalg_sarray_view.h"
 
 #endif	//_HIPPNUMERICAL_H_

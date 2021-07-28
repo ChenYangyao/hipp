@@ -12,10 +12,14 @@ namespace HIPP::NUMERICAL {
 template<typename FilterT, typename ValueT, size_t ...Ds>
 class SArrayView {
 public:
+    static_assert(std::is_base_of_v<SFilter, FilterT>, 
+        "FilterT is not a subclass of SFilter");
+    
     typedef SArray<ValueT, Ds...> array_t;
     typedef FilterT filter_t;
     typedef typename array_t::value_t value_t;
     inline static constexpr size_t SIZE = array_t::SIZE;
+
 
     /**
     Constructor.

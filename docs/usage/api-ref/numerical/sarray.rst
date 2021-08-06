@@ -144,14 +144,18 @@ SArray
         Initializers.
 
         1. Default initialization of all elements. Caution for numeric types.
-        2. All members are initialized with `value`.
-        3. Row-major order copying from a range starting from `b`, with `n` 
+        2. All members are initialized with ``value``.
+        3. Row-major order copying from a range starting from ``b``, with ``n`` 
            elements.
         4. Row-major order copying From an initializer list.
         5. Cast from another SArray.
         
-        In 3. and 4., `n` and `il.size()` may be less than `SIZE`, leaving 
+        In 3. and 4., ``n`` and ``il.size()`` may be less than ``SIZE``, leaving 
         the tail un-initialized.
+
+    .. function:: SArray & operator=(const value_t &value) noexcept
+
+        Set all elements to a single value.
         
     .. function:: friend void swap (SArray &lhs, SArray &rhs) noexcept
         
@@ -349,6 +353,8 @@ SArray
             if ``mask[i, ...]`` is true, then the view contains ``(*this)[i, ...]``.
         :arg stride_filter: generate a stride view according to the stride filter.
 
+Non-member functions 
+""""""""""""""""""""""
 
 The following binary arithmetic and logic functions are defined for :class:`SArray`. 
 For details, see, e.g., the description of the corresponding method :func:`SArray::operator+` .
@@ -401,21 +407,23 @@ For details, see, e.g., the description of the corresponding method :func:`SArra
     template<typename ValueT, size_t ...Ds> SArray<bool, Ds...> operator==( const SArray<ValueT, Ds...> &lhs, const SArray<ValueT, Ds...> &rhs) noexcept
     template<typename ValueT, size_t ...Ds> SArray<bool, Ds...> operator!=( const SArray<ValueT, Ds...> &lhs, const SArray<ValueT, Ds...> &rhs) noexcept
 
+Tuple-like API
+""""""""""""""""""""""
+
 The following classes and functions define the "tuple-like" API of :class:`SArray` for the structural binding language feature.
 
-.. class:: template<typename ValueT, size_t ...Ds> std::tuple_size<HIPP::NUMERICAL::_HIPP_TEMPCLS >
+.. class:: template<typename ValueT, size_t ...Ds> std::tuple_size<SArray<ValueT, Ds...> >
 
     .. member:: static constexpr size_t value
         
         The number of tuple elements, namely the size of the first dimension.
         
 
-.. class:: template<size_t I, typename ValueT, size_t ...Ds> tuple_element<I, HIPP::NUMERICAL::_HIPP_TEMPCLS >
+.. class:: template<size_t I, typename ValueT, size_t ...Ds> tuple_element<I, SArray<ValueT, Ds...> >
 
     .. type:: type
 
         The type of each tuple element, namely a sub-array.
-
 
 
 .. function:: template<size_t I, typename ValueT, size_t ...Ds> decltype(auto) get(const SArray<ValueT, Ds...> &v) noexcept 
@@ -443,13 +451,401 @@ first matrix::
     assert( r00[1] == 2 );
     assert( r00[2] == 3 );
 
+SArray (1-D)
+----------------------------
+
+
+.. class:: template<typename ValueT, size_t N> SArray<ValueT, N> : public SArrayBase
+
+    The specialization for ``SArray`` in the one-dimensional space. Most of 
+    the member variables and functions are available as in the main template. 
+
+    .. type:: ValueT value_t
+        ValueT raw_array_t[N]
+        RawArrayTraits<SArray> traits_t
+
+    .. member:: static constexpr size_t SIZE = N;
+
+        Basic aliases and properties.
+        
+        - ``value_t`` : type of the array element.
+        - ``raw_array_t`` : type of the internal storage of the array, i.e., a raw array.
+        - ``traits_t`` : type traits for SArray.
+        - ``SIZE`` : total number of elements.
+    
+    .. type:: value_t & ref_t
+            const value_t & cref_t
+            value_t *iter_t
+            const value_t *citer_t
+
+        Aliases for member access.
+        
+        - ``ret_t`` and ``cref_t``: reference type to the vector element, and its const counterpart.
+        - ``iter_t`` and ``citer_t``: iterator type to the vector element, and its const counterpart.
+
+    .. type:: SArray<bool, N> bool_mask_t
+        SBoolFilter<N> bool_filter_t
+        SArrayView<bool_filter_t, ValueT, N> bool_view_t
+        SArrayConstView<bool_filter_t, ValueT, N> cbool_view_t 
+
+        Aliases for Boolean filter.
+
+    .. type:: SStrideFilter<N> stride_filter_t
+        SArrayView<stride_filter_t, ValueT, N> stride_view_t
+        SArrayConstView<stride_filter_t, ValueT, N> cstride_view_t 
+
+        Aliases for stride filter.
+
+    .. member:: static constexpr bool IS_INT
+
+    .. type::  std::conditional_t<IS_INT, ValueT, int> int_value_t
+
+        ``IS_INT``: tells whether the value type is integer-like (i.e., integer or pointer). 
+        ``int_value_t``: is defined as ``int`` for non-integer-like, and defined as 
+        itself for integer-like.
+
+    
+    .. function:: SArray() noexcept
+        explicit SArray(const value_t &value) noexcept
+        template<typename InputValue> explicit SArray(const InputValue *b, size_t n = SIZE) noexcept
+        template<typename InputValue> SArray(std::initializer_list<InputValue> il) noexcept
+        template<typename InputValue> explicit SArray(const SArray<InputValue, SIZE> &v) noexcept
+
+        Initializers.
+
+        1. Default initialization of all elements. Caution for numeric types.
+        2. All members are initialized with ``value``.
+        3. Copy from a range starting from ``b``, with ``n`` elements.
+        4. From an initializer list.
+        5. Cast from another svec.
+        
+        In 3. and 4., ``n`` and ``il.size()`` may be less than ``SIZE``, leaving 
+        the tail un-initialized.
+
+    .. function:: SArray & operator=(const value_t &value) noexcept
+
+        Set all elements to a single value.
+    
+    .. function:: friend void swap (SArray &lhs, SArray &rhs) noexcept
+
+        Deep, all elements are swapped.
+
+    .. function:: friend ostream & operator<< (ostream &os, const SArray &)
+        ostream & info(ostream &os=cout, int fmt_cntl=1) const
+
+        ``operator<<()`` prints inline information of the instance.
+        
+        ``info()`` prints the instance with more controls.
+
+        :arg fmt_cntl: ``0`` for an inline short message. ``1`` for a long block message.
+
+    .. function:: value_t * data() noexcept
+        const value_t * data() const noexcept
+        raw_array_t & raw() noexcept
+        const raw_array_t & raw() const noexcept
+        static constexpr size_t size() noexcept
+        static constexpr bool empty() noexcept
+
+    .. function:: ref_t operator[](size_t pos) noexcept
+        cref_t operator[](size_t pos) const noexcept
+    
+    .. function:: ref_t at(size_t pos)
+        cref_t at(size_t pos) const
+
+    .. function:: bool_view_t operator[](const bool_mask_t &mask) noexcept
+        cbool_view_t operator[](const bool_mask_t &mask) const noexcept
+
+    .. function:: stride_view_t operator[](const stride_filter_t &s) noexcept
+        cstride_view_t operator[](const stride_filter_t &s) const noexcept
+
+    .. function:: iter_t begin() noexcept
+        citer_t begin() const noexcept
+        citer_t cbegin() const noexcept
+        iter_t end() noexcept
+        citer_t end() const noexcept
+        citer_t cend() const noexcept
+
+    STL-conforming definitions - semantics are like ``std::vector``.
+
+    - ``data()``: return a pointer to the internal storage.
+    - ``size()``: always returns ``SIZE``.
+    - ``empty()``: returns true only if ``SIZE == 0``.
+    - ``operator[]`` and ``at()`` - element access. 
+        
+        - ``at()`` throws on the out-of-range.
+        - ``operator[]`` can accept a Boolean mask, return a view.
+        - ``operator[]`` can accept a stride filter, return a view.
+    
+    - ``begin()``, ``end()`` and their const counterparts - iterators.
+
+    .. function:: ref_t operator()(size_t id) noexcept
+        cref_t operator()(size_t id) const noexcept
+
+        For 1-D SArray, operator()(size_t) is identical to operator[](size_t).
+
+    .. function:: template<typename T = value_t> vector<T> to_vector() const
+        template<typename T = value_t> std::array<T, N> to_array() const noexcept
+
+        Convert the SArray to objects of other types. Return a deeply 
+        copied version. 
+
+        :tparam T: the value type of returned object.
+
+    .. function:: SArray & operator+=(const value_t &rhs) noexcept
+        SArray & operator-=(const value_t &rhs) noexcept
+        SArray & operator*=(const value_t &rhs) noexcept
+        SArray & operator/=(const value_t &rhs) noexcept
+        SArray & operator%=(const value_t &rhs) noexcept
+        SArray & operator&=(const value_t &rhs) noexcept
+        SArray & operator|=(const value_t &rhs) noexcept
+        SArray & operator^=(const value_t &rhs) noexcept
+
+    .. function:: SArray & operator+=(const SArray &rhs) noexcept
+        SArray & operator-=(const SArray &rhs) noexcept
+        SArray & operator*=(const SArray &rhs) noexcept
+        SArray & operator/=(const SArray &rhs) noexcept
+        SArray & operator%=(const SArray &rhs) noexcept
+        SArray & operator&=(const SArray &rhs) noexcept
+        SArray & operator|=(const SArray &rhs) noexcept
+        SArray & operator^=(const SArray &rhs) noexcept
+
+    .. function:: SArray operator+() const noexcept
+        SArray operator-() const noexcept
+        SArray operator~() const noexcept
+
+        Linear algebra operations. All are element-wise operations.
+
+        ======================== ===============================================================  ==========================================================================================================================
+        Type of operation        Usage                                                            The operator ``op``
+        ======================== ===============================================================  ==========================================================================================================================
+        Unary RMW operations     ``arr op= scalar`` |br| ``arr op= arr``                          ``+``, ``-``, ``*``, ``/``, ``%``: arithmetic operation and return ``SArray &``. |br|
+                                                                                                  ``&``, ``|``, ``^``: bit-wise logic for each element and returns ``SArray &``.
+        Binary operations        ``arr op scalar`` |br| ``scalar op arr`` |br| ``arr op arr``     ``+``, ``-``, ``*``, ``/``, ``%``: arithmetic operations and return ``SArray``. |br|
+                                                                                                  ``&``, ``|``, ``^``: bit-wise for each element and return ``SArray``. |br|
+                                                                                                  ``<``, ``<=``, ``>``, ``>=``, ``==``, ``!=``: comparison/logic operations and return ``SArray<bool, Ds...>``.
+        Unary operations         ``op arr``                                                       ``~``, ``+``, ``-`` for bit-wise NOT, arithmetic positate, negate, respectively.
+        ======================== ===============================================================  ==========================================================================================================================
+            
+        Caution: interger-lift is used intermediately for small integers, like 
+        ``bool``, ``char``, etc., so that ``~true != false``. But ``&``, ``|``, ``^`` work just as
+        expected.
+    
+    .. function:: template<typename ResT = double> ResT norm() const noexcept
+        template<typename ResT = double>  ResT norm(int p) const noexcept
+        template<typename ResT = double>  ResT squared_norm() const noexcept
+    
+    .. function:: SArray & normalize() noexcept
+        SArray & normalize(int p) noexcept
+        SArray normalized() const noexcept
+        SArray normalized(int p) const noexcept
+
+        - ``norm()`` : 2-norm.
+        - ``norm(p)`` : p-norm.
+        - ``squared_norm()`` : square of 2-norm.
+        - ``normalize()`` : normalize itself, according to 2-norm.
+        - ``normalize(int p)`` : normalize itself, according to p-norm.
+        - ``normalized()`` : returns a normalized (according to 2-norm) copy.
+        - ``normalized(int p)`` : returns a normalized (according to p-norm) copy.
+         
+        ``normalize()`` or ``normalized()`` for an integer vector are ill-defined. 
+        ``norm()`` with ``ResT`` != floting-point type may have truncation.
+        With caution to use.
+
+    .. function:: template<typename ResT = value_t> ResT sum() const noexcept
+        template<typename ResT = value_t> ResT prod() const noexcept 
+        template<typename ResT = value_t> ResT mean() const noexcept
+        template<typename ResT = value_t> ResT dot(const SArray &rhs) const noexcept
+        template<typename ResT = value_t> SArray<ResT, SIZE> cross(const SArray &rhs) const noexcept
+        value_t min() const noexcept
+        value_t max() const noexcept
+        std::pair<value_t, value_t> minmax() const noexcept
+        size_t min_index() const noexcept
+        size_t max_index() const noexcept
+        std::pair<size_t, size_t> minmax_index() const noexcept
+        bool all() const noexcept
+        bool any() const noexcept
+
+        Reduction operations.
+        
+        - ``sum()``, ``prod()``, ``mean()`` : the summation, product, and mean of all elements.
+        - ``dot()``, ``cross()`` : dot product and cross product.
+        - ``min()``, ``max()``, ``minmax()`` : as you expect. The indexed-version returns the element index if the corresponding result.
+        - ``all()``, ``any()`` : all true or any true.
+
+    .. function:: template<typename UnaryOp> SArray & map(UnaryOp op)
+        template<typename UnaryOp, typename ResT = std::invoke_result_t<UnaryOp, value_t> > SArray<ResT, SIZE> mapped(UnaryOp op) const
+        template<typename BinaryOp> void visit(BinaryOp op) const
+        template<typename BinaryOp> void visit(BinaryOp op)
+
+        Map and visit operations.
+        
+        - ``map()`` : for each ``i``, ``self[i] = op(self[i])``.
+        - ``mapped()`` : returns a mapped copy.
+        - ``visit()`` : for each ``size_t(i)``, call ``op(i, self[i])``.
+
+    .. function:: template<typename ResT = int_value_t> SArray<ResT, SIZE> floor() const noexcept
+        template<typename ResT = int_value_t> SArray<ResT, SIZE> ceil() const noexcept
+        template<typename ResT = int_value_t> SArray<ResT, SIZE> trunc() const noexcept
+        SArray abs() const noexcept
+
+        Round to floor, ceil, trunc toward zero, and absolute value.
+        ``ResT`` can be floating-point or integral type.
+
+        By default, if ``value_t`` is integer or pointer, ``ResT`` is ``value_t`` itself,
+        no conversion bappens. Otherwise ``ResT`` is ``int``, and the conversion is made
+        by ``std::floor``, ``ceil``, ``trunc`` and then cast.
+
+    .. function:: bool_view_t view(const bool_mask_t &mask) noexcept
+        cbool_view_t view(const bool_mask_t &mask) const noexcept
+        cbool_view_t cview(const bool_mask_t &mask) const noexcept
+
+    .. function:: stride_view_t view(const stride_filter_t &s) noexcept
+        cstride_view_t view(const stride_filter_t &s) const noexcept
+        cstride_view_t cview(const stride_filter_t &s) const noexcept
+        template<typename Arg> stride_view_t view(s_stride_t, Arg &&arg) noexcept
+        template<typename Arg> cstride_view_t view(s_stride_t, Arg &&arg) const noexcept
+        template<typename Arg> cstride_view_t cview(s_stride_t, Arg &&arg) const noexcept
+
+        Views - get a "view" object of the instance.
+        
+        The view object holds a reference to the SArray instance that generates it.
+        Any modifications to the view is reflected to the SArray.
+        A constant view cannot be used to modify the SArray.
+
+        - ``view()`` : get a view object. 
+        - ``cview()`` : get constant view object.
+        
+        If the ``s_stride_t`` function is matched, ``args`` are forwarded to construct a 
+        stride filter and then it is used for the view.
+        
+        :arg mask: generate a boolean view according to the mask for each element. E.g.,
+            if ``mask[i, ...]`` is true, then the view contains ``(*this)[i, ...]``.
+        :arg stride_filter: generate a stride view according to the stride filter.
+
+Non-member functions 
+""""""""""""""""""""""
+
+The following binary arithmetic and logic functions are defined for :class:`SArray\<SizeT, N>`. 
+For details, see, e.g., the description of the corresponding method :func:`SArray\<SizeT, N>::operator+` .
+
+.. function:: \
+    template<typename ValueT, size_t N> SArray<ValueT, N> operator+( const ValueT &lhs, const SArray<ValueT, N> &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<ValueT, N> operator-( const ValueT &lhs, const SArray<ValueT, N> &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<ValueT, N> operator*( const ValueT &lhs, const SArray<ValueT, N> &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<ValueT, N> operator/( const ValueT &lhs, const SArray<ValueT, N> &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<ValueT, N> operator%( const ValueT &lhs, const SArray<ValueT, N> &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<ValueT, N> operator&( const ValueT &lhs, const SArray<ValueT, N> &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<ValueT, N> operator|( const ValueT &lhs, const SArray<ValueT, N> &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<ValueT, N> operator^( const ValueT &lhs, const SArray<ValueT, N> &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<bool, N> operator<( const ValueT &lhs, const SArray<ValueT, N> &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<bool, N> operator<=( const ValueT &lhs, const SArray<ValueT, N> &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<bool, N> operator>( const ValueT &lhs, const SArray<ValueT, N> &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<bool, N> operator>=( const ValueT &lhs, const SArray<ValueT, N> &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<bool, N> operator==( const ValueT &lhs, const SArray<ValueT, N> &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<bool, N> operator!=( const ValueT &lhs, const SArray<ValueT, N> &rhs) noexcept
+
+.. function:: \
+    template<typename ValueT, size_t N> SArray<ValueT, N> operator+( const SArray<ValueT, N> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<ValueT, N> operator-( const SArray<ValueT, N> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<ValueT, N> operator*( const SArray<ValueT, N> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<ValueT, N> operator/( const SArray<ValueT, N> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<ValueT, N> operator%( const SArray<ValueT, N> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<ValueT, N> operator&( const SArray<ValueT, N> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<ValueT, N> operator|( const SArray<ValueT, N> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<ValueT, N> operator^( const SArray<ValueT, N> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<bool, N> operator<( const SArray<ValueT, N> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<bool, N> operator<=( const SArray<ValueT, N> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<bool, N> operator>( const SArray<ValueT, N> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<bool, N> operator>=( const SArray<ValueT, N> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<bool, N> operator==( const SArray<ValueT, N> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<bool, N> operator!=( const SArray<ValueT, N> &lhs, const ValueT &rhs) noexcept
+
+.. function:: \
+    template<typename ValueT, size_t N> SArray<ValueT, N> operator+( const SArray<ValueT, N> &lhs, const SArray<ValueT, N> &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<ValueT, N> operator-( const SArray<ValueT, N> &lhs, const SArray<ValueT, N> &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<ValueT, N> operator*( const SArray<ValueT, N> &lhs, const SArray<ValueT, N> &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<ValueT, N> operator/( const SArray<ValueT, N> &lhs, const SArray<ValueT, N> &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<ValueT, N> operator%( const SArray<ValueT, N> &lhs, const SArray<ValueT, N> &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<ValueT, N> operator&( const SArray<ValueT, N> &lhs, const SArray<ValueT, N> &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<ValueT, N> operator|( const SArray<ValueT, N> &lhs, const SArray<ValueT, N> &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<ValueT, N> operator^( const SArray<ValueT, N> &lhs, const SArray<ValueT, N> &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<bool, N> operator<( const SArray<ValueT, N> &lhs, const SArray<ValueT, N> &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<bool, N> operator<=( const SArray<ValueT, N> &lhs, const SArray<ValueT, N> &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<bool, N> operator>( const SArray<ValueT, N> &lhs, const SArray<ValueT, N> &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<bool, N> operator>=( const SArray<ValueT, N> &lhs, const SArray<ValueT, N> &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<bool, N> operator==( const SArray<ValueT, N> &lhs, const SArray<ValueT, N> &rhs) noexcept
+    template<typename ValueT, size_t N> SArray<bool, N> operator!=( const SArray<ValueT, N> &lhs, const SArray<ValueT, N> &rhs) noexcept
+
+Tuple-like API
+""""""""""""""""""""""
+
+The following classes and functions define the "tuple-like" API of :class:`template\<typename ValueT, size_t N> SArray\<SizeT, N>` for the structural binding language feature.
+
+.. class:: template<typename ValueT, size_t N> std::tuple_size<SArray<ValueT, N> >
+
+    .. member:: static constexpr size_t value
+        
+        The number of tuple elements, namely the vector length.
+        
+
+.. class:: template<size_t I, typename ValueT, size_t N> tuple_element<I, SArray<ValueT, N> >
+
+    .. type:: type
+
+        The type of each tuple element, namely a scalar.
+
+.. function:: template<size_t I, typename ValueT, size_t N> decltype(auto) get(const SArray<ValueT, N> &v) noexcept 
+        template<size_t I, typename ValueT, size_t N> decltype(auto) get(SArray<ValueT, N> &v) noexcept
+        template<size_t I, typename ValueT, size_t N> decltype(auto) get(SArray<ValueT, N> &&v) noexcept
+
+
+Vector Aliases
+--------------
+
+.. type:: template<typename ValueT, size_t N> SVec = SArray<ValueT, N>
+
+.. type:: template<size_t N> SVecXd = SArray<double, N>
+    SVec1d = SVecXd<1>
+    SVec2d = SVecXd<2>
+    SVec3d = SVecXd<3>
+    SVec4d = SVecXd<4>
+
+.. type:: template<size_t N> SVecXf = SArray<float, N>
+    SVec1f = SVecXf<1>
+    SVec2f = SVecXf<2>
+    SVec3f = SVecXf<3>
+    SVec4f = SVecXf<4>
+
+.. type:: template<size_t N> SVecXi = SArray<int, N>
+    SVec1i = SVecXi<1>
+    SVec2i = SVecXi<2>
+    SVec3i = SVecXi<3>
+    SVec4i = SVecXi<4>
+
+.. type:: template<size_t N> SVecXb = SArray<bool, N>
+    SVec1b = SVecXb<1>
+    SVec2b = SVecXb<2>
+    SVec3b = SVecXb<3>
+    SVec4b = SVecXb<4>
+
+    Aliases for convenience. 
+    
+    Format: ``SVecPq``, where ``P`` is in {X, 1, 2, 3, 4}, and ``q`` is in {d, f, i, b}.
+    
+    - ``P``: dimension of the vector.
+    - ``q``: type of its element. d, f, i, and b are for double, float, integer, 
+      and bool, respectively.
+
+RawArray Traits 
+--------------------
+
 .. class:: template<typename ValueT, size_t ...Ds> RawArrayTraits< SArray<ValueT, Ds...> >
 
     ``SArray`` follows the raw-array concept, i.e., it is binary compatible to a 
     raw array typed ``ValueT [D0][D1][...]`` where ``{D0,D1,...} = Ds``.
 
-    **Examples:** The traits type for raw-array concept can be used to get its static information::
+**Examples:** The traits type for raw-array concept can be used to get its static information::
 
-        typedef RawArrayTraits<SArray<int,3,4> > traits_t;
-        assert( traits_t::rank == 2 );
-        assert( traits_t::size == 12 );
+    typedef RawArrayTraits<SArray<int,3,4> > traits_t;
+    assert( traits_t::rank == 2 );
+    assert( traits_t::size == 12 );

@@ -95,10 +95,10 @@ class SArray<ValueT, N> : public SArrayBase  {
 public:
     /**
     Basic aliases and properties.
-    value_t - type of the array element.
-    raw_array_t - type of the internal storage of the array, i.e., a raw array.
-    traits_t - type traits for SArray.
-    SIZE - total number of elements.
+    value_t: type of the array element.
+    raw_array_t: type of the internal storage of the array, i.e., a raw array.
+    traits_t: type traits for SArray.
+    SIZE: total number of elements.
     */
     typedef ValueT value_t;
     typedef ValueT raw_array_t[N];
@@ -107,9 +107,9 @@ public:
     
     /** 
     Aliases for member access.
-    ret_t and cref_t - reference type to the vector element, and its const 
+    ret_t and cref_t: reference type to the vector element, and its const 
         counterpart.
-    iter_t and citer_t - iterator type to the vector element, and its const
+    iter_t and citer_t: iterator type to the vector element, and its const
         counterpart.
     */
     typedef value_t & ref_t;
@@ -129,10 +129,10 @@ public:
     typedef SArrayConstView<stride_filter_t, ValueT, N> cstride_view_t; 
 
     /**
-    ``IS_INT`` tells whether the value type is integer-like 
-    (i.e., integer or pointer). 
-    ``int_value_t`` is defined as ``int`` for non-integer-like, and defined as 
-    itself for integer-like.
+    IS_INT: tells whether the value type is integer-like (i.e., integer or 
+        pointer). 
+    int_value_t: is defined as ``int`` for non-integer-like, and defined as 
+        itself for integer-like.
     */
     inline static constexpr bool IS_INT = 
         std::is_integral_v<ValueT> || std::is_pointer_v<ValueT>;
@@ -140,11 +140,11 @@ public:
 
     /**
     (1) Default initialization of all elements. Caution for numeric types.
-    (2) All members are initialized with `value`.
-    (3) Copy from a range starting from `b`, with `n` elements.
+    (2) All members are initialized with ``value``.
+    (3) Copy from a range starting from ``b``, with ``n`` elements.
     (4) From an initializer list.
     (5) Cast from another svec.
-    In (3) and (4), `n` and `il.size()` may be less than `SIZE`, leaving 
+    In (3) and (4), ``n`` and ``il.size()`` may be less than ``SIZE``, leaving 
     the tail un-initialized.
     */
     SArray() noexcept {}
@@ -165,6 +165,10 @@ public:
     SArray & operator=(const SArray &) noexcept = default;
     SArray & operator=(SArray &&)  noexcept = default;
     ~SArray() noexcept {}
+
+    /* Set all elements to a single value. */
+    SArray & operator=(const value_t &value) noexcept;
+
     /**
     Deep, all elements are swapped.
     */
@@ -181,8 +185,8 @@ public:
     /**
     STL-conforming definitions - semantics are like std::vector.
     data() - return a pointer to the internal storage.
-    size() - always returns `SIZE`.
-    empty() - returns true only if `SIZE == 0`.
+    size() - always returns ``SIZE``.
+    empty() - returns true only if ``SIZE == 0``.
 
     operator[] and at() - element access. 
         - at() throws on the out-of-range.
@@ -216,9 +220,17 @@ public:
     citer_t end() const noexcept;
     citer_t cend() const noexcept;
 
-    /** For SArray, operator()(size_t) is identical to operator[](size_t) */
+    /** For 1-D SArray, operator()(size_t) is identical to operator[](size_t) */
     ref_t operator()(size_t id) noexcept;
     cref_t operator()(size_t id) const noexcept;
+
+    /** 
+    Convert the SArray to objects of other types. Return a deeply 
+    copied version. 
+    @T: the value type of returned object.
+    */
+    template<typename T = value_t> vector<T> to_vector() const;
+    template<typename T = value_t> std::array<T, N> to_array() const noexcept;
 
     /**
     Linear algebra operations. All are element-wise operations.
@@ -275,8 +287,8 @@ public:
     normalized() - returns a normalized (according to 2-norm) copy.
     normalized(int p) - returns a normalized (according to p-norm) copy.
 
-    `normalize()` or `normalized()` for an integer vector are ill-defined. 
-    `norm()` with `ResT` != floting-point type may have truncation.
+    ``normalize()`` or ``normalized()`` for an integer vector are ill-defined. 
+    ``norm()`` with ``ResT`` != floting-point type may have truncation.
     With caution to use.
     */
     template<typename ResT = double> 
@@ -345,11 +357,11 @@ public:
 
     /** 
     Round to floor, ceil, trunc toward zero, and absolute value.
-    `ResT` can be floating-point or integral type.
+    ``ResT`` can be floating-point or integral type.
 
-    By default, if `value_t` is integer or pointer, `ResT` is `value_t` itself,
-    no conversion bappens. Otherwise `ResT` is `int`, and the conversion is made
-    by std::floor, ceil, trunc and then cast.
+    By default, if ``value_t`` is integer or pointer, ``ResT`` is ``value_t`` 
+    itself, no conversion bappens. Otherwise ``ResT`` is ``int``, and the 
+    conversion is made by std::floor, ceil, trunc and then cast.
     */
     template<typename ResT = int_value_t>
     SArray<ResT, SIZE> floor() const noexcept;
@@ -371,12 +383,12 @@ public:
     view() - get a view object. 
     cview() - get constant view object.
     
+    If the `s_stride_t` function is matched, `args` are forwarded to construct a 
+    stride filter and then it is used for the view.
+    
     @mask: generate a boolean view according to the mask for each element. E.g.,
         if mask[i, ...] is true, then the view contains (*this)[i, ...].
     @stride_filter: generate a stride view according to the stride filter.
-    
-    If the `s_stride_t` function is matched, `args` are forwarded to construct a 
-    stride filter and then it is used for the view.
     */
     bool_view_t view(const bool_mask_t &mask) noexcept;
     cbool_view_t view(const bool_mask_t &mask) const noexcept;
@@ -397,29 +409,37 @@ protected:
 
 /* Implementation. */
 _HIPP_TEMPNORET
-SArray(const value_t &value) noexcept { std::fill_n(_data, SIZE, value); }
+SArray(const value_t &value) noexcept { 
+    std::fill_n(data(), SIZE, value); 
+}
 
 _HIPP_TEMPHD
 template<typename InputValue>
 _HIPP_TEMPCLS::SArray(const InputValue *b, size_t n) noexcept {
-    std::copy_n(b, n, _data);
+    std::copy_n(b, n, data());
 }
 
 _HIPP_TEMPHD
 template<typename InputValue>
 _HIPP_TEMPCLS::SArray(std::initializer_list<InputValue> il) noexcept {
-    std::copy(il.begin(), il.end(), _data);
+    std::copy(il.begin(), il.end(), data());
 }
 
 _HIPP_TEMPHD
 template<typename InputValue>
 _HIPP_TEMPCLS::SArray(const SArray<InputValue, SIZE> &v) noexcept {
-    std::copy_n(v.data(), SIZE, _data);
+    std::copy_n(v.data(), SIZE, data());
 }
 
 _HIPP_TEMPHD
 void swap(_HIPP_TEMPCLS &lhs, _HIPP_TEMPCLS &rhs) noexcept {
     std::swap_ranges(lhs.begin(), lhs.end(), rhs.begin());
+}
+
+_HIPP_TEMPRET
+operator=(const value_t &value) noexcept -> SArray & {
+    std::fill_n(data(), SIZE, value);
+    return *this;
 }
 
 _HIPP_TEMPHD
@@ -538,6 +558,20 @@ _HIPP_TEMPRET operator()(size_t id) noexcept -> ref_t {
 
 _HIPP_TEMPRET operator()(size_t id) const noexcept -> cref_t {
     return (*this)[id];
+}
+
+_HIPP_TEMPHD
+template<typename T>
+vector<T> _HIPP_TEMPCLS::to_vector() const {
+    return vector<T>(begin(), end());
+}
+
+_HIPP_TEMPHD
+template<typename T>
+std::array<T, N> _HIPP_TEMPCLS::to_array() const noexcept {
+    std::array<T, N> a;
+    std::copy_n(begin(), SIZE, a.begin());
+    return a;
 }
 
 #define _HIPP_UNARY_OP_DEF(op) \

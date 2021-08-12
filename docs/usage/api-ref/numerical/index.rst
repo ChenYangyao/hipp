@@ -38,4 +38,5 @@ API References
     :maxdepth: 2
 
     sarray
+    darray
 

@@ -1,15 +1,18 @@
 /**
- * creat: Yangyao CHEN, 2020/12/22
- *      [write   ] 
- *      GaussianRandomNumber<> - generator of random numbers for normal 
- *          distribution.
- */ 
+create: Yangyao CHEN, 2020/12/22
+    [write   ] 
+    GaussianRandomNumber<> - generator of random numbers for normal 
+        distribution.
+*/ 
 
 #ifndef _HIPPNUMERICAL_RANNUM_GAUSSIAN_H_
 #define _HIPPNUMERICAL_RANNUM_GAUSSIAN_H_
 #include "rannum_base.h"
 namespace HIPP::NUMERICAL {
 
+/**
+GaussianRandomNumber - generator of Normal Distribution random numbers.
+*/
 template<typename RealT = double, 
     typename EngineT = DefaultRandomEngine>
 class GaussianRandomNumber {
@@ -42,8 +45,14 @@ public:
     GaussianRandomNumber & operator=(GaussianRandomNumber &&o);
     
     /**
-     * Attribute Getting.
-     */
+    Setters.
+    reset_state(): reset the internal state so that the subsequent random 
+        numbers do not depend on the previous ones.
+    reset_param(): reset the parameters.
+    reset_engine(): reset the random number engine. Note that its life-time 
+        is controlled by the user.
+    seed(): reseed the random engine.
+    */
     GaussianRandomNumber & reset_state();
     GaussianRandomNumber & reset_param(
         result_t mean = 0., result_t stddev = 1.);
@@ -53,8 +62,15 @@ public:
     GaussianRandomNumber & seed(seed_t seed = engine_t::default_seed);
 
     /**
-     * Attribute Querying.
-     */
+    Geters.
+    mean(), stddev() - the parameters of the distribution.
+    param() - the packet of mean and stddev.
+    min(), max() - minimum and maximum value that can be returned by the random
+        number generator.
+    range() - the pair {min(), max()}.
+    engine() - the random engine. 
+    rng() - the internal random number generator.
+    */
     result_t mean() const;
     result_t stddev() const;
     param_t param() const;
@@ -66,21 +82,21 @@ public:
     const rng_t & rng() const;
 
     /**
-     * Get a single random number.
-     * 1. using current parameters.
-     * 2. using new parameters 'param'.
-     * 3. using new parameters 'mean' and 'stddev'.
-     */
+    Get a single random number.
+    1. using current parameters.
+    2. using new parameters 'param'.
+    3. using new parameters 'mean' and 'stddev'.
+    */
     result_t operator()();
     result_t get(const param_t &param);
     result_t get(result_t mean, result_t stddev);
     
     /**
-     * Get a series of random numbers.
-     * 1. Get 'n' numbers, returned a container (must have push back).
-     * 2. Directly pushing back into container 'c' (clear() is not called).
-     * 3. Write into a range specified by a pair of iterator.
-     */
+    Get a series of random numbers.
+    1. Get 'n' numbers, returned a container (must have push back).
+    2. Directly pushing back into container 'c' (clear() is not called).
+    3. Write into a range specified by a pair of iterator.
+    */
     template<template<typename> typename Container = std::vector>
     Container<result_t> operator()(std::size_t n);
 

@@ -33,4 +33,6 @@ API References
 
     stream
     error
+    time
+    concept
 

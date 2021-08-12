@@ -3,8 +3,8 @@ create: Yangyao CHEN, 2021/06/16
     [write   ] RayleighDist - Rayleigh distribution functions.
 */
 
-#ifndef _HIPPNUMERICAL__H_
-#define _HIPPNUMERICAL__H_
+#ifndef _HIPPNUMERICAL_RANDIST_RAYLEIGH_H_
+#define _HIPPNUMERICAL_RANDIST_RAYLEIGH_H_
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_cdf.h>
 namespace HIPP::NUMERICAL {
@@ -39,4 +39,4 @@ inline double RayleighDist::invcdf_upper(double Q, double sigma) noexcept {
 }
 
 } // namespace HIPP::NUMERICAL
-#endif	//_HIPPNUMERICAL__H_
+#endif	//_HIPPNUMERICAL_RANDIST_RAYLEIGH_H_

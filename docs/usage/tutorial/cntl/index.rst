@@ -6,5 +6,8 @@ General-purpose C++ Utilities
 .. toctree:: 
     :maxdepth: 2
     
-    stream_manipulation.rst
-    exception_handling.rst
+    stream_manipulation
+    exception_handling
+    logging
+    timing
+    concept

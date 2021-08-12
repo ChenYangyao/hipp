@@ -10,9 +10,17 @@ create: Yangyao CHEN, 2021/06/15
 #include "rannum_base.h"
 namespace HIPP::NUMERICAL {
 
+/**
+UniformIntRandomNumber - generator of integer random numbers of 
+uniform distribution.
+*/
 template<typename IntT = int, typename EngineT = DefaultRandomEngine>
 class UniformIntRandomNumber {
 public:
+    /**
+    The result type, random number engine type, underlying random number 
+    generator type, parameter type, and seed type.
+    */
     typedef IntT result_t;
     typedef EngineT engine_t;
     typedef std::uniform_int_distribution<result_t> rng_t;
@@ -40,6 +48,15 @@ public:
     UniformIntRandomNumber & operator=(const UniformIntRandomNumber &o);
     UniformIntRandomNumber & operator=(UniformIntRandomNumber &&o);
 
+    /**
+    Setters.
+    reset_state(): reset the internal state so that the subsequent random 
+        numbers do not depend on the previous ones.
+    reset_param(): reset the parameters.
+    reset_engine(): reset the random number engine. Note that its life-time 
+        is controlled by the user.
+    seed(): reseed the random engine.
+    */
     UniformIntRandomNumber & reset_state();
     UniformIntRandomNumber & reset_param(
         result_t a = 0, result_t b = std::numeric_limits<result_t>::max());
@@ -48,8 +65,9 @@ public:
     UniformIntRandomNumber & seed(seed_t seed = engine_t::default_seed);
 
     /**
-    Geters
+    Geters.
     a(), b() - the parameter a, b.
+    param() - the packet of a and b.
     min(), max() - minimum and maximum value that can be returned by the random
         number generator. Equal to a and b, respectively.
     range() - the pair {min(), max()}.

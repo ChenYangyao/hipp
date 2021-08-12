@@ -1,3 +1,8 @@
+/**
+create: Yangyao CHEN, 2021/08/12
+    [write   ] The random number generator component.
+*/
+
 #ifndef _HIPPNUMERICAL_RANNUM_H_
 #define _HIPPNUMERICAL_RANNUM_H_
 
@@ -13,7 +18,7 @@ The predefined random number generators.
 They are thread-local variable, share the same thread-local engine 
 `global_random_engine`.
 
-Note that calling `seed()` of one affact the others because of the sharing of 
+Note that calling `seed()` of one affects the others because of the sharing of 
 engine.
 */
 inline thread_local static 

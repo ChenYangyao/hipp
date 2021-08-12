@@ -59,7 +59,7 @@ Formatted IO
         Possible types of ``x`` are:
 
         .. table:: 
-            :class: fix-width-table
+            :class: fix-width-table tight-table
             :widths: 30 70 
 
             =========================== ==================================================================================
@@ -118,7 +118,7 @@ Formatted IO
     of the array:
 
     .. table::
-        :class: fix-width-table 
+        :class: fix-width-table tight-table
         :widths: 20 30 50
         
         ==================== =========================== ===============================================================
@@ -276,15 +276,18 @@ Logger
 
 
     **Memory management methods:**
+
+    .. table:: 
+        :class: tight-table
     
-    =================================================== ==================================================
-    Method                                              Detail 
-    =================================================== ==================================================
-    default constructor                                 Not available.
-    copy and move constructors                          Defined; deep-copy.
-    ``operator=(&&)`` |br| and ``operator=(const &)``   Deleted.
-    destructor                                          ``noexcept``.
-    =================================================== ==================================================
+        =================================================== ==================================================
+        Method                                              Detail 
+        =================================================== ==================================================
+        default constructor                                 Not available.
+        copy and move constructors                          Defined; deep-copy.
+        ``operator=(&&)`` |br| and ``operator=(const &)``   Deleted.
+        destructor                                          ``noexcept``.
+        =================================================== ==================================================
 
     .. type:: _hippcntl_stream_pretty_log_helper::Guard guard_t
     .. type:: _hippcntl_stream_pretty_log_helper::StreamOperand stream_op_t
@@ -655,14 +658,17 @@ them by calling the methods of the main classes.
 
     **Memory management methods:**
 
-    =================================================== ====================================================
-    Method                                              Detail 
-    =================================================== ====================================================
-    default constructor                                 Not avaiable.
-    copy constructor |br| and ``operator=(&&)``         Deleted.
-    move constructor |br| and ``operator=(const &)``    Available; ``noexcept``.
-    destructor                                          ``noexcept``.
-    =================================================== ====================================================
+    .. table:: 
+        :class: tight-table
+
+        =================================================== ====================================================
+        Method                                              Detail 
+        =================================================== ====================================================
+        default constructor                                 Not avaiable.
+        copy constructor |br| and ``operator=(&&)``         Deleted.
+        move constructor |br| and ``operator=(const &)``    Available; ``noexcept``.
+        destructor                                          ``noexcept``.
+        =================================================== ====================================================
 
     .. function:: Guard(PLogStream &pls, bool hint_pop=false)
 
@@ -701,15 +707,18 @@ them by calling the methods of the main classes.
 
     **Memory management methods:**
 
-    =================================================== ====================================================
-    Method                                              Detail 
-    =================================================== ====================================================
-    default constructor                                 Not avaiable.
-    copy constructor |br| and ``operator=(&&)``         Deleted. ``noexcept``. The copied one refers to 
-                                                        the same stream object.
-    move constructor |br| and ``operator=(const &)``    Available; ``noexcept``.
-    destructor                                          ``noexcept``.
-    =================================================== ====================================================
+    .. table:: 
+        :class: tight-table
+
+        =================================================== ====================================================
+        Method                                              Detail 
+        =================================================== ====================================================
+        default constructor                                 Not avaiable.
+        copy constructor |br| and ``operator=(&&)``         Deleted. ``noexcept``. The copied one refers to 
+                                                            the same stream object.
+        move constructor |br| and ``operator=(const &)``    Available; ``noexcept``.
+        destructor                                          ``noexcept``.
+        =================================================== ====================================================
 
     .. type:: PStream::stream_op_t parent_t
     .. type:: parent_t::it_pair_t

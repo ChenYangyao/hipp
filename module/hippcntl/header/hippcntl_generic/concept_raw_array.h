@@ -29,6 +29,25 @@ public:
     }
 
     /**
+    Find the strides of a raw array.
+    e.g., int [2][3][4] => std::array {12, 4, 1};
+    */
+    template<typename ArrayT>
+    static constexpr std::array<size_t, std::rank_v<ArrayT> > strides()
+    {
+        constexpr size_t N = std::rank_v<ArrayT>;
+        constexpr std::array<size_t, N> exts = extents<ArrayT>();
+        std::array<size_t, N> out {};
+        for(size_t i=0; i<N; ++i){
+            out[i] = 1;
+            for(size_t j=i+1; j<N; ++j){
+                out[i] *= exts[j];
+            }
+        }
+        return out;
+    }
+
+    /**
     Determine the size, i.e., total number of elements in the raw array.
     e.g., int[3][4] => 12.
     */
@@ -42,9 +61,47 @@ public:
     }
 
     /**
+    Get an element from a raw array typed object.
+    e.g., int[3][4] &a, 0, 1 => a[0][1].
+        int &a => a.
+    */
+    template<typename ArrayT>
+    ArrayT & get_elem(ArrayT &a) { return a; }
+
+    template<typename ArrayT, typename ...SizeTs>
+    std::remove_all_extents_t<ArrayT> & get_elem(ArrayT &a, size_t id1, SizeTs &&...ids) {
+        return get_elem(a[id1], std::forward<SizeTs>(ids)...);
+    }
+
+    /**
+    Get raw array type from from the extents list.
+    e.g.,
+    int, 3, 4, 5 => int[3][4][5].
+    int => int.
+    */
+    template<typename T, size_t ...Ds> 
+    struct extents_to_array
+    {};
+
+    template<typename T> 
+    struct extents_to_array<T>
+    {
+        typedef T type;
+    };
+
+    template<typename T, size_t D1, size_t ...Ds> 
+    struct extents_to_array<T, D1, Ds...>
+    {
+        typedef typename extents_to_array<T, Ds...>::type type[D1];
+    };
+
+    template<typename T, size_t ...Ds>
+    using extents_to_array_t = typename extents_to_array<T, Ds...>::type;
+
+    /**
     Determine if T is a std::array.
     e.g., std::array< std::array<int, 3>, 4 > => true.
-        std::array<int [3]> => false.
+        int [3] => false;
     */
     template<typename T, typename _V = void>
     struct is_std_array : std::false_type {};
@@ -110,17 +167,31 @@ template<typename RawArrayT>
 class RawArrayTraits<RawArrayT, 
     std::enable_if_t<std::is_array_v<RawArrayT>> > {
 public:
+    /* The raw array type. */
     typedef RawArrayT array_t;
+
+    /* The scalar type. */ 
     typedef std::remove_all_extents_t<array_t> value_t;
 
+    /** 
+    ``is_array`` tells whether or not the template parameter is an raw-array-like type.
+    If true, ``rank``, ``size``, ``extents``, and ``strides`` gives its details.
+    */
     inline static constexpr bool is_array = true;
     inline static constexpr size_t 
         rank = std::rank_v<array_t>,
         size = RawArrayHelper::size<array_t>();
 
     inline static constexpr std::array<size_t, rank> 
-        extents = RawArrayHelper::extents<array_t>();
+        extents = RawArrayHelper::extents<array_t>(),
+        strides = RawArrayHelper::strides<array_t>();
 
+    /**
+    Print the traits detail. 
+    @fmt_cntl: 0 for a inline message, 1 for a long and verbose block message.
+
+    ``operator<<`` prints a inline message.
+    */
     ostream & info(ostream &os=cout, int fmt_cntl=1) const {
         PStream ps(os);
         ps << HIPPCNTL_CLASS_INFO_INLINE(HIPP::RawArrayTraits);
@@ -140,6 +211,10 @@ private:
     }
 };
 
+/**
+Specialization for the ``std::array``. It is defined according to the 
+corresponding raw-array type.
+*/
 template<typename T, size_t N>
 class RawArrayTraits< std::array<T, N> > 
 : public RawArrayTraits<

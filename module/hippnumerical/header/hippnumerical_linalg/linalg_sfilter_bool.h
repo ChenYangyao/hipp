@@ -55,11 +55,14 @@ public:
     ostream & info(ostream &os=cout, int fmt_cntl=1) const;
 
     
-    /** Return true or false, if i-th element is or is not selected. */
+    /* Return true or false, if i-th element is or is not selected. */
     bool operator[](size_t i) noexcept;
     bool operator[](size_t i) const noexcept;
 
-    /**  */
+    /** 
+    Return true or false, if element indexed ``ids`` is not selected. The size 
+    of parameter packet ``ids`` is equal to the rank of the target SArray.
+    */
     template<typename ...SizeTs>
     bool operator()(SizeTs &&...ids) noexcept;
     template<typename ...SizeTs>

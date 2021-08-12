@@ -8,6 +8,7 @@ set(_src
     random_number.gtest.cpp
     linalg_svec.gtest.cpp
     linalg_sarray.gtest.cpp
+    linalg_darray.gtest.cpp
 )
 
 set(_exebase "${_projectid}${_modid}")

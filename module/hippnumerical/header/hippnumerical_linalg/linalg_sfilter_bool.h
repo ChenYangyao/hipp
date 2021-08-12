@@ -16,7 +16,9 @@ SBoolFilter - Filter that selects elements using static Boolean array.
 template<size_t ...Ds>
 class SBoolFilter : public SFilter {
 public:
+    /* The underlying mask type used by ``SBoolFilter`` to filter elements */
     typedef SArray<bool, Ds...> mask_t;
+    /* The size (i.e., total no. of elements of the target SArray). */
     inline static constexpr size_t SIZE = mask_t::SIZE;
 
     /** 
@@ -36,11 +38,14 @@ public:
     ~SBoolFilter() noexcept;
     friend void swap(SBoolFilter &lhs, SBoolFilter &rhs) noexcept               { swap(lhs._mask, rhs._mask); }
     
-    /** Convert to a boolean filter. For SBoolFilter, returns a identical copy. */
+    /** 
+    Convert to a Boolean filter. For ``SBoolFilter``, returns a identical 
+    copy. 
+    */
     SBoolFilter to_bool() const noexcept;
 
     /**
-    Print the object to `os`.
+    Print the object to ``os``.
     operator<<  - a inline, short description.
     info        - controlled by `fmt_cntl`.
                   0 for a inline, short description; 
@@ -54,6 +59,7 @@ public:
     bool operator[](size_t i) noexcept;
     bool operator[](size_t i) const noexcept;
 
+    /**  */
     template<typename ...SizeTs>
     bool operator()(SizeTs &&...ids) noexcept;
     template<typename ...SizeTs>

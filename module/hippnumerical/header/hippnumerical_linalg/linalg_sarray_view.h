@@ -9,6 +9,12 @@ create: Yangyao CHEN, 2021/07/14
 #include "linalg_sfilter.h"
 namespace HIPP::NUMERICAL {
 
+/**
+A view of a SArray.
+The view refers to a SArray, with a filter selecting a part of its elements.
+Operations, like arithmetics, reductions, map, visit can be applied to the 
+selected elements.
+*/
 template<typename FilterT, typename ValueT, size_t ...Ds>
 class SArrayView {
 public:
@@ -20,10 +26,9 @@ public:
     typedef typename array_t::value_t value_t;
     inline static constexpr size_t SIZE = array_t::SIZE;
 
-
     /**
     Constructor.
-    Filter the `vec` by the `filter`.
+    Filter the SArray ``a`` by the ``filter``.
     */
     SArrayView(array_t &a, const filter_t &filter) noexcept;
 
@@ -31,17 +36,27 @@ public:
     SArrayView(SArrayView &&) noexcept = delete;
     ~SArrayView() noexcept;
 
+    /* Get the array that the view refers to. */
     array_t & array() noexcept;
+
+    /* Get the filter used for element selection. */
     const array_t & array() const noexcept;
     filter_t & filter() noexcept;
     const filter_t & filter() const noexcept;
 
     /**
-    If rhs is `array_t`, it gets same filter.
+    Set the selected elements of the referred array to ``rhs``.
+    If ``rhs`` is a SArray ``array_t``, it gets the same filter and then is 
+    assigned to the view element-wisely.
     */
     SArrayView & operator=(const value_t &rhs) noexcept;
     SArrayView & operator=(const array_t &rhs) noexcept;
 
+    /**
+    Element-wise arithmetic and logic operations with ``rhs``.
+    If ``rhs`` is a SArray ``array_t``, it gets the same filter and then is 
+    operated with the view element-wisely.
+    */
     SArrayView & operator+=(const value_t &rhs) noexcept;
     SArrayView & operator-=(const value_t &rhs) noexcept;
     SArrayView & operator*=(const value_t &rhs) noexcept;
@@ -62,8 +77,8 @@ public:
 
     /**
     The return vector is defined by, first copying the un-filtered vector in the 
-    view, then operating with another operand with the filter (binary operation)
-    or apply the operation with the filter (unary operation).
+    view, then operating with another operand with the same filter 
+    (binary operation) or apply the operation with the filter (unary operation).
     */
     friend array_t operator+(const SArrayView &lhs, const value_t &rhs) noexcept    { array_t ret(lhs._array); lhs._filter.visit( [&](size_t i){ ret[i] += rhs; } ); return ret; }
     friend array_t operator-(const SArrayView &lhs, const value_t &rhs) noexcept    { array_t ret(lhs._array); lhs._filter.visit( [&](size_t i){ ret[i] -= rhs; } ); return ret; }
@@ -105,6 +120,13 @@ public:
     array_t operator-() const noexcept;
     array_t operator~() const noexcept;
 
+    /**
+    Reduction operations.
+    sum(), prod(), mean() - the summation, product, and mean of all elements 
+    selected by the view.
+
+    all(), any() - all true or any true of all elements selected by the view.
+    */
     template<typename ResT = value_t>
     ResT sum() const noexcept;
     template<typename ResT = value_t>
@@ -115,6 +137,16 @@ public:
     bool all() const noexcept;
     bool any() const noexcept;
 
+    /**
+    Map and visit operations.
+    map() - for each ``size_t i`` of selected elements, call 
+    ``self[i] = op(self[i])``.
+    mapped() - returns a mapped copy, i.e., copy the entire array 
+    (including unselected elements), then map the selected elements, and 
+    return the new array.
+    visit() - for each ``size_t i`` of selected elements, call 
+    ``op(i, self[i])``.
+    */
     template<typename UnaryOp>
     SArrayView & map(UnaryOp op);
 

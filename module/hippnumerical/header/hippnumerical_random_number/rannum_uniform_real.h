@@ -12,11 +12,15 @@ namespace HIPP::NUMERICAL {
 
 /**
 UniformRealRandomNumber - generator of floating-point random numbers of 
-uniform distribution
+uniform distribution.
 */
 template<typename RealT = double, typename EngineT = DefaultRandomEngine>
 class UniformRealRandomNumber {
 public:
+    /**
+    The result type, random number engine type, underlying random number 
+    generator type, parameter type, and seed type.
+    */
     typedef RealT result_t;
     typedef EngineT engine_t;
     typedef std::uniform_real_distribution<result_t> rng_t;
@@ -43,6 +47,15 @@ public:
     UniformRealRandomNumber & operator=(const UniformRealRandomNumber &o);
     UniformRealRandomNumber & operator=(UniformRealRandomNumber &&o);
 
+    /**
+    Setters.
+    reset_state(): reset the internal state so that the subsequent random 
+        numbers do not depend on the previous ones.
+    reset_param(): reset the parameters.
+    reset_engine(): reset the random number engine. Note that its life-time 
+        is controlled by the user.
+    seed(): reseed the random engine.
+    */
     UniformRealRandomNumber & reset_state();
     UniformRealRandomNumber & reset_param(result_t a = 0., result_t b = 1.);
     UniformRealRandomNumber & reset_param(const param_t &param);
@@ -50,8 +63,9 @@ public:
     UniformRealRandomNumber & seed(seed_t seed = engine_t::default_seed);
 
     /**
-    Geters
+    Geters.
     a(), b() - the parameter a, b.
+    param() - the packet of a and b.
     min(), max() - minimum and maximum value that can be returned by the random
         number generator. Equal to a and b, respectively.
     range() - the pair {min(), max()}.
@@ -69,21 +83,21 @@ public:
     const rng_t & rng() const;
 
     /**
-     * Get a single random number.
-     * 1. using current parameters.
-     * 2. using new parameters 'param'.
-     * 3. using new parameters 'a' and 'b'.
-     */
+    Get a single random number.
+    1. using current parameters.
+    2. using new parameters 'param'.
+    3. using new parameters 'a' and 'b'.
+    */
     result_t operator()();
     result_t get(const param_t &param);
     result_t get(result_t a, result_t b);
 
     /**
-     * Get a series of random numbers.
-     * 1. Get 'n' numbers, returned a container (must have push back).
-     * 2. Directly pushing back into container 'c' (clear() is not called).
-     * 3. Write into a range specified by a pair of iterator.
-     */
+    Get a series of random numbers.
+    1. Get 'n' numbers, returned a container (must have push back).
+    2. Directly pushing back into container 'c' (clear() is not called).
+    3. Write into a range specified by a pair of iterator.
+    */
     template<template<typename> typename Container = std::vector>
     Container<result_t> operator()(std::size_t n);
 

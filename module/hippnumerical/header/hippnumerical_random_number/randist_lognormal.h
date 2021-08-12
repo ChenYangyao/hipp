@@ -11,7 +11,7 @@ create: Yangyao CHEN, 2021/06/14
 namespace HIPP::NUMERICAL {
 
 /**
-LognormalDist - the lognormal distribution for x > 0, i. e.
+LognormalDist - the lognormal distribution for x > 0, i.e.,
     p(x) = 1/(x sqrt( 2 pi sigma^2) ) exp( -( ln(x) - zeta )^2 / 2 sigma^2 ).
 */
 class LognormalDist {

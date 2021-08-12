@@ -3,8 +3,8 @@ create: Yangyao CHEN, 2021/06/16
     [write   ] RayleighTailDist - tail of Rayleigh distribution functions.
 */
 
-#ifndef _HIPPNUMERICAL__H_
-#define _HIPPNUMERICAL__H_
+#ifndef _HIPPNUMERICAL_RANDIST_RAYLEIGH_TAIL_H_
+#define _HIPPNUMERICAL_RANDIST_RAYLEIGH_TAIL_H_
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_cdf.h>
 namespace HIPP::NUMERICAL {
@@ -24,4 +24,4 @@ inline double RayleighTailDist::pdf(double x, double a, double sigma) noexcept {
 }
 
 } // namespace HIPP::NUMERICAL
-#endif	//_HIPPNUMERICAL__H_
+#endif	//_HIPPNUMERICAL_RANDIST_RAYLEIGH_TAIL_H_

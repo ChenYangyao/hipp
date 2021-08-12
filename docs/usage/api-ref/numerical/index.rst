@@ -10,6 +10,7 @@ NUMERICAL Module Overview
 HIPP's NUMERICAL module defines APIs for numerical computation. These include
 
 - Numerical arrays.
+- Probability Distributions.
 - Random number generators.
 - Special functions.
 - Interpolation.
@@ -39,4 +40,6 @@ API References
 
     sarray
     darray
+    randist
+    rannum
 

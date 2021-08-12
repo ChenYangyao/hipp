@@ -1,41 +1,55 @@
 /**
 create: Yangyao CHEN, 2021/05/28
-    [write   ] SVec - static/small vector with fixed length.
+    [write   ] SArray specialization for 1D case.
 */
 
-#ifndef _HIPPNUMERICAL_LINALG_SVEC_H_
-#define _HIPPNUMERICAL_LINALG_SVEC_H_
-#include "linalg_base.h"
+#ifndef _HIPPNUMERICAL_LINALG_SARRAY1D_H_
+#define _HIPPNUMERICAL_LINALG_SARRAY1D_H_
+
+#include "linalg_sarray.h"
 
 #define _HIPP_TEMPHD template<typename ValueT, size_t N>
 #define _HIPP_TEMPARG <ValueT, N>
-#define _HIPP_TEMPCLS SVec _HIPP_TEMPARG
-#define _HIPP_TEMPCLS_B SVec <bool, N>
+#define _HIPP_TEMPCLS SArray _HIPP_TEMPARG
+#define _HIPP_TEMPCLS_B SArray <bool, N>
 #define _HIPP_TEMPRET _HIPP_TEMPHD inline auto _HIPP_TEMPCLS::
 #define _HIPP_TEMPNORET _HIPP_TEMPHD inline _HIPP_TEMPCLS::
 
+
+namespace std {
+
+/** The tuple-like API. */
+template<typename ValueT, size_t N>
+struct tuple_size<HIPP::NUMERICAL::_HIPP_TEMPCLS > {
+    /* The number of tuple elements, namely the vector length. */
+    inline static constexpr size_t value = N;
+};
+
+template<size_t I, typename ValueT, size_t N>
+struct tuple_element<I, HIPP::NUMERICAL::_HIPP_TEMPCLS > {
+    /* The type of each tuple element, namely a scalar. */
+    using type = ValueT;
+};
+
+} // namespace std
+
 namespace HIPP::NUMERICAL {
 
-/** Forward declarations. */
-_HIPP_TEMPHD class SVec;
-template<size_t N> class SBoolFilter;
-template<typename ValueT, size_t N, typename FilterT> class SVecView;
-template<typename ValueT, size_t N, typename FilterT> class SVecConstView;
 
-_HIPP_TEMPHD ostream & operator<<(ostream &os, const _HIPP_TEMPCLS &);
-_HIPP_TEMPHD void swap(_HIPP_TEMPCLS &lhs, _HIPP_TEMPCLS &rhs) noexcept;
+template<size_t I, typename ValueT, size_t N>
+const ValueT & get(const _HIPP_TEMPCLS &v) noexcept { return v[I]; }
+
+template<size_t I, typename ValueT, size_t N>
+ValueT & get(_HIPP_TEMPCLS &v) noexcept { return v[I]; }
+
+template<size_t I, typename ValueT, size_t N>
+ValueT && get(_HIPP_TEMPCLS &&v) noexcept { return std::move(v[I]); }
+
+
 
 /**
-SVec - static/small vector with fixed length.
+SArray specialization for 1D case - aliased as SVec<ValueT, N>.
 
-Template arguments
-------------------
-@ValueT: element type, usually a numerical scalar (integer or floating-point 
-         number).
-@N: length of the vector.
-
-Description
-------------
 SVec is like std::array, but more convenient methods are provided for basic 
 linear algebra, e.g., arithmetic operations, reductions (min, max, sum, prod, 
 norm, ...).
@@ -60,7 +74,6 @@ auto view = x[x>-6];                // => bool_view_t {true, true, true}.
 x.view(x>-6);                       // the same as x[x>6].
 x.cview(x>-6);                      // => the const version of the view
                                     // which cannot used to change x.
-
 x[x>-6].sum();                      // => int {0}.
 x[x>0].sum();                       // => int {3}.
 
@@ -70,27 +83,33 @@ x[x>0] += 1;                        // x itself is changed to {-3, 2, 3}.
 Note that a view cannot be further viewed. Its filter object and bool array mask 
 can be obtained by, e.g.,
 auto view = x[x>0];
-view.vec();                         // => a ref to x.
+view.array();                       // => a ref to x.
 view.filter();                      // => a ref to bool_filter_t(x>0).
-view.filter().mask();               // => a ref to bool SVec x>0.
+view.filter().mask();               // => a ref to bool SVec(x>0).
 
 SVec has a RawArrayTraits support, which enables compile-time feature 
 detection.
 */
 template<typename ValueT, size_t N>
-class SVec {
+class SArray<ValueT, N> : public SArrayBase  {
 public:
     /**
-    Basic aliases - The type and number of elements.
+    Basic aliases and properties.
+    value_t: type of the array element.
+    raw_array_t: type of the internal storage of the array, i.e., a raw array.
+    traits_t: type traits for SArray.
+    SIZE: total number of elements.
     */
     typedef ValueT value_t;
+    typedef ValueT raw_array_t[N];
+    typedef RawArrayTraits<SArray> traits_t;
     inline static constexpr size_t SIZE = N;
-
+    
     /** 
     Aliases for member access.
-    ret_t and cref_t - reference type to the vector element, and its const 
+    ret_t and cref_t: reference type to the vector element, and its const 
         counterpart.
-    iter_t and citer_t - iterator type to the vector element, and its const
+    iter_t and citer_t: iterator type to the vector element, and its const
         counterpart.
     */
     typedef value_t & ref_t;
@@ -99,63 +118,86 @@ public:
     typedef const value_t *citer_t;
 
     /** Aliases for Boolean filter. */
-    typedef SVec<bool, SIZE> bool_mask_t;
-    typedef SBoolFilter<SIZE> bool_filter_t;
-    typedef SVecView<value_t, SIZE, bool_filter_t> bool_view_t;
-    typedef SVecConstView<value_t, SIZE, bool_filter_t> cbool_view_t; 
+    typedef SArray<bool, N> bool_mask_t;
+    typedef SBoolFilter<N> bool_filter_t;
+    typedef SArrayView<bool_filter_t, ValueT, N> bool_view_t;
+    typedef SArrayConstView<bool_filter_t, ValueT, N> cbool_view_t; 
 
+    /** Aliases for stride filter. */
+    typedef SStrideFilter<N> stride_filter_t;
+    typedef SArrayView<stride_filter_t, ValueT, N> stride_view_t;
+    typedef SArrayConstView<stride_filter_t, ValueT, N> cstride_view_t; 
+
+    /**
+    IS_INT: tells whether the value type is integer-like (i.e., integer or 
+        pointer). 
+    int_value_t: is defined as ``int`` for non-integer-like, and defined as 
+        itself for integer-like.
+    */
     inline static constexpr bool IS_INT = 
-        std::is_integral_v<value_t> || std::is_pointer_v<value_t>;
-    typedef std::conditional_t<IS_INT, value_t, int> int_value_t;
+        std::is_integral_v<ValueT> || std::is_pointer_v<ValueT>;
+    typedef std::conditional_t<IS_INT, ValueT, int> int_value_t;
 
     /**
     (1) Default initialization of all elements. Caution for numeric types.
-    (2) All members are initialized with `value`.
-    (3) Copy from a range starting from `b`, with `n` elements.
+    (2) All members are initialized with ``value``.
+    (3) Copy from a range starting from ``b``, with ``n`` elements.
     (4) From an initializer list.
     (5) Cast from another svec.
-    In (3) and (4), `n` and `il.size()` may be less than `SIZE`, leaving 
+    In (3) and (4), ``n`` and ``il.size()`` may be less than ``SIZE``, leaving 
     the tail un-initialized.
     */
-    SVec() noexcept {}
+    SArray() noexcept {}
 
-    explicit SVec(const value_t &value) noexcept;
+    explicit SArray(const value_t &value) noexcept;
     
     template<typename InputValue>
-    explicit SVec(const InputValue *b, size_t n = SIZE) noexcept;
+    explicit SArray(const InputValue *b, size_t n = SIZE) noexcept;
     
     template<typename InputValue>
-    SVec(std::initializer_list<InputValue> il) noexcept;
+    SArray(std::initializer_list<InputValue> il) noexcept;
 
     template<typename InputValue>
-    explicit SVec(const SVec<InputValue, SIZE> &v) noexcept;
+    explicit SArray(const SArray<InputValue, SIZE> &v) noexcept;
 
-    SVec(const SVec &) noexcept = default;
-    SVec(SVec &&)  noexcept = default;
-    SVec & operator=(const SVec &) noexcept = default;
-    SVec & operator=(SVec &&)  noexcept = default;
-    ~SVec() noexcept {}
+    SArray(const SArray &) noexcept = default;
+    SArray(SArray &&)  noexcept = default;
+    SArray & operator=(const SArray &) noexcept = default;
+    SArray & operator=(SArray &&)  noexcept = default;
+    ~SArray() noexcept {}
+
+    /* Set all elements to a single value. */
+    SArray & operator=(const value_t &value) noexcept;
+
     /**
     Deep, all elements are swapped.
     */
-    friend void swap <ValueT, N> (SVec &lhs, SVec &rhs) noexcept;
+    friend void swap <ValueT, N> (SArray &lhs, SArray &rhs) noexcept;
 
-    friend ostream & operator<< <ValueT, N> (ostream &os, const SVec &);
+    /** 
+    operator<<() prints inline information of the instance.
+    info() prints the instance with more controls.
+    @fmt_cntl: 0 for an inline short message. 1 for a long block message.
+    */
+    friend ostream & operator<< <ValueT, N> (ostream &os, const SArray &);
     ostream & info(ostream &os=cout, int fmt_cntl=1) const;
 
     /**
     STL-conforming definitions - semantics are like std::vector.
     data() - return a pointer to the internal storage.
-    size() - always returns `SIZE`.
-    empty() - returns true only if `SIZE == 0`.
+    size() - always returns ``SIZE``.
+    empty() - returns true only if ``SIZE == 0``.
 
     operator[] and at() - element access. 
         - at() throws on the out-of-range.
         - operator [] can accept a Boolean mask, return a view.
-    begin(), end and their const counterparts - iterators.
+        - operator [] can accept a stride filter, return a view.
+    begin(), end() and their const counterparts - iterators.
     */
     value_t * data() noexcept;
     const value_t * data() const noexcept;
+    raw_array_t & raw() noexcept;
+    const raw_array_t & raw() const noexcept;
     static constexpr size_t size() noexcept;
     static constexpr bool empty() noexcept;
 
@@ -168,6 +210,9 @@ public:
     bool_view_t operator[](const bool_mask_t &mask) noexcept;
     cbool_view_t operator[](const bool_mask_t &mask) const noexcept;
 
+    stride_view_t operator[](const stride_filter_t &s) noexcept;
+    cstride_view_t operator[](const stride_filter_t &s) const noexcept;
+
     iter_t begin() noexcept;
     citer_t begin() const noexcept;
     citer_t cbegin() const noexcept;
@@ -175,51 +220,63 @@ public:
     citer_t end() const noexcept;
     citer_t cend() const noexcept;
 
+    /** For 1-D SArray, operator()(size_t) is identical to operator[](size_t) */
+    ref_t operator()(size_t id) noexcept;
+    cref_t operator()(size_t id) const noexcept;
+
+    /** 
+    Convert the SArray to objects of other types. Return a deeply 
+    copied version. 
+    @T: the value type of returned object.
+    */
+    template<typename T = value_t> vector<T> to_vector() const;
+    template<typename T = value_t> std::array<T, N> to_array() const noexcept;
+
     /**
     Linear algebra operations. All are element-wise operations.
     1. Unary RMW operations:
         (1) vec op= scalar;
         (2) vec op= vec;
     Where op is 
-        +, -, *, /, %           - arithmetic -> SVec &
-        &, |, ^                 - bit-wise for each element -> SVec &
+        +, -, *, /, %           - arithmetic -> SArray &
+        &, |, ^                 - bit-wise for each element -> SArray &
     2. Binary operations:
         (1) vec op scalar;
         (2) scalar op vec;
         (3) vec op vec;
     Where op is 
-        +, -, *, /, %           - arithmetic -> SVec
-        &, |, ^                 - bit-wise for each element -> SVec
-        <, <=, >, >=, ==, !=    - comparison/logic -> SVec<bool, SIZE>
+        +, -, *, /, %           - arithmetic -> SArray
+        &, |, ^                 - bit-wise for each element -> SArray
+        <, <=, >, >=, ==, !=    - comparison/logic -> SArray<bool, SIZE>
     3. Unary operations: 
         op vec;
     Where op is
         ~, +, -                 - bit-wise NOT, arithmetic positate, negate. 
     Caution: interger-lift is used intermediately for small integers, like 
-    `int`, `char`, etc., so that ~true != false. But &, |, ^ work just as
+    `bool`, `char`, etc., so that ~true != false. But &, |, ^ work just as
     expected.
     */
-    SVec & operator+=(const value_t &rhs) noexcept;
-    SVec & operator-=(const value_t &rhs) noexcept;
-    SVec & operator*=(const value_t &rhs) noexcept;
-    SVec & operator/=(const value_t &rhs) noexcept;
-    SVec & operator%=(const value_t &rhs) noexcept;
-    SVec & operator&=(const value_t &rhs) noexcept;
-    SVec & operator|=(const value_t &rhs) noexcept;
-    SVec & operator^=(const value_t &rhs) noexcept;
+    SArray & operator+=(const value_t &rhs) noexcept;
+    SArray & operator-=(const value_t &rhs) noexcept;
+    SArray & operator*=(const value_t &rhs) noexcept;
+    SArray & operator/=(const value_t &rhs) noexcept;
+    SArray & operator%=(const value_t &rhs) noexcept;
+    SArray & operator&=(const value_t &rhs) noexcept;
+    SArray & operator|=(const value_t &rhs) noexcept;
+    SArray & operator^=(const value_t &rhs) noexcept;
 
-    SVec & operator+=(const SVec &rhs) noexcept;
-    SVec & operator-=(const SVec &rhs) noexcept;
-    SVec & operator*=(const SVec &rhs) noexcept;
-    SVec & operator/=(const SVec &rhs) noexcept;
-    SVec & operator%=(const SVec &rhs) noexcept;
-    SVec & operator&=(const SVec &rhs) noexcept;
-    SVec & operator|=(const SVec &rhs) noexcept;
-    SVec & operator^=(const SVec &rhs) noexcept;
+    SArray & operator+=(const SArray &rhs) noexcept;
+    SArray & operator-=(const SArray &rhs) noexcept;
+    SArray & operator*=(const SArray &rhs) noexcept;
+    SArray & operator/=(const SArray &rhs) noexcept;
+    SArray & operator%=(const SArray &rhs) noexcept;
+    SArray & operator&=(const SArray &rhs) noexcept;
+    SArray & operator|=(const SArray &rhs) noexcept;
+    SArray & operator^=(const SArray &rhs) noexcept;
 
-    SVec operator+() const noexcept;
-    SVec operator-() const noexcept;
-    SVec operator~() const noexcept;
+    SArray operator+() const noexcept;
+    SArray operator-() const noexcept;
+    SArray operator~() const noexcept;
 
     /**
     norm() - 2-norm.
@@ -230,8 +287,8 @@ public:
     normalized() - returns a normalized (according to 2-norm) copy.
     normalized(int p) - returns a normalized (according to p-norm) copy.
 
-    `normalize()` or `normalized()` for an integer vector are ill-defined. 
-    `norm()` with `ResT` != floting-point type may have truncation.
+    ``normalize()`` or ``normalized()`` for an integer vector are ill-defined. 
+    ``norm()`` with ``ResT`` != floting-point type may have truncation.
     With caution to use.
     */
     template<typename ResT = double> 
@@ -241,10 +298,10 @@ public:
     template<typename ResT = double> 
     ResT squared_norm() const noexcept;
     
-    SVec & normalize() noexcept;
-    SVec & normalize(int p) noexcept;
-    SVec normalized() const noexcept;
-    SVec normalized(int p) const noexcept;
+    SArray & normalize() noexcept;
+    SArray & normalize(int p) noexcept;
+    SArray normalized() const noexcept;
+    SArray normalized(int p) const noexcept;
 
     /**
     Reduction operations.
@@ -264,9 +321,9 @@ public:
     ResT mean() const noexcept;
 
     template<typename ResT = value_t>
-    ResT dot(const SVec &rhs) const noexcept;
+    ResT dot(const SArray &rhs) const noexcept;
     template<typename ResT = value_t>
-    SVec<ResT, SIZE> cross(const SVec &rhs) const noexcept;
+    SArray<ResT, SIZE> cross(const SArray &rhs) const noexcept;
 
     value_t min() const noexcept;
     value_t max() const noexcept;
@@ -286,11 +343,11 @@ public:
     visit() - for each size_t(i), call op(i, self[i]).
     */
     template<typename UnaryOp>
-    SVec & map(UnaryOp op);
+    SArray & map(UnaryOp op);
 
     template<typename UnaryOp, 
         typename ResT = std::invoke_result_t<UnaryOp, value_t> >
-    SVec<ResT, SIZE> mapped(UnaryOp op) const;
+    SArray<ResT, SIZE> mapped(UnaryOp op) const;
 
     template<typename BinaryOp>
     void visit(BinaryOp op) const;
@@ -300,82 +357,78 @@ public:
 
     /** 
     Round to floor, ceil, trunc toward zero, and absolute value.
-    `ResT` can be floating-point or integral type.
+    ``ResT`` can be floating-point or integral type.
 
-    By default, if `value_t` is integer or pointer, `ResT` is `value_t` itself,
-    no conversion bappens. Otherwise `ResT` is `int`, and the conversion is made
-    by std::floor, ceil, trunc and then cast.
+    By default, if ``value_t`` is integer or pointer, ``ResT`` is ``value_t`` 
+    itself, no conversion bappens. Otherwise ``ResT`` is ``int``, and the 
+    conversion is made by std::floor, ceil, trunc and then cast.
     */
     template<typename ResT = int_value_t>
-    SVec<ResT, SIZE> floor() const noexcept;
+    SArray<ResT, SIZE> floor() const noexcept;
 
     template<typename ResT = int_value_t>
-    SVec<ResT, SIZE> ceil() const noexcept;
+    SArray<ResT, SIZE> ceil() const noexcept;
 
     template<typename ResT = int_value_t>
-    SVec<ResT, SIZE> trunc() const noexcept;
+    SArray<ResT, SIZE> trunc() const noexcept;
 
-    SVec abs() const noexcept;
+    SArray abs() const noexcept;
 
+    /**
+    Views - get a "view" object of the instance.
+    The view object holds a reference to the SArray instance that generates it.
+    Any modifications to the view is reflected to the SArray.
+    A constant view cannot be used to modify the SArray.
+
+    view() - get a view object. 
+    cview() - get constant view object.
+    
+    If the `s_stride_t` function is matched, `args` are forwarded to construct a 
+    stride filter and then it is used for the view.
+    
+    @mask: generate a boolean view according to the mask for each element. E.g.,
+        if mask[i, ...] is true, then the view contains (*this)[i, ...].
+    @stride_filter: generate a stride view according to the stride filter.
+    */
     bool_view_t view(const bool_mask_t &mask) noexcept;
     cbool_view_t view(const bool_mask_t &mask) const noexcept;
     cbool_view_t cview(const bool_mask_t &mask) const noexcept;
+
+    stride_view_t view(const stride_filter_t &s) noexcept;
+    cstride_view_t view(const stride_filter_t &s) const noexcept;
+    cstride_view_t cview(const stride_filter_t &s) const noexcept;
+    template<typename Arg>
+    stride_view_t view(s_stride_t, Arg &&arg) noexcept;
+    template<typename Arg>
+    cstride_view_t view(s_stride_t, Arg &&arg) const noexcept;
+    template<typename Arg>
+    cstride_view_t cview(s_stride_t, Arg &&arg) const noexcept;
 protected:
-    value_t _data[SIZE];
+    raw_array_t _data;
 };
-
-/**
-Aliases for convenience. 
-
-Format: SVecPq, where P is X, 1, 2, 3 or 4, and q is d, f or i.
-@P: dimension of the vector.
-@q: type of its element. d, f and i are for double, float and integer, 
-    respectively.
-*/
-template<size_t N>
-using SVecXd = SVec<double, N>;
-using SVec1d = SVecXd<1>;
-using SVec2d = SVecXd<2>;
-using SVec3d = SVecXd<3>;
-using SVec4d = SVecXd<4>;
-
-template<size_t N>
-using SVecXf = SVec<float, N>;
-using SVec1f = SVecXf<1>;
-using SVec2f = SVecXf<2>;
-using SVec3f = SVecXf<3>;
-using SVec4f = SVecXf<4>;
-
-template<size_t N>
-using SVecXi = SVec<int, N>;
-using SVec1i = SVecXi<1>;
-using SVec2i = SVecXi<2>;
-using SVec3i = SVecXi<3>;
-using SVec4i = SVecXi<4>;
 
 /* Implementation. */
 _HIPP_TEMPNORET
-SVec(const value_t &value) noexcept { std::fill_n(_data, SIZE, value); }
-
-_HIPP_TEMPHD
-template<typename InputValue>
-_HIPP_TEMPCLS::SVec(const InputValue *b, size_t n) noexcept {
-    std::copy_n(b, n, _data);
+SArray(const value_t &value) noexcept { 
+    std::fill_n(data(), SIZE, value); 
 }
 
 _HIPP_TEMPHD
 template<typename InputValue>
-_HIPP_TEMPCLS::SVec(std::initializer_list<InputValue> il) noexcept {
-    auto b = il.begin(), e = il.end();
-    size_t i = 0;
-    while( b != e )
-        _data[i++] = *b++;
+_HIPP_TEMPCLS::SArray(const InputValue *b, size_t n) noexcept {
+    std::copy_n(b, n, data());
 }
 
 _HIPP_TEMPHD
 template<typename InputValue>
-_HIPP_TEMPCLS::SVec(const SVec<InputValue, SIZE> &v) noexcept {
-    std::copy_n(v.data(), SIZE, _data);
+_HIPP_TEMPCLS::SArray(std::initializer_list<InputValue> il) noexcept {
+    std::copy(il.begin(), il.end(), data());
+}
+
+_HIPP_TEMPHD
+template<typename InputValue>
+_HIPP_TEMPCLS::SArray(const SArray<InputValue, SIZE> &v) noexcept {
+    std::copy_n(v.data(), SIZE, data());
 }
 
 _HIPP_TEMPHD
@@ -383,20 +436,26 @@ void swap(_HIPP_TEMPCLS &lhs, _HIPP_TEMPCLS &rhs) noexcept {
     std::swap_ranges(lhs.begin(), lhs.end(), rhs.begin());
 }
 
+_HIPP_TEMPRET
+operator=(const value_t &value) noexcept -> SArray & {
+    std::fill_n(data(), SIZE, value);
+    return *this;
+}
+
 _HIPP_TEMPHD
-ostream & operator<< (ostream &os, const SVec _HIPP_TEMPARG & v) {
+ostream & operator<< (ostream &os, const SArray _HIPP_TEMPARG & v) {
     PStream ps(os);
-    ps << "SVec{", ps(v.begin(), v.end()), "}";
+    ps << "SArray{", ps(v.begin(), v.end()), "}";
     return os;
 }
 
 _HIPP_TEMPRET info(ostream &os, int fmt_cntl) const -> ostream & {
     PStream ps(os);
     if(fmt_cntl == 0) {
-        ps << HIPPCNTL_CLASS_INFO_INLINE(SVec), 
+        ps << HIPPCNTL_CLASS_INFO_INLINE(SArray), 
             "{", ps(cbegin(), cend()), "}";
     }else {
-        ps << HIPPCNTL_CLASS_INFO(SVec), 
+        ps << HIPPCNTL_CLASS_INFO(SArray), 
             "  |- size = ", SIZE, "\n"
             "  |- values = {", ps(cbegin(), cend()), "}\n";
     }
@@ -408,6 +467,14 @@ _HIPP_TEMPRET data() noexcept -> value_t * {
 }
 
 _HIPP_TEMPRET data() const noexcept -> const value_t * {
+    return _data;
+}
+
+_HIPP_TEMPRET raw() noexcept -> raw_array_t & {
+    return _data;
+}
+
+_HIPP_TEMPRET raw() const noexcept -> const raw_array_t & {
     return _data;
 }
 
@@ -437,18 +504,28 @@ _HIPP_TEMPRET operator[](const bool_mask_t &mask) const noexcept -> cbool_view_t
     return view(mask); 
 }
 
+_HIPP_TEMPRET operator[](const stride_filter_t &s) noexcept
+-> stride_view_t {
+    return view(s);
+}
+
+_HIPP_TEMPRET operator[](const stride_filter_t &s) const noexcept
+-> cstride_view_t {
+    return view(s);
+}
+
 _HIPP_TEMPRET at(size_t pos) -> ref_t {
     if( pos >= SIZE )
         ErrLogic::throw_(ErrLogic::eOUTOFRANGE, emFLPFB, "   ... pos ", 
         pos, " >= size ", SIZE, '\n');    
-    return _data[pos];
+    return (*this)[pos];
 }
 
 _HIPP_TEMPRET at(size_t pos) const -> cref_t {
     if( pos >= SIZE )
         ErrLogic::throw_(ErrLogic::eOUTOFRANGE, emFLPFB, "   ... pos ", 
         pos, " >= size ", SIZE, '\n');    
-    return _data[pos];
+    return (*this)[pos];
 }
 
 _HIPP_TEMPRET begin() noexcept -> iter_t {
@@ -475,15 +552,37 @@ _HIPP_TEMPRET cend() const noexcept -> citer_t {
     return _data+SIZE;
 }
 
-#define _HIPP_UNARY_OP_DEF(op) \
-_HIPP_TEMPRET operator op (const value_t &rhs) noexcept -> SVec & { \
-    for(size_t i=0; i<SIZE; ++i) _data[i]  op  rhs; \
-    return *this; \
-} \
-_HIPP_TEMPRET operator op (const SVec &rhs) noexcept -> SVec & { \
-    for(size_t i=0; i<SIZE; ++i) _data[i]  op  rhs._data[i]; \
-    return *this; \
+_HIPP_TEMPRET operator()(size_t id) noexcept -> ref_t {
+    return (*this)[id];
 }
+
+_HIPP_TEMPRET operator()(size_t id) const noexcept -> cref_t {
+    return (*this)[id];
+}
+
+_HIPP_TEMPHD
+template<typename T>
+vector<T> _HIPP_TEMPCLS::to_vector() const {
+    return vector<T>(begin(), end());
+}
+
+_HIPP_TEMPHD
+template<typename T>
+std::array<T, N> _HIPP_TEMPCLS::to_array() const noexcept {
+    std::array<T, N> a;
+    std::copy_n(begin(), SIZE, a.begin());
+    return a;
+}
+
+#define _HIPP_UNARY_OP_DEF(op) \
+    _HIPP_TEMPRET operator op (const value_t &rhs) noexcept -> SArray & { \
+        for(size_t i=0; i<SIZE; ++i) _data[i]  op  rhs; \
+        return *this; \
+    } \
+    _HIPP_TEMPRET operator op (const SArray &rhs) noexcept -> SArray & { \
+        for(size_t i=0; i<SIZE; ++i) _data[i]  op  rhs._data[i]; \
+        return *this; \
+    }
 
 _HIPP_UNARY_OP_DEF(+=)
 _HIPP_UNARY_OP_DEF(-=)
@@ -497,11 +596,11 @@ _HIPP_UNARY_OP_DEF(^=)
 #undef _HIPP_UNARY_OP_DEF
 
 #define _HIPP_UNARY_OP_DEF(op) \
-_HIPP_TEMPRET operator op () const noexcept -> SVec { \
-    SVec ret; \
-    for(size_t i=0; i<SIZE; ++i) ret[i] = op _data[i]; \
-    return ret; \
-} \
+    _HIPP_TEMPRET operator op () const noexcept -> SArray { \
+        SArray ret; \
+        for(size_t i=0; i<SIZE; ++i) ret[i] = op _data[i]; \
+        return ret; \
+    }
 
 _HIPP_UNARY_OP_DEF(+)
 _HIPP_UNARY_OP_DEF(-)
@@ -510,28 +609,28 @@ _HIPP_UNARY_OP_DEF(~)
 #undef _HIPP_UNARY_OP_DEF
 
 #define _HIPP_BIN_OP_DEF(op)  \
-_HIPP_TEMPHD \
-_HIPP_TEMPCLS operator op (const typename _HIPP_TEMPCLS::value_t &lhs,  \
-    const _HIPP_TEMPCLS &rhs) noexcept  \
-{ \
-    _HIPP_TEMPCLS ret; \
-    for(size_t i=0; i<N; ++i) ret[i] = lhs op rhs[i]; \
-    return ret; \
-} \
-_HIPP_TEMPHD \
-_HIPP_TEMPCLS operator op (const _HIPP_TEMPCLS &lhs,  \
-    const typename _HIPP_TEMPCLS::value_t& rhs) noexcept { \
-    _HIPP_TEMPCLS ret; \
-    for(size_t i=0; i<N; ++i) ret[i] = lhs[i] op rhs; \
-    return ret; \
-} \
-_HIPP_TEMPHD \
-_HIPP_TEMPCLS operator op (const _HIPP_TEMPCLS &lhs,  \
-    const _HIPP_TEMPCLS &rhs) noexcept { \
-    _HIPP_TEMPCLS ret; \
-    for(size_t i=0; i<N; ++i) ret[i] = lhs[i] op rhs[i]; \
-    return ret; \
-}
+    _HIPP_TEMPHD \
+    _HIPP_TEMPCLS operator op (const typename _HIPP_TEMPCLS::value_t &lhs,  \
+        const _HIPP_TEMPCLS &rhs) noexcept  \
+    { \
+        _HIPP_TEMPCLS ret; \
+        for(size_t i=0; i<N; ++i) ret[i] = lhs op rhs[i]; \
+        return ret; \
+    } \
+    _HIPP_TEMPHD \
+    _HIPP_TEMPCLS operator op (const _HIPP_TEMPCLS &lhs,  \
+        const typename _HIPP_TEMPCLS::value_t& rhs) noexcept { \
+        _HIPP_TEMPCLS ret; \
+        for(size_t i=0; i<N; ++i) ret[i] = lhs[i] op rhs; \
+        return ret; \
+    } \
+    _HIPP_TEMPHD \
+    _HIPP_TEMPCLS operator op (const _HIPP_TEMPCLS &lhs,  \
+        const _HIPP_TEMPCLS &rhs) noexcept { \
+        _HIPP_TEMPCLS ret; \
+        for(size_t i=0; i<N; ++i) ret[i] = lhs[i] op rhs[i]; \
+        return ret; \
+    }
 
 _HIPP_BIN_OP_DEF(+)
 _HIPP_BIN_OP_DEF(-)
@@ -604,22 +703,22 @@ ResT _HIPP_TEMPCLS::squared_norm() const noexcept {
     return ret;
 }
 
-_HIPP_TEMPRET normalize() noexcept -> SVec & {
+_HIPP_TEMPRET normalize() noexcept -> SArray & {
     auto scale = 1.0 / norm();
     return this->operator*=( static_cast<value_t>(scale) );
 }
 
-_HIPP_TEMPRET normalize(int p) noexcept -> SVec & {
+_HIPP_TEMPRET normalize(int p) noexcept -> SArray & {
     auto scale = 1.0 / norm(p);
     return this->operator*=( static_cast<value_t>(scale) );
 }
 
-_HIPP_TEMPRET normalized() const noexcept -> SVec{
+_HIPP_TEMPRET normalized() const noexcept -> SArray{
     auto scale = 1.0 / norm();
     return (*this) * static_cast<value_t>(scale);
 }
 
-_HIPP_TEMPRET normalized(int p) const noexcept -> SVec{
+_HIPP_TEMPRET normalized(int p) const noexcept -> SArray{
     auto scale = 1.0 / norm(p);
     return (*this) * static_cast<value_t>(scale);
 }
@@ -637,6 +736,7 @@ template<typename ResT>
 auto _HIPP_TEMPCLS::prod() const noexcept -> ResT {
     ResT ret {1};
     for(size_t i=0; i<SIZE; ++i) ret *= _data[i];
+    return ret;
 }
 
 _HIPP_TEMPHD 
@@ -648,7 +748,7 @@ auto _HIPP_TEMPCLS::mean() const noexcept -> ResT {
 
 _HIPP_TEMPHD 
 template<typename ResT> 
-auto _HIPP_TEMPCLS::dot(const SVec &rhs) const noexcept -> ResT {
+auto _HIPP_TEMPCLS::dot(const SArray &rhs) const noexcept -> ResT {
     ResT ret {0};
     for(size_t i=0; i<SIZE; ++i){
         ret += static_cast<ResT>(_data[i])*static_cast<ResT>(rhs._data[i]);  
@@ -658,8 +758,10 @@ auto _HIPP_TEMPCLS::dot(const SVec &rhs) const noexcept -> ResT {
 
 _HIPP_TEMPHD 
 template<typename ResT> 
-auto _HIPP_TEMPCLS::cross(const SVec &rhs) const noexcept -> SVec<ResT, SIZE> {
-    SVec<ResT, SIZE> ret;
+auto _HIPP_TEMPCLS::cross(const SArray &rhs) const noexcept 
+-> SArray<ResT, SIZE> 
+{
+    SArray<ResT, SIZE> ret;
     for(size_t i=0; i<SIZE; ++i){
         size_t j = (i+1)%SIZE, k = (i+2)%SIZE;
         ret[i] = static_cast<ResT>(_data[j])*static_cast<ResT>(rhs._data[k]) 
@@ -733,7 +835,7 @@ _HIPP_TEMPRET any() const noexcept -> bool {
 
 _HIPP_TEMPHD
 template<typename UnaryOp>
-auto _HIPP_TEMPCLS::map(UnaryOp op) -> SVec & {
+auto _HIPP_TEMPCLS::map(UnaryOp op) -> SArray & {
     for(size_t i=0; i<SIZE; ++i){
         _data[i] = op(_data[i]);
     }
@@ -742,8 +844,8 @@ auto _HIPP_TEMPCLS::map(UnaryOp op) -> SVec & {
 
 _HIPP_TEMPHD
 template<typename UnaryOp, typename ResT>
-auto _HIPP_TEMPCLS::mapped(UnaryOp op) const -> SVec<ResT, SIZE> {
-    SVec<ResT, SIZE> ret;
+auto _HIPP_TEMPCLS::mapped(UnaryOp op) const -> SArray<ResT, SIZE> {
+    SArray<ResT, SIZE> ret;
     for(size_t i=0; i<SIZE; ++i){
         ret[i] = op(_data[i]);
     }
@@ -764,9 +866,9 @@ void _HIPP_TEMPCLS::visit(BinaryOp op) {
 
 _HIPP_TEMPHD
 template<typename ResT>
-auto _HIPP_TEMPCLS::floor() const noexcept -> SVec<ResT, SIZE> 
+auto _HIPP_TEMPCLS::floor() const noexcept -> SArray<ResT, SIZE> 
 {
-    SVec<ResT, SIZE> res;
+    SArray<ResT, SIZE> res;
     if constexpr ( IS_INT ) {
         for(size_t i=0; i<SIZE; ++i) res[i] = static_cast<ResT>(_data[i]);
     } else {
@@ -778,9 +880,9 @@ auto _HIPP_TEMPCLS::floor() const noexcept -> SVec<ResT, SIZE>
 
 _HIPP_TEMPHD
 template<typename ResT>
-auto _HIPP_TEMPCLS::ceil() const noexcept -> SVec<ResT, SIZE> 
+auto _HIPP_TEMPCLS::ceil() const noexcept -> SArray<ResT, SIZE> 
 {
-    SVec<ResT, SIZE> res;
+    SArray<ResT, SIZE> res;
     if constexpr ( IS_INT ) {
         for(size_t i=0; i<SIZE; ++i) res[i] = static_cast<ResT>(_data[i]);
     } else {
@@ -792,9 +894,9 @@ auto _HIPP_TEMPCLS::ceil() const noexcept -> SVec<ResT, SIZE>
 
 _HIPP_TEMPHD
 template<typename ResT>
-auto _HIPP_TEMPCLS::trunc() const noexcept -> SVec<ResT, SIZE> 
+auto _HIPP_TEMPCLS::trunc() const noexcept -> SArray<ResT, SIZE> 
 {
-    SVec<ResT, SIZE> res;
+    SArray<ResT, SIZE> res;
     if constexpr ( IS_INT ) {
         for(size_t i=0; i<SIZE; ++i) res[i] = static_cast<ResT>(_data[i]);
     } else {
@@ -804,68 +906,64 @@ auto _HIPP_TEMPCLS::trunc() const noexcept -> SVec<ResT, SIZE>
     return res;
 }
 
-_HIPP_TEMPRET abs() const noexcept -> SVec {
-    SVec ret;
+_HIPP_TEMPRET abs() const noexcept -> SArray {
+    SArray ret;
     for(size_t i=0; i<SIZE; ++i) ret[i] = std::abs(_data[i]);
     return ret;
 }
 
 _HIPP_TEMPRET view(const bool_mask_t &mask) noexcept -> bool_view_t { 
-    return bool_view_t(*this, bool_filter_t(mask) ); 
+    return bool_view_t(*this, bool_filter_t(mask)); 
 }
 
 _HIPP_TEMPRET view(const bool_mask_t &mask) const noexcept -> cbool_view_t { 
-    return cbool_view_t(*this, bool_filter_t(mask) ); 
+    return cview(mask);
 }
 
 _HIPP_TEMPRET cview(const bool_mask_t &mask) const noexcept -> cbool_view_t { 
-    return cbool_view_t(*this, bool_filter_t(mask) ); 
+    return cbool_view_t(*this, bool_filter_t(mask)); 
 }
 
-template<size_t I, typename ValueT, size_t N>
-const ValueT & get(const SVec _HIPP_TEMPARG &v) noexcept { return v[I]; }
+_HIPP_TEMPRET
+view(const stride_filter_t &s) noexcept -> stride_view_t {
+    return stride_view_t(*this, s);
+}
 
-template<size_t I, typename ValueT, size_t N>
-ValueT & get(SVec _HIPP_TEMPARG &v) noexcept { return v[I]; }
+_HIPP_TEMPRET
+view(const stride_filter_t &s) const noexcept -> cstride_view_t {
+    return cview(s);
+}
 
-template<size_t I, typename ValueT, size_t N>
-ValueT && get(SVec _HIPP_TEMPARG &&v) noexcept { return std::move(v[I]); }
+_HIPP_TEMPRET
+cview(const stride_filter_t &s) const noexcept -> cstride_view_t {
+    return cstride_view_t(*this, s);
+}
+
+_HIPP_TEMPHD
+template<typename Arg>
+auto _HIPP_TEMPCLS::view(s_stride_t, Arg &&arg) noexcept 
+-> stride_view_t 
+{
+    return view( stride_filter_t(std::forward<Arg>(arg)) );
+}
+
+_HIPP_TEMPHD
+template<typename Arg>
+auto _HIPP_TEMPCLS::view(s_stride_t, Arg &&arg) const noexcept 
+-> cstride_view_t 
+{
+    return view( stride_filter_t(std::forward<Arg>(arg)) );
+}
+
+_HIPP_TEMPHD
+template<typename Arg>
+auto _HIPP_TEMPCLS::cview(s_stride_t, Arg &&arg) const noexcept 
+-> cstride_view_t 
+{
+    return cview( stride_filter_t(std::forward<Arg>(arg)) );
+}
 
 } // namespace HIPP::NUMERICAL
-
-
-/** The tuple-like API. */
-namespace std {
-
-template<typename ValueT, size_t N>
-struct tuple_size<HIPP::NUMERICAL::_HIPP_TEMPCLS >;
-
-template<size_t I, typename ValueT, size_t N>
-struct tuple_element<I, HIPP::NUMERICAL::_HIPP_TEMPCLS >;
-
-} // namespace std
-
-template<typename ValueT, size_t N>
-struct std::tuple_size<HIPP::NUMERICAL::_HIPP_TEMPCLS > {
-    inline static constexpr size_t value = N;
-};
-
-template<size_t I, typename ValueT, size_t N>
-struct std::tuple_element<I, HIPP::NUMERICAL::_HIPP_TEMPCLS > {
-    using type = ValueT;
-};
-
-
-/** Specialization of the HIPP RawArrayTraits API */
-
-namespace HIPP {
-
-template<typename ValueT, size_t N> 
-class RawArrayTraits< HIPP::NUMERICAL::SVec<ValueT, N> > 
-: public RawArrayTraits< ValueT[N] > {};
-
-
-} // namespace HIPP
 
 
 #undef _HIPP_TEMPNORET
@@ -875,4 +973,4 @@ class RawArrayTraits< HIPP::NUMERICAL::SVec<ValueT, N> >
 #undef _HIPP_TEMPARG
 #undef _HIPP_TEMPHD
 
-#endif	//_HIPPNUMERICAL_LINALG_SVEC_H_
+#endif	//_HIPPNUMERICAL_LINALG_SARRAY1D_H_

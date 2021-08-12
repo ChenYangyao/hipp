@@ -121,7 +121,7 @@ Contributors
 
 .. toctree::
    :maxdepth: 1
-   :caption: Getting Started
+   :caption: API References
    :hidden:
 
    usage/api-ref/cntl/index
@@ -129,3 +129,4 @@ Contributors
    usage/api-ref/io/index
    usage/api-ref/simd/index
    usage/api-ref/algorithm/index
+   usage/api-ref/numerical/index

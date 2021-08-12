@@ -22,9 +22,14 @@ protected:
             EXPECT_EQ(c1[i], c2[i]);
         }
     }
+    template<typename T1, typename T2>
+    void chk_type_eq() {
+        bool same = std::is_same_v<T1, T2>;
+        EXPECT_TRUE(same);
+    }
 };
 
-TEST_F(ConceptRawArrayTest, Helper) {
+TEST_F(ConceptRawArrayTest, HelperSizeExtents) {
     using t1 = int[3];
     using t2 = double[3][4];
     using at1 = std::array<int, 3>;
@@ -40,6 +45,31 @@ TEST_F(ConceptRawArrayTest, Helper) {
         sz2 = helper_t::size<t2>();
     EXPECT_EQ(sz1, 3);
     EXPECT_EQ(sz2, 12);
+}
+
+TEST_F(ConceptRawArrayTest, HelperExtentsToRawArray) {
+    struct A {};
+    using t0 = helper_t::extents_to_array_t<double>;
+    using t0A = helper_t::extents_to_array_t<A>;
+    using t1 = helper_t::extents_to_array_t<double,3>;
+    using t1A = helper_t::extents_to_array_t<A,3>;
+    using t3 = helper_t::extents_to_array_t<double,3, 4, 5>;
+    using t3A = helper_t::extents_to_array_t<A,3, 4, 5>;
+
+    chk_type_eq<t0, double>();
+    chk_type_eq<t0A, A>();
+    chk_type_eq<t1, double[3]>();
+    chk_type_eq<t1A, A[3]>();
+    chk_type_eq<t3, double[3][4][5]>();
+    chk_type_eq<t3A, A[3][4][5]>();
+}
+
+TEST_F(ConceptRawArrayTest, HelperStdArray) {
+    using t1 = int[3];
+    using t2 = double[3][4];
+    using at1 = std::array<int, 3>;
+    using at2 = std::array<std::array<double, 4>, 3>;
+    class A {};
 
     bool y1 = helper_t::is_std_array_v<t1>,
         ya1 = helper_t::is_std_array_v<at1>, 
@@ -52,10 +82,8 @@ TEST_F(ConceptRawArrayTest, Helper) {
     EXPECT_FALSE(yA);
     EXPECT_FALSE(yInt);
 
-    bool s1 = std::is_same_v<helper_t::std_array_to_raw_t<at1>, t1>,
-        s2 = std::is_same_v<helper_t::std_array_to_raw_t<at2>, t2>;
-    EXPECT_TRUE(s1);
-    EXPECT_TRUE(s2);
+    chk_type_eq<helper_t::std_array_to_raw_t<at1>, t1>();
+    chk_type_eq<helper_t::std_array_to_raw_t<at2>, t2>();
 }
 
 TEST_F(ConceptRawArrayTest, Traits) {

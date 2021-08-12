@@ -20,15 +20,15 @@ protected:
         ASSERT_TRUE( (x - y == 0).all() );
     }
     void chk_eq(const bvec_t &x, const bvec_t &y) {
-        for(size_t i=0; i<vec_t::SIZE; ++i) {
+        for(size_t i=0; i<bvec_t::SIZE; ++i) {
             ASSERT_EQ(x[i], y[i]);
         }
         ASSERT_TRUE( (x == y).all() );
         ASSERT_TRUE( !(x != y).any() );
     }
     void chk_eq(const fvec_t &x, const fvec_t &y, double eps=1.0e-4) {
-        for(size_t i=0; i<vec_t::SIZE; ++i) {
-            chk_eq(x[i], y[i]);
+        for(size_t i=0; i<fvec_t::SIZE; ++i) {
+            chk_eq(x[i], y[i], eps);
         }
         ASSERT_TRUE(((x-y).abs() < eps).all());
     }
@@ -46,6 +46,40 @@ protected:
         ASSERT_TRUE(match);
     }
 };
+
+TEST_F(SVecIntTest, Conversion) {
+    vec_t x{0,1,2};
+    auto v = x.to_vector();
+    auto a = x.to_array();
+    ASSERT_EQ(v.size(), x.size());
+    ASSERT_EQ(a.size(), x.size());
+    bool tp_eq_v = std::is_same_v< typename decltype(v)::value_type, int >,
+        tp_eq_a = std::is_same_v< typename decltype(a)::value_type, int >;
+    ASSERT_TRUE(tp_eq_v);
+    ASSERT_TRUE(tp_eq_a);
+
+    for(size_t i=0; i<x.size(); ++i){
+        EXPECT_EQ(x[i], v[i]);
+        EXPECT_EQ(x[i], a[i]);
+    }
+}
+
+TEST_F(SVecIntTest, STLLikeAPI) {
+    vec_t x{0,1,2};
+    ASSERT_EQ(x.size(), 3);
+    for(size_t i=0; i<x.size(); ++i){
+        EXPECT_EQ(x[i], i);
+        EXPECT_EQ(x.at(i), i);
+    }
+
+    bool has_err = false;
+    try {
+        x.at(3);
+    } catch ( const ErrLogic &e ) {
+        has_err = true;
+    }
+    EXPECT_TRUE(has_err);
+}
 
 TEST_F(SVecIntTest, Reduction) {
     vec_t x {0,0,0}, x0 {1,0,0}, x1 {0,2,0}, x2 {0,0,3}, 
@@ -109,10 +143,10 @@ TEST_F(SVecIntTest, BoolView) {
     /** Unary RMW. */
     vec_t x {-3, 1, 2};
     auto v1 = x[x>0], v2 = x[{false, true, true}];
-    chk_eq(v1.vec(), v2.vec());
+    chk_eq(v1.array(), v2.array());
     chk_eq(v1.filter().mask(), v1.filter().mask());
     v1 += 1;
-    chk_eq(v1.vec(), x);
+    chk_eq(v1.array(), x);
     chk_eq(x, {-3, 2, 3});
 
     x[x!=2] *= 2;
@@ -145,13 +179,13 @@ TEST_F(SVecIntTest, ConstBoolView) {
     /** Unary RMW. */
     const vec_t x {-3, 1, 2};
     auto v1 = x[x>0], v2 = x[{false, true, true}];
-    chk_eq(v1.vec(), v2.vec());
+    chk_eq(v1.array(), v2.array());
     chk_eq(v1.filter().mask(), v1.filter().mask());
     auto y1 = v1 + 1;
     chk_eq(y1, {-3, 2, 3});
 
     auto v3 = x.cview(x>0), v4 = x.cview({false, true, true});
-    chk_eq(v3.vec(), v4.vec());
+    chk_eq(v3.array(), v4.array());
     chk_eq(v3.filter().mask(), v4.filter().mask());
     auto y3 = v3 + 1;
     chk_eq(y3, {-3, 2, 3});

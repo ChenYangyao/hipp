@@ -13,7 +13,7 @@ namespace HIPP::NUMERICAL {
 /**
 Cauchy distribution (also known as Lorentz distribution) with scale parameter 
 a, i.e.,
-    p(x) = 1 / ( a pi ( 1+ (x/a)^2 ) ), , for x in (-inf, inf).
+    p(x) = 1 / ( a pi ( 1+ (x/a)^2 ) ), for x in (-inf, inf).
 */
 class CauchyDist {
 public:

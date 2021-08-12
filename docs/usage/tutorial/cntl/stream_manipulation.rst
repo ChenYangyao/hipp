@@ -1,6 +1,8 @@
 Basic Stream Manipulation
 ==========================
 
+.. include:: /global.rst
+
 Printing is a common task in C++ programming. The standard library provides 
 various facilities for it (e.g. ``std::printf`` and ``std::cout``), which enable 
 very detailed controlling of both binary and formatted read/write.
@@ -11,6 +13,8 @@ log records along the execution of the program. Binary IO for large computation
 data is described in the separate :doc:`IO Module <../io/index>`.
 
 All the example codes in the below sections can be downloaded at:  :download:`cntl/basic-stream-manip.cpp </../example/tutorial/cntl/basic-stream-manip.cpp>`.
+
+.. _tutor-cntl-pstream:
 
 Printing Anything With the Pretty Stream 
 -----------------------------------------

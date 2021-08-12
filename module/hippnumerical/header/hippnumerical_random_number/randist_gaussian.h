@@ -12,22 +12,19 @@ create: Yangyao CHEN, 2020/12/22
 #include <gsl/gsl_cdf.h>
 namespace HIPP::NUMERICAL {
 
+/** 
+The Normal/Gaussian distribution with standard deviation ``sigma``. 
+*/
 class GaussianDist {
 public:
-    /** 
-    cdf_lower() and cdf_upper() corresponds to P(x) and Q(x) in GSL, 
-    satisfying:
-        - P(x) + Q(x) = 1.
-        - 0 <= P(x) <= 1; 0 <= Q(x) <= 1.
-    "inv" functions are their inverse.
-    */
+    /* Calls for the Gaussian dist with standard deviation ``sigma``. */
     static double pdf(double x, double sigma) noexcept;
     static double cdf_lower(double x, double sigma) noexcept; 
     static double cdf_upper(double x, double sigma) noexcept; 
     static double invcdf_lower(double P, double sigma) noexcept;
     static double invcdf_upper(double Q, double sigma) noexcept;    
 
-    /* calls for the unit gaussian dist., i.e., sigma = 1 */
+    /* calls for the unit gaussian dist., i.e., ``sigma = 1``. */
     static double pdf_unit(double x) noexcept;
     static double cdf_lower_unit(double x) noexcept;
     static double cdf_upper_unit(double x) noexcept;

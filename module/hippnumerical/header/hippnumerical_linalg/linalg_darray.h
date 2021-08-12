@@ -1,0 +1,4 @@
+#ifndef _HIPPNUMERICAL_LINALG_DARRAY_H_
+#define _HIPPNUMERICAL_LINALG_DARRAY_H_
+#include "linalg_darraynd.h"
+#endif	//_HIPPNUMERICAL_LINALG_DARRAY_H_

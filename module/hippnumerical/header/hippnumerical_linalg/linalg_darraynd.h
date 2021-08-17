@@ -7,10 +7,15 @@ create: Yangyao CHEN, 2021/07/30
 #define _HIPPNUMERICAL_LINALG_DARRAYND_H_
 #include "linalg_sarray.h"
 
-#define _HIPP_TEMPHD template<typename ValueT, size_t Rank>
-#define _HIPP_TEMPARG <ValueT, Rank>
+#define _HIPP_TEMPHD template<typename ValueT, size_t Rank, typename Alloc>
+#define _HIPP_TEMPARG <ValueT, Rank, Alloc>
 #define _HIPP_TEMPCLS DArray _HIPP_TEMPARG
-#define _HIPP_TEMPCLS_B DArray<bool, Rank>
+
+#define _HIPP_TEMPHD_B \
+    template<typename ValueT, size_t Rank, typename Alloc, \
+        typename AllocB=std::allocator<bool> >
+#define _HIPP_TEMPCLS_B DArray<bool, Rank, AllocB>
+
 #define _HIPP_TEMPRET _HIPP_TEMPHD inline auto _HIPP_TEMPCLS::
 #define _HIPP_TEMPNORET _HIPP_TEMPHD inline _HIPP_TEMPCLS::
 
@@ -37,8 +42,14 @@ struct DArrayBase {
 /**
 Dynamic Array with fixed compile-time rank (i.e., the number of dimensions).
 The extents of dimensions (i.e., the shape) is specified at run-time.
+
+Template parameters
+--------------------
+@ValueT: element type. Usually arithmetic scalar.
+@Rank: number of dimensions.
+@Alloc: allocator for memory.
 */
-template<typename ValueT, size_t Rank>
+template<typename ValueT, size_t Rank, typename Alloc=std::allocator<ValueT> >
 class DArray : public DArrayBase {
 public:
     /**
@@ -46,10 +57,12 @@ public:
     value_t: type of the array element.
     RANK: number of dimensions.
     shape_t: extents of dimensions.
+    alloc_t: type of the allocator.
     */
     typedef ValueT value_t;
     inline static constexpr size_t RANK = Rank;
     typedef SVec<size_t, RANK> shape_t;
+    typedef Alloc alloc_t;
 
     /** 
     Aliases for member access.
@@ -215,13 +228,13 @@ public:
     The result of reshape to an empty darray is an empty one.
     */
     void reshape(const shape_t &new_shape);
-    template<size_t NewRank>
-    DArray<ValueT, NewRank> reshaped(
+    template<size_t NewRank, typename NewAlloc=alloc_t>
+    DArray<ValueT, NewRank, NewAlloc> reshaped(
         const SVec<size_t, NewRank> &new_shape) const;
 
     /* Return a vector row-majorly filled with the DArray elements. */
-    template<typename T = value_t>
-    vector<T> to_vector() const;
+    template<typename T = value_t, typename NewAlloc=std::allocator<T> >
+    vector<T, NewAlloc> to_vector() const;
 
     /**
     Linear algebra operations. All are element-wise operations.
@@ -332,8 +345,9 @@ public:
     DArray & map(UnaryOp op);
 
     template<typename UnaryOp, 
-        typename ResT = std::invoke_result_t<UnaryOp, value_t> >
-    DArray<ResT, Rank> mapped(UnaryOp op) const;
+        typename ResT = std::invoke_result_t<UnaryOp, value_t>,
+        typename NewAlloc = std::allocator<ResT> >
+    DArray<ResT, Rank, NewAlloc> mapped(UnaryOp op) const;
 
     template<typename BinaryOp>
     void visit(BinaryOp op) const;
@@ -349,14 +363,17 @@ public:
     ``value_t`` itself, no conversion bappens. Otherwise ``ResT`` is ``int``, 
     and the conversion is made by std::floor, ceil, trunc and then cast.
     */
-    template<typename ResT = int_value_t>
-    DArray<ResT, Rank> floor() const;
+    template<typename ResT = int_value_t, 
+        typename NewAlloc = std::allocator<ResT> >
+    DArray<ResT, Rank, NewAlloc> floor() const;
 
-    template<typename ResT = int_value_t>
-    DArray<ResT, Rank> ceil() const;
+    template<typename ResT = int_value_t, 
+        typename NewAlloc = std::allocator<ResT> >
+    DArray<ResT, Rank, NewAlloc> ceil() const;
 
-    template<typename ResT = int_value_t>
-    DArray<ResT, Rank> trunc() const;
+    template<typename ResT = int_value_t, 
+        typename NewAlloc = std::allocator<ResT> >
+    DArray<ResT, Rank, NewAlloc> trunc() const;
 
     DArray abs() const;
 protected:
@@ -644,26 +661,26 @@ _HIPP_TEMPRET reshape(const shape_t &new_shape) -> void {
 }
 
 _HIPP_TEMPHD
-template<size_t NewRank>
-DArray<ValueT, NewRank> _HIPP_TEMPCLS::reshaped(
+template<size_t NewRank, typename NewAlloc>
+DArray<ValueT, NewRank, NewAlloc> _HIPP_TEMPCLS::reshaped(
     const SVec<size_t, NewRank> &new_shape) const 
 {
     size_t new_size = new_shape.prod();
     _chk_size_match(_size, new_size);
 
     if( _data ) {
-        return DArray<ValueT, NewRank>(new_shape, size_hint_t(new_size), 
-            begin(), end());
+        return DArray<ValueT, NewRank, NewAlloc>(
+            new_shape, size_hint_t(new_size), cbegin(), cend());
     }else{
-        return DArray<ValueT, NewRank>();
+        return DArray<ValueT, NewRank, NewAlloc>();
     }
 }
 
 _HIPP_TEMPHD
-template<typename T>
-vector<T> _HIPP_TEMPCLS::to_vector() const {
+template<typename T, typename NewAlloc>
+vector<T, NewAlloc> _HIPP_TEMPCLS::to_vector() const {
     static_assert( Rank == 1, "Rank must be 1 to be converted to a vector" );
-    return vector<T>(begin(), end());
+    return vector<T, NewAlloc>(cbegin(), cend());
 }
 
 #define _HIPP_UNARY_OP_DEF(op) \
@@ -748,7 +765,7 @@ _HIPP_BIN_OP_DEF(^)
 #undef _HIPP_BIN_OP_DEF
 
 #define _HIPP_BIN_OP_DEF(op) \
-    _HIPP_TEMPHD \
+    _HIPP_TEMPHD_B \
     _HIPP_TEMPCLS_B operator op(const typename _HIPP_TEMPCLS::value_t &lhs,  \
         const _HIPP_TEMPCLS &rhs) \
     { \
@@ -758,7 +775,7 @@ _HIPP_BIN_OP_DEF(^)
         for(size_t i=0; i<n; ++i) ret[i] = lhs op rhs[i]; \
         return _HIPP_TEMPCLS_B{std::move(ret)}; \
     } \
-    _HIPP_TEMPHD \
+    _HIPP_TEMPHD_B \
     _HIPP_TEMPCLS_B operator op(const _HIPP_TEMPCLS &lhs,  \
         const typename _HIPP_TEMPCLS::value_t &rhs) \
     { \
@@ -768,7 +785,7 @@ _HIPP_BIN_OP_DEF(^)
         for(size_t i=0; i<n; ++i) ret[i] = lhs[i] op rhs; \
         return _HIPP_TEMPCLS_B{std::move(ret)}; \
     } \
-    _HIPP_TEMPHD \
+    _HIPP_TEMPHD_B \
     _HIPP_TEMPCLS_B operator op(const _HIPP_TEMPCLS &lhs,  \
         const _HIPP_TEMPCLS &rhs) \
     { \
@@ -936,9 +953,9 @@ auto _HIPP_TEMPCLS::map(UnaryOp op) -> DArray & {
 }
 
 _HIPP_TEMPHD
-template<typename UnaryOp, typename ResT>
-auto _HIPP_TEMPCLS::mapped(UnaryOp op) const -> DArray<ResT, Rank> {
-    DArray<ResT, Rank> res(_shape, size_hint_t(_size));
+template<typename UnaryOp, typename ResT, typename NewAlloc>
+auto _HIPP_TEMPCLS::mapped(UnaryOp op) const -> DArray<ResT, Rank, NewAlloc> {
+    DArray<ResT, Rank, NewAlloc> res(_shape, size_hint_t(_size));
     for(size_t i=0; i<_size; ++i) res[i] = op(_data[i]);
     return {std::move(res)};
 }
@@ -960,9 +977,9 @@ void _HIPP_TEMPCLS::visit(BinaryOp op) {
 }
 
 _HIPP_TEMPHD
-template<typename ResT>
-auto _HIPP_TEMPCLS::floor() const -> DArray<ResT, Rank> {
-    DArray<ResT, Rank> res(_shape, size_hint_t(_size));
+template<typename ResT, typename NewAlloc>
+auto _HIPP_TEMPCLS::floor() const -> DArray<ResT, Rank, NewAlloc> {
+    DArray<ResT, Rank, NewAlloc> res(_shape, size_hint_t(_size));
     if constexpr(IS_INT) {
         for(size_t i=0; i<_size; ++i) res[i] = static_cast<ResT>(_data[i]);
     }else {
@@ -973,9 +990,9 @@ auto _HIPP_TEMPCLS::floor() const -> DArray<ResT, Rank> {
 }
 
 _HIPP_TEMPHD
-template<typename ResT>
-auto _HIPP_TEMPCLS::ceil() const -> DArray<ResT, Rank> {
-    DArray<ResT, Rank> res(_shape, size_hint_t(_size));
+template<typename ResT, typename NewAlloc>
+auto _HIPP_TEMPCLS::ceil() const -> DArray<ResT, Rank, NewAlloc> {
+    DArray<ResT, Rank, NewAlloc> res(_shape, size_hint_t(_size));
     if constexpr(IS_INT) {
         for(size_t i=0; i<_size; ++i) res[i] = static_cast<ResT>(_data[i]);
     }else {
@@ -986,9 +1003,9 @@ auto _HIPP_TEMPCLS::ceil() const -> DArray<ResT, Rank> {
 }
 
 _HIPP_TEMPHD
-template<typename ResT>
-auto _HIPP_TEMPCLS::trunc() const -> DArray<ResT, Rank> {
-    DArray<ResT, Rank> res(_shape, size_hint_t(_size));
+template<typename ResT, typename NewAlloc>
+auto _HIPP_TEMPCLS::trunc() const -> DArray<ResT, Rank, NewAlloc> {
+    DArray<ResT, Rank, NewAlloc> res(_shape, size_hint_t(_size));
     if constexpr(IS_INT) {
         for(size_t i=0; i<_size; ++i) res[i] = static_cast<ResT>(_data[i]);
     }else {
@@ -1012,11 +1029,11 @@ _HIPP_TEMPRET _nullify() noexcept -> void {
 }
 
 _HIPP_TEMPRET _alloc(size_t n) -> void {
-    _data = new value_t [n];
+    _data = alloc_t().allocate(n);
 }
 
 _HIPP_TEMPRET _dealloc() noexcept -> void {
-    delete [] _data;
+    if ( _data ) alloc_t().deallocate(_data, _size);
 }
 
 _HIPP_TEMPHD
@@ -1061,7 +1078,10 @@ void _HIPP_TEMPCLS::_chk_size_match(size_t s1, size_t s2, Args &&...args) {
 #undef _HIPP_TEMPHD
 #undef _HIPP_TEMPARG
 #undef _HIPP_TEMPCLS
+
+#undef _HIPP_TEMPHD_B
 #undef _HIPP_TEMPCLS_B
+
 #undef _HIPP_TEMPRET
 #undef _HIPP_TEMPNORET
 

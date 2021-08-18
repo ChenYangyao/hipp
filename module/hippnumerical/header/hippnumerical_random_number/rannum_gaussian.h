@@ -129,18 +129,18 @@ _HIPP_TEMPARG ~GaussianRandomNumber(){}
 
 _HIPP_TEMPHD
 _HIPP_TEMPARG GaussianRandomNumber(const GaussianRandomNumber &o)
-:_engine(o._engine), _rng(o._rng.param()) { }
+:_engine(o.engine()), _rng(o.param()) { }
 
 _HIPP_TEMPHD
 _HIPP_TEMPARG GaussianRandomNumber(GaussianRandomNumber &&o)
-:_engine(o._engine), _rng(o._rng.param()) { }
+:_engine(o.engine()), _rng(o.param()) { }
 
 _HIPP_TEMPHD
 auto _HIPP_TEMPARG operator=(const GaussianRandomNumber &o)
 -> GaussianRandomNumber &
 {
-    _engine = o.engine;
-    _rng.param(o._rng.param());
+    _engine = o.engine();
+    _rng.param(o.param());
     return *this;
 }
 
@@ -148,8 +148,8 @@ _HIPP_TEMPHD
 auto _HIPP_TEMPARG operator=(GaussianRandomNumber &&o) 
 -> GaussianRandomNumber &
 {
-    _engine = o._engine;
-    _rng.param(o._rng.param());
+    _engine = o.engine();
+    _rng.param(o.param());
     return *this;
 }
 
@@ -166,6 +166,7 @@ auto _HIPP_TEMPARG reset_param(const param_t &param)
 -> GaussianRandomNumber &
 {
     _rng.param(param);
+    return *this;
 }
 
 _HIPP_TEMPHD

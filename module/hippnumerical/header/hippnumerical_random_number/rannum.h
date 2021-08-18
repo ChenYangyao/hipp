@@ -6,9 +6,12 @@ create: Yangyao CHEN, 2021/08/12
 #ifndef _HIPPNUMERICAL_RANNUM_H_
 #define _HIPPNUMERICAL_RANNUM_H_
 
-#include "rannum_gaussian.h"
 #include "rannum_uniform_real.h"
 #include "rannum_uniform_int.h"
+
+#include "rannum_gaussian.h"
+
+#include "rannum_poisson.h"
 
 namespace HIPP::NUMERICAL {
 

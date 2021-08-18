@@ -23,6 +23,9 @@ Predefined Variables
 Formatted IO
 --------------------------
 
+PStream
+""""""""""""""""""
+
 .. class:: PStream
 
     ``PStream`` (Pretty Stream) is a wrapper for ``std::ostream``. It provides shortcuts which 
@@ -78,32 +81,68 @@ Formatted IO
 
         Wrap a pair of input iterators to an object which can be passed to ``PStream`` for output.   
 
-    **Example:**
+**Example:**
+
+Here we output some objects to :var:`pout`, which is a wrapper of ``std::cout`` but provides 
+more elegant printing interface for any object.
+
+Scalar or array can be printed like::
+
+    int a[3] = {1,2,3};
+
+    pout << "a[0]=", a[0], ", a[1]=", a[1], ", a[2]=", a[2], '\n',
+            "a = ", pout(a, a+3), endl;
+
+Output:
+
+.. code-block:: text
+
+    a[0]=1, a[1]=2, a[2]=3
+    a = 1,2,3
+
+STL containers and utilities can directly streamed. For example, ``std::vector``, ``std::unordered_map`` and 
+``std::tuple`` can be printed by::
+
+    vector<double> b = {1.1, 2.1, 3.1};
+    std::unordered_map<string, double> c = {{"bar", 10.0}, {"foo", 20.0}, {"baz", 30.0}};
+    std::tuple<string, int, vector<double>> d = {"a string", 1, {2.0,3.0, 4.0}};
+
+    pout << "b = (", b, ")\n",
+        "c = {", c, "}\n",
+        "d = ", d, endl;
+
+Output:
+
+.. code-block:: text
+
+    b = (1.1,2.1,3.1)
+    c = {foo:20,baz:30,bar:10}
+    d = a string:1:2,3,4
     
-    Here we output some objects to :var:`pout`, which is a wrapper of ``std::cout``::
 
-        using HIPP::pout;
+Object with overloaded ``operator<<`` can be streamed. Otherwise, a compiler-dependent 
+printing is made. For example, the following ``class A`` has no ``operator<<`` defined, 
+but ``class B`` does::
 
-        int a[3] = {1,2,3};
-        pout << "a has three elements, a[0]=", a[0], ", a[1]=", a[1], ", a[2]=", a[2], '\n',
-                "a can be directly put into stream: ", pout(a, a+3), endl;
-        
-        vector<double> b = {1.1, 2.1, 3.1};
-        std::unordered_map<string, double> c = {{"bar", 10.0}, {"foo", 20.0}, {"baz", 30.0}};
-        pout << "b=(", b, "), c={", c, "}", endl;
+    struct A {};
+    struct B { 
+        friend ostream & operator<<(ostream &os, const B &b) {
+            return os << "B object";
+        }
+    };
+    pout << "A() = ", A(), '\n',
+            "B() = ", B(), endl;
 
-        std::tuple<string, int, vector<double>> d = {"a string", 1, {2.0,3.0, 4.0}};
-        pout << "d=", d, endl;
+Output:
 
-    The output is 
+.. code-block:: text
 
-    .. code-block::
+    A() = <1A instance at 0x7ffe76760f08>
+    B() = B object
 
-        a has three elements, a[0]=1, a[1]=2, a[2]=3
-        a can be directly put into stream: 1,2,3
-        b=(1.1,2.1,3.1), c={foo:20,baz:30,bar:10}
-        d=a string:1:2,3,4
 
+PrtArray
+"""""""""""""
 
 .. class:: template<typename InputIterator> PrtArray
 

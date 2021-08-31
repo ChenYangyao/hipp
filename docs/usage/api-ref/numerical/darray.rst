@@ -220,6 +220,25 @@ DArray Class Template
         ``reshaped()``: return a new reshaped darray ranked ``NewRank``. The number of 
         elements cannot be changed. The result of reshape to an empty darray is an empty one.
         
+    .. function:: \
+        void resize(size_t new_size, const value_t &value = value_t {})
+        void resize(const shape_t &new_shape, const value_t &value = value_t {})
+
+        ``resize()``: change the size, i.e., the number of elements.
+        If a ``new_size`` is passed, the first dimension if extended so that the 
+        final size is equal to ``new_size``. ``new_size`` can be 0.
+        
+        - For empty DArray, the dimensions except the first is set to 1.
+        - If impossible to resize to ``new_size`` due to inconsistency of 
+          dimensions, an ErrLogic is thrown.
+        
+        If a ``new_shape`` is passed, the resulted DArray has this shape.
+        
+        The original elements are contiguously copied to the new buffer. If the 
+        new size is larger than the original, ``value`` is used to fill the tail
+        of the new buffer.
+        If new size is smaller, original data at the tail is truncated.
+
     .. function:: template<typename T = value_t, typename NewAlloc=std::allocator<T> > vector<T, NewAlloc> to_vector() const
         
         Return a vector row-majorly filled with the DArray elements.

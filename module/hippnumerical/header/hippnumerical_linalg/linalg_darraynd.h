@@ -232,6 +232,22 @@ public:
     DArray<ValueT, NewRank, NewAlloc> reshaped(
         const SVec<size_t, NewRank> &new_shape) const;
 
+    /**
+    resize(): change the size, i.e., the number of elements.
+    If a ``new_size`` is passed, the first dimension if extended so that the 
+    final size is equal to ``new_size``. ``new_size`` can be 0.
+    - For empty DArray, the dimensions except the first is set to 1.
+    - If impossible to resize to ``new_size`` due to inconsistency of 
+      dimensions, an ErrLogic is thrown.
+    If a ``new_shape`` is passed, the resulted DArray has this shape.
+    The original elements are contiguously copied to the new buffer. If the 
+    new size is larger than the original, ``value`` is used to fill the tail
+    of the new buffer.
+    If new size is smaller, original data at the tail is truncated.
+    */
+    void resize(size_t new_size, const value_t &value = value_t {});
+    void resize(const shape_t &new_shape, const value_t &value = value_t {});
+
     /* Return a vector row-majorly filled with the DArray elements. */
     template<typename T = value_t, typename NewAlloc=std::allocator<T> >
     vector<T, NewAlloc> to_vector() const;
@@ -385,16 +401,24 @@ protected:
     _nullify(): set attributes to an "empty" state.
     _alloc(): _data = buffer allocated for n value_t objects.
     _dealloc(): deallocate buffer pointned by _data. _data itself is untouched.
+    _not_null(), _is_null() identify whether the instance is not/is in the 
+        "empty" state.
     */
     void _nullify() noexcept;
     void _alloc(size_t n);
     void _dealloc() noexcept;
+    bool _not_null() const noexcept { return _data; }
+    bool _is_null() const noexcept { return ! _not_null(); }
 
     template<typename ...SizeTs>
     size_t _indices_to_pos(size_t prev, size_t id0, SizeTs ...ids) noexcept;
     
+    /* Copy b, e to _data, without any checking. */
     template<typename It>
     void _write_data(It b, It e) noexcept;
+
+    void _resize_impl(const shape_t &new_shape, size_t new_size, 
+        const value_t &value);
     
     /**
     Consistency check.
@@ -666,7 +690,7 @@ DArray<ValueT, NewRank, NewAlloc> _HIPP_TEMPCLS::reshaped(
     const SVec<size_t, NewRank> &new_shape) const 
 {
     size_t new_size = new_shape.prod();
-    _chk_size_match(_size, new_size);
+    _chk_size_match(_size, new_size, emFLPFB);
 
     if( _data ) {
         return DArray<ValueT, NewRank, NewAlloc>(
@@ -675,6 +699,38 @@ DArray<ValueT, NewRank, NewAlloc> _HIPP_TEMPCLS::reshaped(
         return DArray<ValueT, NewRank, NewAlloc>();
     }
 }
+
+_HIPP_TEMPRET resize(size_t new_size, const value_t &value) 
+-> void {
+    if( _is_null() ) {
+        shape_t sp( size_t(1) );
+        sp[0] = new_size;
+        _resize_impl(sp, new_size, value); return;
+    }
+
+    if( new_size == size() ) return;
+    
+    shape_t sp = shape();
+    if( new_size == 0 ) {
+        sp[0] = 0;
+        _resize_impl(sp, 0, value); return;
+    }
+
+    size_t rem_sz = sp.cview(sp.s_stride, sp.s_tail(RANK-1)).prod();
+    if( rem_sz == 0)
+        ErrLogic::throw_(ErrLogic::eLENGTH, emFLPFB, "  ... shape ", sp, 
+        " cannot be resized to ", new_size, '\n');
+    size_t ext0 = new_size / rem_sz;
+    _chk_size_match(ext0*rem_sz, new_size, emFLPFB);
+    sp[0] = ext0;
+    _resize_impl(sp, new_size, value);
+}
+    
+_HIPP_TEMPRET resize(const shape_t &new_shape, const value_t &value) 
+-> void {
+    _resize_impl( new_shape, new_shape.prod(), value );
+}
+
 
 _HIPP_TEMPHD
 template<typename T, typename NewAlloc>
@@ -1054,6 +1110,28 @@ _HIPP_TEMPHD
 template<typename It>
 void _HIPP_TEMPCLS::_write_data(It b, It e) noexcept {
     std::copy(b, e, _data);
+}
+
+_HIPP_TEMPRET _resize_impl(const shape_t &new_shape, size_t new_size, 
+    const value_t &value) -> void
+{
+    if( _is_null() ) {
+        (*this) = DArray(new_shape, size_hint_t(new_size), value);
+        return;
+    }
+    const size_t old_size = size();
+    if( new_size == old_size ) {
+        _shape = new_shape; return;
+    }
+
+    DArray new_a(new_shape, size_hint_t(new_size));
+    if( new_size <= old_size ) {
+        new_a._write_data( cbegin(), cbegin()+new_size );
+    }else{
+        new_a._write_data( cbegin(), cend() );
+        std::fill_n(new_a.begin() + old_size, new_size-old_size, value);
+    }
+    (*this) = std::move(new_a);
 }
 
 _HIPP_TEMPHD

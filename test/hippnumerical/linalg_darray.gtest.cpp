@@ -222,6 +222,43 @@ TEST_F(DArrayIntTest, ReshapeAndConversion) {
     }
 }
 
+TEST_F(DArrayIntTest, ReshapeSize) {
+    a3_t a1({2,2,3}, 1);
+    a1.resize(12); 
+    
+    a1.resize(24);
+    ASSERT_EQ(a1.size(), 24);
+    bool sz_eq = ( a1.shape() == shape3_t{4,2,3} ).all();
+    ASSERT_TRUE( sz_eq );
+    for(int i=0; i<12; ++i){
+        EXPECT_EQ(a1.at(i), 1);
+        EXPECT_EQ(a1.at(i+12), 0);
+    }
+
+    a1.resize(48, 2);
+    ASSERT_EQ(a1.size(), 48);
+    sz_eq = ( a1.shape() == shape3_t{8,2,3} ).all();
+    ASSERT_TRUE( sz_eq );
+
+    for(int i=0; i<12; ++i){
+        EXPECT_EQ(a1.at(i), 1);
+        EXPECT_EQ(a1.at(i+12), 0);
+        EXPECT_EQ(a1.at(i+24), 2);
+        EXPECT_EQ(a1.at(i+36), 2);
+    }
+
+    a1.resize({8,2,3});
+    a1.resize({2,2,3});
+    a1.resize({4,2,3}, 2);
+    ASSERT_EQ(a1.size(), 24);
+    sz_eq = ( a1.shape() == shape3_t{4,2,3} ).all();
+    ASSERT_TRUE( sz_eq );
+    for(int i=0; i<12; ++i){
+        EXPECT_EQ(a1.at(i), 1);
+        EXPECT_EQ(a1.at(i+12), 2);
+    }
+}
+
 TEST_F(DArrayIntTest, Arithmetic) {
     a3_t a1 {{2,2,3}, {-3,-2,-1,0,1,2,3,4,5,6,7,8}};
     a1 += 3;

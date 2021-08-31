@@ -24,7 +24,7 @@ public:
     typedef typename engine_t::result_type seed_t;
 
     /**
-    @mean, stddev: parameters of normal distribution. Instead a param_t can
+    @mean, stddev: parameters of normal distribution. Instead a ``param_t`` can
         be passed.
     @engine: an engine of random number. A pointer is passed, and its lifetime
         is controlled by the user.
@@ -63,13 +63,13 @@ public:
 
     /**
     Geters.
-    mean(), stddev() - the parameters of the distribution.
-    param() - the packet of mean and stddev.
-    min(), max() - minimum and maximum value that can be returned by the random
+    mean(), stddev() : the parameters of the distribution.
+    param() : the packet of ``mean`` and ``stddev``.
+    min(), max() : minimum and maximum value that can be returned by the random
         number generator.
-    range() - the pair {min(), max()}.
-    engine() - the random engine. 
-    rng() - the internal random number generator.
+    range() : the pair {min(), max()}.
+    engine() : the random engine. 
+    rng() : the internal random number generator.
     */
     result_t mean() const;
     result_t stddev() const;
@@ -83,9 +83,10 @@ public:
 
     /**
     Get a single random number.
+
     1. using current parameters.
-    2. using new parameters 'param'.
-    3. using new parameters 'mean' and 'stddev'.
+    2. using new parameters ``param``.
+    3. using new parameters ``mean`` and ``stddev``.
     */
     result_t operator()();
     result_t get(const param_t &param);
@@ -93,8 +94,9 @@ public:
     
     /**
     Get a series of random numbers.
-    1. Get 'n' numbers, returned a container (must have push back).
-    2. Directly pushing back into container 'c' (clear() is not called).
+
+    1. Get ``n`` numbers, returned a container (must have push back).
+    2. Directly pushing back into container ``c`` (``clear()`` is not called).
     3. Write into a range specified by a pair of iterator.
     */
     template<template<typename> typename Container = std::vector>

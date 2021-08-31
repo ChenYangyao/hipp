@@ -18,7 +18,8 @@ probability function:
     P(i | mu) = exp(-mu) mu^i / i !,
 where ``mu`` is the mean number.
 */
-template<typename IntT = int, typename EngineT = DefaultRandomEngine>
+template<typename IntT = int, 
+    typename EngineT = DefaultRandomEngine>
 class PoissonRandomNumber {
 public:
     typedef IntT result_t;

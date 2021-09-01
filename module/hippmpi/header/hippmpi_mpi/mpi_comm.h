@@ -1,8 +1,7 @@
 /**
- * creat: Yangyao CHEN, 2020/01/18
- *      [write   ] Comm - the high-level communicator interface for MPI system.
- */ 
-
+create: Yangyao CHEN, 2020/01/18
+    [write   ] Comm - the high-level communicator interface for MPI system.
+*/ 
 #ifndef _HIPPMPI_MPI_COMM_H_
 #define _HIPPMPI_MPI_COMM_H_
 #include "mpi_obj_base.h"
@@ -384,69 +383,66 @@ std::pair<Win, T*> Comm::win_allocate_shared(size_t n, int disp_unit,
 }
 template<typename ...Args>
 void Comm::send( int dest, int tag, Args && ...args ) const{
-    Datapacket dp( std::forward<Args>(args)... );
-    _obj_ptr->send( dp._buff, dp._size, dp._dtype.raw(), dest, tag );
+    auto [p, n, dt] = Datapacket{ std::forward<Args>(args)... };
+    _obj_ptr->send(p, n, dt.raw(), dest, tag );
 }
 
 template<typename ...Args>
 void Comm::bsend( int dest, int tag, Args && ...args ) const{
-    Datapacket dp( std::forward<Args>(args)... );
-    _obj_ptr->bsend( dp._buff, dp._size, dp._dtype.raw(), dest, tag );
+    auto [p, n, dt] = Datapacket{ std::forward<Args>(args)... };
+    _obj_ptr->bsend( p, n, dt.raw(), dest, tag );
 }
 
 template<typename ...Args>
 void Comm::ssend( int dest, int tag, Args && ...args ) const{
-    Datapacket dp( std::forward<Args>(args)... );
-    _obj_ptr->ssend( dp._buff, dp._size, dp._dtype.raw(), dest, tag );
+    auto [p, n, dt] = Datapacket{ std::forward<Args>(args)... };
+    _obj_ptr->ssend( p, n, dt.raw(), dest, tag );
 }
 
 template<typename ...Args>
 void Comm::rsend( int dest, int tag, Args && ...args ) const{
-    Datapacket dp( std::forward<Args>(args)... );
-    _obj_ptr->rsend( dp._buff, dp._size, dp._dtype.raw(), dest, tag );
+    auto [p, n, dt] = Datapacket{ std::forward<Args>(args)... };
+    _obj_ptr->rsend( p, n, dt.raw(), dest, tag );
 }
 
 template<typename ...Args>
 Status Comm::recv( int src, int tag, Args && ...args ) const{
-    Datapacket dp( std::forward<Args>(args)... );
-    return _obj_ptr->recv( dp._buff, dp._size, dp._dtype.raw(), src, tag );
+    auto [p, n, dt] = Datapacket{ std::forward<Args>(args)... };
+    return _obj_ptr->recv( p, n, dt.raw(), src, tag );
 }
 
 template<typename ...Args>
 Requests Comm::isend( int dest, int tag, Args && ...args ) const{
-    Datapacket dp( std::forward<Args>(args)... );
-    auto rq = _obj_ptr->isend( dp._buff, dp._size, dp._dtype.raw(), dest, tag );
+    auto [p, n, dt] = Datapacket{ std::forward<Args>(args)... };
+    auto rq = _obj_ptr->isend( p, n, dt.raw(), dest, tag );
     return Requests::_from_raw( rq, 0 );
 }
 
 template<typename ...Args>
 Requests Comm::ibsend( int dest, int tag, Args && ...args ) const{
-    Datapacket dp( std::forward<Args>(args)... );
-    auto rq = _obj_ptr->ibsend( dp._buff, dp._size, dp._dtype.raw(), 
-        dest, tag );
+    auto [p, n, dt] = Datapacket{ std::forward<Args>(args)... };
+    auto rq = _obj_ptr->ibsend( p, n, dt.raw(), dest, tag );
     return Requests::_from_raw( rq, 0 );
 }
 
 template<typename ...Args>
 Requests Comm::issend( int dest, int tag, Args && ...args ) const{
-    Datapacket dp( std::forward<Args>(args)... );
-    auto rq = _obj_ptr->issend( dp._buff, dp._size, dp._dtype.raw(), 
-        dest, tag );
+    auto [p, n, dt] = Datapacket{ std::forward<Args>(args)... };
+    auto rq = _obj_ptr->issend( p, n, dt.raw(), dest, tag );
     return Requests::_from_raw( rq, 0 );
 }
 
 template<typename ...Args>
 Requests Comm::irsend( int dest, int tag, Args && ...args ) const{
-    Datapacket dp( std::forward<Args>(args)... );
-    auto rq = _obj_ptr->irsend( dp._buff, dp._size, dp._dtype.raw(), 
-        dest, tag );
+    auto [p, n, dt] = Datapacket{ std::forward<Args>(args)... };
+    auto rq = _obj_ptr->irsend( p, n, dt.raw(), dest, tag );
     return Requests::_from_raw( rq, 0 );
 }
 
 template<typename ...Args>
 Requests Comm::irecv( int src, int tag, Args && ...args ) const{
-    Datapacket dp( std::forward<Args>(args)... );
-    auto rq = _obj_ptr->irecv( dp._buff, dp._size, dp._dtype.raw(), src, tag );
+    auto [p, n, dt] = Datapacket{ std::forward<Args>(args)... };
+    auto rq = _obj_ptr->irecv( p, n, dt.raw(), src, tag );
     return Requests::_from_raw( rq, 0 );
 }
 

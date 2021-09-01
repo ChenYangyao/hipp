@@ -3,7 +3,8 @@ namespace HIPP{
 namespace MPI{
 
 Datapacket::Datapacket( const void *buff, int size, Datatype dtype ) noexcept
-    :_buff((void *)buff), _size(size), _dtype(dtype){ }
+    :_buff((void *)buff), _size(size), _dtype(dtype) { }
+
 Datapacket::Datapacket( const void *buff, int size, const string &dtype )
     :_buff((void *)buff), _size(size), _dtype(NULL)
 {
@@ -13,6 +14,7 @@ Datapacket::Datapacket( const void *buff, int size, const string &dtype )
             "  ... cannot find datatype ", dtype, '\n');
     _dtype = *it->second;
 }
+
 Datapacket & Datapacket::operator=(const Datapacket &p) noexcept{
     if( this != &p ){
         _buff = p._buff;
@@ -21,6 +23,7 @@ Datapacket & Datapacket::operator=(const Datapacket &p) noexcept{
     }
     return *this;
 }
+
 Datapacket & Datapacket::operator=(Datapacket &&p) noexcept{
     if( this != &p ){
         _buff = p._buff;

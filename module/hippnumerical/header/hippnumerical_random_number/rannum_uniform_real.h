@@ -185,7 +185,7 @@ _HIPP_TEMPHD
 auto _HIPP_TEMPARG seed(seed_t seed) 
 -> UniformRealRandomNumber & 
 {
-    _engine.seed(seed);
+    _engine->seed(seed);
     return *this;
 }
 

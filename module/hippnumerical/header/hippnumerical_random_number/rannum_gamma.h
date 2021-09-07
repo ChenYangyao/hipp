@@ -190,7 +190,7 @@ _HIPP_TEMPRET reset_engine(engine_t *engine)
 _HIPP_TEMPRET seed(seed_t seed)
 -> GammaRandomNumber &
 {
-    _engine.seed(seed);
+    _engine->seed(seed);
     return *this;
 }
 

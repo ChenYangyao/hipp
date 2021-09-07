@@ -191,7 +191,7 @@ _HIPP_TEMPHD
 auto _HIPP_TEMPARG seed(seed_t seed)
 -> GaussianRandomNumber & 
 {
-    _engine.seed(seed);
+    _engine->seed(seed);
     return *this;
 }
 

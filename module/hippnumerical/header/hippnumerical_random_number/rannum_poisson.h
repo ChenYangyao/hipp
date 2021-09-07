@@ -178,7 +178,7 @@ reset_engine(engine_t *engine) -> PoissonRandomNumber & {
 
 _HIPP_TEMPRET 
 seed(seed_t seed) -> PoissonRandomNumber & {
-    _engine.seed(seed);
+    _engine->seed(seed);
     return *this;    
 }
 

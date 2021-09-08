@@ -29,8 +29,7 @@ RawArrayHelper
             strides<int [2][3][4]>();   // => std::array {12, 4, 1}
 
     .. function:: \
-        template<typename ArrayT> \
-        static constexpr size_t size()
+        template<typename ArrayT> static constexpr size_t size()
 
         Determine the size, i.e., total number of elements in the raw array. 
         For example::
@@ -38,8 +37,9 @@ RawArrayHelper
             size<int [3][4]>();         // => 12
     
     .. function:: \
+        template<typename ArrayT> static ArrayT & get_elem(ArrayT &a)
         template<typename ArrayT, typename ...SizeTs> \
-        std::remove_all_extents_t<ArrayT> & get_elem(ArrayT &a, size_t id1, SizeTs &&...ids)
+        static std::remove_all_extents_t<ArrayT> & get_elem(ArrayT &a, size_t id1, SizeTs &&...ids)
 
         Get an element from a raw array typed object. For scalar, return the reference
         to itself. For example::

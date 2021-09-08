@@ -62,14 +62,14 @@ public:
 
     /**
     Get an element from a raw array typed object.
-    e.g., int[3][4] &a, 0, 1 => a[0][1].
+    e.g., int (&a)[3][4], 0, 1 => a[0][1].
         int &a => a.
     */
     template<typename ArrayT>
-    ArrayT & get_elem(ArrayT &a) { return a; }
+    static ArrayT & get_elem(ArrayT &a) { return a; }
 
     template<typename ArrayT, typename ...SizeTs>
-    std::remove_all_extents_t<ArrayT> & get_elem(ArrayT &a, size_t id1, SizeTs &&...ids) {
+    static std::remove_all_extents_t<ArrayT> & get_elem(ArrayT &a, size_t id1, SizeTs &&...ids) {
         return get_elem(a[id1], std::forward<SizeTs>(ids)...);
     }
 

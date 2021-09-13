@@ -1,110 +1,169 @@
-Basic Point-to-point and Collective Communication
-===============================================================
+Get-started with MPI
+=======================
 
 .. include:: /global.rst
+
+.. _tutor-mpi-env:
+
+The MPI Environment
+---------------------
+
+HIPP provides the set of MPI interface which corresponds to the MPI standard. User familiar 
+with the Standard MPI interface would find easy to get started with HIPP's OOP interface.
+
+In this tutorial, we assume a inclusion of the header file and declarations of 
+namespaces as following::
+
+    #include <hippmpi.h>
+
+    using namespace HIPP;
+    using namespace HIPP::MPI;
+    using namespace std;
+
+which import all the HIPP MPI definitions and expose them to the current namespace.
+
+To start the MPI environment, define a named :class:`~HIPP::MPI::Env` object at the 
+beginning of the ``main()`` function. The global "world" communicator typed :class:`~HIPP::MPI::Comm` 
+can be access from :func:`~HIPP::MPI::Env::world` method of the environment object::
+
+    int main(int argc, char const *argv[]) {
+        Env env;
+        Comm comm = env.world();
+
+        // The remaining codes ....
+
+        return 0;
+    }
+
+The host name can be obtained by :func:`~HIPP::MPI::Env::processor_name` method 
+of the environment object. The number of processes and the rank of the current 
+process can be obtained from the communicator::
+
+    string name = env.processor_name();
+    int rank = comm.rank(), n_procs = comm.size();
+
+    pout << "Host name ", name, '\n',
+        "Rank ", rank, ", no. of processes ", n_procs, endl;
+
+To compile the program, link with the HIPP MPI library and CNTL library. The MPI 
+program can be run by ``mpirun`` or ``mpiexec``, depending on the implementation you used:
+
+.. code-block:: bash
+
+    mpicxx  -std=c++17 -O3 -Wall -o get-started.out get-started.cpp -lhippmpi -lhippcntl
+    mpirun -n 4 ./get-started.out
+
+Output:
+
+.. code-block:: text
+
+    Host name local-HP
+    Rank 2, no. of processes 4
+    Host name local-HP
+    Rank 0, no. of processes 4
+    Host name local-HP
+    Rank 3, no. of processes 4
+    Host name local-HP
+    Rank 1, no. of processes 4
+
+More details can be found in the :ref:`API-Ref <api-mpi-usage>`.
+
+HIPP's objects are printable so that we can quickly get some knownledge 
+about them, particularly useful for loggin and debug. For example::
+
+    if(rank == 0) pout << comm;
+
+Output:
+
+.. code-block:: text
+
+  HIPP::MPI::Comm instance [loc=0x7ffce560d790, size=16, align=8]
+  ----------
+    Process group
+      rank/size:        0/4
+    Topology: undefined
+
+.. _tutor-mpi-p2p:
 
 Point-to-point Communication
 --------------------------------------------------------------
 
-We demonstrate how to use HIPP's MPI module to perform basic point-to-point communication
-among processes in the below. Here we use the :func:`send() <HIPP::MPI::Comm::send>` and 
-:func:`recv() <HIPP::MPI::Comm::recv>` methods of the :class:`Comm <HIPP::MPI::Comm>` class,
-which are counterparts of the **Standard** MPI calls ``MPI_Send()`` and ``MPI_Recv()``.
+To send a message from one process to another, call :func:`~HIPP::MPI::Comm::send` and 
+:func:`~HIPP::MPI::Comm::recv` on the communicator in the sender and receiver, respectively.
 
-:download:`mpi/basic-p2p.cpp </../example/tutorial/mpi/basic-p2p.cpp>`
+For example, int the following we send 5 double-precision floating-point values from 
+process 0 to 1::
 
-.. include:: /../example/tutorial/mpi/basic-p2p.cpp 
-    :code: cpp
+    double outbuf[5] = {}, inbuf[5];
+    int tag = 0;
+    if( rank == 0 ) {
+        comm.send(1, tag, outbuf);
+    }else if( rank == 1 ) {
+        comm.recv(0, tag, inbuf);
+        pout << "Got {", pout(inbuf, inbuf+5), "}", endl;
+    }
 
-To use any definition in HIPP MPI, include the header ``<hippmpi.h>`` and initialize the MPI environment 
-by defining a :class:`Env <HIPP::MPI::Env>` instance. The detailed conventions and compiling options can be
-found in the :ref:`API Reference <api-mpi-usage>`.
+Here the ``tag`` is for message matching if there are multiple communications between 
+a pair of processes. The output from process 1 is 
 
-The :func:`rank() <HIPP::MPI::Comm::rank>` method of the communicator tells the rank of the current process 
-in the groups of processes in the communicator (``[2]`` in the example). We use this rank determine the identity
-of each process (here, we will send a message from process 0 to process 1).
-Similarily, the :func:`size() <HIPP::MPI::Comm::size>` method tells the total number of processes.
+.. code-block:: text
 
-To send a message (a vector containing 10 double-precision values in the example), we need to specify two things:
+    Got {0,0,0,0,0}
 
-(1) The message envelop (target process ``rank``, and the ``tag`` to match).
-(2) The message buffer. In HIPP, you can directly use a single ``std::vector`` of numeric elements as the buffer. We will discuss
-    other ways of specifying buffer in the below.
+Note that the receiver's buffer must be sufficiently large to hold the message.
+To find the actual number of items received, use :func:`HIPP::MPI::Status::count`
+on the returned status object from ``recv``::
 
-Therefore, a call of ``comm.send(dest, tag, sendbuf)`` (``[3]`` in the example) sends the buffer ``sendbuf`` 
-to the process ranked ``dest`` with a ``tag``, in the context of the communicator.
+    auto status = comm.recv(0, tag, inbuf);
+    pout << "Got ", status.count(DOUBLE), " items", endl;
 
-The message-receiving call ``comm.recv(src, tag, recv_buff)`` (``[4]`` in the example) does things inversely, 
-i.e., receive a message 
-from process ranked ``src`` with a matched ``tag``, and put the message into the buffer ``recv_buff``. It is 
-required that the size of ``recv_buff`` is larger than the message. To tell the actual number of elements 
-received, you use the :func:`count() <HIPP::MPI::Status::count>` method of the return status of the receiving call.
-In the example, although the receiving buffer size is 20, only 10 elements are put into the beginning of it.
-
-The output is 
-
-.. code-block:: text 
-
-    Received 10 values: 0,0,0,0,0,0,0,0,0,0
-
-Note that HIPP's objects are printable. For example, a call of ``cout << comm`` prints out the basic 
-information of the communicator, which might be useful for debugging.
-
-.. code-block:: text 
-
-    HIPP::MPI::Comm instance [loc=0x7ffed841c690, size=16, align=8]
-    ----------
-    Process group
-        rank/size:        1/4
-    Topology: undefined
-
+.. _tutor-mpi-buff-spec:
 
 The Communication Buffer
 """"""""""""""""""""""""""
 
-In the above example of point-to-pointcommunication, 
-we use a ``std::vector`` of numeric type as the communication buffer. 
-Thanks to the meta-programming support of C++, we can pass different combinations of arguments
-to the same send/recv function call. 
-Depending on the types of the arguments, the function call gives different semantics.
+The design strategy of HIPP is to provide both the most general interface 
+and the interfaces specific to special tasks. 
+In terms of the communication calls,
+you may use the Standard MPI style to specify the buffer, i.e., use the 
+``{address, count, datatype}`` triplet::
 
-HIPP supports many forms of arguments passed to send/recv calls. See API reference for 
-:class:`HIPP::MPI::Datapacket` for the details.
+    double outbuf[5] = {};
+    comm.send(1, tag, outbuf, 5, DOUBLE);
 
-.. _tutor-mpi-buff-spec:
+Or, equivalently, use the name string for any numerical type::
 
-Therefore, the following calls for send (or recv) are valid and equivalent when using a ``std::vector`` as the buffer::
+    comm.send(1, tag, outbuf, 5, "double");
 
-    vector<int> send_buff(10), recv_buff(10);
+Or, omit the datatype and let the library infer it from the pointer type passed::
 
-    comm.send(dest, tag, send_buff);
-    comm.send(dest, tag, &send_buff[0], 10, HIPP::MPI::INT);
-    comm.send(dest, tag, &send_buff[0], 10, "int");
+    comm.send(1, tag, outbuf, 5);
 
-    comm.recv(src, tag, recv_buff);
-    comm.recv(src, tag, &recv_buff[0], 10, HIPP::MPI::INT);
-    comm.recv(src, tag, &recv_buff[0], 10, "int");
+Note that the last one is preferred since you will have no chance of mistake.
 
-Note that using the triple ``(buffer, size, datatype)`` is the most universal way in MPI to specify a data buffer.
-But in HIPP, you have different ways to implement the same functional, much more convenient in some cases.
-Internally, HIPP converts all these forms into an unifield :class:`HIPP::MPI::Datapacket` type which hosts the standard triplet
-Then, data described by the data packet are used in send/recv.
+For a single numerical variable, raw-array, ``std::string`` and ``std::vector``, 
+you may even drop the count since they are self-contained::
+    
+    double x; 
+    short a[5];
+    string s = "hello"; 
+    vector<int> v(5);
 
-Strings, arithmetic scalars and arrays of arithmetic scalars can be directly used as arguments::
+    comm.send(1, tag, x);
+    comm.send(1, tag, a);
+    comm.send(1, tag, s);
+    comm.send(1, tag, v);
 
-    string send_str = "content to send";
-    vector<char> recv_str(128);
+Note that HIPP does not resize the containers, so the count is inferred from 
+their ``size()``.
 
-    comm.send(dest, tag, send_str);
-    comm.recv(src, tag, recv_str);
+The full list of supported buffer specification is documented in the API-Ref 
+of :class:`~HIPP::MPI::Datapacket`. The actual implementation is to first 
+construct a unified Datapacket object from any of these calls, and then pass it
+to the underlying MPI calls. For ``recv()``, the only limitation is that 
+the object or buffer passed must be writable (hence, ``std::string`` 
+cannot be used) and sufficiently large.
 
-    int x,
-        arr[3],
-        *buff = new int [3];
-
-    comm.send(dest, tag, x);
-    comm.send(dest, tag, arr);
-    comm.send(dest, tag, buff, 3);
 
 Collective Communication
 --------------------------

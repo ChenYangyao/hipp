@@ -116,8 +116,8 @@ Contributors
 
    usage/tutorial/cntl/index
    usage/tutorial/numerical/index
-   usage/tutorial/simd/index
    usage/tutorial/mpi/index
+   usage/tutorial/simd/index
    usage/tutorial/io/index
 
 .. toctree::

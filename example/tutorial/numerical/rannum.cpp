@@ -39,8 +39,7 @@ void from_distribution() {
         rng.a(), ", ", rng.b(), '\n';
     
     
-    rng.engine()->seed(10086);
-    rng.reset_state();
+    rng.seed(10086).reset_state();
     pout << "New sequence of random numbers after reseed {", rng(5), "}\n";
 
     pout << "Temporary U(0, 200) variable ", rng.get(0., 200.), '\n';

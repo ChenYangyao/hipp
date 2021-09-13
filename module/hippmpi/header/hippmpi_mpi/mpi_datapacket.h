@@ -19,7 +19,7 @@ class Pack;
 class ExternalPack;
 
 /**
-A datapacked is defined, in the high-level interface, as a pack of the 
+A datapacket is defined, in the high-level interface, as a pack of the 
 standard MPI data buffer specification, i.e.,
          <buff_addr, buff_size, datatype>.
 Datapacket gives the communications calls flexibility in that multiple types

@@ -167,13 +167,14 @@ Output:
     Minimal and maximal possible values = 0,  100
     Parameters (a and b for the distribution) = 0, 100
 
-To reseed the distribution instance, call ``engine()`` to get a pointer 
-to the random engine and reseed it. Distribution class may remember 
-some intermediate values which depend on the former sequence of output, 
-call ``reset_state()`` to let it forget its memory::
+To reseed the distribution instance, call ``seed()`` and pass a new seed to 
+it. 
+Because a distribution class may remember some intermediate values which depend 
+on the former sequence of output, 
+call ``reset_state()`` to let it forget its memory. These setters return 
+reference to the caller instance itself so that they can be chained to use::
 
-    rng.engine()->seed(10086);
-    rng.reset_state();
+    rng.seed(10086).reset_state();
     pout << "New sequence of random numbers after reseed {", rng(5), "}\n";
 
 Possible output:

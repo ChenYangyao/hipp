@@ -73,6 +73,11 @@ template<typename ValueT, size_t ...Ds>
 class RawArrayTraits< HIPP::NUMERICAL::SArray<ValueT, Ds...> > 
 : public RawArrayTraits< RawArrayHelper::extents_to_array_t<ValueT, Ds...> > {};
 
+template<typename ValueT, size_t ...Ds> 
+class RawArrayTraits< const HIPP::NUMERICAL::SArray<ValueT, Ds...> > 
+: public RawArrayTraits< 
+    RawArrayHelper::extents_to_array_t<std::add_const_t<ValueT>, Ds...> > {};
+
 } // namespace HIPP
 
 

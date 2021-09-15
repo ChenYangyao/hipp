@@ -109,6 +109,9 @@ public:
     template<typename T, size_t N>
     struct is_std_array< std::array<T, N> > : std::true_type {};
 
+    template<typename T, size_t N>
+    struct is_std_array< const std::array<T, N> > : std::true_type {};
+
     template<typename T>
     inline static constexpr bool is_std_array_v = is_std_array<T>::value;
 
@@ -129,7 +132,23 @@ public:
 
     template<typename T, size_t N>
     struct std_array_to_raw<
+        const std::array<T, N>, 
+        std::enable_if_t<!is_std_array_v<T> > 
+    > {
+        typedef std::add_const_t<T> type[N];
+    };
+
+    template<typename T, size_t N>
+    struct std_array_to_raw<
         std::array<T, N>, 
+        std::enable_if_t<is_std_array_v<T> > > 
+    {
+        typedef typename std_array_to_raw<T>::type type[N];
+    };
+
+    template<typename T, size_t N>
+    struct std_array_to_raw<
+        const std::array<T, N>, 
         std::enable_if_t<is_std_array_v<T> > > 
     {
         typedef typename std_array_to_raw<T>::type type[N];
@@ -219,6 +238,12 @@ template<typename T, size_t N>
 class RawArrayTraits< std::array<T, N> > 
 : public RawArrayTraits<
     RawArrayHelper::std_array_to_raw_t< std::array<T, N> > 
+> {};
+
+template<typename T, size_t N>
+class RawArrayTraits< const std::array<T, N> > 
+: public RawArrayTraits<
+    RawArrayHelper::std_array_to_raw_t< const std::array<T, N> > 
 > {};
 
 } // namespace HIPP

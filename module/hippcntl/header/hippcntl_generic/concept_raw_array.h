@@ -190,7 +190,6 @@ i.e., type of the array element, is also const. e.g.,
 RawArrayTraits<const int [3][4]>::value_t             // => const int
 RawArrayTraits<std::array<const int, 3> >::value_t    // => const int
 RawArrayTraits<const std::array<int, 3> >::value_t    // => const int
-
 RawArrayTraits<const std::array<int, 3> >::array_t    // => const int [3]
 */
 template<typename T, typename V=void> 

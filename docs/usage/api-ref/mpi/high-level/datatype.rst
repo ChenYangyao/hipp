@@ -7,7 +7,7 @@ The following classes are all defined within namespace ``HIPP::MPI``.
 
 .. namespace:: HIPP::MPI
 
-Class Datatype: the Type of Data Element
+Datatype and Datapacket
 ------------------------------------------
 
 .. class:: Datatype 
@@ -210,19 +210,25 @@ Predefined Datatypes
     Predefined datatypes for reduction operations (such as :var:`MINLOC` and :var:`MAXLOC`). 
 
 
-Class Datapacket: the Data Buffer Descriptor
+Datapacket
 """""""""""""""""""""""""""""""""""""""""""""""
 
 .. class::  Datapacket 
 
-    A ``Datapacket`` instance describes a data/message buffer in the communication (i.e., data packet).
-    As in the **Standard** MPI interface, a data buffer is described by a 
-    triplet ``(addr, size, datatype)``.  ``Datapacket`` encapsulates these three 
-    into a single object to make the communication calls more elegant.
+    A datapacket is defined, in the high-level interface, as a pack of the 
+    standard MPI data buffer specification, i.e., 
+    ``{buff_addr, buff_size, datatype}``.
+    
+    Datapacket gives the communications calls flexibility in that multiple types
+    of objects can be directly passed in as buffer.
 
-    HIPP provides a variety of ways to specify a data packet, including using the Standard MPI 
-    triplet, using a scalar variable, or using an array-like variable. See the constructors 
-    below for the details.
+    The Datapacket type has tuple-like API for structured binding, e.g.::
+
+        std::vector<int> v {1,2,3};
+        auto [buff, size, datatype] = Datapacket(v);
+    
+    Here, buff, size, datatype are reference type to ``void *``, ``int`` and ``Datatype``, 
+    respectively.
 
     **Memory management methods:**
     
@@ -300,53 +306,77 @@ Class Datapacket: the Data Buffer Descriptor
         The ``Datapacket`` type can represent such triplets, too. Internally, the
         displacement is stored by casting into a ``void *``.
 
-    **Examples:**
+Tuple-like API are defined for ``Datapacket``:
 
-    In the point-to-point communication, the send/recv call needs data buffer as argument.
-    Traditionally, MPI uses triplet ``(addr, size, datatype)`` to describe the data buffer.
-    In HIPP, the following send (or recv) calls are valid and equivalent for ``std::vector``::
+.. function:: \
+    template<std::size_t I> decltype(auto) get( Datapacket &dp )
+    template<std::size_t I> decltype(auto) get( const Datapacket &dp )
+    template<std::size_t I> decltype(auto) get( Datapacket &&dp )
 
-        vector<int> send_buff(10), recv_buff(10);
+.. class:: template<> std::tuple_size<Datapacket>
+    
+    .. member:: static constexpr std::size_t value = 3
 
-        comm.send(dest, tag, send_buff);
-        comm.send(dest, tag, &send_buff[0], 10, HIPP::MPI::INT);
-        comm.send(dest, tag, &send_buff[0], 10, "int");
+.. class:: template<> tuple_element<0, Datapacket>
 
-        comm.recv(src, tag, recv_buff);
-        comm.recv(src, tag, &recv_buff[0], 10, HIPP::MPI::INT);
-        comm.recv(src, tag, &recv_buff[0], 10, "int");
+    .. type:: type = void *
 
-    Note that in a send (or recv) call, HIPP uses the arguments after ``src`` (or ``dest``) and ``tag`` to construct a 
-    ``Datapacket`` instance, and uses members in this data packet as the buffer arguments
-    to the underlying MPI library.
+.. class:: template<> tuple_element<1, HIPP::MPI::Datapacket>
+    
+    .. type:: type = int
 
-    ``std::string`` can be used as a sending buffer, but not a receiving buffer. You must provide a buffer by 
-    yourself in the receiving call, like using a ``std::vector``::
+.. class:: template<> tuple_element<2, HIPP::MPI::Datapacket>
 
-        string send_str = "content to send";
-        vector<char> recv_str(128);
-
-        comm.send(dest, tag, send_str);
-        comm.recv(src, tag, recv_str);
-
-    Arithematic scalars and raw arrays (or raw buffers) of them can be easily send/recv, like::
-
-        int x,
-            arr[3],
-            *buff = new int [3];
-
-        comm.send(dest, tag, x);
-        comm.send(dest, tag, arr);
-        comm.send(dest, tag, buff, 3);
-
-        // Or equivalently, using the standard triplet as buffer descriptor
-        comm.send(dest, tag, &x, 1, HIPP::MPI::INT);
-        comm.send(dest, tag, arr, 3, HIPP::MPI::INT);
-        comm.send(dest, tag, buff, 3, HIPP::MPI::INT);
+    .. type:: type = Datatype
 
 
+**Examples:**
 
-Class Pack and ExternalPack
+In the point-to-point communication, the send/recv call needs data buffer as argument.
+Traditionally, MPI uses triplet ``{addr, size, datatype}`` to describe the data buffer.
+In HIPP, the following send (or recv) calls are valid and equivalent for ``std::vector``::
+
+    vector<int> send_buff(10), recv_buff(10);
+
+    comm.send(dest, tag, send_buff);
+    comm.send(dest, tag, &send_buff[0], 10, INT);
+    comm.send(dest, tag, &send_buff[0], 10, "int");
+
+    comm.recv(src, tag, recv_buff);
+    comm.recv(src, tag, &recv_buff[0], 10, INT);
+    comm.recv(src, tag, &recv_buff[0], 10, "int");
+
+Note that in a send (or recv) call, HIPP uses the arguments after ``src`` (or ``dest``) and ``tag`` to construct a 
+``Datapacket`` instance, and uses members in this data packet as the buffer arguments
+to the underlying MPI library.
+
+``std::string`` can be used as a sending buffer, but not a receiving buffer. You must provide a buffer by 
+yourself in the receiving call, like using a ``std::vector``::
+
+    string send_str = "content to send";
+    vector<char> recv_str(128);
+
+    comm.send(dest, tag, send_str);
+    comm.recv(src, tag, recv_str);
+
+Arithematic scalars and raw arrays (or raw buffers) of them can be easily send/recv, like::
+
+    int x,
+        arr[3],
+        *buff = new int [3];
+
+    comm.send(dest, tag, x);
+    comm.send(dest, tag, arr);
+    comm.send(dest, tag, buff, 3);
+
+    // Or equivalently, using the standard triplet as buffer descriptor
+    comm.send(dest, tag, &x, 1, HIPP::MPI::INT);
+    comm.send(dest, tag, arr, 3, HIPP::MPI::INT);
+    comm.send(dest, tag, buff, 3, HIPP::MPI::INT);
+
+
+
+Pack and ExternalPack
 ---------------------------------
 
 .. class:: Pack 
@@ -537,7 +567,7 @@ Class Pack and ExternalPack
         Methods mapped to the standard MPI calls.
 
 
-Class Op: the Operation
+Op
 ---------------------------
 
 .. class::  Op

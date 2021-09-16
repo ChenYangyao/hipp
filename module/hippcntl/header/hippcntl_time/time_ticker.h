@@ -87,6 +87,20 @@ public:
     void tick(int add_entry=1);
     void tick(const string &s);
 
+    /**
+    Return the time elapsed in seconds since the last update of the internal 
+    clock. 
+    @update: if true, update the internal clock.
+    */
+    double duration(int update=1);
+
+    /**
+    last_time_point() : get the last-updated time point of the internal clock.
+    now() : get the time point of now.
+    */
+    const point_t & last_time_point() const;
+    static point_t now();
+
     /** 
     Visit the recorded event.
     
@@ -123,16 +137,37 @@ public:
 protected:
     vector<record_t> _records;
     point_t _last_point;
+
+    /**
+    Get duration t2-t1 represented by ``dur_t``.
+    */
+    static dur_t _get_duration(const point_t &t1, const point_t &t2);
 };
 
-inline ostream & operator<<(ostream &os, const Ticker &ticker) 
-{ return ticker.info(os); }
+inline ostream & operator<<(ostream &os, const Ticker &ticker) { 
+    return ticker.info(os); 
+}
 
-inline ostream & operator<<(ostream &os, const Ticker::record_t &r) 
-{ return r.info(os); }
+inline ostream & operator<<(ostream &os, const Ticker::record_t &r) { 
+    return r.info(os); 
+}
 
-inline ostream & operator<<(ostream &os, const Ticker::summary_t &s) 
-{ return s.info(os); }
+inline ostream & operator<<(ostream &os, const Ticker::summary_t &s) { 
+    return s.info(os); 
+}
+
+inline auto Ticker::last_time_point() const -> const point_t & {
+    return _last_point;
+}
+
+inline auto Ticker::now() -> point_t {
+    return clock_t::now();
+}
+
+inline auto Ticker::_get_duration(const point_t &t1, const point_t &t2) -> dur_t 
+{
+    return std::chrono::duration_cast<dur_t>(t2-t1);
+}
 
 } // namespace HIPP
 #endif	//_HIPPCNTL_TIME_TICKER_H_

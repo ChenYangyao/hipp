@@ -1,11 +1,15 @@
 Random Number Generators
 ==================================
 
+.. _api-numerical-rannum:
+
 .. include:: /global.rst
 
 The following variables, functions and classes are all defined within the namespace ``HIPP::NUMERICAL``.
 
 .. namespace:: HIPP::NUMERICAL
+
+.. _api-numerical-rannum-predefined-obj:
 
 Predefined Random Number Generators
 --------------------------------------
@@ -112,7 +116,31 @@ Detailed Definitions
 Random Number Engines 
 ----------------------
 
-.. type::   std::default_random_engine DefaultRandomEngine
+.. class:: RandomEngine 
+
+    Ensemble of random number engine types.
+
+    .. type:: minstd_rand0_t          = std::minstd_rand0
+            minstd_rand_t           = std::minstd_rand
+            mt19937_t               = std::mt19937
+            mt19937_64_t            = std::mt19937_64
+            ranlux24_base_t         = std::ranlux24_base
+            ranlux48_base_t         = std::ranlux48_base
+            ranlux24_t              = std::ranlux24
+            ranlux48_t              = std::ranlux48
+            knuth_b_t               = std::knuth_b
+            default_t               = std::default_random_engine
+
+        Predefined random number generator types.
+    
+    .. type:: device_t                = std::random_device
+
+        Non-deterministic random number generator types.
+
+
+.. type::   RandomEngine::default_t DefaultRandomEngine
+
+    The default engine type chosen by the implementation. Generally the best in most cases.
 
 .. var::    thread_local static DefaultRandomEngine global_random_engine
             static DefaultRandomEngine process_global_random_engine
@@ -126,8 +154,11 @@ Random Number Engines
     The process global one is shared among threads. It is not thread-safe
     and must be protected carefully.
 
+Uniform Distributions
+-------------------------
+
 Uniform Distributed Integer 
--------------------------------
+""""""""""""""""""""""""""""""
 
 .. class:: template<typename IntT = int, typename EngineT = DefaultRandomEngine> UniformIntRandomNumber
 
@@ -230,7 +261,7 @@ Uniform Distributed Integer
 
 
 Uniform Distributed Floating-point Number
------------------------------------------------- 
+"""""""""""""""""""""""""""""""""""""""""""
 
 .. class:: template<typename RealT = double, typename EngineT = DefaultRandomEngine> UniformRealRandomNumber
 
@@ -427,6 +458,553 @@ Gaussian Random Number
         template<template<typename> typename Container = std::vector> Container<result_t> operator()(std::size_t n)
         template<typename Container>  void operator()(Container &c, std::size_t n)
         template<typename InputIt>  void operator()(InputIt b, InputIt e)
+
+        Get a series of random numbers.
+
+        1. Get ``n`` numbers, returned a container (must have push back).
+        2. Directly pushing back into container ``c`` (``clear()`` is not called).
+        3. Write into a range specified by a pair of iterator.
+
+
+Poisson Distributions
+-------------------------
+
+Poisson Random Number
+""""""""""""""""""""""""""""""
+
+.. class:: template<typename IntT = int, typename EngineT = DefaultRandomEngine> PoissonRandomNumber
+
+    PoissonRandomNumber - generator of Poisson Distribution random number.
+    It produces non-negative integer value :math:`i`, distributed according to the 
+    probability function:
+
+    .. math::
+        
+        P(i | \mu) = \exp(-\mu) \mu^i / i !,
+
+    where :math:`mu` is the mean number.
+
+    .. type:: IntT result_t
+        EngineT engine_t
+        std::poisson_distribution<result_t> rng_t
+        typename rng_t::param_type param_t
+        typename engine_t::result_type seed_t
+
+    
+    .. function:: explicit PoissonRandomNumber(double mean = 1.0, engine_t *engine = &global_random_engine)
+        explicit PoissonRandomNumber(const param_t &param, engine_t *engine = &global_random_engine)
+        ~PoissonRandomNumber()
+
+        Constructors and destructor.
+
+        :arg mean: parameter of Poisson distribution. Instead a ``param_t`` can be passed.
+        :arg engine: an engine of random number. A pointer is passed, and its lifetime is controlled by the user.
+    
+    .. function:: \
+        PoissonRandomNumber(const PoissonRandomNumber &o)
+        PoissonRandomNumber(PoissonRandomNumber &&o)
+        PoissonRandomNumber & operator=(const PoissonRandomNumber &o)
+        PoissonRandomNumber & operator=(PoissonRandomNumber &&o)
+
+        The copy for parameter is deep, but engine is shared. 
+
+    .. function:: \
+        PoissonRandomNumber & reset_state()
+        PoissonRandomNumber & reset_param(double mean = 1.0)
+        PoissonRandomNumber & reset_param(const param_t &param)
+        PoissonRandomNumber & reset_engine(engine_t *engine)
+        PoissonRandomNumber & seed(seed_t seed = engine_t::default_seed)
+
+        Setters.
+    
+        ``reset_state()`` : reset the internal state so that the subsequent random 
+        numbers do not depend on the previous ones.
+        
+        ``reset_param()`` : reset the parameters.
+        
+        ``reset_engine()`` : reset the random number engine. Note that its life-time 
+        is controlled by the user.
+        
+        ``seed()`` : reseed the random engine.
+
+    .. function:: \
+        double mean() const
+        param_t param() const
+        result_t min() const
+        result_t max() const
+        std::pair<result_t, result_t> range() const
+        engine_t * engine() const
+        rng_t & rng()
+        const rng_t & rng() const
+
+        Geters.
+
+        ``mean()`` : the parameter of the distribution.
+        
+        ``param()`` : the packet of mean.
+        
+        ``min(),`` ``max()`` : minimum and maximum value that can be returned by the random
+        number generator.
+        
+        ``range()`` : the pair ``{min(), max()}``.
+        
+        ``engine()`` : the random engine. 
+        
+        ``rng()`` : the internal random number generator.
+
+    .. function:: \
+        result_t operator()()
+        result_t get(const param_t &param)
+        result_t get(double mean)
+
+        Get a single random number.
+    
+        1. using current parameters.
+        2. using new parameter ``param``.
+        3. using new parameter ``mean``.
+
+    .. function:: \
+        template<template<typename> typename Container = std::vector> Container<result_t> operator()(std::size_t n)
+        template<typename Container>  void operator()(Container &c, std::size_t n)
+        template<typename InputIt> void operator()(InputIt b, InputIt e)
+
+        Get a series of random numbers.
+    
+        1. Get ``n`` numbers, returned a container (must have push back).
+        2. Directly pushing back into container ``c`` (clear() is not called).
+        3. Write into a range specified by a pair of iterator.
+
+Exponential Random Number
+""""""""""""""""""""""""""""""
+
+.. class:: template<typename RealT = double, typename EngineT = DefaultRandomEngine> ExponentialRandomNumber
+
+    Non-negative floating-point value :math:`x`, distributed according to the exponential
+    probability density function:
+
+    .. math::
+
+        P(x | \lambda) = \lambda \exp(-\lambda x),
+    
+    This is the continuous counterpart of geometric distribution.
+
+    .. type:: RealT result_t
+        EngineT engine_t
+        std::exponential_distribution<result_t> rng_t
+        typename rng_t::param_type param_t
+        typename engine_t::result_type seed_t
+
+    .. function:: \
+        explicit ExponentialRandomNumber(result_t lambda = 1.0, engine_t *engine = &global_random_engine)
+        explicit ExponentialRandomNumber(const param_t &param, engine_t *engine = &global_random_engine)
+        ~ExponentialRandomNumber()
+
+        Constructors and destructor.
+
+        :arg lambda: parameter of exponential distribution. Instead a ``param_t`` can be passed.
+        :arg engine: an engine of random number. A pointer is passed, and its lifetime is controlled by the user.
+
+
+    .. function:: \
+        ExponentialRandomNumber(const ExponentialRandomNumber &o)
+        ExponentialRandomNumber(ExponentialRandomNumber &&o)
+        ExponentialRandomNumber & operator=(const ExponentialRandomNumber &o)
+        ExponentialRandomNumber & operator=(ExponentialRandomNumber &&o)
+
+        The copy for parameter is deep, but engine is shared. 
+
+    .. function:: \
+        ExponentialRandomNumber & reset_state()
+        ExponentialRandomNumber & reset_param(result_t lambda = 1.0)
+        ExponentialRandomNumber & reset_param(const param_t &param)
+        ExponentialRandomNumber & reset_engine(engine_t *engine)
+        ExponentialRandomNumber & seed(seed_t seed = engine_t::default_seed)
+
+        Setters.
+        
+        ``reset_state()`` : reset the internal state so that the subsequent random 
+        numbers do not depend on the previous ones.
+
+        ``reset_param()`` : reset the parameters.
+
+        ``reset_engine()`` : reset the random number engine. Note that its life-time 
+        is controlled by the user.
+
+        ``seed()`` : reseed the random engine.
+
+    .. function:: \
+        result_t lambda() const
+        param_t param() const
+        result_t min() const
+        result_t max() const
+        std::pair<result_t, result_t> range() const
+        engine_t * engine() const
+        rng_t & rng()
+        const rng_t & rng() const
+
+        Geters.
+
+        ``lambda()`` : the parameter of the distribution.
+
+        ``param()`` : the packet of ``lambda``.
+        
+        ``min()``, ``max()`` : minimum and maximum value that can be returned by the random
+        number generator.
+        
+        ``range()`` : the pair ``{min(), max()}``.
+        
+        ``engine()`` : the random engine. 
+        
+        ``rng()`` : the internal random number generator.
+
+
+    .. function:: \
+        result_t operator()()
+        result_t get(const param_t &param)
+        result_t get(result_t lambda)
+
+        Get a single random number.
+
+        1. using current parameters.
+        2. using new parameter ``param``.
+        3. using new parameter ``lambda``.
+
+    .. function:: \
+        template<template<typename> typename Container = std::vector> Container<result_t> operator()(std::size_t n)
+        template<typename Container> void operator()(Container &c, std::size_t n)
+        template<typename InputIt> void operator()(InputIt b, InputIt e)
+
+        Get a series of random numbers.
+
+        1. Get ``n`` numbers, returned a container (must have push back).
+        2. Directly pushing back into container ``c`` (``clear()`` is not called).
+        3. Write into a range specified by a pair of iterator.
+
+Gamma Random Number
+""""""""""""""""""""""""""""""
+
+.. class:: template<typename RealT = double, typename EngineT = DefaultRandomEngine> GammaRandomNumber 
+
+    Positive floating-point value :math:`x`, distributed according to the gamma
+    probability density function:
+
+    .. math::
+        
+        P(x | \alpha, \beta) = \exp(- \frac{x}{\beta} ) x^{\alpha-1} / (\beta^\alpha \Gamma(\alpha) ),
+
+    where :math:`\alpha` is shape parameter and :math:`\beta` the scale parameter.
+
+    .. type:: RealT result_t
+        EngineT engine_t
+        std::gamma_distribution<result_t> rng_t
+        typename rng_t::param_type param_t
+        typename engine_t::result_type seed_t
+
+    .. function:: \
+        explicit GammaRandomNumber(result_t alpha = 1.0, result_t beta = 1.0,engine_t *engine = &global_random_engine)
+        explicit GammaRandomNumber(const param_t &param, engine_t *engine = &global_random_engine)
+        ~GammaRandomNumber()
+
+        Constructors and destructor.
+
+        ``alpha``, ``beta`` : parameters of gamma distribution. Instead a ``param_t`` can
+        be passed.
+        
+        ``engine`` : an engine of random number. A pointer is passed, and its lifetime
+        is controlled by the user.
+
+    .. function:: \
+        GammaRandomNumber(const GammaRandomNumber &o)
+        GammaRandomNumber(GammaRandomNumber &&o)
+        GammaRandomNumber & operator=(const GammaRandomNumber &o)
+        GammaRandomNumber & operator=(GammaRandomNumber &&o)
+
+        The copy for parameter is deep, but engine is shared. 
+
+
+    .. function:: \
+        GammaRandomNumber & reset_state()
+        GammaRandomNumber & reset_param(result_t alpha = 1.0, result_t beta = 1.0)
+        GammaRandomNumber & reset_param(const param_t &param)
+        GammaRandomNumber & reset_engine(engine_t *engine)
+        GammaRandomNumber & seed(seed_t seed = engine_t::default_seed)
+
+        Setters.
+        
+        ``reset_state()`` : reset the internal state so that the subsequent random 
+        numbers do not depend on the previous ones.
+
+        ``reset_param()`` : reset the parameters.
+
+        ``reset_engine()`` : reset the random number engine. Note that its life-time 
+        is controlled by the user.
+
+        ``seed()`` : reseed the random engine.
+
+    
+    .. function:: \
+        result_t alpha() const
+        result_t beta() const
+        param_t param() const
+        result_t min() const
+        result_t max() const
+        std::pair<result_t, result_t> range() const
+        engine_t * engine() const
+        rng_t & rng()
+        const rng_t & rng() const
+
+        Geters.
+
+        ``alpha()``, ``beta()`` : the parameters of the distribution.
+        
+        ``param()`` : the packet of ``alpha`` and ``beta``.
+        
+        ``min()``, ``max()`` : minimum and maximum value that can be returned by the random
+        number generator.
+        
+        ``range()`` : the pair ``{min(), max()}``.
+        
+        ``engine()`` : the random engine. 
+        
+        ``rng()`` : the internal random number generator.
+
+ 
+    .. function:: \
+        result_t operator()()
+        result_t get(const param_t &param)
+        result_t get(result_t alpha, result_t beta)
+
+        Get a single random number.
+
+        1. using current parameters.
+        2. using new parameters ``param``.
+        3. using new parameters ``alpha`` and ``beta``.
+
+    .. function:: \
+        template<template<typename> typename Container = std::vector> Container<result_t> operator()(std::size_t n)
+        template<typename Container> void operator()(Container &c, std::size_t n)
+        template<typename InputIt> void operator()(InputIt b, InputIt e)
+
+        Get a series of random numbers.
+
+        1. Get ``n`` numbers, returned a container (must have push back).
+        2. Directly pushing back into container ``c`` (``clear()`` is not called).
+        3. Write into a range specified by a pair of iterator.
+
+Weibull Random Number
+""""""""""""""""""""""""""""""
+
+.. class:: template<typename RealT = double, typename EngineT = DefaultRandomEngine> WeibullRandomNumber
+
+
+    Floating-point value :math:`x`, distributed according to the Weibull
+    probability density function:
+
+    .. math::
+
+        p(x | a,b) = (\frac{a}{b}) (\frac{x}{b})^{a-1} \exp( -(\frac{x}{b})^a ),
+        
+    where :math:`a` is shape parameter and :math:`b` the scale parameter.
+
+    .. type:: RealT result_t
+        EngineT engine_t
+        std::weibull_distribution<result_t> rng_t
+        typename rng_t::param_type param_t
+        typename engine_t::result_type seed_t
+
+    .. function:: \
+        explicit WeibullRandomNumber(result_t a = 1.0, result_t b = 1.0,engine_t *engine = &global_random_engine)
+        explicit WeibullRandomNumber(const param_t &param, engine_t *engine = &global_random_engine)
+        ~WeibullRandomNumber()
+
+        Constructors and destructor.
+
+        ``a``, ``b`` : parameters of weibull distribution. Instead a ``param_t`` can
+        be passed.
+        
+        ``engine``: an engine of random number. A pointer is passed, and its lifetime
+        is controlled by the user.
+
+    .. function:: \
+        WeibullRandomNumber(const WeibullRandomNumber &o)
+        WeibullRandomNumber(WeibullRandomNumber &&o)
+        WeibullRandomNumber & operator=(const WeibullRandomNumber &o)
+        WeibullRandomNumber & operator=(WeibullRandomNumber &&o)
+
+        The copy for parameter is deep, but engine is shared. 
+
+
+    .. function:: \
+        WeibullRandomNumber & reset_state()
+        WeibullRandomNumber & reset_param(result_t a = 1.0, result_t b = 1.0)
+        WeibullRandomNumber & reset_param(const param_t &param)
+        WeibullRandomNumber & reset_engine(engine_t *engine)
+        WeibullRandomNumber & seed(seed_t seed = engine_t::default_seed)
+
+        Setters.
+        
+        ``reset_state()`` : reset the internal state so that the subsequent random 
+        numbers do not depend on the previous ones.
+
+        ``reset_param()`` : reset the parameters.
+
+        ``reset_engine()`` : reset the random number engine. Note that its life-time 
+        is controlled by the user.
+
+        ``seed()`` : reseed the random engine.
+
+    .. function:: \
+        result_t a() const
+        result_t b() const
+        param_t param() const
+        result_t min() const
+        result_t max() const
+        std::pair<result_t, result_t> range() const
+        engine_t * engine() const
+        rng_t & rng()
+        const rng_t & rng() const
+
+        Geters.
+
+        ``a()``, ``b()`` : the parameters of the distribution.
+        
+        ``param()`` : the packet of ``a`` and ``b``.
+        
+        ``min()``, ``max()`` : minimum and maximum value that can be returned by the random
+        number generator.
+        
+        ``range()`` : the pair ``{min(), max()}``.
+        
+        ``engine()`` : the random engine. 
+        
+        ``rng()`` : the internal random number generator.
+
+    .. function:: \
+        result_t operator()()
+        result_t get(const param_t &param)
+        result_t get(result_t a, result_t b)
+
+        Get a single random number.
+
+        1. using current parameters.
+        2. using new parameters ``param``.
+        3. using new parameters ``a`` and ``b``.
+        
+    .. function:: \
+        template<template<typename> typename Container = std::vector> Container<result_t> operator()(std::size_t n)
+        template<typename Container> void operator()(Container &c, std::size_t n)
+        template<typename InputIt> void operator()(InputIt b, InputIt e)
+
+        Get a series of random numbers.
+
+        1. Get ``n`` numbers, returned a container (must have push back).
+        2. Directly pushing back into container ``c`` (``clear()`` is not called).
+        3. Write into a range specified by a pair of iterator.
+
+Extreme Value Random Number
+""""""""""""""""""""""""""""""
+.. class:: template<typename RealT = double, typename EngineT = DefaultRandomEngine> ExtremeValueRandomNumber
+
+    Floating-point value :math:`x`, distributed according to the extreme value (also known
+    as Gumbel Type I, log weibull, Fisher-Tippett Type I) probability density 
+    function:
+
+    .. math::
+
+        p(x | a,b) = \frac{1}{b} \exp( ( \frac{a-x}{b} ) - \exp( \frac{a-x}{b} ) ),
+
+    where :math:`a` is shape parameter and :math:`b` the scale parameter.
+
+
+    .. type:: RealT result_t
+        EngineT engine_t
+        std::extreme_value_distribution<result_t> rng_t
+        typename rng_t::param_type param_t
+        typename engine_t::result_type seed_t
+
+    .. function:: \
+        explicit ExtremeValueRandomNumber(result_t a = 0.0, result_t b = 1.0,engine_t *engine = &global_random_engine)
+        explicit ExtremeValueRandomNumber(const param_t &param, engine_t *engine = &global_random_engine)
+        ~ExtremeValueRandomNumber()
+
+        Constructors and destructor.
+
+        ``a``, ``b``: parameters of extreme value distribution. Instead a ``param_t`` can
+        be passed.
+        
+        ``engine``: an engine of random number. A pointer is passed, and its lifetime
+        is controlled by the user.
+
+    .. function:: \
+        ExtremeValueRandomNumber(const ExtremeValueRandomNumber &o)
+        ExtremeValueRandomNumber(ExtremeValueRandomNumber &&o)
+        ExtremeValueRandomNumber & operator=(const ExtremeValueRandomNumber &o)
+        ExtremeValueRandomNumber & operator=(ExtremeValueRandomNumber &&o)
+
+        The copy for parameter is deep, but engine is shared. 
+
+    .. function:: \
+        ExtremeValueRandomNumber & reset_state()
+        ExtremeValueRandomNumber & reset_param(result_t a = 0.0, result_t b = 1.0)
+        ExtremeValueRandomNumber & reset_param(const param_t &param)
+        ExtremeValueRandomNumber & reset_engine(engine_t *engine)
+        ExtremeValueRandomNumber & seed(seed_t seed = engine_t::default_seed)
+
+        Setters.
+        
+        ``reset_state()`` : reset the internal state so that the subsequent random 
+        numbers do not depend on the previous ones.
+
+        ``reset_param()`` : reset the parameters.
+
+        ``reset_engine()`` : reset the random number engine. Note that its life-time 
+        is controlled by the user.
+
+        ``seed()`` : reseed the random engine.
+    
+    .. function:: \
+        result_t a() const
+        result_t b() const
+        param_t param() const
+        result_t min() const
+        result_t max() const
+        std::pair<result_t, result_t> range() const
+        engine_t * engine() const
+        rng_t & rng()
+        const rng_t & rng() const
+
+        Geters.
+
+        ``a()``, ``b()`` : the parameters of the distribution.
+        
+        ``param()`` : the packet of ``a`` and ``b``.
+        
+        ``min()``, ``max()`` : minimum and maximum value that can be returned by the random
+        number generator.
+        
+        ``range()`` : the pair ``{min(), max()}``.
+        
+        ``engine()`` : the random engine. 
+        
+        ``rng()`` : the internal random number generator.
+
+    
+    .. function:: \
+        result_t operator()()
+        result_t get(const param_t &param)
+        result_t get(result_t a, result_t b)
+
+        Get a single random number.
+
+        1. using current parameters.
+        2. using new parameters ``param``.
+        3. using new parameters ``a`` and ``b``.
+
+
+    .. function:: \
+        template<template<typename> typename Container = std::vector> Container<result_t> operator()(std::size_t n)
+        template<typename Container> void operator()(Container &c, std::size_t n)
+        template<typename InputIt> void operator()(InputIt b, InputIt e)
 
         Get a series of random numbers.
 

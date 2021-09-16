@@ -60,6 +60,20 @@ protected:
     }
 };
 
+TEST_F(SArrayIntTest, ElementAccess) {
+    arr_t a {
+        -3,-2,-1,
+        0,1,2, 
+        3,4,5,
+        6,7,8 };
+    a[0] = 100;
+    a(1,1,1) = 101;
+
+    auto a00 = a(0,0,0), a11 = a[10];
+    EXPECT_EQ(a00, 100);
+    EXPECT_EQ(a11, 101);
+}
+
 TEST_F(SArrayIntTest, Map) {
     arr_t a {
         -3,-2,-1,

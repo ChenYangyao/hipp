@@ -15,7 +15,7 @@ ostream & Ticker::summary_t::info(ostream &os, int fmt_cntl) const {
     return os;
 }
 
-Ticker::Ticker(): _last_point(clock_t::now())
+Ticker::Ticker(): _last_point(now())
 {}
 Ticker::~Ticker(){ }
 
@@ -32,6 +32,7 @@ Ticker & Ticker::operator=(const Ticker &o){
     _last_point = o._last_point;
     return *this;
 }
+
 Ticker & Ticker::operator=(Ticker &&o){
     _records = std::move(o._records);
     _last_point = std::move(o._last_point);
@@ -39,37 +40,51 @@ Ticker & Ticker::operator=(Ticker &&o){
 }
 
 void Ticker::tick(int add_entry) {
-    auto cur_point = clock_t::now();
+    auto cur_point = now();
     if( add_entry ){
-        _records.emplace_back( 
-            std::chrono::duration_cast<dur_t>(cur_point-_last_point), "" );    
+        _records.emplace_back( _get_duration(_last_point, cur_point), "" );    
     }
     _last_point = cur_point;
 }
+
 void Ticker::tick(const string &s) {
-    auto cur_point = clock_t::now();
-    _records.emplace_back(
-        std::chrono::duration_cast<dur_t>(cur_point-_last_point), s);
+    auto cur_point = now();
+    _records.emplace_back( _get_duration(_last_point, cur_point), s);
     _last_point = cur_point;
 }
+
+double Ticker::duration(int update) {
+    auto cur_point = now();
+    double dur = _get_duration(_last_point, cur_point).count();
+    if( update )
+        _last_point = cur_point;
+    return dur;
+}
+
 auto Ticker::query(index_t index) -> record_t & {
     return _records.at(index);
 }
+
 auto Ticker::query_last( ) -> record_t & {
     return _records.at(_records.size()-1);
 }
+
 auto Ticker::query_all() noexcept -> vector<record_t> & {
     return _records;
 }
+
 auto Ticker::query(index_t index) const -> const record_t & {
     return _records.at(index);
 }
+
 auto Ticker::query_last( ) const -> const record_t & {
     return _records.at(_records.size()-1);
 }
+
 auto Ticker::query_all() const noexcept -> const vector<record_t> & {
     return _records;
 }
+
 auto Ticker::summary() const noexcept -> summary_t {
     index_t n_recs = 0; 
     double dur_total = 0., dur_sq_total = 0.;

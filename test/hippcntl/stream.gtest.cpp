@@ -48,6 +48,21 @@ TEST_F(CntlStreamPStreamTest, TupleType){
     ASSERT_EQ(os.str(), "Tpl=1:2:3s, pr=4:5s, comp=0:1:2:3s:4:5s:6,7,8\n");
 }
 
+struct A {
+    friend ostream & operator<<(ostream &os, const A &a) {
+        return os << "A instance";
+    }
+};    
+TEST_F(CntlStreamPStreamTest, AnyType) {
+    ps << "A: ", A(), '\n';
+    struct B {};
+    B b;
+    ps << "B: ", b, '\n';
+    string expected_s = str("A: A instance\n", 
+        "B: <", typeid(b).name()," instance at ", (void *)&b, ">\n");
+    ASSERT_EQ(os.str(), expected_s);
+}
+
 /* PLogStream */
 class CntlStreamPLogStreamTest: public ::testing::Test {
 protected:

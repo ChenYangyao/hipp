@@ -29,24 +29,31 @@ DArrayBase
 DArray Class Template
 """"""""""""""""""""""
 
-.. class:: template<typename ValueT, size_t Rank> DArray : public DArrayBase 
+.. class:: template<typename ValueT, size_t Rank, typename Alloc=std::allocator<ValueT> > DArray : public DArrayBase 
 
     Dynamic Array with fixed compile-time rank (i.e., the number of dimensions).
     The extents of dimensions (i.e., the shape) is specified at run-time.
 
-    .. type:: ValueT value_t
-    
+    Template parameters:
+    - ``ValueT``: element type. Usually arithmetic scalar.
+    - ``Rank``: number of dimensions.
+    - ``Alloc``: allocator for memory.
+
     .. member:: static constexpr size_t RANK = Rank
     
-    .. type:: SVec<size_t, RANK> shape_t
+    .. type:: ValueT value_t
+        SVec<size_t, RANK> shape_t
+        Alloc alloc_t
 
         Basic aliases and properties.
         
-        ``value_t``: type of the array element.
-        
         ``RANK``: number of dimensions.
         
+        ``value_t``: type of the array element.        
+        
         ``shape_t``: extents of dimensions.
+
+        ``alloc_t``: type of the allocator.
 
     .. type::   value_t & ref_t
         const value_t & cref_t
@@ -205,7 +212,7 @@ DArray Class Template
 
     .. function:: \
         void reshape(const shape_t &new_shape)
-        template<size_t NewRank> DArray<ValueT, NewRank> reshaped(const SVec<size_t, NewRank> &new_shape) const
+        template<size_t NewRank, typename NewAlloc=alloc_t> DArray<ValueT, NewRank, NewAlloc> reshaped(const SVec<size_t, NewRank> &new_shape) const
         
         ``reshape()``: inplace change the shape to ``new_shape``. The number of elements
         (i.e., ``size()``) and the rank cannot be changed.
@@ -213,7 +220,26 @@ DArray Class Template
         ``reshaped()``: return a new reshaped darray ranked ``NewRank``. The number of 
         elements cannot be changed. The result of reshape to an empty darray is an empty one.
         
-    .. function:: template<typename T = value_t> vector<T> to_vector() const
+    .. function:: \
+        void resize(size_t new_size, const value_t &value = value_t {})
+        void resize(const shape_t &new_shape, const value_t &value = value_t {})
+
+        ``resize()``: change the size, i.e., the number of elements.
+        If a ``new_size`` is passed, the first dimension if extended so that the 
+        final size is equal to ``new_size``. ``new_size`` can be 0.
+        
+        - For empty DArray, the dimensions except the first is set to 1.
+        - If impossible to resize to ``new_size`` due to inconsistency of 
+          dimensions, an ErrLogic is thrown.
+        
+        If a ``new_shape`` is passed, the resulted DArray has this shape.
+        
+        The original elements are contiguously copied to the new buffer. If the 
+        new size is larger than the original, ``value`` is used to fill the tail
+        of the new buffer.
+        If new size is smaller, original data at the tail is truncated.
+
+    .. function:: template<typename T = value_t, typename NewAlloc=std::allocator<T> > vector<T, NewAlloc> to_vector() const
         
         Return a vector row-majorly filled with the DArray elements.
     
@@ -318,7 +344,7 @@ DArray Class Template
 
     .. function:: \
         template<typename UnaryOp> DArray & map(UnaryOp op)
-        template<typename UnaryOp, typename ResT = std::invoke_result_t<UnaryOp, value_t> > DArray<ResT, Rank> mapped(UnaryOp op) const
+        template<typename UnaryOp, typename ResT = std::invoke_result_t<UnaryOp, value_t>, typename NewAlloc = std::allocator<ResT> > DArray<ResT, Rank, NewAlloc> mapped(UnaryOp op) const
         template<typename BinaryOp> void visit(BinaryOp op) const
         template<typename BinaryOp> void visit(BinaryOp op)
 
@@ -329,9 +355,9 @@ DArray Class Template
         ``visit()`` : for each ``size_t i``, call ``op(i, self[i])``.
 
     .. function:: \
-        template<typename ResT = int_value_t> DArray<ResT, Rank> floor() const
-        template<typename ResT = int_value_t> DArray<ResT, Rank> ceil() const
-        template<typename ResT = int_value_t> DArray<ResT, Rank> trunc() const
+        template<typename ResT = int_value_t, typename NewAlloc = std::allocator<ResT> > DArray<ResT, Rank, NewAlloc> floor() const
+        template<typename ResT = int_value_t, typename NewAlloc = std::allocator<ResT> > DArray<ResT, Rank, NewAlloc> ceil() const
+        template<typename ResT = int_value_t, typename NewAlloc = std::allocator<ResT> > DArray<ResT, Rank, NewAlloc> trunc() const
         DArray abs() const
 
         Round to floor, ceil, trunc toward zero, and absolute value.
@@ -348,49 +374,49 @@ The following binary arithmetic and logic functions are defined for :class:`DArr
 For details, see, e.g., the description of the corresponding method :func:`DArray::operator+` .
 
 .. function:: \
-    template<typename ValueT, size_t Rank> DArray<ValueT, Rank> operator+( const ValueT &lhs, const DArray<ValueT, Rank> &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<ValueT, Rank> operator-( const ValueT &lhs, const DArray<ValueT, Rank> &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<ValueT, Rank> operator*( const ValueT &lhs, const DArray<ValueT, Rank> &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<ValueT, Rank> operator/( const ValueT &lhs, const DArray<ValueT, Rank> &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<ValueT, Rank> operator%( const ValueT &lhs, const DArray<ValueT, Rank> &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<ValueT, Rank> operator&( const ValueT &lhs, const DArray<ValueT, Rank> &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<ValueT, Rank> operator|( const ValueT &lhs, const DArray<ValueT, Rank> &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<ValueT, Rank> operator^( const ValueT &lhs, const DArray<ValueT, Rank> &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<bool, Rank> operator<( const ValueT &lhs, const DArray<ValueT, Rank> &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<bool, Rank> operator<=( const ValueT &lhs, const DArray<ValueT, Rank> &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<bool, Rank> operator>( const ValueT &lhs, const DArray<ValueT, Rank> &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<bool, Rank> operator>=( const ValueT &lhs, const DArray<ValueT, Rank> &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<bool, Rank> operator==( const ValueT &lhs, const DArray<ValueT, Rank> &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<bool, Rank> operator!=( const ValueT &lhs, const DArray<ValueT, Rank> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc> DArray<ValueT, Rank, Alloc> operator+( const ValueT &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc> DArray<ValueT, Rank, Alloc> operator-( const ValueT &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc> DArray<ValueT, Rank, Alloc> operator*( const ValueT &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc> DArray<ValueT, Rank, Alloc> operator/( const ValueT &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc> DArray<ValueT, Rank, Alloc> operator%( const ValueT &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc> DArray<ValueT, Rank, Alloc> operator&( const ValueT &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc> DArray<ValueT, Rank, Alloc> operator|( const ValueT &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc> DArray<ValueT, Rank, Alloc> operator^( const ValueT &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc, typename AllocB = std::allocator<bool> > DArray<bool, Rank, AllocB> operator<( const ValueT &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc, typename AllocB = std::allocator<bool> > DArray<bool, Rank, AllocB> operator<=( const ValueT &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc, typename AllocB = std::allocator<bool> > DArray<bool, Rank, AllocB> operator>( const ValueT &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc, typename AllocB = std::allocator<bool> > DArray<bool, Rank, AllocB> operator>=( const ValueT &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc, typename AllocB = std::allocator<bool> > DArray<bool, Rank, AllocB> operator==( const ValueT &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc, typename AllocB = std::allocator<bool> > DArray<bool, Rank, AllocB> operator!=( const ValueT &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
 
 .. function:: \
-    template<typename ValueT, size_t Rank> DArray<ValueT, Rank> operator+( const DArray<ValueT, Rank> &lhs, const ValueT &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<ValueT, Rank> operator-( const DArray<ValueT, Rank> &lhs, const ValueT &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<ValueT, Rank> operator*( const DArray<ValueT, Rank> &lhs, const ValueT &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<ValueT, Rank> operator/( const DArray<ValueT, Rank> &lhs, const ValueT &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<ValueT, Rank> operator%( const DArray<ValueT, Rank> &lhs, const ValueT &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<ValueT, Rank> operator&( const DArray<ValueT, Rank> &lhs, const ValueT &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<ValueT, Rank> operator|( const DArray<ValueT, Rank> &lhs, const ValueT &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<ValueT, Rank> operator^( const DArray<ValueT, Rank> &lhs, const ValueT &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<bool, Rank> operator<( const DArray<ValueT, Rank> &lhs, const ValueT &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<bool, Rank> operator<=( const DArray<ValueT, Rank> &lhs, const ValueT &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<bool, Rank> operator>( const DArray<ValueT, Rank> &lhs, const ValueT &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<bool, Rank> operator>=( const DArray<ValueT, Rank> &lhs, const ValueT &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<bool, Rank> operator==( const DArray<ValueT, Rank> &lhs, const ValueT &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<bool, Rank> operator!=( const DArray<ValueT, Rank> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc> DArray<ValueT, Rank, Alloc> operator+( const DArray<ValueT, Rank, Alloc> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc> DArray<ValueT, Rank, Alloc> operator-( const DArray<ValueT, Rank, Alloc> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc> DArray<ValueT, Rank, Alloc> operator*( const DArray<ValueT, Rank, Alloc> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc> DArray<ValueT, Rank, Alloc> operator/( const DArray<ValueT, Rank, Alloc> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc> DArray<ValueT, Rank, Alloc> operator%( const DArray<ValueT, Rank, Alloc> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc> DArray<ValueT, Rank, Alloc> operator&( const DArray<ValueT, Rank, Alloc> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc> DArray<ValueT, Rank, Alloc> operator|( const DArray<ValueT, Rank, Alloc> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc> DArray<ValueT, Rank, Alloc> operator^( const DArray<ValueT, Rank, Alloc> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc, typename AllocB = std::allocator<bool> > DArray<bool, Rank, AllocB> operator<( const DArray<ValueT, Rank, Alloc> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc, typename AllocB = std::allocator<bool> > DArray<bool, Rank, AllocB> operator<=( const DArray<ValueT, Rank, Alloc> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc, typename AllocB = std::allocator<bool> > DArray<bool, Rank, AllocB> operator>( const DArray<ValueT, Rank, Alloc> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc, typename AllocB = std::allocator<bool> > DArray<bool, Rank, AllocB> operator>=( const DArray<ValueT, Rank, Alloc> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc, typename AllocB = std::allocator<bool> > DArray<bool, Rank, AllocB> operator==( const DArray<ValueT, Rank, Alloc> &lhs, const ValueT &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc, typename AllocB = std::allocator<bool> > DArray<bool, Rank, AllocB> operator!=( const DArray<ValueT, Rank, Alloc> &lhs, const ValueT &rhs) noexcept
 
 .. function:: \
-    template<typename ValueT, size_t Rank> DArray<ValueT, Rank> operator+( const DArray<ValueT, Rank> &lhs, const DArray<ValueT, Rank> &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<ValueT, Rank> operator-( const DArray<ValueT, Rank> &lhs, const DArray<ValueT, Rank> &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<ValueT, Rank> operator*( const DArray<ValueT, Rank> &lhs, const DArray<ValueT, Rank> &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<ValueT, Rank> operator/( const DArray<ValueT, Rank> &lhs, const DArray<ValueT, Rank> &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<ValueT, Rank> operator%( const DArray<ValueT, Rank> &lhs, const DArray<ValueT, Rank> &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<ValueT, Rank> operator&( const DArray<ValueT, Rank> &lhs, const DArray<ValueT, Rank> &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<ValueT, Rank> operator|( const DArray<ValueT, Rank> &lhs, const DArray<ValueT, Rank> &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<ValueT, Rank> operator^( const DArray<ValueT, Rank> &lhs, const DArray<ValueT, Rank> &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<bool, Rank> operator<( const DArray<ValueT, Rank> &lhs, const DArray<ValueT, Rank> &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<bool, Rank> operator<=( const DArray<ValueT, Rank> &lhs, const DArray<ValueT, Rank> &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<bool, Rank> operator>( const DArray<ValueT, Rank> &lhs, const DArray<ValueT, Rank> &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<bool, Rank> operator>=( const DArray<ValueT, Rank> &lhs, const DArray<ValueT, Rank> &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<bool, Rank> operator==( const DArray<ValueT, Rank> &lhs, const DArray<ValueT, Rank> &rhs) noexcept
-    template<typename ValueT, size_t Rank> DArray<bool, Rank> operator!=( const DArray<ValueT, Rank> &lhs, const DArray<ValueT, Rank> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc> DArray<ValueT, Rank, Alloc> operator+( const DArray<ValueT, Rank, Alloc> &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc> DArray<ValueT, Rank, Alloc> operator-( const DArray<ValueT, Rank, Alloc> &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc> DArray<ValueT, Rank, Alloc> operator*( const DArray<ValueT, Rank, Alloc> &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc> DArray<ValueT, Rank, Alloc> operator/( const DArray<ValueT, Rank, Alloc> &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc> DArray<ValueT, Rank, Alloc> operator%( const DArray<ValueT, Rank, Alloc> &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc> DArray<ValueT, Rank, Alloc> operator&( const DArray<ValueT, Rank, Alloc> &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc> DArray<ValueT, Rank, Alloc> operator|( const DArray<ValueT, Rank, Alloc> &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc> DArray<ValueT, Rank, Alloc> operator^( const DArray<ValueT, Rank, Alloc> &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc, typename AllocB = std::allocator<bool> > DArray<bool, Rank, AllocB> operator<( const DArray<ValueT, Rank, Alloc> &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc, typename AllocB = std::allocator<bool> > DArray<bool, Rank, AllocB> operator<=( const DArray<ValueT, Rank, Alloc> &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc, typename AllocB = std::allocator<bool> > DArray<bool, Rank, AllocB> operator>( const DArray<ValueT, Rank, Alloc> &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc, typename AllocB = std::allocator<bool> > DArray<bool, Rank, AllocB> operator>=( const DArray<ValueT, Rank, Alloc> &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc, typename AllocB = std::allocator<bool> > DArray<bool, Rank, AllocB> operator==( const DArray<ValueT, Rank, Alloc> &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+    template<typename ValueT, size_t Rank, typename Alloc, typename AllocB = std::allocator<bool> > DArray<bool, Rank, AllocB> operator!=( const DArray<ValueT, Rank, Alloc> &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept

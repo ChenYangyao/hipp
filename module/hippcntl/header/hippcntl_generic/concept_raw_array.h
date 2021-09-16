@@ -100,8 +100,9 @@ public:
 
     /**
     Determine if T is a std::array.
-    e.g., std::array< std::array<int, 3>, 4 > => true.
-        int [3] => false;
+    e.g., 
+    std::array< std::array<int, 3>, 4 >             // => true.
+    int [3]                                         // => false.
     */
     template<typename T, typename _V = void>
     struct is_std_array : std::false_type {};
@@ -117,7 +118,14 @@ public:
 
     /**
     Find the raw array type corresponding to a std::array.
-    e.g., std::array< std::array<double, 4>, 3 > => double[3][4].
+    e.g., 
+    std::array< std::array<double, 4>, 3 >          // => double[3][4].
+
+    If std::array is const (in any nested depth), the raw array is also const.
+    e.g.,
+    std::array< std::array<const double, 4>, 3 >    // => const double[3][4].
+    std::array<const std::array<double, 4>, 3 >     // => const double[3][4].
+    const std::array<std::array<double, 4>, 3 >     // => const double[3][4].
     */
     template<typename T, typename _V=void>
     struct std_array_to_raw {};
@@ -151,7 +159,7 @@ public:
         const std::array<T, N>, 
         std::enable_if_t<is_std_array_v<T> > > 
     {
-        typedef typename std_array_to_raw<T>::type type[N];
+        typedef typename std_array_to_raw<std::add_const_t<T> >::type type[N];
     };
 
     template<typename T>
@@ -171,9 +179,19 @@ RawArrayTraits - gives features for a raw-array-like type.
 User may add specializations to this generic class.
 
 e.g.,
-RawArrayTraits<int [3][4]>::extents => std::array{3,4}.
+RawArrayTraits<int [3][4]>::extents 
+    // => std::array{3,4}.
 RawArrayTraits< std::array<std::array<double, 4>, 3> >::extents 
-    => std::array{3,4}.
+    // => std::array{3,4}.
+
+If an array has const value, or the array itself is const, the ``value_t``, 
+i.e., type of the array element, is also const. e.g.,
+
+RawArrayTraits<const int [3][4]>::value_t             // => const int
+RawArrayTraits<std::array<const int, 3> >::value_t    // => const int
+RawArrayTraits<const std::array<int, 3> >::value_t    // => const int
+
+RawArrayTraits<const std::array<int, 3> >::array_t    // => const int [3]
 */
 template<typename T, typename V=void> 
 class RawArrayTraits {
@@ -193,8 +211,9 @@ public:
     typedef std::remove_all_extents_t<array_t> value_t;
 
     /** 
-    ``is_array`` tells whether or not the template parameter is an raw-array-like type.
-    If true, ``rank``, ``size``, ``extents``, and ``strides`` gives its details.
+    ``is_array`` tells whether or not the template parameter is an 
+    raw-array-like type. If true, ``rank``, ``size``, ``extents``, and 
+    ``strides`` gives its details.
     */
     inline static constexpr bool is_array = true;
     inline static constexpr size_t 

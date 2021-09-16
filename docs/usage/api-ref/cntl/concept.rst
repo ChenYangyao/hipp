@@ -82,6 +82,12 @@ RawArrayHelper
 
             std_array_to_raw_t< std::array< std::array<double, 4>, 3 > >;    // => double [3][4]
 
+        If std::array is ``const`` (in any nested depth), the raw array is also const. For example::
+    
+            std::array< std::array<const double, 4>, 3 >    // => const double[3][4].
+            std::array<const std::array<double, 4>, 3 >     // => const double[3][4].
+            const std::array<std::array<double, 4>, 3 >     // => const double[3][4].
+
 
 RawArrayTraits 
 ---------------
@@ -93,6 +99,14 @@ For example::
 
     RawArrayTraits<int [3][4]>::extents;                                    // => std::array{3,4}.
     RawArrayTraits< std::array<std::array<double, 4>, 3> >::extents;        // => std::array{3,4}.
+
+If an array has ``const`` value, or the array itself is ``const``, the ``value_t``, 
+i.e., type of the array element, is also ``const``. e.g.::
+
+    RawArrayTraits<const int [3][4]>::value_t             // => const int
+    RawArrayTraits<std::array<const int, 3> >::value_t    // => const int
+    RawArrayTraits<const std::array<int, 3> >::value_t    // => const int
+    RawArrayTraits<const std::array<int, 3> >::array_t    // => const int [3]
 
 .. class:: template<typename T, typename V=void> RawArrayTraits
     
@@ -129,5 +143,7 @@ For example::
 
 .. class:: template<typename T, size_t N> RawArrayTraits< std::array<T, N> >
 
-    Specialization for the ``std::array``. It is defined according to the corresponding
-    raw-array type.
+.. class:: template<typename T, size_t N> RawArrayTraits< const std::array<T, N> > 
+
+    Specialization for the ``std::array`` and its const version. 
+    It is defined according to the corresponding raw-array type.

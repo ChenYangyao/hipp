@@ -64,6 +64,7 @@ TEST_F(ConceptRawArrayTest, HelperExtentsToRawArray) {
     chk_type_eq<t3A, A[3][4][5]>();
 }
 
+
 TEST_F(ConceptRawArrayTest, HelperStdArray) {
     using t1 = int[3];
     using t2 = double[3][4];
@@ -84,6 +85,22 @@ TEST_F(ConceptRawArrayTest, HelperStdArray) {
 
     chk_type_eq<helper_t::std_array_to_raw_t<at1>, t1>();
     chk_type_eq<helper_t::std_array_to_raw_t<at2>, t2>();
+}
+
+TEST_F(ConceptRawArrayTest, HelperStdArrayConst) {
+    using t1 = const int[3];
+    using t2 = const double[3][4];
+    using at11 = std::array<const int, 3>;
+    using at12 = const std::array<int, 3>;
+    using at21 = std::array<std::array<const double, 4>, 3>;
+    using at22 = std::array<const std::array<double, 4>, 3>;
+    using at23 = const std::array<std::array<double, 4>, 3>;
+
+    chk_type_eq<helper_t::std_array_to_raw_t<at11>, t1>();
+    chk_type_eq<helper_t::std_array_to_raw_t<at12>, t1>();
+    chk_type_eq<helper_t::std_array_to_raw_t<at21>, t2>();
+    chk_type_eq<helper_t::std_array_to_raw_t<at22>, t2>();
+    chk_type_eq<helper_t::std_array_to_raw_t<at23>, t2>(); 
 }
 
 TEST_F(ConceptRawArrayTest, Traits) {
@@ -120,6 +137,28 @@ TEST_F(ConceptRawArrayTest, Traits) {
     chk_iterable_eq(t_at1::extents, arr_st<1>{3});
     chk_iterable_eq(t_t2::extents, arr_st<2>{3, 4});
     chk_iterable_eq(t_at2::extents, arr_st<2>{3, 4});
+}
+
+TEST_F(ConceptRawArrayTest, TraitsConst) {
+    using t1 = const int[3];
+    using t2 = const double[3][4];
+    using at11 = std::array<const int, 3>;
+    using at12 = const std::array<int, 3>;
+    using at21 = std::array<std::array<const double, 4>, 3>;
+    using at22 = std::array<const std::array<double, 4>, 3>;
+    using at23 = const std::array<std::array<double, 4>, 3>;
+
+    chk_type_eq< typename traits_t<at11>::array_t, t1>();
+    chk_type_eq< typename traits_t<at12>::array_t, t1>();
+    chk_type_eq< typename traits_t<at21>::array_t, t2>();
+    chk_type_eq< typename traits_t<at22>::array_t, t2>();
+    chk_type_eq< typename traits_t<at23>::array_t, t2>();
+
+    chk_type_eq< typename traits_t<at11>::value_t, const int>();
+    chk_type_eq< typename traits_t<at12>::value_t, const int>();
+    chk_type_eq< typename traits_t<at21>::value_t, const double>();
+    chk_type_eq< typename traits_t<at22>::value_t, const double>();
+    chk_type_eq< typename traits_t<at23>::value_t, const double>();
 }
 
 }

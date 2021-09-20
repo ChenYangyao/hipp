@@ -60,7 +60,7 @@ protected:
  * Be cautious to resize the Pack instance to suitable length before 
  * receiving, and to reset the position to 0 before unpack.
  */
-class Pack: _hippmpi_mpi_pack_helper::PackBuffer {
+class Pack: public _hippmpi_mpi_pack_helper::PackBuffer {
 public:
     typedef _Pack _obj_raw_t;
     typedef _hippmpi_mpi_pack_helper::PackBuffer super_t;
@@ -133,7 +133,7 @@ protected:
 /**
  * The canonical counterpart of Pack.
  */
-class ExternalPack: _hippmpi_mpi_pack_helper::PackBuffer {
+class ExternalPack: public _hippmpi_mpi_pack_helper::PackBuffer {
 public:
     typedef _Pack _obj_raw_t;
     typedef _hippmpi_mpi_pack_helper::PackBuffer super_t;

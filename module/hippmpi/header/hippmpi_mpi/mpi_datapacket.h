@@ -67,20 +67,21 @@ public:
     */
     template<typename T, std::enable_if_t<_is_intern_dtype<T>(), size_t> N>
     Datapacket(const T (&buff)[N]) noexcept
-    : Datapacket( buff, N, *_TypeCvt<T>::datatype){ }
+    : Datapacket( buff, static_cast<int>(N), *_TypeCvt<T>::datatype){ }
 
     template<typename T, std::enable_if_t<_is_intern_dtype<T>(), int> =0>
-    Datapacket(const T *buff, size_t n) noexcept
+    Datapacket(const T *buff, int n) noexcept
     : Datapacket( buff, n, *_TypeCvt<T>::datatype ){ }
 
     template<typename T, std::enable_if_t<_is_intern_dtype<T>(), size_t> N>
     Datapacket(const std::array<T, N> &buff) noexcept
-    : Datapacket( buff.data(), N, *_TypeCvt<T>::datatype ){ }
+    : Datapacket( buff.data(), static_cast<int>(N), *_TypeCvt<T>::datatype ){ }
 
     template<typename T, typename A, 
         std::enable_if_t<_is_intern_dtype<T>(), int> =0>
     Datapacket(const vector<T,A> &buff) noexcept
-    : Datapacket( buff.data(), buff.size(), *_TypeCvt<T>::datatype ){ }
+    : Datapacket( buff.data(), static_cast<int>(buff.size()), 
+        *_TypeCvt<T>::datatype ){ }
 
     /**
     Sometimes, triplet is used to specify a memory segement relative to 

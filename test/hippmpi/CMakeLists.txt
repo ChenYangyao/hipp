@@ -21,6 +21,7 @@ endfunction(addmpitest)
 
 addmpitest(p2p 4)
 addmpitest(pack 4)
+addmpitest(collective 4)
 
 if(enable-hdf5)
     prtkeyproc("Test on hippmpi_mpprof enabled")

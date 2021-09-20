@@ -32,11 +32,15 @@ void test_send(Comm &comm){
         comm.send(1,0,td.x);
         comm.send(1,1,td.y);
         comm.send(1,2,td.z);
+        comm.send(1,3,td.ptr, td.sz_buff);
+        comm.send(1,4,td.arr);
     }else if( rank == 1 ){
         td.init_empty();
         comm.recv(0,0,td.x);
         comm.recv(0,1,td.y);
         comm.recv(0,2,td.z);
+        comm.recv(0,3,td.ptr, td.sz_buff);
+        comm.recv(0,4,td.arr);
         td_targ.compare(td);
     }
     comm.barrier();

@@ -26,6 +26,26 @@ public:
         assert(by == ey);
     }
 
+    template<typename T1, typename T2, typename Cnts>
+    static void chk_seq_eq_chunks(const T1 &x, const T2 &y, const Cnts &cnts) {
+        auto bx = std::begin(x), ex = std::end(x);
+        auto by = std::begin(y), ey = std::end(y);
+        auto bc = std::begin(cnts), ec = std::end(cnts);
+        for(auto pc=bc; pc!=ec; ++pc){
+            int cnt = *pc;
+            for(int i=0; i<cnt; ++i){
+                assert(bx != ex); assert(by != ey);
+                if( *bx != *by )
+                    ErrRuntime::throw_(ErrRuntime::eRANGE, emFLPFB, 
+                        "  ... chunk ", pc-bc, ", x[", i, "] != y[", i, "] (", 
+                        *bx, " and ", *by, ")\n");
+                ++bx; ++by;
+            }
+        }
+        assert(bx == ex);
+        assert(by == ey);
+    }
+
     template<typename T>
     static ostream & prt_bytes(ostream &os, const T *ptr, size_t n){
         size_t sz = sizeof(T) * n;
@@ -83,6 +103,54 @@ public:
     int sz_buff;
 
     std::array<double, 3> arr;
+};
+
+
+class TestGatherData {
+public:
+    TestGatherData(Comm &_comm) : comm(_comm) {
+        rank = comm.rank(); n_procs = comm.size(); 
+        is_root = rank == 0;
+
+        assert(n_procs == 4);
+
+        if( is_root ) init_master();
+        else init_worker();
+    }
+    void init_master() {
+        cnts = {1,2,3,4}, offs = {0,1,3,6};
+
+        recvbuf.assign(cnts.back()+offs.back(), -1);
+        res = {1,2,2,3,3,3,4,4,4,4};
+
+        recvbuf_eqsz.assign(n_procs*3,-1);
+        res_eqsz = {1,1,1,2,2,2,3,3,3,4,4,4};
+        init_any();
+    }
+    void init_worker() {
+        init_any();
+    }
+    void init_any() {
+        sendbuf.assign(rank+1, rank+1);
+        sendbuf_eqsz.assign(3, rank+1);
+    }
+    void chk_res() {
+        ValidateData::chk_seq_eq_chunks(recvbuf, res, cnts);
+        recvbuf.assign(recvbuf.size(), -1);
+    }
+    void chk_res_eqsz(bool chk_recv = true) {
+        ValidateData::chk_seq_eq(recvbuf_eqsz, res_eqsz);
+        recvbuf_eqsz.assign(recvbuf_eqsz.size(), -1.0f);
+    }
+
+    Comm &comm;
+    int rank, n_procs;
+    bool is_root;
+
+    vector<int> cnts, offs;
+    vector<int> sendbuf, recvbuf, res;
+
+    vector<float> sendbuf_eqsz, recvbuf_eqsz, res_eqsz;
 };
 
 } // namespace HIPP::MPI

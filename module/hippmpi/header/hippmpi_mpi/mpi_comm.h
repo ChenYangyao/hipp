@@ -154,35 +154,72 @@ public:
     std::pair<Status, Message> improbe(int src, int tag, int &flag) const;
 
     /**
-     * collective communication
-     */
+    Collective communication - barrier of all processes.
+    */
     void barrier() const;
+    
     /**
-     * Broadcast calls
-     * Overloads:
-     * 2: use a datapacket specification
-     */
+    Broadcast calls.
+    MPI standard-compliant.
+    Use Datapacket as buffer specification.
+    */
     void bcast(void *buf, int count, const Datatype &dtype, int root) const;
     void bcast(const Datapacket &dpacket, int root) const;
+
     /** 
-     * Gather calls 
-     * Overloads: 
-     * 2 and 3 the send and recv has same dtype and count.
-     */
+    Gather calls.
+    (1): MPI standard-compliant.
+    (2) and (3): Send and Recv share the same datatype and count.
+    
+    recvbuf, recvcount, recvtype - only significant at root. The send buffer 
+    signature must match the recv buffer signature at root.
+
+    For intra-communicator, ``sendbuf = IN_PLACE`` at root means in-place 
+    sending. Then the sendcount and sendtype are ignored.
+
+    For inter-communicator, in group A, root process passes ``root=ROOT``, other
+    processes pass ``root=PROC_NULL``. In group B, all pass ``root`` eq to the 
+    rank of root in A.
+    */
     void gather(const void *sendbuf, int sendcount, const Datatype &sendtype, 
         void *recvbuf, int recvcount, const Datatype &recvtype, int root) const;
     void gather(const void *sendbuf, void *recvbuf, 
         int count, const Datatype &dtype, int root) const;
     void gather(const Datapacket &send_dpacket, void *recvbuf, int root) const;
-    void gatherv(
-        const void *sendbuf, int sendcount, const Datatype &sendtype, 
-        void *recvbuf, const int recvcounts[], const int displs[],
-        const Datatype &recvtype, int root ) const;
+    
     /**
-     * Scatter calls
-     * Overloads: 
-     * 2 and 3: the send and recv has same dtype and count.
-     */
+    Variant of gather, allowing processes sending different number of items.
+    (1): MPI standard-compliant.
+    (2): Use abstract concept arguments - Datapacket and ContiguousBuffer.
+
+    @recvbuf, recvcounts, displs, recvtype:  place to put the received data - 
+    significant only at root.
+    ``sendbuf = IN_PLACE`` is still available.
+    */
+    void gatherv(const void *sendbuf, int sendcount, const Datatype &sendtype, 
+        void *recvbuf, const int recvcounts[], const int displs[],
+        const Datatype &recvtype, int root) const;
+    void gatherv(const Datapacket &send_dpacket, void *recvbuf, 
+        ContiguousBuffer<const int> recvcounts, 
+        ContiguousBuffer<const int> displs,
+        const Datatype &recvtype, int root) const;
+
+    /**
+    Scatter calls
+    (1): MPI standard-compliant.
+    (2) and (3): Send and Recv share the same datatype and count.
+    
+    sendbuf, sendcount, sendtype - only significant at root. The send buffer
+    signature at root must match each recv buffer signature. Every 
+    location in the send buffer cannot be read more than once.
+
+    For intra-communicator, ``recvbuf = IN_PLACE`` at root mean in-place 
+    sending. Then recvbuf and recvcount are ignored.
+
+    For inter-communicator, in group A, root process passes ``root=ROOT``, other
+    processes pass ``root=PROC_NULL``. In group B, all pass ``root`` eq to the 
+    rank of root in A.
+    */
     void scatter(
         const void *sendbuf, int sendcount, const Datatype &sendtype,
         void *recvbuf, int recvcount, const Datatype &recvtype, int root )const;
@@ -190,10 +227,23 @@ public:
         int count, const Datatype &dtype, int root) const; 
     void scatter(const void *sendbuf, 
         const Datapacket &recv_dpacket, int root) const;
-    void scatterv(
-        const void *sendbuf, const int sendcounts[], const int displs[], 
-        const Datatype &sendtype,
+
+    /**
+    Variants of scatter, allowing sending to processes different number of 
+    items.
+    (1): MPI standard-compliant.
+    (2): Use abstract concept arguments - Datapacket and ContiguousBuffer.
+
+    The send buffer arguments are ignored at all processes except the root.
+    ``recvbuf = IN_PLACE`` is still available.
+    */
+    void scatterv(const void *sendbuf, const int sendcounts[], 
+        const int displs[], const Datatype &sendtype,
         void *recvbuf, int recvcount, const Datatype &recvtype, int root) const;
+    void scatterv(const void *sendbuf, ContiguousBuffer<const int> sendcounts, 
+        ContiguousBuffer<const int> displs, const Datatype &sendtype,
+        const Datapacket &recv_dpacket, int root) const;
+
     void allgather( const void *sendbuf, int sendcount, 
         const Datatype &sendtype,
         void *recvbuf, int recvcount, const Datatype &recvtype ) const;
@@ -222,17 +272,22 @@ public:
         const Datatype &dtype, const Oppacket &op, int root ) const;
     void reduce( const Datapacket &send_dpacket, void *recvbuf,
         const Oppacket &op, int root ) const;
+
     void allreduce( const void *sendbuf, void *recvbuf, int count, 
         const Datatype &dtype, const Oppacket &op ) const;
     void allreduce( const Datapacket &send_dpacket, void *recvbuf, 
         const Oppacket &op ) const;
+    
     static void reduce_local( const void *inbuf, void *inoutbuf, int count, 
         const Datatype &dtype, const Oppacket &op );
+    
     void reduce_scatter_block( const void *sendbuf, void *recvbuf, 
         int recvcount, const Datatype &dtype, const Oppacket &op ) const;
+    
     void reduce_scatter( const void *sendbuf, void *recvbuf, 
         const int recvcounts[], const Datatype &dtype, 
         const Oppacket &op )const;
+    
     void scan( const void *sendbuf, void *recvbuf, 
         int count, const Datatype &dtype, const Oppacket &op ) const;
     void exscan( const void *sendbuf, void *recvbuf, 

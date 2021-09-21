@@ -77,6 +77,7 @@ int Comm::create_keyval( copy_attr_fn_t copy_attr_fn,
     }
     return keyval;
 }
+
 void Comm::free_keyval( int &keyval ){
     auto it = _attr_extra_state.find( keyval );
     if( it == _attr_extra_state.end() )
@@ -87,13 +88,16 @@ void Comm::free_keyval( int &keyval ){
     _attr_extra_state.erase(it);
     _obj_raw_t::free_keyval(&keyval);
 }
+
 Comm & Comm::set_attr( int keyval, void *attr_val ){
     _obj_ptr->set_attr( keyval, attr_val );
     return *this;
 }
+
 bool Comm::get_attr( int keyval, void * &attr_val ) const{
     return _obj_ptr->get_attr(keyval, &attr_val);
 }
+
 Comm & Comm::del_attr( int keyval ){
     _obj_ptr->del_attr(keyval);
     return *this;
@@ -104,25 +108,31 @@ Comm Comm::split( int color, int key )const{
     int state = (newcomm == _obj_raw_t::nullval())?0:1;
     return _from_raw(newcomm, state );
 }
+
 Comm Comm::dup() const{
     mpi_t newcomm = _obj_ptr->dup();
     int state = (newcomm == _obj_raw_t::nullval())?0:1;
     return _from_raw( newcomm, state );
 }
+
 Comm Comm::create( const Group &group ) const{
     mpi_t newcomm = _obj_raw_t::create( raw(), group.raw() );
     int state = (newcomm == _obj_raw_t::nullval())?0:1;
     return _from_raw(newcomm, state);
 }
+
 Comm Comm::world() noexcept{
     return _from_raw( _obj_raw_t::world(), 0 );
 }
+
 Comm Comm::selfval() noexcept{
     return _from_raw( _obj_raw_t::selfval(), 0 );
 }
+
 Comm Comm::nullval() noexcept{
     return _from_raw( _obj_raw_t::nullval(), 0 );
 }
+
 Comm Comm::create_inter( int local_leader, const Comm &peer_comm, 
     int remote_leader, int tag ){
     return _from_raw(
@@ -130,19 +140,24 @@ Comm Comm::create_inter( int local_leader, const Comm &peer_comm,
             peer_comm.raw(), remote_leader, tag ), 1
     );
 }
+
 Comm Comm::merge_inter( int high ){
     return _from_raw( _obj_raw_t::merge_inter( raw(), high ), 1 );
 }
+
 const Group Comm::group() const{
     return const_cast<Comm*>(this)->group();
 }
+
 Group Comm::group(){
     auto obj = _obj_ptr->group();
     return Group( std::make_shared<Group::_obj_raw_t>(obj, 1) );
 }
+
 const Group Comm::remote_group() const{
     return const_cast<Comm*>(this)->remote_group();
 }
+
 Group Comm::remote_group(){
     auto obj = _obj_ptr->remote_group();
     return Group( std::make_shared<Group::_obj_raw_t>(obj, 1) );
@@ -153,6 +168,7 @@ Comm Comm::cart_create( const vector<int> &dims,
     return _from_raw( _obj_ptr->cart_create( dims.size(), 
         dims.data(), periods.data(), reorder ), 1 );
 }
+
 void Comm::dims_create( int nnodes, int ndims, vector<int> &dims ){
     if( nnodes <= 0 || ndims <= 0 )
         ErrLogic::throw_(ErrLogic::eDOMAIN, emFLPFB, 
@@ -161,12 +177,15 @@ void Comm::dims_create( int nnodes, int ndims, vector<int> &dims ){
     dims.resize(ndims, 0);
     _obj_raw_t::dims_create(nnodes, ndims, dims.data());
 }
+
 int Comm::topo_test()const{
     return _obj_ptr->topo_test();
 }
+
 int Comm::cartdim_get()const{
     return _obj_ptr->cartdim_get();
 }
+
 void Comm::cart_get( vector<int> &dims, vector<int> &periods, 
     vector<int> &coords )const{
     int ndims = cartdim_get();
@@ -176,35 +195,42 @@ void Comm::cart_get( vector<int> &dims, vector<int> &periods,
 int Comm::cart_rank( const vector<int> &coords )const{
     return _obj_ptr->cart_rank( coords.data() );
 }
+
 vector<int> Comm::cart_coords( int rank )const{
     int ndims = cartdim_get();
     vector<int> coords( ndims );
     _obj_ptr->cart_coords( rank, ndims, coords.data() );
     return coords;
 }
+
 void Comm::cart_shift( int direction, int disp, 
     int &rank_src, int &rank_dest )const{
     _obj_ptr->cart_shift( direction, disp, &rank_src, &rank_dest );
 }
+
 Comm Comm::cart_sub( const vector<int> &remain_dims ){
     return _from_raw( _obj_ptr->cart_sub( remain_dims.data() ), 1 );
 }
+
 Win Comm::win_create(void *base, aint_t size, int disp_unit, 
 const Info &info) const {
     auto win = Win::_obj_raw_t::create(base, size, disp_unit, 
         info.raw(), raw());
     return Win::_from_raw(win, Win::_obj_raw_t::stFREE);
 }
+
 Win Comm::win_create_dynamic(const Info &info) const {
     auto win = Win::_obj_raw_t::create_dynamic(info.raw(), raw());
     return Win::_from_raw(win, Win::_obj_raw_t::stFREE);
 }
+
 Win Comm::win_allocate(void *&base_ptr, aint_t size, int disp_unit, 
     const Info &info ) const {
     auto win = Win::_obj_raw_t::allocate(size, disp_unit, info.raw(), raw(), 
         &base_ptr);
     return Win::_from_raw(win, Win::_obj_raw_t::stFREE);
 }
+
 Win Comm::win_allocate_shared(void *&base_ptr, 
     aint_t size, int disp_unit, const Info &info) const
 {
@@ -212,6 +238,7 @@ Win Comm::win_allocate_shared(void *&base_ptr,
         raw(), &base_ptr);
     return Win::_from_raw(win, Win::_obj_raw_t::stFREE);
 }
+
 Status Comm::sendrecv(const Datapacket &send_dpacket, int dest, int sendtag, 
     const Datapacket &recv_dpacket, int src, int recvtag)
 {
@@ -221,6 +248,7 @@ Status Comm::sendrecv(const Datapacket &send_dpacket, int dest, int sendtag,
         sdp._buff, sdp._size, sdp._dtype.raw(), dest, sendtag, 
         rdp._buff, rdp._size, rdp._dtype.raw(), src, recvtag);
 }
+
 Status Comm::sendrecv(const Datapacket &send_dpacket, int dest, int sendtag, 
     void *recvbuf, int src, int recvtag)
 {
@@ -229,6 +257,7 @@ Status Comm::sendrecv(const Datapacket &send_dpacket, int dest, int sendtag,
         dp._buff, dp._size, dp._dtype.raw(), dest, sendtag,
         recvbuf, dp._size, dp._dtype.raw(), src, recvtag);
 }
+
 Status Comm::sendrecv_replace(const Datapacket &dpacket, int dest, int sendtag, 
     int src, int recvtag)
 {
@@ -236,53 +265,80 @@ Status Comm::sendrecv_replace(const Datapacket &dpacket, int dest, int sendtag,
     return _obj_ptr->sendrecv_replace(dp._buff, dp._size, dp._dtype.raw(), 
         dest, sendtag, src, recvtag);
 }
+
 Status Comm::probe(int src, int tag) const{
     return _obj_ptr->probe(src, tag);
 }
+
 Status Comm::iprobe(int src, int tag, int &flag) const{
     return _obj_ptr->iprobe(src, tag, flag);
 }
+
 std::pair<Status, Message> Comm::mprobe(int src, int tag) const{
     Message::mpi_t msg;
     Status st = _obj_ptr->mprobe(src, tag, msg);
     return {st, Message(msg)};
 }
+
 std::pair<Status, Message> Comm::improbe(int src, int tag, int &flag) const{
     Message::mpi_t msg;
     Status st = _obj_ptr->improbe(src, tag, flag, msg);
     return {st, Message(msg)};
 }
+
 void Comm::barrier() const{
     _obj_ptr->barrier();
 }
+
 void Comm::bcast( void *buf, int count, const Datatype &dtype, int root) const{
     _obj_ptr->bcast(buf, count, dtype.raw(), root);
 }
+
 void Comm::bcast(const Datapacket &dpacket, int root) const {
     auto & [p, n, dt] = dpacket;
     bcast(p, n, dt, root);
 }
+
 void Comm::gather( const void *sendbuf, int sendcount, const Datatype &sendtype, 
-    void *recvbuf, int recvcount, const Datatype &recvtype, int root) const{
+    void *recvbuf, int recvcount, const Datatype &recvtype, int root) const {
     _obj_ptr->gather(sendbuf, sendcount, sendtype.raw(), recvbuf,
         recvcount, recvtype.raw(), root);
 }
+
 void Comm::gather(const void *sendbuf, void *recvbuf, 
     int count, const Datatype &dtype, int root) const {
     gather(sendbuf, count, dtype, recvbuf, count, dtype, root);
 }
+
 void Comm::gather(const Datapacket &send_dpacket, 
     void *recvbuf, int root) const {
     auto & [p,n,dt] = send_dpacket;
     gather(p, recvbuf, n, dt, root);
 }
-void Comm::gatherv(
-    const void *sendbuf, int sendcount, const Datatype &sendtype, 
+
+void Comm::gatherv(const void *sendbuf, int sendcount, const Datatype &sendtype, 
     void *recvbuf, const int recvcounts[], const int displs[],
-    const Datatype &recvtype, int root ) const{
+    const Datatype &recvtype, int root ) const 
+{
     _obj_ptr->gatherv( sendbuf, sendcount, sendtype.raw(), 
         recvbuf, recvcounts, displs, recvtype.raw(), root );
 }
+
+void Comm::gatherv(const Datapacket &send_dpacket, void *recvbuf, 
+    ContiguousBuffer<const int> recvcounts, 
+    ContiguousBuffer<const int> displs,
+    const Datatype &recvtype, int root) const
+{
+    const auto &[_recvcounts, n_cs] = recvcounts;
+    const auto &[_displs, n_ds] = displs;
+    if( n_cs != n_ds ) 
+        ErrLogic::throw_(ErrLogic::eLENGTH, emFLPFB, 
+            "  ... recvcounts", recvcounts, 
+            " does not match displs ", displs, '\n');
+    auto [p,n,dt] = send_dpacket;
+    gatherv(p, n, dt, recvbuf, _recvcounts, _displs, recvtype, root);
+}
+
 void Comm::scatter(
     const void *sendbuf, int sendcount, const Datatype &sendtype,
     void *recvbuf, int recvcount, const Datatype &recvtype, int root )const{
@@ -302,12 +358,27 @@ void Comm::scatter(const void *sendbuf,
     scatter(sendbuf, p, n, dt, root);
 }
 
-void Comm::scatterv(
-    const void *sendbuf, const int sendcounts[], const int displs[], 
-    const Datatype &sendtype,
-    void *recvbuf, int recvcount, const Datatype &recvtype, int root) const{
+void Comm::scatterv(const void *sendbuf, const int sendcounts[], 
+    const int displs[], const Datatype &sendtype,
+    void *recvbuf, int recvcount, const Datatype &recvtype, int root) const
+{
     _obj_ptr->scatterv(sendbuf, sendcounts, displs, sendtype.raw(), 
         recvbuf, recvcount, recvtype.raw(), root);
+}
+
+void Comm::scatterv(const void *sendbuf, ContiguousBuffer<const int> sendcounts, 
+    ContiguousBuffer<const int> displs, const Datatype &sendtype,
+    const Datapacket &recv_dpacket, int root) const
+{
+    auto [_sendcounts, n_cs] = sendcounts;
+    auto [_displs, n_ds] = displs;
+    if( n_cs != n_ds )
+        ErrLogic::throw_(ErrLogic::eLENGTH, emFLPFB, 
+            "  ... sendcounts", sendcounts, 
+            " does not match displs ", displs, '\n');
+    auto [p, n, dt] = recv_dpacket;
+    scatterv(sendbuf, _sendcounts, _displs, sendtype, 
+        p, n, dt, root);
 }
 
 void Comm::allgather( const void *sendbuf, int sendcount, 

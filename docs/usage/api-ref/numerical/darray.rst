@@ -420,3 +420,24 @@ For details, see, e.g., the description of the corresponding method :func:`DArra
     template<typename ValueT, size_t Rank, typename Alloc, typename AllocB = std::allocator<bool> > DArray<bool, Rank, AllocB> operator>=( const DArray<ValueT, Rank, Alloc> &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
     template<typename ValueT, size_t Rank, typename Alloc, typename AllocB = std::allocator<bool> > DArray<bool, Rank, AllocB> operator==( const DArray<ValueT, Rank, Alloc> &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
     template<typename ValueT, size_t Rank, typename Alloc, typename AllocB = std::allocator<bool> > DArray<bool, Rank, AllocB> operator!=( const DArray<ValueT, Rank, Alloc> &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
+
+ContiguousBuffer Protocol
+""""""""""""""""""""""""""
+
+.. class:: template<typename ValueT, size_t Rank, typename Alloc> \
+    HIPP::ContiguousBufferTraits<const DArray<ValueT, Rank, Alloc> > \
+    : ContiguousBufferTraits< std::add_const_t<typename DArray<ValueT, Rank, Alloc>::value_t > * >
+
+    .. type:: ContiguousBufferTraits<std::add_const_t<typename DArray<ValueT, Rank, Alloc>::value_t > * > _parent_t
+        const DArray<ValueT, Rank, Alloc> buffer_t
+
+    .. function:: constexpr ContiguousBufferTraits(buffer_t &a) noexcept 
+
+.. class:: template<typename ValueT, size_t Rank, typename Alloc> \
+    HIPP::ContiguousBufferTraits<DArray<ValueT, Rank, Alloc> >  \
+    : ContiguousBufferTraits< typename DArray<ValueT, Rank, Alloc>::value_t * >
+
+    .. type:: ContiguousBufferTraits< typename DArray<ValueT, Rank, Alloc>::value_t * > _parent_t
+        DArray<ValueT, Rank, Alloc> buffer_t;
+
+    .. function:: constexpr ContiguousBufferTraits(buffer_t &a) noexcept 

@@ -41,6 +41,11 @@ public:
             std::is_same_v< std::complex<long double>, T >;
     }
 
+    /*
+    Equivalent to (BOTTOM, 0, INT) buffer.
+    */
+    Datapacket() noexcept : _buff(BOTTOM), _size(0), _dtype(INT) {}
+
     /**
     Formally specify the buffer as a triplet. The second version with string 
     "dtype" automatically converts to a suitable underlying dtype.

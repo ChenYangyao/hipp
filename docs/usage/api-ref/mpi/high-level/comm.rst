@@ -689,7 +689,7 @@ Class Comm: the Communication Context
         void reduce(const void *sendbuf, const Datapacket &recv_dpacket, \
             const Oppacket &op, int root) const 
         void reduce(const Datapacket &send_dpacket, const Datapacket &recv_dpacket, \
-            const Oppacket &op, int root) const
+            const Oppacket &op, int root) const    
         void allreduce( const void *sendbuf, void *recvbuf, int count, \
             const Datatype &dtype, const Oppacket &op ) const
         void allreduce( const Datapacket &send_dpacket, void *recvbuf, \

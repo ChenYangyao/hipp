@@ -171,7 +171,7 @@ public:
     (1): MPI standard-compliant.
     (2)：Send and recv share the same datatype and count.
     (3,4): Same as (2) but the datatype and count are taken from 
-    ``send_dpacket`.
+    ``send_dpacket``.
     
     recvbuf, recvcount, recvtype - only significant at root. The send buffer 
     signature must match the recv buffer signature at root.
@@ -195,7 +195,7 @@ public:
     Variant of gather, allowing processes sending different number of items.
     (1): MPI standard-compliant.
     (2): Use abstract concept arguments - Datapacket and ContiguousBuffer.
-    (3): Same as (2) but recv datatype are inferred from the datapacket.
+    (3): Same as (2) but recv datatype is inferred from the datapacket.
 
     @recvbuf, recvcounts, displs, recvtype:  place to put the received data - 
     significant only at root.
@@ -244,7 +244,7 @@ public:
     items.
     (1): MPI standard-compliant.
     (2): Use abstract concept arguments - Datapacket and ContiguousBuffer.
-    (3): Same as (2) but send datatype are inferred from the datapacket.
+    (3): Same as (2) but send datatype is inferred from the datapacket.
 
     The send buffer arguments are ignored at all processes except the root.
     ``recvbuf = IN_PLACE`` is still available.
@@ -292,7 +292,7 @@ public:
     (1): MPI standard-compliant.
     (2): send buffer and recv buffer share the same count and datatype.
 
-    If send buffer is IN_PLACE, the data are taken from and replace the recv
+    If send buffer is ``IN_PLACE``, the data are taken from and replace the recv
     buffer.
     */
     void alltoall(const void *sendbuf, int sendcount, const Datatype &sendtype,
@@ -311,13 +311,19 @@ public:
     /**
     Reduce calls.
     (1): MPI standard-compliant.
-    (2,3): count and datatype are taken from ``send_dpacket``.
+    (2,4): count and datatype are taken from ``send_dpacket``.
+    (3): count and datatype are taken from ``recv_dpacket``.
 
     The same applies to ``allreduce()``.
+
+    Set ``sendbuf=IN_PLACE`` at root implies in-place reduction, i.e., at root,
+    data are taken from recv buffer and the results overwrite it.
     */
     void reduce(const void *sendbuf, void *recvbuf, int count, 
         const Datatype &dtype, const Oppacket &op, int root) const;
     void reduce(const Datapacket &send_dpacket, void *recvbuf,
+        const Oppacket &op, int root) const;
+    void reduce(const void *sendbuf, const Datapacket &recv_dpacket,
         const Oppacket &op, int root) const;
     void reduce(const Datapacket &send_dpacket, const Datapacket &recv_dpacket,
         const Oppacket &op, int root) const;
@@ -325,6 +331,8 @@ public:
     void allreduce(const void *sendbuf, void *recvbuf, int count, 
         const Datatype &dtype, const Oppacket &op ) const;
     void allreduce(const Datapacket &send_dpacket, void *recvbuf, 
+        const Oppacket &op ) const;
+    void allreduce(const void *sendbuf, const Datapacket &recv_dpacket,
         const Oppacket &op ) const;
     void allreduce(const Datapacket &send_dpacket, 
         const Datapacket &recv_dpacket, const Oppacket &op) const;
@@ -442,14 +450,26 @@ public:
         const int senddispls[], const Datatype::mpi_t sendtypes[],
         void *recvbuf, const int recvcounts[], const int recvdispls[], 
         const Datatype::mpi_t recvtypes[] ) const;
+
     Requests ireduce( const void *sendbuf, void *recvbuf, int count, 
         const Datatype &dtype, const Oppacket &op, int root ) const;
     Requests ireduce( const Datapacket &send_dpacket, void *recvbuf,
         const Oppacket &op, int root ) const;
+    Requests ireduce(const void *sendbuf, const Datapacket &recv_dpacket,
+        const Oppacket &op, int root ) const;
+    Requests ireduce(const Datapacket &send_dpacket, 
+        const Datapacket &recv_dpacket, const Oppacket &op, int root ) const;
+    
     Requests iallreduce( const void *sendbuf, void *recvbuf, int count, 
         const Datatype &dtype, const Oppacket &op ) const;
     Requests iallreduce( const Datapacket &send_dpacket, void *recvbuf, 
         const Oppacket &op ) const;
+    Requests iallreduce(const void *sendbuf, const Datapacket &recv_dpacket,
+        const Oppacket &op ) const;
+    Requests iallreduce(const Datapacket &send_dpacket, 
+        const Datapacket &recv_dpacket,
+        const Oppacket &op ) const;
+
     Requests ireduce_scatter_block( const void *sendbuf, void *recvbuf, 
         int recvcount, const Datatype &dtype, const Oppacket &op ) const;
     Requests ireduce_scatter( const void *sendbuf, void *recvbuf, 

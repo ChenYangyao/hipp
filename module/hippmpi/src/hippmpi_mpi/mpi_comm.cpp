@@ -468,6 +468,13 @@ void Comm::reduce( const Datapacket &send_dpacket, void *recvbuf,
     reduce(dp._buff, recvbuf, dp._size, dp._dtype, op, root);
 }
 
+void Comm::reduce(const void *sendbuf, const Datapacket &recv_dpacket,
+    const Oppacket &op, int root) const
+{
+    auto &[p,n,dt] = recv_dpacket;
+    reduce(sendbuf, p, n, dt, op, root);
+}
+
 void Comm::reduce(const Datapacket &send_dpacket, 
     const Datapacket &recv_dpacket, const Oppacket &op, int root) const
 {
@@ -483,6 +490,13 @@ void Comm::allreduce( const Datapacket &send_dpacket, void *recvbuf,
     const Oppacket &op ) const {
     auto &[p, n, dt] = send_dpacket;
     allreduce(p, recvbuf, n, dt, op);
+}
+
+void Comm::allreduce(const void *sendbuf, const Datapacket &recv_dpacket,
+    const Oppacket &op ) const
+{
+    auto &[p,n,dt] = recv_dpacket;
+    allreduce(sendbuf, p, n, dt, op);
 }
 
 void Comm::allreduce(const Datapacket &send_dpacket, 
@@ -763,6 +777,19 @@ Requests Comm::ireduce( const Datapacket &send_dpacket, void *recvbuf,
     return ireduce(p, recvbuf, n, dt, op, root);
 }
 
+Requests Comm::ireduce(const void *sendbuf, const Datapacket &recv_dpacket,
+    const Oppacket &op, int root ) const
+{
+    auto &[p,n,dt] = recv_dpacket;
+    return ireduce(sendbuf, p, n, dt, op, root);
+}
+
+Requests Comm::ireduce(const Datapacket &send_dpacket, 
+    const Datapacket &recv_dpacket, const Oppacket &op, int root ) const
+{
+    return ireduce(send_dpacket, recv_dpacket.get_buff(), op, root);
+}
+
 Requests Comm::iallreduce( const void *sendbuf, void *recvbuf, int count, 
     const Datatype &dtype, const Oppacket &op ) const{
     return Requests::_from_raw( _obj_ptr->iallreduce( sendbuf, recvbuf, count, 
@@ -774,6 +801,20 @@ Requests Comm::iallreduce( const Datapacket &send_dpacket, void *recvbuf,
 {
     auto &[p, n, dt] = send_dpacket;
     return iallreduce(p, recvbuf, n, dt, op);
+}
+
+Requests Comm::iallreduce(const void *sendbuf, const Datapacket &recv_dpacket,
+    const Oppacket &op ) const
+{
+    auto &[p,n,dt] = recv_dpacket;
+    return iallreduce(sendbuf, p, n, dt, op);
+}
+
+Requests Comm::iallreduce(const Datapacket &send_dpacket, 
+    const Datapacket &recv_dpacket,
+    const Oppacket &op ) const
+{
+    return iallreduce(send_dpacket, recv_dpacket.get_buff(), op);
 }
 
 Requests Comm::ireduce_scatter_block( const void *sendbuf, void *recvbuf, 

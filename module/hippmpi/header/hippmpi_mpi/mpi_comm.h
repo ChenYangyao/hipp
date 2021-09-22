@@ -169,8 +169,9 @@ public:
     /** 
     Gather calls.
     (1): MPI standard-compliant.
-    (2-4)： Send and Recv share the same datatype and count that are determined
-    by the send buffer specification.
+    (2)：Send and recv share the same datatype and count.
+    (3,4): Same as (2) but the datatype and count are taken from 
+    ``send_dpacket`.
     
     recvbuf, recvcount, recvtype - only significant at root. The send buffer 
     signature must match the recv buffer signature at root.
@@ -214,8 +215,8 @@ public:
     /**
     Scatter calls
     (1): MPI standard-compliant.
-    (2-4): Send and Recv share the same datatype and count that are determined
-    from the recv buffer specification.
+    (2): Send and recv share the same datatype and count.
+    (3,4): Same as (2) but datatype and count are taken from ``recv_dpacket``.
     
     sendbuf, sendcount, sendtype - only significant at root. The send buffer
     signature at root must match each recv buffer signature. Every 
@@ -259,15 +260,46 @@ public:
         ContiguousBuffer<const int> displs,
         const Datapacket &recv_dpacket, int root) const;
 
-    void allgather( const void *sendbuf, int sendcount, 
+    /**
+    All-variant to the gather/gatherv call - all processes received the data.
+    */
+    void allgather(const void *sendbuf, int sendcount, 
         const Datatype &sendtype,
-        void *recvbuf, int recvcount, const Datatype &recvtype ) const;
+        void *recvbuf, int recvcount, const Datatype &recvtype) const;
+    void allgather(const void *sendbuf, void *recvbuf, 
+        int count, const Datatype &dtype) const;
+    void allgather(const Datapacket &send_dpacket,
+        void *recvbuf) const;
+    void allgather(const Datapacket &send_dpacket,
+        const Datapacket &recv_dpacket) const;
+    
     void allgatherv(
         const void *sendbuf, int sendcount, const Datatype &sendtype, 
         void *recvbuf, const int recvcounts[], const int displs[],
         const Datatype &recvtype ) const;
-    void alltoall( const void *sendbuf, int sendcount, const Datatype &sendtype,
+    void allgatherv(
+        const Datapacket &send_dpacket, void *recvbuf, 
+        ContiguousBuffer<const int> recvcounts, 
+        ContiguousBuffer<const int> displs,
+        const Datatype &recvtype) const;
+    void allgatherv(
+        const Datapacket &send_dpacket, const Datapacket &recv_dpacket,
+        ContiguousBuffer<const int> recvcounts, 
+        ContiguousBuffer<const int> displs) const;
+
+    /**
+    All-to-all calls.
+    (1): MPI standard-compliant.
+    (2): send buffer and recv buffer share the same count and datatype.
+
+    If send buffer is IN_PLACE, the data are taken from and replace the recv
+    buffer.
+    */
+    void alltoall(const void *sendbuf, int sendcount, const Datatype &sendtype,
         void *recvbuf, int recvcount, const Datatype &recvtype ) const;
+    void alltoall(const void *sendbuf, void *recvbuf, 
+        int count, const Datatype &dtype) const;
+
     void alltoallv( const void *sendbuf, const int sendcounts[], 
         const int senddispls[], const Datatype &sendtype,
         void *recvbuf, const int recvcounts[], const int recvdispls[], 
@@ -335,7 +367,7 @@ public:
         void *recvbuf, int root) const;
     Requests igather(const Datapacket &send_dpacket, 
         const Datapacket &recv_dpacket, int root) const;
-        
+
     Requests igatherv(
         const void *sendbuf, int sendcount, const Datatype &sendtype, 
         void *recvbuf, const int recvcounts[], const int displs[],
@@ -373,16 +405,35 @@ public:
         ContiguousBuffer<const int> displs,
         const Datapacket &recv_dpacket, int root) const;
 
-    Requests iallgather( const void *sendbuf, int sendcount, 
+    Requests iallgather(const void *sendbuf, int sendcount, 
         const Datatype &sendtype,
         void *recvbuf, int recvcount, const Datatype &recvtype ) const;
+    Requests iallgather(const void *sendbuf, void *recvbuf, int count, 
+        const Datatype &dtype) const;
+    Requests iallgather(const Datapacket &send_dpacket, void *recvbuf) const;
+    Requests iallgather(const Datapacket &send_dpacket, 
+        const Datapacket &recv_dpacket) const;
+
     Requests iallgatherv(
         const void *sendbuf, int sendcount, const Datatype &sendtype, 
         void *recvbuf, const int recvcounts[], const int displs[],
         const Datatype &recvtype ) const;
-    Requests ialltoall( const void *sendbuf, int sendcount, 
+    Requests iallgatherv(
+        const Datapacket &send_dpacket,
+        void *recvbuf, ContiguousBuffer<const int> recvcounts, 
+        ContiguousBuffer<const int> displs,
+        const Datatype &recvtype ) const;
+    Requests iallgatherv(
+        const Datapacket &send_dpacket, const Datapacket &recv_dpacket, 
+        ContiguousBuffer<const int> recvcounts, 
+        ContiguousBuffer<const int> displs) const;
+    
+    Requests ialltoall(const void *sendbuf, int sendcount, 
         const Datatype &sendtype,
         void *recvbuf, int recvcount, const Datatype &recvtype ) const;
+    Requests ialltoall(const void *sendbuf, void *recvbuf, int count, 
+        const Datatype &dtype) const;
+
     Requests ialltoallv( const void *sendbuf, const int sendcounts[], 
         const int senddispls[], const Datatype &sendtype,
         void *recvbuf, const int recvcounts[], const int recvdispls[], 

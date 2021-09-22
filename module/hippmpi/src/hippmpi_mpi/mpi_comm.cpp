@@ -434,6 +434,12 @@ void Comm::alltoall( const void *sendbuf, int sendcount,
         recvbuf, recvcount, recvtype.raw() );
 }
 
+void Comm::alltoall(const void *sendbuf, void *recvbuf, 
+    int count, const Datatype &dtype) const
+{
+    alltoall(sendbuf, count, dtype, recvbuf, count, dtype);
+}
+
 void Comm::alltoallv( const void *sendbuf, const int sendcounts[], 
     const int senddispls[], const Datatype &sendtype,
     void *recvbuf, const int recvcounts[], const int recvdispls[], 
@@ -441,6 +447,7 @@ void Comm::alltoallv( const void *sendbuf, const int sendcounts[],
     _obj_ptr->alltoallv(sendbuf, sendcounts, senddispls, sendtype.raw(),
     recvbuf, recvcounts, recvdispls, recvtype.raw());
 }
+
 void Comm::alltoallw( const void *sendbuf, const int sendcounts[], 
     const int senddispls[], const Datatype::mpi_t sendtypes[],
     void *recvbuf, const int recvcounts[], const int recvdispls[], 
@@ -662,6 +669,23 @@ Requests Comm::iallgather( const void *sendbuf, int sendcount,
         recvbuf, recvcount, recvtype.raw() ), 0);
 }
 
+Requests Comm::iallgather(const void *sendbuf, void *recvbuf, int count, 
+    const Datatype &dtype) const
+{
+    return iallgather(sendbuf, count, dtype, recvbuf, count, dtype);
+}
+
+Requests Comm::iallgather(const Datapacket &send_dpacket, void *recvbuf) const {
+    auto &[p,n,dt] = send_dpacket;
+    return iallgather(p, recvbuf, n, dt);
+}
+
+Requests Comm::iallgather(const Datapacket &send_dpacket, 
+    const Datapacket &recv_dpacket) const
+{
+    return iallgather(send_dpacket, recv_dpacket.get_buff());
+}
+
 Requests Comm::iallgatherv(
     const void *sendbuf, int sendcount, const Datatype &sendtype, 
     void *recvbuf, const int recvcounts[], const int displs[],
@@ -671,6 +695,31 @@ Requests Comm::iallgatherv(
         recvbuf, recvcounts, displs, recvtype.raw()), 0);
 }
 
+Requests Comm::iallgatherv(
+    const Datapacket &send_dpacket,
+    void *recvbuf, ContiguousBuffer<const int> recvcounts, 
+    ContiguousBuffer<const int> displs,
+    const Datatype &recvtype ) const
+{
+    auto [_recvcounts, n_cs] = recvcounts;
+    auto [_displs, n_ds] = displs;
+    if( n_cs != n_ds )
+        ErrLogic::throw_(ErrLogic::eLENGTH, emFLPFB, 
+            "  ... recvcounts", recvcounts, 
+            " does not match displs ", displs, '\n');
+    auto &[p,n,dt] = send_dpacket;
+    return iallgatherv(p,n,dt,recvbuf,_recvcounts,_displs,recvtype);
+}
+
+Requests Comm::iallgatherv(
+    const Datapacket &send_dpacket, const Datapacket &recv_dpacket, 
+    ContiguousBuffer<const int> recvcounts, 
+    ContiguousBuffer<const int> displs) const
+{
+    auto &[p,n,dt] = recv_dpacket;
+    return iallgatherv(send_dpacket, p, recvcounts, displs, dt);
+}
+
 Requests Comm::ialltoall( const void *sendbuf, int sendcount, 
     const Datatype &sendtype,
     void *recvbuf, int recvcount, const Datatype &recvtype ) const{
@@ -678,6 +727,13 @@ Requests Comm::ialltoall( const void *sendbuf, int sendcount,
         sendtype.raw(),
         recvbuf, recvcount, recvtype.raw() ), 0);
 }
+
+Requests Comm::ialltoall(const void *sendbuf, void *recvbuf, int count, 
+    const Datatype &dtype) const
+{
+    return ialltoall(sendbuf, count, dtype, recvbuf, count, dtype);
+}
+
 Requests Comm::ialltoallv( const void *sendbuf, const int sendcounts[], 
     const int senddispls[], const Datatype &sendtype,
     void *recvbuf, const int recvcounts[], const int recvdispls[], 
@@ -719,6 +775,7 @@ Requests Comm::iallreduce( const Datapacket &send_dpacket, void *recvbuf,
     auto &[p, n, dt] = send_dpacket;
     return iallreduce(p, recvbuf, n, dt, op);
 }
+
 Requests Comm::ireduce_scatter_block( const void *sendbuf, void *recvbuf, 
     int recvcount, const Datatype &dtype, const Oppacket &op ) const{
     return Requests::_from_raw( _obj_ptr->ireduce_scatter_block( 

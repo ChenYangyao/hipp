@@ -169,7 +169,8 @@ public:
     /** 
     Gather calls.
     (1): MPI standard-compliant.
-    (2) and (3): Send and Recv share the same datatype and count.
+    (2-4)： Send and Recv share the same datatype and count that are determined
+    by the send buffer specification.
     
     recvbuf, recvcount, recvtype - only significant at root. The send buffer 
     signature must match the recv buffer signature at root.
@@ -186,11 +187,14 @@ public:
     void gather(const void *sendbuf, void *recvbuf, 
         int count, const Datatype &dtype, int root) const;
     void gather(const Datapacket &send_dpacket, void *recvbuf, int root) const;
+    void gather(const Datapacket &send_dpacket, const Datapacket &recv_dpacket, 
+        int root) const;
     
     /**
     Variant of gather, allowing processes sending different number of items.
     (1): MPI standard-compliant.
     (2): Use abstract concept arguments - Datapacket and ContiguousBuffer.
+    (3): Same as (2) but recv datatype are inferred from the datapacket.
 
     @recvbuf, recvcounts, displs, recvtype:  place to put the received data - 
     significant only at root.
@@ -203,11 +207,15 @@ public:
         ContiguousBuffer<const int> recvcounts, 
         ContiguousBuffer<const int> displs,
         const Datatype &recvtype, int root) const;
+    void gatherv(const Datapacket &send_dpacket, const Datapacket &recv_dpacket, 
+        ContiguousBuffer<const int> recvcounts, 
+        ContiguousBuffer<const int> displs, int root) const;
 
     /**
     Scatter calls
     (1): MPI standard-compliant.
-    (2) and (3): Send and Recv share the same datatype and count.
+    (2-4): Send and Recv share the same datatype and count that are determined
+    from the recv buffer specification.
     
     sendbuf, sendcount, sendtype - only significant at root. The send buffer
     signature at root must match each recv buffer signature. Every 
@@ -227,12 +235,15 @@ public:
         int count, const Datatype &dtype, int root) const; 
     void scatter(const void *sendbuf, 
         const Datapacket &recv_dpacket, int root) const;
+    void scatter(const Datapacket &send_dpacket,
+        const Datapacket &recv_dpacket, int root) const;
 
     /**
     Variants of scatter, allowing sending to processes different number of 
     items.
     (1): MPI standard-compliant.
     (2): Use abstract concept arguments - Datapacket and ContiguousBuffer.
+    (3): Same as (2) but send datatype are inferred from the datapacket.
 
     The send buffer arguments are ignored at all processes except the root.
     ``recvbuf = IN_PLACE`` is still available.
@@ -242,6 +253,10 @@ public:
         void *recvbuf, int recvcount, const Datatype &recvtype, int root) const;
     void scatterv(const void *sendbuf, ContiguousBuffer<const int> sendcounts, 
         ContiguousBuffer<const int> displs, const Datatype &sendtype,
+        const Datapacket &recv_dpacket, int root) const;
+    void scatterv(const Datapacket &send_dpacket, 
+        ContiguousBuffer<const int> sendcounts, 
+        ContiguousBuffer<const int> displs,
         const Datapacket &recv_dpacket, int root) const;
 
     void allgather( const void *sendbuf, int sendcount, 
@@ -268,9 +283,9 @@ public:
      * 
      * The same applies for allreduce().
      */
-    void reduce( const void *sendbuf, void *recvbuf, int count, 
+    void reduce(const void *sendbuf, void *recvbuf, int count, 
         const Datatype &dtype, const Oppacket &op, int root ) const;
-    void reduce( const Datapacket &send_dpacket, void *recvbuf,
+    void reduce(const Datapacket &send_dpacket, void *recvbuf,
         const Oppacket &op, int root ) const;
 
     void allreduce( const void *sendbuf, void *recvbuf, int count, 

@@ -310,10 +310,16 @@ void Comm::gather(const void *sendbuf, void *recvbuf,
     gather(sendbuf, count, dtype, recvbuf, count, dtype, root);
 }
 
-void Comm::gather(const Datapacket &send_dpacket, 
-    void *recvbuf, int root) const {
+void Comm::gather(const Datapacket &send_dpacket, void *recvbuf, int root) const 
+{
     auto & [p,n,dt] = send_dpacket;
     gather(p, recvbuf, n, dt, root);
+}
+
+void Comm::gather(const Datapacket &send_dpacket, 
+    const Datapacket &recv_dpacket, int root) const
+{
+    gather(send_dpacket, recv_dpacket.get_buff(), root);
 }
 
 void Comm::gatherv(const void *sendbuf, int sendcount, const Datatype &sendtype, 
@@ -335,8 +341,17 @@ void Comm::gatherv(const Datapacket &send_dpacket, void *recvbuf,
         ErrLogic::throw_(ErrLogic::eLENGTH, emFLPFB, 
             "  ... recvcounts", recvcounts, 
             " does not match displs ", displs, '\n');
-    auto [p,n,dt] = send_dpacket;
+    auto & [p,n,dt] = send_dpacket;
     gatherv(p, n, dt, recvbuf, _recvcounts, _displs, recvtype, root);
+}
+
+void Comm::gatherv(const Datapacket &send_dpacket, 
+    const Datapacket &recv_dpacket, 
+    ContiguousBuffer<const int> recvcounts, 
+    ContiguousBuffer<const int> displs, int root) const
+{
+    auto & [p,n,dt] = recv_dpacket;
+    gatherv(send_dpacket, p, recvcounts, displs, dt, root);
 }
 
 void Comm::scatter(
@@ -356,6 +371,13 @@ void Comm::scatter(const void *sendbuf,
 {
     auto & [p, n, dt] = recv_dpacket;
     scatter(sendbuf, p, n, dt, root);
+}
+
+void Comm::scatter(const Datapacket &send_dpacket,
+    const Datapacket &recv_dpacket, int root) const
+{
+    auto & [p,n,dt] = send_dpacket;
+    scatter(p, recv_dpacket, root);
 }
 
 void Comm::scatterv(const void *sendbuf, const int sendcounts[], 
@@ -379,6 +401,15 @@ void Comm::scatterv(const void *sendbuf, ContiguousBuffer<const int> sendcounts,
     auto [p, n, dt] = recv_dpacket;
     scatterv(sendbuf, _sendcounts, _displs, sendtype, 
         p, n, dt, root);
+}
+
+void Comm::scatterv(const Datapacket &send_dpacket, 
+    ContiguousBuffer<const int> sendcounts, 
+    ContiguousBuffer<const int> displs,
+    const Datapacket &recv_dpacket, int root) const
+{
+    auto &[p,n,dt] = send_dpacket;
+    scatterv(p, sendcounts, displs, dt, recv_dpacket, root);
 }
 
 void Comm::allgather( const void *sendbuf, int sendcount, 

@@ -235,13 +235,13 @@ Datapacket
     .. table::
         :class: tight-table
         
-        =================================================== ==================================================
+        =================================================== ============================================================
         Method                                              Detail 
-        =================================================== ==================================================
-        default constructor                                 Not available.
+        =================================================== ============================================================
+        default constructor                                 An empty buffer, i.e., ``(buff=BOTTOM, size=0, dtype=INT)``
         copy constructor |br| and ``operator=(&&)``         Defined; ``noexcept``.
         move constructor |br| and ``operator=(const &)``    Defined; ``noexcept``.
-        =================================================== ==================================================
+        =================================================== ============================================================
 
     .. _api-mpi-dpacket-constructor:
 
@@ -258,6 +258,9 @@ Datapacket
                     Datapacket(const std::array<T, N> &buff) noexcept
                     template<typename T, typename A, std::enable_if_t<_is_intern_dtype<T>(), int> =0> \
                     Datapacket(const vector<T,A> &buff) noexcept
+                    template<typename T, \
+                        std::enable_if_t<ContiguousBufferTraits<T>::is_buffer,int> =0> \
+                        Datapacket(const T &cb)
 
         Data packet constructors. A variety of ways can be used to construct a data packet, by providing the 
         following arguments:
@@ -277,6 +280,7 @@ Datapacket
                                                                 a ``std::string`` is not writable, so that it can not be used in any receiving call.
             An array-like object of arithmetic scalars          raw array (e.g., ``int [3]``), raw buffer
                                                                 (e.g., a ``int *`` that points to ``n`` integers), ``std::array`` or ``std::vector``
+            Any other ContiguousBuffer protocol object          -
             =================================================== ===========================================================================================
         
         When constructing a data packet with the standard triplet, a ``std::string`` can be used to specify the datatype. Valid 

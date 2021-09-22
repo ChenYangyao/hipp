@@ -88,6 +88,17 @@ public:
     : Datapacket( buff.data(), static_cast<int>(buff.size()), 
         *_TypeCvt<T>::datatype ){ }
 
+    /** Any other contiguous buffer API-compliant object. */
+    template<typename T, 
+        std::enable_if_t<ContiguousBufferTraits<T>::is_buffer,int> =0>
+    Datapacket(const T &cb)
+    : Datapacket( 
+        ContiguousBuffer(cb).get_buff(), 
+        static_cast<int>(ContiguousBuffer(cb).get_size()), 
+        *_TypeCvt<std::remove_cv_t<
+            typename ContiguousBufferTraits<T>::value_t > >::datatype 
+    ){}
+
     /**
     Sometimes, triplet is used to specify a memory segement relative to 
     a base address (e.g., in RMA operations). In such cases, the first 

@@ -548,12 +548,16 @@ Class Comm: the Communication Context
         void gather(const void *sendbuf, void *recvbuf, \
             int count, const Datatype &dtype, int root) const
         void gather(const Datapacket &send_dpacket, void *recvbuf, int root) const
+        void gather(const Datapacket &send_dpacket, const Datapacket &recv_dpacket, int root) const
 
         Gather calls.
         
         (1): MPI standard-compliant.
         
-        (2,3): Send and Recv share the same datatype and count.
+        (2)：Send and recv share the same datatype and count.
+        
+        (3,4): Same as (2) but the datatype and count are taken from 
+        ``send_dpacket``.
         
         ``recvbuf``, ``recvcount``, ``recvtype`` - only significant at root. The send buffer 
         signature must match the recv buffer signature at root.
@@ -568,12 +572,15 @@ Class Comm: the Communication Context
     .. function::   \
         void gatherv(const void *sendbuf, int sendcount, const Datatype &sendtype, void *recvbuf, const int recvcounts[], const int displs[], const Datatype &recvtype, int root ) const
         void gatherv(const Datapacket &send_dpacket, void *recvbuf, ContiguousBuffer<const int> recvcounts, ContiguousBuffer<const int> displs, const Datatype &recvtype, int root) const
+        void gatherv(const Datapacket &send_dpacket, const Datapacket &recv_dpacket, ContiguousBuffer<const int> recvcounts, ContiguousBuffer<const int> displs, int root) const
 
         Variant of ``gather``, allowing processes sending different number of items.
         
         (1): MPI standard-compliant.
         
         (2): Use abstract concept arguments - Datapacket and ContiguousBuffer.
+        
+        (3): Same as (2) but recv datatype is inferred from the datapacket.
 
         ``recvbuf``, ``recvcounts``, ``displs``, ``recvtype`` specify the place to put the received data - 
         significant only at root.
@@ -584,12 +591,15 @@ Class Comm: the Communication Context
         void scatter(const void *sendbuf, int sendcount, const Datatype &sendtype, void *recvbuf, int recvcount, const Datatype &recvtype, int root )const
         void scatter(const void *sendbuf, void *recvbuf, int count, const Datatype &dtype, int root) const 
         void scatter(const void *sendbuf, const Datapacket &recv_dpacket, int root) const
+        void scatter(const Datapacket &send_dpacket, const Datapacket &recv_dpacket, int root) const
 
         Scatter calls.
 
-        (1): MPI standard-compliant. 
+        (1): MPI standard-compliant.
         
-        (2,3): Send and Recv share the same datatype and count.
+        (2): Send and recv share the same datatype and count.
+        
+        (3,4): Same as (2) but datatype and count are taken from ``recv_dpacket``.
         
         ``sendbuf``, ``sendcount``, ``sendtype`` - only significant at root. The send buffer
         signature at root must match each recv buffer signature. Every 
@@ -605,13 +615,16 @@ Class Comm: the Communication Context
     .. function::   \
         void scatterv(const void *sendbuf, const int sendcounts[], const int displs[], const Datatype &sendtype, void *recvbuf, int recvcount, const Datatype &recvtype, int root) const
         void scatterv(const void *sendbuf, ContiguousBuffer<const int> sendcounts, ContiguousBuffer<const int> displs, const Datatype &sendtype, const Datapacket &recv_dpacket, int root) const
+        void scatterv(const Datapacket &send_dpacket, ContiguousBuffer<const int> sendcounts, ContiguousBuffer<const int> displs, const Datapacket &recv_dpacket, int root) const
 
         Variants of scatter, allowing sending to processes different number of 
         items.
         
         (1): MPI standard-compliant.
         
-        (2): Use abstract concept arguments - ``Datapacket`` and ``ContiguousBuffer``.
+        (2): Use abstract concept arguments - Datapacket and ContiguousBuffer.
+        
+        (3): Same as (2) but send datatype is inferred from the datapacket.
 
         The send buffer arguments are ignored at all processes except the root.
         ``recvbuf = IN_PLACE`` is still available.
@@ -620,12 +633,45 @@ Class Comm: the Communication Context
         void allgather( const void *sendbuf, int sendcount, \
             const Datatype &sendtype,\
             void *recvbuf, int recvcount, const Datatype &recvtype ) const
+        void allgather(const void *sendbuf, void *recvbuf, \
+            int count, const Datatype &dtype) const
+        void allgather(const Datapacket &send_dpacket, \
+            void *recvbuf) const
+        void allgather(const Datapacket &send_dpacket, \
+            const Datapacket &recv_dpacket) const
         void allgatherv(\
             const void *sendbuf, int sendcount, const Datatype &sendtype, \
             void *recvbuf, const int recvcounts[], const int displs[],\
             const Datatype &recvtype ) const
+        void allgatherv(\
+            const Datapacket &send_dpacket, void *recvbuf, \
+            ContiguousBuffer<const int> recvcounts, \
+            ContiguousBuffer<const int> displs,\
+            const Datatype &recvtype) const
+        void allgatherv(\
+            const Datapacket &send_dpacket, const Datapacket &recv_dpacket,\
+            ContiguousBuffer<const int> recvcounts, \
+            ContiguousBuffer<const int> displs) const
+
+        All-variant to the gather/gatherv call - all processes received the data.
+
+    .. function::   \
         void alltoall( const void *sendbuf, int sendcount, const Datatype &sendtype,\
             void *recvbuf, int recvcount, const Datatype &recvtype ) const
+        void alltoall(const void *sendbuf, void *recvbuf, \
+            int count, const Datatype &dtype) const
+        
+        All-to-all calls.
+        
+        (1): MPI standard-compliant.
+        
+        (2): send buffer and recv buffer share the same count and datatype.
+
+        If send buffer is ``IN_PLACE``, the data are taken from and replace the recv
+        buffer.
+
+    
+    .. function::   \
         void alltoallv( const void *sendbuf, const int sendcounts[], \
             const int senddispls[], const Datatype &sendtype,\
             void *recvbuf, const int recvcounts[], const int recvdispls[], \
@@ -634,16 +680,51 @@ Class Comm: the Communication Context
             const int senddispls[], const Datatype::mpi_t sendtypes[],\
             void *recvbuf, const int recvcounts[], const int recvdispls[], \
             const Datatype::mpi_t recvtypes[] ) const
+        
+    .. function::   \
         void reduce( const void *sendbuf, void *recvbuf, int count, \
             const Datatype &dtype, const Oppacket &op, int root ) const
         void reduce( const Datapacket &send_dpacket, void *recvbuf,\
             const Oppacket &op, int root ) const
+        void reduce(const void *sendbuf, const Datapacket &recv_dpacket, \
+            const Oppacket &op, int root) const 
+        void reduce(const Datapacket &send_dpacket, const Datapacket &recv_dpacket, \
+            const Oppacket &op, int root) const
         void allreduce( const void *sendbuf, void *recvbuf, int count, \
             const Datatype &dtype, const Oppacket &op ) const
         void allreduce( const Datapacket &send_dpacket, void *recvbuf, \
             const Oppacket &op ) const
+        void allreduce(const void *sendbuf, const Datapacket &recv_dpacket,\
+            const Oppacket &op ) const
+        void allreduce(const Datapacket &send_dpacket, \
+            const Datapacket &recv_dpacket, const Oppacket &op) const
+
+        Reduce calls.
+        
+        (1): MPI standard-compliant.
+        
+        (2,4): count and datatype are taken from ``send_dpacket``.
+        
+        (3): count and datatype are taken from ``recv_dpacket``.
+
+        The same applies to ``allreduce()``.
+
+        Set ``sendbuf=IN_PLACE`` at root implies in-place reduction, i.e., at root,
+        data are taken from recv buffer and the results overwrite it.
+
+    .. function::   \
         static void reduce_local( const void *inbuf, void *inoutbuf, int count, \
             const Datatype &dtype, const Oppacket &op )
+        static void reduce_local(const Datapacket &in_dpacket, \
+            const Datapacket &inout_dpacket, const Oppacket &op)
+
+        Reduce_local calls.
+        
+        (1): MPI standard-compliant.
+        
+        (2,3): count and datatype are taken from ``in_dpacket``.
+        
+    .. function::   \
         void reduce_scatter_block( const void *sendbuf, void *recvbuf, \
             int recvcount, const Datatype &dtype, const Oppacket &op ) const
         void reduce_scatter( const void *sendbuf, void *recvbuf, \
@@ -653,10 +734,14 @@ Class Comm: the Communication Context
             int count, const Datatype &dtype, const Oppacket &op ) const
         void exscan( const void *sendbuf, void *recvbuf, \
             int count, const Datatype &dtype, const Oppacket &op ) const
+
+    .. function::   \
         Requests ibarrier() const
         Requests ibcast( \
             void *buf, int count, const Datatype &dtype, int root) const
         Requests ibcast(const Datapacket &dpacket, int root) const
+    
+    .. function::   \
         Requests igather( \
             const void *sendbuf, int sendcount, const Datatype &sendtype, \
             void *recvbuf, int recvcount, const Datatype &recvtype, int root) const
@@ -664,10 +749,23 @@ Class Comm: the Communication Context
             int count, const Datatype &dtype, int root) const
         Requests igather(const Datapacket &send_dpacket, \
             void *recvbuf, int root) const
+        Requests igather(const Datapacket &send_dpacket, \
+            const Datapacket &recv_dpacket, int root) const
         Requests igatherv(\
             const void *sendbuf, int sendcount, const Datatype &sendtype, \
             void *recvbuf, const int recvcounts[], const int displs[],\
             const Datatype &recvtype, int root ) const
+        Requests igatherv(\
+            const Datapacket &send_dpacket, void *recvbuf, \
+            ContiguousBuffer<const int> recvcounts, \
+            ContiguousBuffer<const int> displs, \
+            const Datatype &recvtype, int root ) const
+        Requests igatherv(\
+            const Datapacket &send_dpacket, const Datapacket &recv_dpacket,\
+            ContiguousBuffer<const int> recvcounts, \
+            ContiguousBuffer<const int> displs, int root) const
+
+    .. function::   \
         Requests iscatter(\
             const void *sendbuf, int sendcount, const Datatype &sendtype,\
             void *recvbuf, int recvcount, const Datatype &recvtype, int root )const
@@ -675,20 +773,50 @@ Class Comm: the Communication Context
             int count, const Datatype &dtype, int root) const
         Requests iscatter(const void *sendbuf, \
             const Datapacket &recv_dpacket, int root) const
+        Requests iscatter(const Datapacket &send_dpacket,\
+            const Datapacket &recv_dpacket, int root) const
         Requests iscatterv(\
             const void *sendbuf, const int sendcounts[], const int displs[], \
             const Datatype &sendtype,\
             void *recvbuf, int recvcount, const Datatype &recvtype, int root) const
+        Requests iscatterv(\
+            const void *sendbuf, ContiguousBuffer<const int> sendcounts, \
+            ContiguousBuffer<const int> displs, const Datatype &sendtype,\
+            const Datapacket &recv_dpacket, int root) const
+        Requests iscatterv(\
+            const Datapacket send_dpacket, ContiguousBuffer<const int> sendcounts, \
+            ContiguousBuffer<const int> displs,\
+            const Datapacket &recv_dpacket, int root) const
+
+    .. function::   \
         Requests iallgather( const void *sendbuf, int sendcount, \
             const Datatype &sendtype,\
             void *recvbuf, int recvcount, const Datatype &recvtype ) const
+        Requests iallgather(const void *sendbuf, void *recvbuf, int count, \
+            const Datatype &dtype) const
+        Requests iallgather(const Datapacket &send_dpacket, void *recvbuf) const
+        Requests iallgather(const Datapacket &send_dpacket, \
+            const Datapacket &recv_dpacket) const
         Requests iallgatherv(\
             const void *sendbuf, int sendcount, const Datatype &sendtype, \
             void *recvbuf, const int recvcounts[], const int displs[],\
             const Datatype &recvtype ) const
+        Requests iallgatherv(\
+            const Datapacket &send_dpacket,\
+            void *recvbuf, ContiguousBuffer<const int> recvcounts, \
+            ContiguousBuffer<const int> displs,\
+            const Datatype &recvtype ) const
+        Requests iallgatherv(\
+            const Datapacket &send_dpacket, const Datapacket &recv_dpacket, \
+            ContiguousBuffer<const int> recvcounts, \
+            ContiguousBuffer<const int> displs) const
+
+    .. function::   \
         Requests ialltoall( const void *sendbuf, int sendcount, \
             const Datatype &sendtype,\
             void *recvbuf, int recvcount, const Datatype &recvtype ) const
+        Requests ialltoall(const void *sendbuf, void *recvbuf, int count, \
+            const Datatype &dtype) const
         Requests ialltoallv( const void *sendbuf, const int sendcounts[], \
             const int senddispls[], const Datatype &sendtype,\
             void *recvbuf, const int recvcounts[], const int recvdispls[], \
@@ -697,13 +825,24 @@ Class Comm: the Communication Context
             const int senddispls[], const Datatype::mpi_t sendtypes[],\
             void *recvbuf, const int recvcounts[], const int recvdispls[], \
             const Datatype::mpi_t recvtypes[] ) const
+
+    .. function::   \
         Requests ireduce( const void *sendbuf, void *recvbuf, int count, \
             const Datatype &dtype, const Oppacket &op, int root ) const
         Requests ireduce( const Datapacket &send_dpacket, void *recvbuf, \
             const Oppacket &op, int root ) const
+        Requests ireduce(const void *sendbuf, const Datapacket &recv_dpacket, \
+            const Oppacket &op, int root ) const
+        Requests ireduce(const Datapacket &send_dpacket, \
+            const Datapacket &recv_dpacket, const Oppacket &op, int root ) const
         Requests iallreduce( const void *sendbuf, void *recvbuf, int count, \
             const Datatype &dtype, const Oppacket &op ) const
         Requests iallreduce( const Datapacket &send_dpacket, void *recvbuf, \
+            const Oppacket &op ) const
+        Requests iallreduce(const void *sendbuf, const Datapacket &recv_dpacket,\
+            const Oppacket &op ) const
+        Requests iallreduce(const Datapacket &send_dpacket, \
+            const Datapacket &recv_dpacket,\
             const Oppacket &op ) const
         Requests ireduce_scatter_block( const void *sendbuf, void *recvbuf, \
             int recvcount, const Datatype &dtype, const Oppacket &op ) const

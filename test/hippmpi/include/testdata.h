@@ -59,6 +59,16 @@ public:
     }
 };
 
+class TestDataBase {
+public:
+    TestDataBase(Comm &_comm) 
+    : comm(_comm), rank(comm.rank()), n_procs(comm.size()) {}
+    virtual ~TestDataBase() {}
+
+    Comm &comm;
+    int rank, n_procs;
+};
+
 class TestData {
 public:
     void init() {
@@ -106,17 +116,15 @@ public:
 };
 
 
-class TestGatherData {
+class TestGatherData : public TestDataBase {
 public:
-    TestGatherData(Comm &_comm) : comm(_comm) {
-        rank = comm.rank(); n_procs = comm.size(); 
+    TestGatherData(Comm &_comm) : TestDataBase(_comm) {
         is_root = rank == 0;
-
         assert(n_procs == 4);
-
         if( is_root ) init_master();
         else init_worker();
     }
+
     void init_master() {
         cnts = {1,2,3,4}, offs = {0,1,3,6};
 
@@ -134,6 +142,7 @@ public:
         sendbuf.assign(rank+1, rank+1);
         sendbuf_eqsz.assign(3, rank+1);
     }
+
     void chk_res() {
         ValidateData::chk_seq_eq_chunks(recvbuf, res, cnts);
         recvbuf.assign(recvbuf.size(), -1);
@@ -143,8 +152,6 @@ public:
         recvbuf_eqsz.assign(recvbuf_eqsz.size(), -1.0f);
     }
 
-    Comm &comm;
-    int rank, n_procs;
     bool is_root;
 
     vector<int> cnts, offs;

@@ -11,41 +11,41 @@ const Comm::del_attr_fn_t Comm::NULL_DEL_FN = Comm::_null_del_fn;
 std::unordered_map<int, Comm::_attr_extra_state_t *> Comm::_attr_extra_state; 
 
 ostream & Comm::info( ostream &os, int fmt_cntl ) const{
-    if( fmt_cntl == 0 ){
-        prt(os, HIPPCNTL_CLASS_INFO_INLINE(HIPP::MPI::Comm));
-        if( is_null() ) prt(os, "Null");
-        else{
-            prt(os, "size: ", size(), ", rank: ", rank());
-            if( is_inter() ) prt(os, ", remote size: ", remote_size());
-            prt(os, ", topology: ", _topostr( topo_test() ));
-        } 
+    PStream ps {os};
+    bool null_comm = is_null();
+    if( null_comm ) {
+        if( fmt_cntl == 0 )
+            ps << "Comm{Null}";
+        else
+            ps << HIPPCNTL_CLASS_INFO(HIPP::MPI::Comm), "  Null\n"; 
+        return os;
     }
-    if( fmt_cntl >= 1 ){
-        prt(os, HIPPCNTL_CLASS_INFO(HIPP::MPI::Comm));
-        if( is_null() ) prt(os, "  Null") << endl;
-        else{
-            prt(os, "  Process group",
-                "\n    rank/size:        ", rank(), '/', size());
-            if( is_inter() )
-                prt(os, "\n    remote size:      ", remote_size());
-            prt(os, "\n  Topology: ", _topostr( topo_test() ));
-            int topo = topo_test();
-            if( topo == CART ){
-                vector<int> dims, periods, coords;
-                cart_get( dims, periods, coords );
-                prt(os, "\n    ndims:            ", dims.size());
-                if( dims.size() > 0 ){
-                    prt(os, "\n    dims:             (");
-                    prt_a(os, dims) << ')';
-                    prt(os,  "\n    periods:          (");
-                    prt_a(os, periods) << ')';
-                    prt(os,  "\n    coords:           (");
-                    prt_a(os, coords) << ')';
-                }
-            }
-            os << endl;
-        } 
+
+    const int _rank = rank(), _size = size();
+    const bool inter_comm = is_inter();
+    const int topo = topo_test();
+    auto topos = _topostr(topo);
+    if(fmt_cntl == 0) {
+        ps << "Comm{size=", _size, ", rank=", _rank, ", topology=", topos;
+        if( inter_comm )
+            ps << ", remote size=", remote_size();
+        ps << "}";
+        return os;
     }
+
+    ps << HIPPCNTL_CLASS_INFO(HIPP::MPI::Comm),
+        "  Process group{size=", _size, ", rank=", _rank;
+    if( inter_comm )
+        ps << ", remote size=", remote_size();
+    ps << "}\n",
+        "  Topology{", topos;
+    if( topo == CART ) {
+        vector<int> dims, periods, coords;
+        cart_get(dims, periods, coords);
+        ps << ", ndims=", dims.size(), ", dims={", dims, 
+            "}, periods={", periods, "}, coords={", coords, "}";
+    }
+    ps << "}\n";
     return os;
 }
 void Comm::free() noexcept {

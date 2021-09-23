@@ -49,11 +49,11 @@ Class Comm: the Communication Context
 
     .. function:: void free() noexcept
 
-        free the current communicator instance, and set it to a null 
-        communicator as returned by :func:`Comm::nullval`.
-        ``free`` can be called at any time and repeatly, 
-        even for the pre-defined 
-        communicators and null communicators.
+        Free the communicator and set the instance to the null value 
+        (i.e., is_null()->true). 
+        
+        ``free()`` may be called on any object (even on a null value or other 
+        predefined communicators) at any time.
 
     .. function:: ostream &info( ostream &os = cout, int fmt_cntl = 1 ) const
                   friend ostream & operator<<( ostream &os, const Comm &comm )
@@ -69,18 +69,29 @@ Class Comm: the Communication Context
         The returned reference of ``os`` allows you to chain the outputs, such as 
         ``comm.info(cout) << " continue printing " << endl``.
         
-    .. function::    int size() const
+    .. function::   int size() const
                     int rank() const
                     bool is_null() const
                     bool is_inter() const
                     int remote_size() const
+
+        Return the basic properties of the communicator.
         
-        Return the basic information of the communicater instance: ``size()`` returns the number of
-        processes in the group that forms this communicater. ``rank()`` returns the identifier of 
-        the caller process, which is in the range of [0, size()). ``is_null()`` tests whether this 
-        is a NULL communicater (internally MPI_PROC_NULL). ``is_inter()`` tests whether this is 
-        an inter-communicater, if it is, ``remote_size()`` returns the number of processes in the 
-        remote group of the inter-communicater.
+        
+        ``size``: number of processes in the process group of the communicator.
+        
+        ``rank``: the identifier of the calling process among all processes. It must
+        be in the range ``[0, size)``.
+        
+        ``is_null``: whether or not the communicator is a null value 
+        (internally, ``MPI_PROC_NULL``).
+        
+        ``is_inter``: whether or not the communicator is an inter-communicator.
+        
+        ``remote_size``: number of processes in the remote group for an 
+        inter-communicator.
+        
+        For an inter-communicator, ``size`` and ``rank`` are the values of the local group.
 
     .. _api-mpi-comm-attribute-caching:
 

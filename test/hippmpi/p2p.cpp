@@ -17,6 +17,25 @@ void test_comm_info(Comm &comm){
     assert(comm.size() == n_procs);
     if( rank == 0 )
         HIPPMPI_TEST_PROGRESS, "size OK", endl;
+
+    auto cart = comm.cart_create({2,2}, {0,1});
+    auto null_comm = comm.nullval();
+    // Test printing
+    if( rank == 0 ) {
+        pout << comm;
+        comm.info(cout, 1);
+        comm.info(cout, 0) << endl;
+        
+        pout << null_comm;
+        null_comm.info(cout, 1);
+        null_comm.info(cout, 0) << endl;
+    
+        pout << cart;
+        cart.info(cout, 1);
+        cart.info(cout, 0) << endl;
+        
+        HIPPMPI_TEST_PROGRESS, "info and operator<< OK", endl;
+    }
 }
 
 void test_send(Comm &comm){

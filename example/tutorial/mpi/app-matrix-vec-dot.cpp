@@ -46,7 +46,6 @@ int main(int argc, char const *argv[]) {
                 comm.send(src, row);                    // an empty message
             }
         }
-
         pout << "c = A * b = ", c, endl;
     }
 

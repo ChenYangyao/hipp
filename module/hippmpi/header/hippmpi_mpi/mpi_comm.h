@@ -32,12 +32,29 @@ public:
     ostream &info( ostream &os = cout, int fmt_cntl = 1 ) const;
     friend ostream & operator<<( ostream &os, const Comm &comm );
 
+    /** 
+    Free the communicator and set the instance to the null value 
+    (i.e., is_null()->true). 
+    ``free()`` may be called on any object (even on a null value or other 
+    predefined communicators) at any time.
+    */
     void free() noexcept;
 
+    /**
+    Return the basic properties of the communicator.
+    @size: number of processes in the process group of the communicator.
+    @rank: the identifier of the calling process among all processes. It must
+    be in the range ``[0, size)``.
+    @is_null: whether or not the communicator is a null value 
+    (internally, ``MPI_PROC_NULL``).
+    @is_inter: whether or not the communicator is an inter-communicator.
+    @remote_size: number of processes in the remote group for an 
+    inter-communicator.
+    For an inter-communicator, size and rank are the values of the local group.
+    */
     int size() const;
     int rank() const;
     bool is_null() const;
-
     bool is_inter() const;
     int remote_size() const;
 

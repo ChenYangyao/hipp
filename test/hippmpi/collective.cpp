@@ -12,7 +12,7 @@ struct TestGather : TestGatherData {
     }
     HIPPMPI_TEST_F_BEGIN(test_standard_call)
         float *p_s = sendbuf_eqsz.data(), *p_r = recvbuf_eqsz.data();
-        int n_s = sendbuf_eqsz.size(), n_r = recvbuf_eqsz.size();
+        int n_s = sendbuf_eqsz.size();
         for(int i=0; i<5; ++i){
             comm.gather( p_s, n_s, FLOAT, p_r, n_s, FLOAT, 0 );
             if( is_root ) chk_res_eqsz();
@@ -22,7 +22,7 @@ struct TestGather : TestGatherData {
     HIPPMPI_TEST_F_BEGIN(test_datapacket)
         auto &v_s = sendbuf_eqsz, &v_r = recvbuf_eqsz;
         float *p_s = v_s.data(), *p_r = v_r.data();
-        int n_s = v_s.size(), n_r = v_r.size();
+        int n_s = v_s.size();
         for(int i=0; i<3; ++i){
             comm.gather( p_s, p_r, n_s, FLOAT, 0 );
             if( is_root ) chk_res_eqsz();
@@ -42,7 +42,7 @@ struct TestGatherv : TestGatherData {
     }
     HIPPMPI_TEST_F_BEGIN(test_standard_call)
         auto *p_s = sendbuf.data(), *p_r = recvbuf.data();
-        int n_s = sendbuf.size(), n_r = recvbuf.size();
+        int n_s = sendbuf.size();
         for(int i=0; i<3; ++i){
             comm.gatherv(p_s, n_s, INT, p_r, cnts.data(), offs.data(), INT, 0);
             if( is_root ) chk_res();

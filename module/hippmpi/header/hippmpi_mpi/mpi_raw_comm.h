@@ -107,12 +107,7 @@ public:
     MPI_Request ibsend( const void *buff, int count, MPI_Datatype dtype, 
         int dest, int tag ) const;
     MPI_Request issend( const void *buff, int count, MPI_Datatype dtype, 
-        int dest, int tag ) const{
-        MPI_Request rq;
-        ErrMPI::check( MPI_Issend(buff, count, dtype, dest, tag, _val, &rq), 
-            emFLPFB );
-        return rq;
-    }
+        int dest, int tag ) const;
     MPI_Request irsend( const void *buff, int count, MPI_Datatype dtype, 
         int dest, int tag ) const;
     MPI_Request irecv( void *buff, int count, MPI_Datatype dtype, 
@@ -321,7 +316,7 @@ void _Comm::del_attr( int keyval ) {
 }
 
 inline 
-auto _Comm::split( int color, int key = 0 ) const -> mpi_t {
+auto _Comm::split( int color, int key) const -> mpi_t {
     mpi_t newcomm;
     ErrMPI::check( 
         MPI_Comm_split( _val, color, key, &newcomm ), emFLPFB );
@@ -526,7 +521,8 @@ MPI_Request _Comm::irsend( const void *buff, int count, MPI_Datatype dtype,
 
 inline 
 MPI_Request _Comm::irecv( void *buff, int count, MPI_Datatype dtype, 
-    int src, int tag ) const{
+    int src, int tag ) const
+{
     MPI_Request rq;
     ErrMPI::check( MPI_Irecv(buff, count, dtype, src, tag, _val, &rq) );
     return rq;
@@ -535,7 +531,8 @@ MPI_Request _Comm::irecv( void *buff, int count, MPI_Datatype dtype,
 inline 
 MPI_Status _Comm::sendrecv(const void *sendbuff, int sendcount, 
     MPI_Datatype sendtype, int dest, int sendtag, void *recvbuff, 
-    int recvcount, MPI_Datatype recvtype, int src, int recvtag) {
+    int recvcount, MPI_Datatype recvtype, int src, int recvtag) 
+{
     MPI_Status st;
     ErrMPI::check( MPI_Sendrecv(sendbuff, sendcount, sendtype, 
         dest, sendtag, recvbuff, recvcount, recvtype, 
@@ -560,7 +557,8 @@ inline MPI_Status _Comm::iprobe(int src, int tag, int &flag) const {
     return st;
 }
 
-inline MPI_Status _Comm::probe(int src, int tag) const {
+inline MPI_Status _Comm::probe(int src, int tag) const 
+{
     MPI_Status st;
     ErrMPI::check(MPI_Probe(src, tag, _val, &st), 
         emFLPFB, "  ... src=", src, ", tag=", tag, '\n');
@@ -568,7 +566,8 @@ inline MPI_Status _Comm::probe(int src, int tag) const {
 }
 
 inline MPI_Status _Comm::improbe(
-    int src, int tag, int &flag, MPI_Message &message) const {
+    int src, int tag, int &flag, MPI_Message &message) const 
+{
     MPI_Status st;
     ErrMPI::check(
         MPI_Improbe(src, tag, _val, &flag, &message, &st), 
@@ -584,7 +583,8 @@ inline MPI_Status _Comm::mprobe(int src, int tag, MPI_Message &message) const {
 }
 
 inline MPI_Status _Comm::mrecv( void *buff, int count, MPI_Datatype dtype, 
-    MPI_Message &message){
+    MPI_Message &message)
+{
     MPI_Status st;
     ErrMPI::check(MPI_Mrecv(buff, count, dtype, &message, &st), emFLPFB, 
         "  ... buff=", buff, ", count=", count, '\n');
@@ -592,7 +592,8 @@ inline MPI_Status _Comm::mrecv( void *buff, int count, MPI_Datatype dtype,
 }
 
 inline MPI_Request _Comm::imrecv(void *buff, int count, MPI_Datatype dtype, 
-    MPI_Message &message){
+    MPI_Message &message)
+{
     MPI_Request req;
     ErrMPI::check(MPI_Imrecv(buff, count, dtype, &message, &req), emFLPFB, 
         "  ... buff=", buff, ", count=", count, '\n');

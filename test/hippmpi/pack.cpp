@@ -61,8 +61,20 @@ void test_external_pack(Comm &comm) {
         TestData td; td.init();
 
         ExternalPack pk(1024);
-        pk.push(td.x).push(td.y).push(td.nz).push(td.z)
-            .push(td.sz_buff).push({td.ptr, td.sz_buff}).push(td.arr);
+        pk.push(td.x);
+        HIPPMPI_TEST_PROGRESS, "push td.x", endl;
+        pk.push(td.y);
+        HIPPMPI_TEST_PROGRESS, "push td.y", endl;
+        pk.push(td.nz);
+        HIPPMPI_TEST_PROGRESS, "push td.nz", endl;
+        pk.push(td.z);
+        HIPPMPI_TEST_PROGRESS, "push td.z", endl;
+        pk.push(td.sz_buff);
+        HIPPMPI_TEST_PROGRESS, "push td.sz_buff", endl;
+        pk.push({td.ptr, td.sz_buff});
+        HIPPMPI_TEST_PROGRESS, "push {td.ptr, td.sz_buff}", endl;
+        pk.push(td.arr);
+        HIPPMPI_TEST_PROGRESS, "push td.arr", endl;
         comm.send(1, 0, pk.as_sendbuf());
 
         pk.set_size(10).set_position(0);
@@ -100,6 +112,8 @@ void test_external_pack(Comm &comm) {
 
 } // namespace mpi
 
+using namespace HIPP::MPI;
+using namespace HIPP;
 
 
 int main(int argc, char const *argv[])
@@ -107,11 +121,22 @@ int main(int argc, char const *argv[])
     HIPP::MPI::Env env;
     auto comm = env.world();
 
-    HIPP::MPI::test_pack(comm);
-    comm.barrier();
+    try {
+        HIPP::MPI::test_pack(comm);
+        comm.barrier();
 
-    HIPP::MPI::test_external_pack(comm);
-    comm.barrier();
+    } catch( ErrMPI & e ) {
+        perr << e.whats(), endl;
+        throw;
+    }
+
+    try {
+        HIPP::MPI::test_external_pack(comm);
+        comm.barrier();
+    } catch( ErrMPI & e ) {
+        perr << e.whats(), endl;
+        throw;
+    }
 
     return 0;
 }

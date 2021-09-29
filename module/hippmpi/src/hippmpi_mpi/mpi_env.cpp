@@ -40,23 +40,27 @@ Env::Env(){
     MPI_Init(NULL, NULL);
     _comm = MPI_COMM_WORLD;
     MPI_Comm_set_errhandler(_comm, MPI_ERRORS_RETURN);
+    _init_predefined_objects();
     _init_comm_intern_attr();
 }
 Env::Env(int &argc, char **&argv ){
     MPI_Init(&argc, &argv);
     _comm = MPI_COMM_WORLD;
     MPI_Comm_set_errhandler(_comm, MPI_ERRORS_RETURN);
+    _init_predefined_objects();
     _init_comm_intern_attr();
 }
 Env::Env(int &argc, char **&argv, int required, int &provided ){
     MPI_Init_thread( &argc, &argv, required, &provided );
     _comm = MPI_COMM_WORLD;
     MPI_Comm_set_errhandler(_comm, MPI_ERRORS_RETURN);
+    _init_predefined_objects();
     _init_comm_intern_attr();
 }
 Env::~Env() noexcept{
     try{
         _free_comm_intern_attr();
+        _free_predefined_objects();
     }catch(...){
         ErrMPI::abort(1, emFLPFB);
     }
@@ -159,6 +163,14 @@ void Env::_free_comm_intern_attr(){
         comm.del_attr( _comm_intern_priv_keyval );
 
     Comm::free_keyval( _comm_intern_priv_keyval );
+}
+
+void Env::_init_predefined_objects() {
+    Datatype::_init_predefined_datatypes();
+}
+
+void Env::_free_predefined_objects() {
+    Datatype::_free_predefined_datatypes();
 }
 
 

@@ -32,14 +32,13 @@ protected:
 TEST_F(ConceptRawArrayTest, HelperSizeExtents) {
     using t1 = int[3];
     using t2 = double[3][4];
-    using at1 = std::array<int, 3>;
-    using at2 = std::array<std::array<double, 4>, 3>;
     class A {};
     
     auto ext1 = helper_t::extents<t1>();
     auto ext2 = helper_t::extents<t2>();
     chk_iterable_eq(ext1, arr_st<1>{3});
     chk_iterable_eq(ext2, arr_st<2>{3, 4});
+    
     
     size_t sz1 = helper_t::size<t1>(),
         sz2 = helper_t::size<t2>();

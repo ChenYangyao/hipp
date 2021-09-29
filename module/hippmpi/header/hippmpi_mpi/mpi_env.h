@@ -1,7 +1,7 @@
 /**
- * creat: Yangyao CHEN, 2020/01/21
- *      [write   ] Env - the MPI environment inquiry and management class.
- */ 
+create: Yangyao CHEN, 2020/01/21
+    [write   ] Env - the MPI environment inquiry and management class.
+*/ 
 
 #ifndef _HIPPMPI_MPI_ENV_H_
 #define _HIPPMPI_MPI_ENV_H_
@@ -38,8 +38,8 @@ class SeqBlock;
 
 
 /**
- * the MPI environment inquiry and management class.
- */
+The MPI environment inquiry and management class.
+*/
 class Env{
 public:
     enum: int {
@@ -58,32 +58,32 @@ public:
     ~Env() noexcept;
 
     /**
-     * info() - print MPI environment details
-     * @fmt_cntl: 0/1 for inline/block info, 2 for block library version.
-     * 
-     * operator(os, env) is equivalent to env.info(os).
-     */
+    info() - print MPI environment details
+    @fmt_cntl: 0/1 for inline/block info, 2 for block library version.
+    
+    operator(os, env) is equivalent to env.info(os).
+    */
     ostream & info( ostream &os = cout, int fmt_cntl = 1 ) const;
     friend ostream & operator<<( ostream &os, const Env &);
     
     /**
-     * can be called when MPI is inactive, that is, before MPI_Init() or after 
-     * MPI_Finalize(). Must be thread-safe.
-     */
+    Can be called when MPI is inactive, that is, before MPI_Init() or after 
+    MPI_Finalize(). Must be thread-safe.
+    */
     static void version( int &version, int &subversion );
     static string library_version();
 
     /**
-     * inquire runtime environment
-     */
+    Inquire runtime environment
+    */
     int tag_ub() const;
     int host() const;
     int io() const;
     int wtime_is_global() const;
 
     /**
-     * inquire processor information
-     */
+    Inquire processor information
+    */
     static string processor_name();
 
     static Comm world() noexcept { return Comm::world(); }
@@ -97,12 +97,13 @@ protected:
     int _get_attr( int keyval, int &attrval ) const noexcept;
     void _init_comm_intern_attr();
     void _free_comm_intern_attr();
+    void _init_predefined_objects();
+    void _free_predefined_objects();
 };
 
 inline ostream & operator<<( ostream &os, const Env &env){ 
     return env.info( os );
 }
-
 
 
 } // namespace MPI

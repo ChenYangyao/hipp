@@ -10,8 +10,11 @@ include(cmake/colors.cmake)
 include(cmake/printings.cmake)
 define_colors()
 
+
 # Options
-set(CMAKE_CXX_FLAGS "-O3 -Wall" CACHE STRING "c++ flags")
+if(NOT CMAKE_CXX_FLAGS)
+    set(CMAKE_CXX_FLAGS "-O3 -Wall" CACHE STRING "cxx flags" FORCE)
+endif()
 
 option(enable-mpi "install mpi component?" OFF)
 

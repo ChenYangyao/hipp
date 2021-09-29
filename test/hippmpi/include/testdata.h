@@ -108,8 +108,8 @@ public:
     vector<double> z;
     int nz;
 
-    vector<long> _buff;
-    long *ptr;
+    vector<int> _buff;
+    int *ptr;
     int sz_buff;
 
     std::array<double, 3> arr;

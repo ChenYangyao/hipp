@@ -1143,11 +1143,11 @@ template<typename ...SizeTs>
 size_t _HIPP_TEMPCLS::_indices_to_pos(size_t prev, 
     size_t id0, SizeTs ...ids) noexcept 
 {
-    constexpr size_t rem_rank = sizeof...(SizeTs), 
-        next_dim = RANK - rem_rank;
+    constexpr size_t rem_rank = sizeof...(SizeTs);
     if constexpr ( rem_rank == 0 ) {
         return prev + id0;
     }else {
+        constexpr size_t next_dim = RANK - rem_rank;
         return _indices_to_pos( (prev + id0)*_shape[next_dim], ids...); 
     }
 }

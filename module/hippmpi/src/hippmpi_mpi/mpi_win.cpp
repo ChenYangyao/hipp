@@ -156,71 +156,74 @@ void Win::detach(const void *base){
 Win Win::nullval() noexcept{
     return _from_raw(_obj_raw_t::nullval(), 0);
 }
-void Win::put(int target_rank, const Datapacket &origin_dpacket, 
-    const Datapacket &target_dpacket){
-    auto &o = origin_dpacket;
-    auto &t = target_dpacket;
-    _obj_ptr->put(o._buff, o._size, o._dtype.raw(), target_rank, 
-        (aint_t)t._buff, t._size, t._dtype.raw());
+void Win::put(int target_rank, const ConstDatapacket &origin_dpacket, 
+    const ConstDatapacket &target_dpacket) 
+{
+    auto &[p_o, n_o, dt_o] = origin_dpacket;
+    auto &[p_t, n_t, dt_t] = target_dpacket;
+    _obj_ptr->put(p_o, n_o, dt_o.raw(), target_rank, 
+        (aint_t)p_t, n_t, dt_t.raw());
 }
-void Win::put(int target_rank, const Datapacket &origin_dpacket, 
+void Win::put(int target_rank, const ConstDatapacket &origin_dpacket, 
     aint_t target_disp){
-    auto &o = origin_dpacket;
-    auto dtype = o._dtype.raw();
-    _obj_ptr->put(o._buff, o._size, dtype, target_rank, target_disp, 
-        o._size, dtype);
+    auto &[p, n, dt] = origin_dpacket;
+    auto dtype = dt.raw();
+    _obj_ptr->put(p, n, dtype, target_rank, target_disp, 
+        n, dtype);
 }
 void Win::get(int target_rank, const Datapacket &origin_dpacket, 
-    const Datapacket &target_dpacket){
-    auto &o = origin_dpacket;
-    auto &t = target_dpacket;
-    _obj_ptr->get(o._buff, o._size, o._dtype.raw(), target_rank, 
-        (aint_t)t._buff, t._size, t._dtype.raw());
+    const ConstDatapacket &target_dpacket){
+    auto &[p_o, n_o, dt_o] = origin_dpacket;
+    auto &[p_t, n_t, dt_t] = target_dpacket;
+    _obj_ptr->get(p_o, n_o, dt_o.raw(), target_rank, 
+        (aint_t)p_t, n_t, dt_t.raw());
 }
 void Win::get(int target_rank, const Datapacket &origin_dpacket, 
     aint_t target_disp){
-    auto &o = origin_dpacket;
-    auto dtype = o._dtype.raw();
-    _obj_ptr->get(o._buff, o._size, dtype, target_rank, 
-        target_disp, o._size, dtype);
+    auto &[p,n,dt] = origin_dpacket;
+    auto dtype = dt.raw();
+    _obj_ptr->get(p, n, dtype, target_rank, 
+        target_disp, n, dtype);
 }
 void Win::accumulate(int target_rank, const Oppacket &op, 
-    const Datapacket &origin_dpacket, const Datapacket &target_dpacket){
-    auto &o = origin_dpacket;
-    auto &t = target_dpacket;
-    _obj_ptr->accumulate(o._buff, o._size, o._dtype.raw(), target_rank, 
-        (aint_t)t._buff, t._size, t._dtype.raw(), op._op.raw());
+    const ConstDatapacket &origin_dpacket, 
+    const ConstDatapacket &target_dpacket)
+{
+    auto &[p_o, n_o, dt_o] = origin_dpacket;
+    auto &[p_t, n_t, dt_t] = target_dpacket;
+    _obj_ptr->accumulate(p_o, n_o, dt_o.raw(), target_rank, 
+        (aint_t)p_t, n_t, dt_t.raw(), op._op.raw());
 }
 void Win::accumulate(int target_rank, const Oppacket &op, 
-    const Datapacket &origin_dpacket, aint_t target_disp){
-    auto &o = origin_dpacket;
-    auto dtype = o._dtype.raw();
-    _obj_ptr->accumulate(o._buff, o._size, dtype, target_rank, 
-        target_disp, o._size, dtype, op._op.raw());
+    const ConstDatapacket &origin_dpacket, aint_t target_disp){
+    auto &[p,n,dt] = origin_dpacket;
+    auto dtype = dt.raw();
+    _obj_ptr->accumulate(p, n, dtype, target_rank, 
+        target_disp, n, dtype, op._op.raw());
 }
 void Win::get_accumulate(int target_rank, const Oppacket &op, 
     const Datapacket &result_dpacket, 
-    const Datapacket &origin_dpacket, 
-    const Datapacket &target_dpacket){
-    auto &r = result_dpacket;
-    auto &o = origin_dpacket;
-    auto &t = target_dpacket;
+    const ConstDatapacket &origin_dpacket, 
+    const ConstDatapacket &target_dpacket){
+    auto &[p_r, n_r, dt_r] = result_dpacket;
+    auto &[p_o, n_o, dt_o] = origin_dpacket;
+    auto &[p_t, n_t, dt_t] = target_dpacket;
     _obj_ptr->get_accumulate(
-        o._buff, o._size, o._dtype.raw(), 
-        r._buff, r._size, r._dtype.raw(),
+        p_o, n_o, dt_o.raw(), 
+        p_r, n_r, dt_r.raw(),
         target_rank,
-        (aint_t)t._buff, t._size, t._dtype.raw(), op._op.raw());
+        (aint_t)p_t, n_t, dt_t.raw(), op._op.raw());
 }
 void Win::get_accumulate(int target_rank, const Oppacket &op, 
     const Datapacket &result_dpacket, const void *origin_addr, 
     aint_t target_disp){
-    auto &r = result_dpacket;
-    auto dtype = r._dtype.raw();
+    auto &[p,n,dt] = result_dpacket;
+    auto dtype = dt.raw();
     _obj_ptr->get_accumulate(
-        origin_addr, r._size, dtype, 
-        r._buff, r._size, dtype,
+        origin_addr, n, dtype, 
+        p, n, dtype,
         target_rank,
-        target_disp, r._size, dtype, op._op.raw());
+        target_disp, n, dtype, op._op.raw());
 }
 void Win::fetch_and_op(int target_rank, const Oppacket &op, 
     const Datatype &dtype, 
@@ -234,78 +237,82 @@ void Win::compare_and_swap(int target_rank, const Datatype &dtype,
     _obj_ptr->compare_and_swap(origin_addr, compare_addr, result_addr, 
         dtype.raw(), target_rank, target_disp);
 }
-Requests Win::rput(int target_rank, const Datapacket &origin_dpacket, 
-    const Datapacket &target_dpacket){
-    auto &o = origin_dpacket;
-    auto &t = target_dpacket;
-    auto rq = _obj_ptr->rput(o._buff, o._size, o._dtype.raw(), target_rank, 
-        (aint_t)t._buff, t._size, t._dtype.raw());
+Requests Win::rput(int target_rank, const ConstDatapacket &origin_dpacket, 
+    const ConstDatapacket &target_dpacket){
+    auto &[p_o, n_o, dt_o] = origin_dpacket;
+    auto &[p_t, n_t, dt_t] = target_dpacket;
+    auto rq = _obj_ptr->rput(p_o, n_o, dt_o.raw(), target_rank, 
+        (aint_t)p_t, n_t, dt_t.raw());
     return Requests::_from_raw(rq, 0);
 }
-Requests Win::rput(int target_rank, const Datapacket &origin_dpacket, 
+Requests Win::rput(int target_rank, const ConstDatapacket &origin_dpacket, 
     aint_t target_disp){
-    auto &o = origin_dpacket;
-    auto dtype = o._dtype.raw();
-    auto rq = _obj_ptr->rput(o._buff, o._size, dtype, target_rank, target_disp, 
-        o._size, dtype);
+    auto &[p,n,dt] = origin_dpacket;
+    auto dtype = dt.raw();
+    auto rq = _obj_ptr->rput(p, n, dtype, target_rank, target_disp, 
+        n, dtype);
     return Requests::_from_raw(rq, 0);
 }
 Requests Win::rget(int target_rank, const Datapacket &origin_dpacket, 
-    const Datapacket &target_dpacket){
-    auto &o = origin_dpacket;
-    auto &t = target_dpacket;
-    auto rq = _obj_ptr->rget(o._buff, o._size, o._dtype.raw(), target_rank, 
-        (aint_t)t._buff, t._size, t._dtype.raw());
+    const ConstDatapacket &target_dpacket){
+    auto &[p_o, n_o, dt_o] = origin_dpacket;
+    auto &[p_t, n_t, dt_t] = target_dpacket;
+    auto rq = _obj_ptr->rget(p_o, n_o, dt_o.raw(), target_rank, 
+        (aint_t)p_t, n_t, dt_t.raw());
     return Requests::_from_raw(rq, 0);
 }
 Requests Win::rget(int target_rank, const Datapacket &origin_dpacket, 
-    aint_t target_disp){
-        auto &o = origin_dpacket;
-    auto dtype = o._dtype.raw();
-    auto rq = _obj_ptr->rget(o._buff, o._size, dtype, target_rank, 
-        target_disp, o._size, dtype);
+    aint_t target_disp)
+{
+    auto &[p,n,dt] = origin_dpacket;
+    auto dtype = dt.raw();
+    auto rq = _obj_ptr->rget(p, n, dtype, target_rank, 
+        target_disp, n, dtype);
     return Requests::_from_raw(rq, 0);
 }
 Requests Win::raccumulate(int target_rank, const Oppacket &op, 
-    const Datapacket &origin_dpacket, const Datapacket &target_dpacket){
-        auto &o = origin_dpacket;
-    auto &t = target_dpacket;
-    auto rq = _obj_ptr->raccumulate(o._buff, o._size, o._dtype.raw(), target_rank, 
-        (aint_t)t._buff, t._size, t._dtype.raw(), op._op.raw());
+    const ConstDatapacket &origin_dpacket, 
+    const ConstDatapacket &target_dpacket)
+{
+    auto &[p_o, n_o, dt_o] = origin_dpacket;
+    auto &[p_t, n_t, dt_t] = target_dpacket;
+    auto rq = _obj_ptr->raccumulate(p_o, n_o, dt_o.raw(), target_rank, 
+        (aint_t)p_t, n_t, dt_t.raw(), op._op.raw());
     return Requests::_from_raw(rq, 0);
 }
 Requests Win::raccumulate(int target_rank, const Oppacket &op, 
-    const Datapacket &origin_dpacket, aint_t target_disp){
-    auto &o = origin_dpacket;
-    auto dtype = o._dtype.raw();
-    auto rq = _obj_ptr->raccumulate(o._buff, o._size, dtype, target_rank, 
-        target_disp, o._size, dtype, op._op.raw());
+    const ConstDatapacket &origin_dpacket, aint_t target_disp){
+    auto &[p,n,dt] = origin_dpacket;
+    auto dtype = dt.raw();
+    auto rq = _obj_ptr->raccumulate(p, n, dtype, target_rank, 
+        target_disp, n, dtype, op._op.raw());
     return Requests::_from_raw(rq, 0);
 }
 Requests Win::rget_accumulate(int target_rank, const Oppacket &op, 
     const Datapacket &result_dpacket, 
-    const Datapacket &origin_dpacket, 
-    const Datapacket &target_dpacket){
-    auto &r = result_dpacket;
-    auto &o = origin_dpacket;
-    auto &t = target_dpacket;
+    const ConstDatapacket &origin_dpacket, 
+    const ConstDatapacket &target_dpacket)
+{
+    auto &[p_r, n_r, dt_r] = result_dpacket;
+    auto &[p_o, n_o, dt_o] = origin_dpacket;
+    auto &[p_t, n_t, dt_t] = target_dpacket;
     auto rq = _obj_ptr->rget_accumulate(
-        o._buff, o._size, o._dtype.raw(), 
-        r._buff, r._size, r._dtype.raw(),
+        p_o, n_o, dt_o.raw(), 
+        p_r, n_r, dt_r.raw(),
         target_rank,
-        (aint_t)t._buff, t._size, t._dtype.raw(), op._op.raw());
+        (aint_t)p_t, n_t, dt_t.raw(), op._op.raw());
     return Requests::_from_raw(rq, 0);
 }
 Requests Win::rget_accumulate(int target_rank, const Oppacket &op, 
     const Datapacket &result_dpacket, const void *origin_addr, 
     aint_t target_disp){
-    auto &r = result_dpacket;
-    auto dtype = r._dtype.raw();
+    auto &[p,n,dt] = result_dpacket;
+    auto dtype = dt.raw();
     auto rq = _obj_ptr->rget_accumulate(
-        origin_addr, r._size, dtype, 
-        r._buff, r._size, dtype,
+        origin_addr, n, dtype, 
+        p, n, dtype,
         target_rank,
-        target_disp, r._size, dtype, op._op.raw());    
+        target_disp, n, dtype, op._op.raw());    
     return Requests::_from_raw(rq, 0);
 }
 void Win::fence(int assert){

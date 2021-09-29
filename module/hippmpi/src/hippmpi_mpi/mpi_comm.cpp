@@ -239,30 +239,30 @@ Win Comm::win_allocate_shared(void *&base_ptr,
     return Win::_from_raw(win, Win::_obj_raw_t::stFREE);
 }
 
-Status Comm::sendrecv(const Datapacket &send_dpacket, int dest, int sendtag, 
+Status Comm::sendrecv(const ConstDatapacket &send_dpacket, int dest, int sendtag, 
     const Datapacket &recv_dpacket, int src, int recvtag)
 {
-    const auto &sdp = send_dpacket;
-    const auto &rdp = recv_dpacket;
+    const auto &[p_s,n_s,dt_s] = send_dpacket;
+    const auto &[p_r,n_r,dt_r] = recv_dpacket;
     return _obj_ptr->sendrecv(
-        sdp._buff, sdp._size, sdp._dtype.raw(), dest, sendtag, 
-        rdp._buff, rdp._size, rdp._dtype.raw(), src, recvtag);
+        p_s, n_s, dt_s.raw(), dest, sendtag, 
+        p_r, n_r, dt_r.raw(), src, recvtag);
 }
 
-Status Comm::sendrecv(const Datapacket &send_dpacket, int dest, int sendtag, 
+Status Comm::sendrecv(const ConstDatapacket &send_dpacket, int dest, int sendtag, 
     void *recvbuf, int src, int recvtag)
 {
-    const auto &dp = send_dpacket;
+    const auto [p,n,dt] = send_dpacket;
     return _obj_ptr->sendrecv(
-        dp._buff, dp._size, dp._dtype.raw(), dest, sendtag,
-        recvbuf, dp._size, dp._dtype.raw(), src, recvtag);
+        p, n, dt.raw(), dest, sendtag,
+        recvbuf, n, dt.raw(), src, recvtag);
 }
 
 Status Comm::sendrecv_replace(const Datapacket &dpacket, int dest, int sendtag, 
     int src, int recvtag)
 {
-    const auto &dp = dpacket;
-    return _obj_ptr->sendrecv_replace(dp._buff, dp._size, dp._dtype.raw(), 
+    const auto &[p, n, dt] = dpacket;
+    return _obj_ptr->sendrecv_replace(p, n, dt.raw(), 
         dest, sendtag, src, recvtag);
 }
 
@@ -310,13 +310,14 @@ void Comm::gather(const void *sendbuf, void *recvbuf,
     gather(sendbuf, count, dtype, recvbuf, count, dtype, root);
 }
 
-void Comm::gather(const Datapacket &send_dpacket, void *recvbuf, int root) const 
+void Comm::gather(const ConstDatapacket &send_dpacket, void *recvbuf, 
+int root) const 
 {
     auto & [p,n,dt] = send_dpacket;
     gather(p, recvbuf, n, dt, root);
 }
 
-void Comm::gather(const Datapacket &send_dpacket, 
+void Comm::gather(const ConstDatapacket &send_dpacket, 
     const Datapacket &recv_dpacket, int root) const
 {
     gather(send_dpacket, recv_dpacket.get_buff(), root);
@@ -330,7 +331,7 @@ void Comm::gatherv(const void *sendbuf, int sendcount, const Datatype &sendtype,
         recvbuf, recvcounts, displs, recvtype.raw(), root );
 }
 
-void Comm::gatherv(const Datapacket &send_dpacket, void *recvbuf, 
+void Comm::gatherv(const ConstDatapacket &send_dpacket, void *recvbuf, 
     ContiguousBuffer<const int> recvcounts, 
     ContiguousBuffer<const int> displs,
     const Datatype &recvtype, int root) const
@@ -345,7 +346,7 @@ void Comm::gatherv(const Datapacket &send_dpacket, void *recvbuf,
     gatherv(p, n, dt, recvbuf, _recvcounts, _displs, recvtype, root);
 }
 
-void Comm::gatherv(const Datapacket &send_dpacket, 
+void Comm::gatherv(const ConstDatapacket &send_dpacket, 
     const Datapacket &recv_dpacket, 
     ContiguousBuffer<const int> recvcounts, 
     ContiguousBuffer<const int> displs, int root) const
@@ -373,7 +374,7 @@ void Comm::scatter(const void *sendbuf,
     scatter(sendbuf, p, n, dt, root);
 }
 
-void Comm::scatter(const Datapacket &send_dpacket,
+void Comm::scatter(const ConstDatapacket &send_dpacket,
     const Datapacket &recv_dpacket, int root) const
 {
     auto & [p,n,dt] = send_dpacket;
@@ -403,7 +404,7 @@ void Comm::scatterv(const void *sendbuf, ContiguousBuffer<const int> sendcounts,
         p, n, dt, root);
 }
 
-void Comm::scatterv(const Datapacket &send_dpacket, 
+void Comm::scatterv(const ConstDatapacket &send_dpacket, 
     ContiguousBuffer<const int> sendcounts, 
     ContiguousBuffer<const int> displs,
     const Datapacket &recv_dpacket, int root) const
@@ -419,12 +420,56 @@ void Comm::allgather( const void *sendbuf, int sendcount,
         recvbuf, recvcount, recvtype.raw() );
 }
 
+void Comm::allgather(const void *sendbuf, void *recvbuf, 
+    int count, const Datatype &dtype) const 
+{
+    allgather(sendbuf, count, dtype, recvbuf, count, dtype);
+}
+
+void Comm::allgather(const ConstDatapacket &send_dpacket,
+    void *recvbuf) const 
+{
+    const auto &[p,n,dt] = send_dpacket;
+    allgather(p, recvbuf, n, dt);
+}
+
+void Comm::allgather(const ConstDatapacket &send_dpacket,
+    const Datapacket &recv_dpacket) const 
+{
+    allgather(send_dpacket, recv_dpacket.get_buff());
+}
+
 void Comm::allgatherv(
     const void *sendbuf, int sendcount, const Datatype &sendtype, 
     void *recvbuf, const int recvcounts[], const int displs[],
     const Datatype &recvtype ) const{
     _obj_ptr->allgatherv(sendbuf, sendcount, sendtype.raw(),
         recvbuf, recvcounts, displs, recvtype.raw());
+}
+
+void Comm::allgatherv(
+    const ConstDatapacket &send_dpacket, void *recvbuf, 
+    ContiguousBuffer<const int> recvcounts, 
+    ContiguousBuffer<const int> displs,
+    const Datatype &recvtype) const
+{
+    auto [_recvcounts, n_cs] = recvcounts;
+    auto [_displs, n_ds] = displs;
+    if( n_cs != n_ds )
+        ErrLogic::throw_(ErrLogic::eLENGTH, emFLPFB, 
+            "  ... recvcounts", recvcounts, 
+            " does not match displs ", displs, '\n');
+    const auto &[p,n,dt] = send_dpacket;
+    allgatherv(p, n, dt, recvbuf, _recvcounts, _displs, recvtype);
+}
+
+void Comm::allgatherv(
+    const ConstDatapacket &send_dpacket, const Datapacket &recv_dpacket,
+    ContiguousBuffer<const int> recvcounts, 
+    ContiguousBuffer<const int> displs) const
+{
+    const auto &[p, n, dt] = recv_dpacket;
+    allgatherv(send_dpacket, p, recvcounts, displs, dt);
 }
 
 void Comm::alltoall( const void *sendbuf, int sendcount, 
@@ -443,7 +488,8 @@ void Comm::alltoall(const void *sendbuf, void *recvbuf,
 void Comm::alltoallv( const void *sendbuf, const int sendcounts[], 
     const int senddispls[], const Datatype &sendtype,
     void *recvbuf, const int recvcounts[], const int recvdispls[], 
-    const Datatype &recvtype ) const{
+    const Datatype &recvtype ) const
+{
     _obj_ptr->alltoallv(sendbuf, sendcounts, senddispls, sendtype.raw(),
     recvbuf, recvcounts, recvdispls, recvtype.raw());
 }
@@ -451,21 +497,23 @@ void Comm::alltoallv( const void *sendbuf, const int sendcounts[],
 void Comm::alltoallw( const void *sendbuf, const int sendcounts[], 
     const int senddispls[], const Datatype::mpi_t sendtypes[],
     void *recvbuf, const int recvcounts[], const int recvdispls[], 
-    const Datatype::mpi_t recvtypes[] ) const{
+    const Datatype::mpi_t recvtypes[] ) const
+{
     _obj_ptr->alltoallw(sendbuf, sendcounts, senddispls, sendtypes, 
         recvbuf, recvcounts, recvdispls, recvtypes);
 }
 
 void Comm::reduce( const void *sendbuf, void *recvbuf, int count, 
-    const Datatype &dtype, const Oppacket &op, int root ) const{
+    const Datatype &dtype, const Oppacket &op, int root ) const
+{
     _obj_ptr->reduce( sendbuf, recvbuf, count, 
         dtype.raw(), op._op.raw(), root );
 }
 
-void Comm::reduce( const Datapacket &send_dpacket, void *recvbuf,
+void Comm::reduce( const ConstDatapacket &send_dpacket, void *recvbuf,
     const Oppacket &op, int root ) const {
-    const auto &dp = send_dpacket;
-    reduce(dp._buff, recvbuf, dp._size, dp._dtype, op, root);
+    const auto &[p,n,dt] = send_dpacket;
+    reduce(p, recvbuf, n, dt, op, root);
 }
 
 void Comm::reduce(const void *sendbuf, const Datapacket &recv_dpacket,
@@ -475,7 +523,7 @@ void Comm::reduce(const void *sendbuf, const Datapacket &recv_dpacket,
     reduce(sendbuf, p, n, dt, op, root);
 }
 
-void Comm::reduce(const Datapacket &send_dpacket, 
+void Comm::reduce(const ConstDatapacket &send_dpacket, 
     const Datapacket &recv_dpacket, const Oppacket &op, int root) const
 {
     reduce(send_dpacket, recv_dpacket.get_buff(), op, root);
@@ -486,7 +534,7 @@ void Comm::allreduce( const void *sendbuf, void *recvbuf, int count,
     _obj_ptr->allreduce( sendbuf, recvbuf, count, dtype.raw(), op._op.raw() );
 }
 
-void Comm::allreduce( const Datapacket &send_dpacket, void *recvbuf, 
+void Comm::allreduce( const ConstDatapacket &send_dpacket, void *recvbuf, 
     const Oppacket &op ) const {
     auto &[p, n, dt] = send_dpacket;
     allreduce(p, recvbuf, n, dt, op);
@@ -499,7 +547,7 @@ void Comm::allreduce(const void *sendbuf, const Datapacket &recv_dpacket,
     allreduce(sendbuf, p, n, dt, op);
 }
 
-void Comm::allreduce(const Datapacket &send_dpacket, 
+void Comm::allreduce(const ConstDatapacket &send_dpacket, 
     const Datapacket &recv_dpacket, const Oppacket &op) const
 {
     allreduce(send_dpacket, recv_dpacket.get_buff(), op);
@@ -511,14 +559,14 @@ void Comm::reduce_local(const void *inbuf, void *inoutbuf, int count,
         inbuf, inoutbuf, count, dtype.raw(), op._op.raw() );
 }
 
-void Comm::reduce_local(const Datapacket &in_dpacket, void *inoutbuf, 
+void Comm::reduce_local(const ConstDatapacket &in_dpacket, void *inoutbuf, 
     const Oppacket &op)
 {
     auto &[p, n, dt] = in_dpacket;
     reduce_local(p, inoutbuf, n, dt, op);
 }
 
-void Comm::reduce_local(const Datapacket &in_dpacket, 
+void Comm::reduce_local(const ConstDatapacket &in_dpacket, 
     const Datapacket &inout_dpacket, const Oppacket &op)
 {
     reduce_local(in_dpacket, inout_dpacket.get_buff(), op);
@@ -556,8 +604,8 @@ Requests Comm::ibcast( void *buf, int count, const Datatype &dtype,
         _obj_ptr->ibcast(buf, count, dtype.raw(), root), 0);
 }
 Requests Comm::ibcast(const Datapacket &dpacket, int root) const {
-    const auto &dp = dpacket;
-    return ibcast(dp._buff, dp._size, dp._dtype, root);
+    const auto &[p,n,dt] = dpacket;
+    return ibcast(p, n, dt, root);
 }
 Requests Comm::igather( 
     const void *sendbuf, int sendcount, const Datatype &sendtype, 
@@ -572,12 +620,12 @@ Requests Comm::igather(const void *sendbuf, void *recvbuf,
     return igather(sendbuf, count, dtype, recvbuf, count, dtype, root);
 }
 
-Requests Comm::igather(const Datapacket &send_dpacket, 
+Requests Comm::igather(const ConstDatapacket &send_dpacket, 
     void *recvbuf, int root) const {
     auto &[p, n, dt] = send_dpacket;
     return igather(p, recvbuf, n, dt, root);
 }
-Requests Comm::igather(const Datapacket &send_dpacket, 
+Requests Comm::igather(const ConstDatapacket &send_dpacket, 
     const Datapacket &recv_dpacket, int root) const
 {
     return igather(send_dpacket, recv_dpacket.get_buff(), root);
@@ -593,7 +641,7 @@ Requests Comm::igatherv(
 }
 
 Requests Comm::igatherv(
-    const Datapacket &send_dpacket, void *recvbuf, 
+    const ConstDatapacket &send_dpacket, void *recvbuf, 
     ContiguousBuffer<const int> recvcounts, 
     ContiguousBuffer<const int> displs, 
     const Datatype &recvtype, int root ) const
@@ -609,7 +657,7 @@ Requests Comm::igatherv(
 }
 
 Requests Comm::igatherv(
-    const Datapacket &send_dpacket, const Datapacket &recv_dpacket,
+    const ConstDatapacket &send_dpacket, const Datapacket &recv_dpacket,
     ContiguousBuffer<const int> recvcounts, 
     ContiguousBuffer<const int> displs, int root) const
 {
@@ -632,11 +680,11 @@ Requests Comm::iscatter(const void *sendbuf, void *recvbuf,
 
 Requests Comm::iscatter(const void *sendbuf, 
     const Datapacket &recv_dpacket, int root) const {
-    const auto &dp = recv_dpacket;
-    return iscatter(sendbuf, dp._buff, dp._size, dp._dtype, root);
+    const auto &[p,n,dt] = recv_dpacket;
+    return iscatter(sendbuf, p, n, dt, root);
 }
 
-Requests Comm::iscatter(const Datapacket &send_dpacket,
+Requests Comm::iscatter(const ConstDatapacket &send_dpacket,
     const Datapacket &recv_dpacket, int root) const
 {
     return iscatter(send_dpacket.get_buff(), recv_dpacket, root);
@@ -667,7 +715,7 @@ Requests Comm::iscatterv(
 }
 
 Requests Comm::iscatterv(
-    const Datapacket send_dpacket, ContiguousBuffer<const int> sendcounts, 
+    const ConstDatapacket send_dpacket, ContiguousBuffer<const int> sendcounts, 
     ContiguousBuffer<const int> displs,
     const Datapacket &recv_dpacket, int root) const
 {
@@ -689,12 +737,14 @@ Requests Comm::iallgather(const void *sendbuf, void *recvbuf, int count,
     return iallgather(sendbuf, count, dtype, recvbuf, count, dtype);
 }
 
-Requests Comm::iallgather(const Datapacket &send_dpacket, void *recvbuf) const {
+Requests Comm::iallgather(const ConstDatapacket &send_dpacket, 
+    void *recvbuf) const 
+{
     auto &[p,n,dt] = send_dpacket;
     return iallgather(p, recvbuf, n, dt);
 }
 
-Requests Comm::iallgather(const Datapacket &send_dpacket, 
+Requests Comm::iallgather(const ConstDatapacket &send_dpacket, 
     const Datapacket &recv_dpacket) const
 {
     return iallgather(send_dpacket, recv_dpacket.get_buff());
@@ -710,7 +760,7 @@ Requests Comm::iallgatherv(
 }
 
 Requests Comm::iallgatherv(
-    const Datapacket &send_dpacket,
+    const ConstDatapacket &send_dpacket,
     void *recvbuf, ContiguousBuffer<const int> recvcounts, 
     ContiguousBuffer<const int> displs,
     const Datatype &recvtype ) const
@@ -726,7 +776,7 @@ Requests Comm::iallgatherv(
 }
 
 Requests Comm::iallgatherv(
-    const Datapacket &send_dpacket, const Datapacket &recv_dpacket, 
+    const ConstDatapacket &send_dpacket, const Datapacket &recv_dpacket, 
     ContiguousBuffer<const int> recvcounts, 
     ContiguousBuffer<const int> displs) const
 {
@@ -770,10 +820,10 @@ Requests Comm::ireduce( const void *sendbuf, void *recvbuf, int count,
         dtype.raw(), op._op.raw(), root ), 0);
 }
 
-Requests Comm::ireduce( const Datapacket &send_dpacket, void *recvbuf,
+Requests Comm::ireduce( const ConstDatapacket &send_dpacket, void *recvbuf,
     const Oppacket &op, int root ) const 
 {
-    auto &[p, n, dt] = send_dpacket;
+    auto &[p,n,dt] = send_dpacket;
     return ireduce(p, recvbuf, n, dt, op, root);
 }
 
@@ -784,7 +834,7 @@ Requests Comm::ireduce(const void *sendbuf, const Datapacket &recv_dpacket,
     return ireduce(sendbuf, p, n, dt, op, root);
 }
 
-Requests Comm::ireduce(const Datapacket &send_dpacket, 
+Requests Comm::ireduce(const ConstDatapacket &send_dpacket, 
     const Datapacket &recv_dpacket, const Oppacket &op, int root ) const
 {
     return ireduce(send_dpacket, recv_dpacket.get_buff(), op, root);
@@ -796,10 +846,10 @@ Requests Comm::iallreduce( const void *sendbuf, void *recvbuf, int count,
         dtype.raw(), op._op.raw() ), 0);
 }
 
-Requests Comm::iallreduce( const Datapacket &send_dpacket, void *recvbuf, 
+Requests Comm::iallreduce( const ConstDatapacket &send_dpacket, void *recvbuf, 
     const Oppacket &op ) const 
 {
-    auto &[p, n, dt] = send_dpacket;
+    auto &[p,n,dt] = send_dpacket;
     return iallreduce(p, recvbuf, n, dt, op);
 }
 
@@ -810,7 +860,7 @@ Requests Comm::iallreduce(const void *sendbuf, const Datapacket &recv_dpacket,
     return iallreduce(sendbuf, p, n, dt, op);
 }
 
-Requests Comm::iallreduce(const Datapacket &send_dpacket, 
+Requests Comm::iallreduce(const ConstDatapacket &send_dpacket, 
     const Datapacket &recv_dpacket,
     const Oppacket &op ) const
 {
@@ -860,8 +910,8 @@ string Comm::_topostr( int topo ){
         ret = "distributed graph"; break;
     default:
         ErrLogic::throw_(ErrLogic::eDOMAIN, emFLPFB, "  ... topology ", topo, 
-            " wrong. Possible values are ", UNDEFINED, ", ", CART, ", ", GRAPH,
-            ", ", DIST_GRAPH, '\n');
+            " invalid. Possible values are ", 
+            UNDEFINED, ", ", CART, ", ", GRAPH, ", ", DIST_GRAPH, '\n');
         break;
     }
     return ret;

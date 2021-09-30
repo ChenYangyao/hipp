@@ -130,8 +130,38 @@ public:
         const Info &info=Info::nullval()) const;
 
     /**
-     * point-to-point communication     
-     */
+    Point-to-point communication calls - the core functions of MPI.
+
+    ``send()``, ``bsend()``, ``ssend()``, ``rsend()``: blocking sendings in 
+    standard mode, buffered mode, synchronous mode and ready mode. 
+    Refer to the MPI standard for their semantics. The standard mode is usually 
+    the first choice.
+    
+    ``recv()``: blocking receiving.
+    
+    Methods with prefix "i" are the corresponding non-blocking calls. They 
+    return a ``Requests`` object for later test, cancellation, or completion.
+
+    ``recv()`` returns a ``Status`` object containing the meta-infomation of 
+    the received message. 
+
+    Any data buffer passed to these calls must not be pr-value - its life time 
+    must last at least to the return of blocking calls or the finish of 
+    non-blocking calls.
+    
+    Arguments are:
+    @dest, src: rank of target process in the group that forming the 
+        communicator. Receiving calls may use ``ANY_SOURCE`` for the matching
+        of any source rank. All calls may use ``PROC_NULL`` so that the
+        method returns immediately and has no effect.
+    @tag: matching tag. Receiving calls may use wildcard tag ``ANY_TAG`` for
+        the matching of arbitrary tags.
+    @args: data to be sent/received. ``args`` are perfect-forwarded to 
+        constructing a ``ConstDatapacket`` object (for sending calls) or 
+        ``Datapacket`` object (for receiving calls) from which the buffer 
+        specification is extracted and passed to the underlying communication 
+        calls.
+    */
     template<typename ...Args>
     void send( int dest, int tag, Args && ...args ) const;
     template<typename ...Args>
@@ -155,12 +185,18 @@ public:
     Requests irecv( int src, int tag, Args && ...args ) const;
 
     /** 
-     * The second overload assumes the recv size and dtype are the same with 
-     * those of the sending 
-     */
-    Status sendrecv(const Datapacket &send_dpacket, int dest, int sendtag, 
+    Perform one send and one receive in a single call.
+
+    The second overload assumes the receiving buffer size and datatype are the 
+    same with those of the sending buffer.
+
+    The third overload uses a single buffer, i.e., received data replace the 
+    sending data. Note that the underlying implementation may use additional 
+    buffer.
+    */
+    Status sendrecv(const ConstDatapacket &send_dpacket, int dest, int sendtag, 
         const Datapacket &recv_dpacket, int src, int recvtag);
-    Status sendrecv(const Datapacket &send_dpacket, int dest, int sendtag, 
+    Status sendrecv(const ConstDatapacket &send_dpacket, int dest, int sendtag, 
         void *recvbuf, int src, int recvtag);
     Status sendrecv_replace(const Datapacket &dpacket, int dest, int sendtag, 
         int src, int recvtag);
@@ -204,8 +240,10 @@ public:
         void *recvbuf, int recvcount, const Datatype &recvtype, int root) const;
     void gather(const void *sendbuf, void *recvbuf, 
         int count, const Datatype &dtype, int root) const;
-    void gather(const Datapacket &send_dpacket, void *recvbuf, int root) const;
-    void gather(const Datapacket &send_dpacket, const Datapacket &recv_dpacket, 
+    void gather(const ConstDatapacket &send_dpacket, 
+        void *recvbuf, int root) const;
+    void gather(const ConstDatapacket &send_dpacket, 
+        const Datapacket &recv_dpacket, 
         int root) const;
     
     /**
@@ -221,11 +259,12 @@ public:
     void gatherv(const void *sendbuf, int sendcount, const Datatype &sendtype, 
         void *recvbuf, const int recvcounts[], const int displs[],
         const Datatype &recvtype, int root) const;
-    void gatherv(const Datapacket &send_dpacket, void *recvbuf, 
+    void gatherv(const ConstDatapacket &send_dpacket, void *recvbuf, 
         ContiguousBuffer<const int> recvcounts, 
         ContiguousBuffer<const int> displs,
         const Datatype &recvtype, int root) const;
-    void gatherv(const Datapacket &send_dpacket, const Datapacket &recv_dpacket, 
+    void gatherv(const ConstDatapacket &send_dpacket, 
+        const Datapacket &recv_dpacket, 
         ContiguousBuffer<const int> recvcounts, 
         ContiguousBuffer<const int> displs, int root) const;
 
@@ -253,7 +292,7 @@ public:
         int count, const Datatype &dtype, int root) const; 
     void scatter(const void *sendbuf, 
         const Datapacket &recv_dpacket, int root) const;
-    void scatter(const Datapacket &send_dpacket,
+    void scatter(const ConstDatapacket &send_dpacket,
         const Datapacket &recv_dpacket, int root) const;
 
     /**
@@ -272,7 +311,7 @@ public:
     void scatterv(const void *sendbuf, ContiguousBuffer<const int> sendcounts, 
         ContiguousBuffer<const int> displs, const Datatype &sendtype,
         const Datapacket &recv_dpacket, int root) const;
-    void scatterv(const Datapacket &send_dpacket, 
+    void scatterv(const ConstDatapacket &send_dpacket, 
         ContiguousBuffer<const int> sendcounts, 
         ContiguousBuffer<const int> displs,
         const Datapacket &recv_dpacket, int root) const;
@@ -285,9 +324,9 @@ public:
         void *recvbuf, int recvcount, const Datatype &recvtype) const;
     void allgather(const void *sendbuf, void *recvbuf, 
         int count, const Datatype &dtype) const;
-    void allgather(const Datapacket &send_dpacket,
+    void allgather(const ConstDatapacket &send_dpacket,
         void *recvbuf) const;
-    void allgather(const Datapacket &send_dpacket,
+    void allgather(const ConstDatapacket &send_dpacket,
         const Datapacket &recv_dpacket) const;
     
     void allgatherv(
@@ -295,12 +334,12 @@ public:
         void *recvbuf, const int recvcounts[], const int displs[],
         const Datatype &recvtype ) const;
     void allgatherv(
-        const Datapacket &send_dpacket, void *recvbuf, 
+        const ConstDatapacket &send_dpacket, void *recvbuf, 
         ContiguousBuffer<const int> recvcounts, 
         ContiguousBuffer<const int> displs,
         const Datatype &recvtype) const;
     void allgatherv(
-        const Datapacket &send_dpacket, const Datapacket &recv_dpacket,
+        const ConstDatapacket &send_dpacket, const Datapacket &recv_dpacket,
         ContiguousBuffer<const int> recvcounts, 
         ContiguousBuffer<const int> displs) const;
 
@@ -338,20 +377,21 @@ public:
     */
     void reduce(const void *sendbuf, void *recvbuf, int count, 
         const Datatype &dtype, const Oppacket &op, int root) const;
-    void reduce(const Datapacket &send_dpacket, void *recvbuf,
+    void reduce(const ConstDatapacket &send_dpacket, void *recvbuf,
         const Oppacket &op, int root) const;
     void reduce(const void *sendbuf, const Datapacket &recv_dpacket,
         const Oppacket &op, int root) const;
-    void reduce(const Datapacket &send_dpacket, const Datapacket &recv_dpacket,
+    void reduce(const ConstDatapacket &send_dpacket, 
+        const Datapacket &recv_dpacket,
         const Oppacket &op, int root) const;
 
     void allreduce(const void *sendbuf, void *recvbuf, int count, 
         const Datatype &dtype, const Oppacket &op ) const;
-    void allreduce(const Datapacket &send_dpacket, void *recvbuf, 
+    void allreduce(const ConstDatapacket &send_dpacket, void *recvbuf, 
         const Oppacket &op ) const;
     void allreduce(const void *sendbuf, const Datapacket &recv_dpacket,
         const Oppacket &op ) const;
-    void allreduce(const Datapacket &send_dpacket, 
+    void allreduce(const ConstDatapacket &send_dpacket, 
         const Datapacket &recv_dpacket, const Oppacket &op) const;
     
     /**
@@ -361,9 +401,9 @@ public:
     */
     static void reduce_local(const void *inbuf, void *inoutbuf, int count, 
         const Datatype &dtype, const Oppacket &op);
-    static void reduce_local(const Datapacket &in_dpacket, void *inoutbuf, 
+    static void reduce_local(const ConstDatapacket &in_dpacket, void *inoutbuf, 
         const Oppacket &op);
-    static void reduce_local(const Datapacket &in_dpacket, 
+    static void reduce_local(const ConstDatapacket &in_dpacket, 
         const Datapacket &inout_dpacket, const Oppacket &op);
     
     void reduce_scatter_block(const void *sendbuf, void *recvbuf, 
@@ -388,9 +428,9 @@ public:
         void *recvbuf, int recvcount, const Datatype &recvtype, int root) const;
     Requests igather(const void *sendbuf, void *recvbuf, 
         int count, const Datatype &dtype, int root) const;
-    Requests igather(const Datapacket &send_dpacket, 
+    Requests igather(const ConstDatapacket &send_dpacket, 
         void *recvbuf, int root) const;
-    Requests igather(const Datapacket &send_dpacket, 
+    Requests igather(const ConstDatapacket &send_dpacket, 
         const Datapacket &recv_dpacket, int root) const;
 
     Requests igatherv(
@@ -398,12 +438,12 @@ public:
         void *recvbuf, const int recvcounts[], const int displs[],
         const Datatype &recvtype, int root ) const;
     Requests igatherv(
-        const Datapacket &send_dpacket, void *recvbuf, 
+        const ConstDatapacket &send_dpacket, void *recvbuf, 
         ContiguousBuffer<const int> recvcounts, 
         ContiguousBuffer<const int> displs, 
         const Datatype &recvtype, int root ) const;
     Requests igatherv(
-        const Datapacket &send_dpacket, const Datapacket &recv_dpacket,
+        const ConstDatapacket &send_dpacket, const Datapacket &recv_dpacket,
         ContiguousBuffer<const int> recvcounts, 
         ContiguousBuffer<const int> displs, int root) const;
     
@@ -414,7 +454,7 @@ public:
         int count, const Datatype &dtype, int root) const; 
     Requests iscatter(const void *sendbuf, 
         const Datapacket &recv_dpacket, int root) const;
-    Requests iscatter(const Datapacket &send_dpacket,
+    Requests iscatter(const ConstDatapacket &send_dpacket,
         const Datapacket &recv_dpacket, int root) const;
 
     Requests iscatterv(
@@ -426,7 +466,8 @@ public:
         ContiguousBuffer<const int> displs, const Datatype &sendtype,
         const Datapacket &recv_dpacket, int root) const;
     Requests iscatterv(
-        const Datapacket send_dpacket, ContiguousBuffer<const int> sendcounts, 
+        const ConstDatapacket send_dpacket, 
+        ContiguousBuffer<const int> sendcounts, 
         ContiguousBuffer<const int> displs,
         const Datapacket &recv_dpacket, int root) const;
 
@@ -435,8 +476,9 @@ public:
         void *recvbuf, int recvcount, const Datatype &recvtype ) const;
     Requests iallgather(const void *sendbuf, void *recvbuf, int count, 
         const Datatype &dtype) const;
-    Requests iallgather(const Datapacket &send_dpacket, void *recvbuf) const;
-    Requests iallgather(const Datapacket &send_dpacket, 
+    Requests iallgather(const ConstDatapacket &send_dpacket, 
+        void *recvbuf) const;
+    Requests iallgather(const ConstDatapacket &send_dpacket, 
         const Datapacket &recv_dpacket) const;
 
     Requests iallgatherv(
@@ -444,12 +486,12 @@ public:
         void *recvbuf, const int recvcounts[], const int displs[],
         const Datatype &recvtype ) const;
     Requests iallgatherv(
-        const Datapacket &send_dpacket,
+        const ConstDatapacket &send_dpacket,
         void *recvbuf, ContiguousBuffer<const int> recvcounts, 
         ContiguousBuffer<const int> displs,
         const Datatype &recvtype ) const;
     Requests iallgatherv(
-        const Datapacket &send_dpacket, const Datapacket &recv_dpacket, 
+        const ConstDatapacket &send_dpacket, const Datapacket &recv_dpacket, 
         ContiguousBuffer<const int> recvcounts, 
         ContiguousBuffer<const int> displs) const;
     
@@ -470,20 +512,20 @@ public:
 
     Requests ireduce( const void *sendbuf, void *recvbuf, int count, 
         const Datatype &dtype, const Oppacket &op, int root ) const;
-    Requests ireduce( const Datapacket &send_dpacket, void *recvbuf,
+    Requests ireduce( const ConstDatapacket &send_dpacket, void *recvbuf,
         const Oppacket &op, int root ) const;
     Requests ireduce(const void *sendbuf, const Datapacket &recv_dpacket,
         const Oppacket &op, int root ) const;
-    Requests ireduce(const Datapacket &send_dpacket, 
+    Requests ireduce(const ConstDatapacket &send_dpacket, 
         const Datapacket &recv_dpacket, const Oppacket &op, int root ) const;
     
     Requests iallreduce( const void *sendbuf, void *recvbuf, int count, 
         const Datatype &dtype, const Oppacket &op ) const;
-    Requests iallreduce( const Datapacket &send_dpacket, void *recvbuf, 
+    Requests iallreduce( const ConstDatapacket &send_dpacket, void *recvbuf, 
         const Oppacket &op ) const;
     Requests iallreduce(const void *sendbuf, const Datapacket &recv_dpacket,
         const Oppacket &op ) const;
-    Requests iallreduce(const Datapacket &send_dpacket, 
+    Requests iallreduce(const ConstDatapacket &send_dpacket, 
         const Datapacket &recv_dpacket,
         const Oppacket &op ) const;
 
@@ -570,6 +612,7 @@ std::pair<Win, T*> Comm::win_allocate(size_t n, int disp_unit,
     auto win = win_allocate(base_ptr, n*sizeof(T), disp_unit, info);
     return {std::move(win), static_cast<T*>(base_ptr)};
 }
+
 template<typename T>
 std::pair<Win, T*> Comm::win_allocate_shared(size_t n, int disp_unit, 
     const Info &info) const
@@ -578,27 +621,28 @@ std::pair<Win, T*> Comm::win_allocate_shared(size_t n, int disp_unit,
     auto win = win_allocate_shared(base_ptr, n*sizeof(T), disp_unit, info);
     return {std::move(win), static_cast<T*>(base_ptr)};
 }
+
 template<typename ...Args>
 void Comm::send( int dest, int tag, Args && ...args ) const{
-    auto [p, n, dt] = Datapacket{ std::forward<Args>(args)... };
+    auto [p, n, dt] = ConstDatapacket{ std::forward<Args>(args)... };
     _obj_ptr->send(p, n, dt.raw(), dest, tag );
 }
 
 template<typename ...Args>
 void Comm::bsend( int dest, int tag, Args && ...args ) const{
-    auto [p, n, dt] = Datapacket{ std::forward<Args>(args)... };
+    auto [p, n, dt] = ConstDatapacket{ std::forward<Args>(args)... };
     _obj_ptr->bsend( p, n, dt.raw(), dest, tag );
 }
 
 template<typename ...Args>
 void Comm::ssend( int dest, int tag, Args && ...args ) const{
-    auto [p, n, dt] = Datapacket{ std::forward<Args>(args)... };
+    auto [p, n, dt] = ConstDatapacket{ std::forward<Args>(args)... };
     _obj_ptr->ssend( p, n, dt.raw(), dest, tag );
 }
 
 template<typename ...Args>
 void Comm::rsend( int dest, int tag, Args && ...args ) const{
-    auto [p, n, dt] = Datapacket{ std::forward<Args>(args)... };
+    auto [p, n, dt] = ConstDatapacket{ std::forward<Args>(args)... };
     _obj_ptr->rsend( p, n, dt.raw(), dest, tag );
 }
 
@@ -610,28 +654,28 @@ Status Comm::recv( int src, int tag, Args && ...args ) const{
 
 template<typename ...Args>
 Requests Comm::isend( int dest, int tag, Args && ...args ) const{
-    auto [p, n, dt] = Datapacket{ std::forward<Args>(args)... };
+    auto [p, n, dt] = ConstDatapacket{ std::forward<Args>(args)... };
     auto rq = _obj_ptr->isend( p, n, dt.raw(), dest, tag );
     return Requests::_from_raw( rq, 0 );
 }
 
 template<typename ...Args>
 Requests Comm::ibsend( int dest, int tag, Args && ...args ) const{
-    auto [p, n, dt] = Datapacket{ std::forward<Args>(args)... };
+    auto [p, n, dt] = ConstDatapacket{ std::forward<Args>(args)... };
     auto rq = _obj_ptr->ibsend( p, n, dt.raw(), dest, tag );
     return Requests::_from_raw( rq, 0 );
 }
 
 template<typename ...Args>
 Requests Comm::issend( int dest, int tag, Args && ...args ) const{
-    auto [p, n, dt] = Datapacket{ std::forward<Args>(args)... };
+    auto [p, n, dt] = ConstDatapacket{ std::forward<Args>(args)... };
     auto rq = _obj_ptr->issend( p, n, dt.raw(), dest, tag );
     return Requests::_from_raw( rq, 0 );
 }
 
 template<typename ...Args>
 Requests Comm::irsend( int dest, int tag, Args && ...args ) const{
-    auto [p, n, dt] = Datapacket{ std::forward<Args>(args)... };
+    auto [p, n, dt] = ConstDatapacket{ std::forward<Args>(args)... };
     auto rq = _obj_ptr->irsend( p, n, dt.raw(), dest, tag );
     return Requests::_from_raw( rq, 0 );
 }

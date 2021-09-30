@@ -318,14 +318,18 @@ Class Comm: the Communication Context
 
         Example: a call of ``Comm::cart_create(nnodes, ndims, dims)`` gives results as 
 
-        ================= ==========================
-        nnodes and ndims   input and output dims  
-        ================= ==========================
-        6, 2              (0,0) -> (3,2)
-        7, 2              (0,0) -> (7,1)
-        6, 3              (0,3,0) -> (2,3,1)
-        7, 3              (0,3,0) -> erroneous call 
-        ================= ==========================
+
+        .. table::
+            :class: tight-table
+
+            ================= ==========================
+            nnodes and ndims   input and output dims  
+            ================= ==========================
+            6, 2              (0,0) -> (3,2)
+            7, 2              (0,0) -> (7,1)
+            6, 3              (0,3,0) -> (2,3,1)
+            7, 3              (0,3,0) -> erroneous call 
+            ================= ==========================
 
         For an communicator with cartesian topology, the following calls inquiry its information. 
         
@@ -473,22 +477,20 @@ Class Comm: the Communication Context
         must last at least to the return of blocking calls or the finish of 
         non-blocking calls.
 
-        Arguments are:
-
-        - ``dest``, ``src``: rank of target process in the group that forming the 
-          communicator. Receiving calls may use ``ANY_SOURCE`` for the matching
-          of any source rank. All calls may use ``PROC_NULL`` so that the
-          method returns immediately and has no effect.
-        - ``tag``: matching tag. Receiving calls may use wildcard tag ``ANY_TAG`` for
-          the matching of arbitrary tags.
-        - ``args``: data to be sent/received. ``args`` are perfect-forwarded to 
-          constructing a :class:`ConstDatapacket` object (for sending calls) or 
-          :class:`Datapacket` object (for receiving calls) from which the buffer 
-          specification is extracted and passed to the underlying communication 
-          calls (see below examples).
+        :arg dest, src: rank of target process in the group that forming the 
+            communicator. Receiving calls may use ``ANY_SOURCE`` for the matching
+            of any source rank. All calls may use ``PROC_NULL`` so that the
+            method returns immediately and has no effect.
+        :arg tag: matching tag. Receiving calls may use wildcard tag ``ANY_TAG`` for
+            the matching of arbitrary tags.
+        :arg args:  data to be sent/received. ``args`` are perfect-forwarded to 
+            constructing a :class:`ConstDatapacket` object (for sending calls) or 
+            :class:`Datapacket` object (for receiving calls) from which the buffer 
+            specification is extracted and passed to the underlying communication 
+            calls (see below examples).
 
         **Examples:** It is always valid to use the standard MPI buffer specification 
-        style, i.e., by the ``buffer address, size, datatype`` triplet::
+        style, i.e., by the ``{buffer, size, datatype}`` triplet::
         
             int a[3] = {0, 1, 2};
             int dest = 1, tag = 0;
@@ -502,13 +504,15 @@ Class Comm: the Communication Context
 
         The underlying implementation is like::
 
-            auto [buff, size, dtype] = Datapacket {a};      // Construct the Datapacket and extract buffer specificaton.
-        
+            // Construct the Datapacket and extract buffer specificaton.
+            auto [buff, size, dtype] = ConstDatapacket {a};      
+            
             assert(buff == (void *)&a[0]);
             assert(size == 3);
             assert(dtype.raw() == MPI_INT);
-
-            comm.send(dest, tag, buff, size, dtype);        // Forward the buffer specification.
+            
+            // Forward the buffer specification.
+            comm.send(dest, tag, buff, size, dtype);        
             
 
     .. function:: \

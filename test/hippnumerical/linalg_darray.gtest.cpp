@@ -176,10 +176,12 @@ TEST_F(DArrayIntTest, STLLikeAPI) {
     auto b = a1.begin(), e = a1.end();
     EXPECT_EQ(b+a1.size(), e);
     for(size_t i=0; i<a1.size(); ++i){
-        *b++ == a1[i];
+        auto x = *b++, y = a1[i];
+        EXPECT_EQ(x, y);
     }
     for(auto p=b; p!=e; ++p){
-        *p == a1[p-b];
+        auto x = *p, y = a1[p-b];
+        EXPECT_EQ(x, y);
     }
 
     auto cb = a1.cbegin(), ce = a1.cend();

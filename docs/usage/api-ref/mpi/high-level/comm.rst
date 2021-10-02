@@ -49,11 +49,11 @@ Class Comm: the Communication Context
 
     .. function:: void free() noexcept
 
-        free the current communicator instance, and set it to a null 
-        communicator as returned by :func:`Comm::nullval`.
-        ``free`` can be called at any time and repeatly, 
-        even for the pre-defined 
-        communicators and null communicators.
+        Free the communicator and set the instance to the null value 
+        (i.e., is_null()->true). 
+        
+        ``free()`` may be called on any object (even on a null value or other 
+        predefined communicators) at any time.
 
     .. function:: ostream &info( ostream &os = cout, int fmt_cntl = 1 ) const
                   friend ostream & operator<<( ostream &os, const Comm &comm )
@@ -69,18 +69,29 @@ Class Comm: the Communication Context
         The returned reference of ``os`` allows you to chain the outputs, such as 
         ``comm.info(cout) << " continue printing " << endl``.
         
-    .. function::    int size() const
+    .. function::   int size() const
                     int rank() const
                     bool is_null() const
                     bool is_inter() const
                     int remote_size() const
+
+        Return the basic properties of the communicator.
         
-        Return the basic information of the communicater instance: ``size()`` returns the number of
-        processes in the group that forms this communicater. ``rank()`` returns the identifier of 
-        the caller process, which is in the range of [0, size()). ``is_null()`` tests whether this 
-        is a NULL communicater (internally MPI_PROC_NULL). ``is_inter()`` tests whether this is 
-        an inter-communicater, if it is, ``remote_size()`` returns the number of processes in the 
-        remote group of the inter-communicater.
+        
+        ``size``: number of processes in the process group of the communicator.
+        
+        ``rank``: the identifier of the calling process among all processes. It must
+        be in the range ``[0, size)``.
+        
+        ``is_null``: whether or not the communicator is a null value 
+        (internally, ``MPI_PROC_NULL``).
+        
+        ``is_inter``: whether or not the communicator is an inter-communicator.
+        
+        ``remote_size``: number of processes in the remote group for an 
+        inter-communicator.
+        
+        For an inter-communicator, ``size`` and ``rank`` are the values of the local group.
 
     .. _api-mpi-comm-attribute-caching:
 
@@ -307,14 +318,18 @@ Class Comm: the Communication Context
 
         Example: a call of ``Comm::cart_create(nnodes, ndims, dims)`` gives results as 
 
-        ================= ==========================
-        nnodes and ndims   input and output dims  
-        ================= ==========================
-        6, 2              (0,0) -> (3,2)
-        7, 2              (0,0) -> (7,1)
-        6, 3              (0,3,0) -> (2,3,1)
-        7, 3              (0,3,0) -> erroneous call 
-        ================= ==========================
+
+        .. table::
+            :class: tight-table
+
+            ================= ==========================
+            nnodes and ndims   input and output dims  
+            ================= ==========================
+            6, 2              (0,0) -> (3,2)
+            7, 2              (0,0) -> (7,1)
+            6, 3              (0,3,0) -> (2,3,1)
+            7, 3              (0,3,0) -> erroneous call 
+            ================= ==========================
 
         For an communicator with cartesian topology, the following calls inquiry its information. 
         
@@ -420,68 +435,85 @@ Class Comm: the Communication Context
 
     .. _api-mpi-comm-point-to-point:
 
-    .. function::   template<typename ...Args>\
-                    void send( int dest, int tag, Args && ...args ) const
-                    template<typename ...Args>\
-                    void bsend( int dest, int tag, Args && ...args ) const
-                    template<typename ...Args>\
-                    void ssend( int dest, int tag, Args && ...args ) const
-                    template<typename ...Args>\
-                    void rsend( int dest, int tag, Args && ...args ) const
-                    template<typename ...Args>\
-                    Status recv( int src, int tag, Args && ...args ) const
-                    template<typename ...Args>\
-                    Requests isend( int dest, int tag, Args && ...args ) const
-                    template<typename ...Args>\
-                    Requests ibsend( int dest, int tag, Args && ...args ) const
-                    template<typename ...Args>\
-                    Requests issend( int dest, int tag, Args && ...args ) const
-                    template<typename ...Args>\
-                    Requests irsend( int dest, int tag, Args && ...args ) const
-                    template<typename ...Args>\
-                    Requests irecv( int src, int tag, Args && ...args ) const
+    .. function:: \
+        template<typename ...Args>\
+        void send( int dest, int tag, Args && ...args ) const
+        template<typename ...Args>\
+        void bsend( int dest, int tag, Args && ...args ) const
+        template<typename ...Args>\
+        void ssend( int dest, int tag, Args && ...args ) const
+        template<typename ...Args>\
+        void rsend( int dest, int tag, Args && ...args ) const
+        template<typename ...Args>\
+        Status recv( int src, int tag, Args && ...args ) const
+        template<typename ...Args>\
+        Requests isend( int dest, int tag, Args && ...args ) const
+        template<typename ...Args>\
+        Requests ibsend( int dest, int tag, Args && ...args ) const
+        template<typename ...Args>\
+        Requests issend( int dest, int tag, Args && ...args ) const
+        template<typename ...Args>\
+        Requests irsend( int dest, int tag, Args && ...args ) const
+        template<typename ...Args>\
+        Requests irecv( int src, int tag, Args && ...args ) const
         
-        Point-to-point communication functions - send messages and receive messages. These are traditional calls lying in the heart of MPI.
+        Point-to-point communication calls - the core functions of MPI.
+
+        ``send()``, ``bsend()``, ``ssend()``, ``rsend()``: blocking sendings in 
+        standard mode, buffered mode, synchronous mode and ready mode. 
+        Refer to the MPI standard for their semantics. The standard mode is usually 
+        the first choice.
         
-        The MPI **Standard** defines both blocking and non-blocking versions 
-        (the later is started with an 'i'). For each version, four send modes are 
-        provided: the standard mode (``send()/isend()``), the buffered mode (``bsend()/ibsend()``),
-        the synchronous mode (``ssend()/issend()``) and the ready mode (``rsend()/irsend()``).
-        If you are not sure about the semantics of the communication modes, choose the standard 
-        mode. Otherwise it is suggested to carefully read the **Standard** specifications 
-        before using non-standard modes. 
-
-        The blocking ``recv()`` returns 
-        a :class:`Status` object containing the information that has been received. The 
-        non-blocking isends and ``irecv()`` return :class:`Requests` object for 
-        handling the completion/testing of the communication.
-
-        Common arguments of these calls are: 
-
-        :arg dest: rank of the target process of the communication, i.e., 
-            source of a recv call and target of a send call. Recv calls can use 
-            the wildcard :var:`ANY_SOURCE` to match message from any process. 
-            Both recv and send calls 
-            can specify :var:`PROC_NULL` as target rank, then the call 
-            has no effect and returns immediately.
-        :arg tag:  a tag for matching the send/recv operation pairs. 
-            Wildcard :var:`ANY_TAG` are allowed for recv calls to match any tags.
-        :arg args: specify the data buffer to be sent/received. Four cases are valid, see below.
-
-        The valid ``args`` are: 
+        ``recv()``: blocking receiving.
         
-        - ``(const) void *buff, int size, Datatype dtype``: the most **Standard** way of specifying a buffer in MPI, the starting address ``buff``, number of elements ``size`` of type ``dtype``.  
+        Methods with prefix "i" are the corresponding non-blocking calls. They 
+        return a :class:`~HIPP::MPI::Requests` object for later test, 
+        cancellation, or completion.
 
-        - ``(const) void *buff, int size, const std::string dtype``: similar to the first, but use a string to specify the datatype. Only predefined datatypes are allowed, such as int, float, etc (see :class:`Datatype`).   
+        ``recv()`` returns a :class:`Status` object containing the meta-infomation of 
+        the received message. 
 
-        - ``(const) vector<T, A> & v`` where T are any predefined types, such as int, float, etc (see :class:`Datatype`): send from/recv to the vector of elements, which is equivalent to the triplet ``v.data(), v.size(), "T"``.   
+        Any data buffer passed to these calls must not be pr-value - its life time 
+        must last at least to the return of blocking calls or the finish of 
+        non-blocking calls.
 
-        - ``const std::string &s``: send the string of characters. Only send call can use this signature, because a `std::string` is not writable.
+        :arg dest, src: rank of target process in the group that forming the 
+            communicator. Receiving calls may use ``ANY_SOURCE`` for the matching
+            of any source rank. All calls may use ``PROC_NULL`` so that the
+            method returns immediately and has no effect.
+        :arg tag: matching tag. Receiving calls may use wildcard tag ``ANY_TAG`` for
+            the matching of arbitrary tags.
+        :arg args:  data to be sent/received. ``args`` are perfect-forwarded to 
+            constructing a :class:`ConstDatapacket` object (for sending calls) or 
+            :class:`Datapacket` object (for receiving calls) from which the buffer 
+            specification is extracted and passed to the underlying communication 
+            calls (see below examples).
 
-        The first three cases accept both const and non-const version. Due to the semantics 
-        of point-to-point communication, it is erroneous to pass a pure-right-value or x-value 
-        (i.e., a temporary variable) as ``v`` or ``s``, because, user must ensure not 
-        using the buffer before the completion of communication.
+        **Examples:** It is always valid to use the standard MPI buffer specification 
+        style, i.e., by the ``{buffer, size, datatype}`` triplet::
+        
+            int a[3] = {0, 1, 2};
+            int dest = 1, tag = 0;
+            
+            comm.send(dest, tag, &a[0], 3, INT);      // Use the standard MPI style.
+
+        In HIPP, any object or objects that can construct a Datapacket is also 
+        allowed. So the above call is equivalent to::
+
+            comm.send(dest, tag, a);                  // Use the HIPP style.
+
+        The underlying implementation is like::
+
+            // Construct the Datapacket and extract buffer specificaton.
+            auto [buff, size, dtype] = ConstDatapacket {a};      
+            
+            assert(buff == (void *)&a[0]);
+            assert(size == 3);
+            assert(dtype.raw() == MPI_INT);
+            
+            // Forward the buffer specification.
+            comm.send(dest, tag, buff, size, dtype);        
+            
 
     .. function:: \
         Status sendrecv(const Datapacket &send_dpacket, int dest, int sendtag, \
@@ -491,19 +523,20 @@ Class Comm: the Communication Context
         Status sendrecv_replace(const Datapacket &dpacket, int dest, int sendtag, \ 
             int src, int recvtag)
 
-        The sending and receiving calls, i.e., finish the sending and receiving operations in a 
-        single call.
+        Perform one send and one receive in a single call.
 
-        The second overload assumes that the receiving buffer has the same count and datatype 
-        as the sending buffer.
+        The second overload assumes the receiving buffer size and datatype are the 
+        same with those of the sending buffer.
 
-        The third overload uses a single buffer, i.e., received data replace the sending data.
-        The underlying implementation may use additional buffer.
+        The third overload uses a single buffer, i.e., received data replace the 
+        sending data. Note that the underlying implementation may use additional 
+        buffer.
 
-    .. function::       Status probe(int src, int tag) const
-                        Status iprobe(int src, int tag, int &flag) const
-                        std::pair<Status, Message> mprobe(int src, int tag) const
-                        std::pair<Status, Message> improbe(int src, int tag, int &flag) const
+    .. function:: \
+            Status probe(int src, int tag) const
+            Status iprobe(int src, int tag, int &flag) const
+            std::pair<Status, Message> mprobe(int src, int tag) const
+            std::pair<Status, Message> improbe(int src, int tag, int &flag) const
 
         The probe operations allow incoming messages to be checked for, without actually receiving them.
         In all probe calls, ``src`` and ``tag`` specify the target message to be checked for 
@@ -517,229 +550,437 @@ Class Comm: the Communication Context
         to allow receiving calls precisely applied to the matched message, which may be helpful in a 
         threaded program.
         
-    
-    .. function::   void barrier() const
-                    void bcast( void *buf, int count, const Datatype &dtype, int root) const
-                    void bcast(const Datapacket &dpacket, int root) const
-                    void gather( const void *sendbuf, int sendcount, const Datatype &sendtype, \
-                        void *recvbuf, int recvcount, const Datatype &recvtype, int root) const
-                    void gather(const void *sendbuf, void *recvbuf, \
-                        int count, const Datatype &dtype, int root) const
-                    void gather(const Datapacket &send_dpacket, void *recvbuf, int root) const
-                    void gatherv(\
-                        const void *sendbuf, int sendcount, const Datatype &sendtype, \
-                        void *recvbuf, const int recvcounts[], const int displs[],\
-                        const Datatype &recvtype, int root ) const
-                    void scatter(\
-                        const void *sendbuf, int sendcount, const Datatype &sendtype,\
-                        void *recvbuf, int recvcount, const Datatype &recvtype, int root )const
-                    void scatter(const void *sendbuf, void *recvbuf, \
-                        int count, const Datatype &dtype, int root) const 
-                    void scatter(const void *sendbuf, \
-                        const Datapacket &recv_dpacket, int root) const
-                    void scatterv(\
-                        const void *sendbuf, const int sendcounts[], const int displs[], \
-                        const Datatype &sendtype,\
-                        void *recvbuf, int recvcount, const Datatype &recvtype, int root) const
-                    void allgather( const void *sendbuf, int sendcount, \
-                        const Datatype &sendtype,\
-                        void *recvbuf, int recvcount, const Datatype &recvtype ) const
-                    void allgatherv(\
-                        const void *sendbuf, int sendcount, const Datatype &sendtype, \
-                        void *recvbuf, const int recvcounts[], const int displs[],\
-                        const Datatype &recvtype ) const
-                    void alltoall( const void *sendbuf, int sendcount, const Datatype &sendtype,\
-                        void *recvbuf, int recvcount, const Datatype &recvtype ) const
-                    void alltoallv( const void *sendbuf, const int sendcounts[], \
-                        const int senddispls[], const Datatype &sendtype,\
-                        void *recvbuf, const int recvcounts[], const int recvdispls[], \
-                        const Datatype &recvtype ) const
-                    void alltoallw( const void *sendbuf, const int sendcounts[], \
-                        const int senddispls[], const Datatype::mpi_t sendtypes[],\
-                        void *recvbuf, const int recvcounts[], const int recvdispls[], \
-                        const Datatype::mpi_t recvtypes[] ) const
-                    void reduce( const void *sendbuf, void *recvbuf, int count, \
-                        const Datatype &dtype, const Oppacket &op, int root ) const
-                    void reduce( const Datapacket &send_dpacket, void *recvbuf,\
-                        const Oppacket &op, int root ) const
-                    void allreduce( const void *sendbuf, void *recvbuf, int count, \
-                        const Datatype &dtype, const Oppacket &op ) const
-                    void allreduce( const Datapacket &send_dpacket, void *recvbuf, \
-                        const Oppacket &op ) const
-                    static void reduce_local( const void *inbuf, void *inoutbuf, int count, \
-                        const Datatype &dtype, const Oppacket &op )
-                    void reduce_scatter_block( const void *sendbuf, void *recvbuf, \
-                        int recvcount, const Datatype &dtype, const Oppacket &op ) const
-                    void reduce_scatter( const void *sendbuf, void *recvbuf, \
-                        const int recvcounts[], const Datatype &dtype, \
-                        const Oppacket &op )const
-                    void scan( const void *sendbuf, void *recvbuf, \
-                        int count, const Datatype &dtype, const Oppacket &op ) const
-                    void exscan( const void *sendbuf, void *recvbuf, \
-                        int count, const Datatype &dtype, const Oppacket &op ) const
-                    Requests ibarrier() const
-                    Requests ibcast( \
-                        void *buf, int count, const Datatype &dtype, int root) const
-                    Requests ibcast(const Datapacket &dpacket, int root) const
-                    Requests igather( \
-                        const void *sendbuf, int sendcount, const Datatype &sendtype, \
-                        void *recvbuf, int recvcount, const Datatype &recvtype, int root) const
-                    Requests igather(const void *sendbuf, void *recvbuf, \
-                        int count, const Datatype &dtype, int root) const
-                    Requests igather(const Datapacket &send_dpacket, \
-                        void *recvbuf, int root) const
-                    Requests igatherv(\
-                        const void *sendbuf, int sendcount, const Datatype &sendtype, \
-                        void *recvbuf, const int recvcounts[], const int displs[],\
-                        const Datatype &recvtype, int root ) const
-                    Requests iscatter(\
-                        const void *sendbuf, int sendcount, const Datatype &sendtype,\
-                        void *recvbuf, int recvcount, const Datatype &recvtype, int root )const
-                    Requests iscatter(const void *sendbuf, void *recvbuf, \
-                        int count, const Datatype &dtype, int root) const
-                    Requests iscatter(const void *sendbuf, \
-                        const Datapacket &recv_dpacket, int root) const
-                    Requests iscatterv(\
-                        const void *sendbuf, const int sendcounts[], const int displs[], \
-                        const Datatype &sendtype,\
-                        void *recvbuf, int recvcount, const Datatype &recvtype, int root) const
-                    Requests iallgather( const void *sendbuf, int sendcount, \
-                        const Datatype &sendtype,\
-                        void *recvbuf, int recvcount, const Datatype &recvtype ) const
-                    Requests iallgatherv(\
-                        const void *sendbuf, int sendcount, const Datatype &sendtype, \
-                        void *recvbuf, const int recvcounts[], const int displs[],\
-                        const Datatype &recvtype ) const
-                    Requests ialltoall( const void *sendbuf, int sendcount, \
-                        const Datatype &sendtype,\
-                        void *recvbuf, int recvcount, const Datatype &recvtype ) const
-                    Requests ialltoallv( const void *sendbuf, const int sendcounts[], \
-                        const int senddispls[], const Datatype &sendtype,\
-                        void *recvbuf, const int recvcounts[], const int recvdispls[], \
-                        const Datatype &recvtype ) const
-                    Requests ialltoallw( const void *sendbuf, const int sendcounts[], \
-                        const int senddispls[], const Datatype::mpi_t sendtypes[],\
-                        void *recvbuf, const int recvcounts[], const int recvdispls[], \
-                        const Datatype::mpi_t recvtypes[] ) const
-                    Requests ireduce( const void *sendbuf, void *recvbuf, int count, \
-                        const Datatype &dtype, const Oppacket &op, int root ) const
-                    Requests ireduce( const Datapacket &send_dpacket, void *recvbuf, \
-                        const Oppacket &op, int root ) const
-                    Requests iallreduce( const void *sendbuf, void *recvbuf, int count, \
-                        const Datatype &dtype, const Oppacket &op ) const
-                    Requests iallreduce( const Datapacket &send_dpacket, void *recvbuf, \
-                        const Oppacket &op ) const
-                    Requests ireduce_scatter_block( const void *sendbuf, void *recvbuf, \
-                        int recvcount, const Datatype &dtype, const Oppacket &op ) const
-                    Requests ireduce_scatter( const void *sendbuf, void *recvbuf, \
-                        const int recvcounts[], const Datatype &dtype, \
-                        const Oppacket &op )const
-                    Requests iscan( const void *sendbuf, void *recvbuf, \
-                        int count, const Datatype &dtype, const Oppacket &op ) const
-                    Requests iexscan( const void *sendbuf, void *recvbuf, \
-                        int count, const Datatype &dtype, const Oppacket &op ) const
 
-        Collective communication functions for data movement or group computation.
-    
-        According to MPI standard, some collective communication functions can
-        apply to both inter and intra communicators. If inter-communicators
-        are used, then only the 'all to all' functions are bi-directional, others
-        are uni-directional.
+    **Collective communication/computation calls**: According to MPI standard, some collective communication functions can
+    apply to both inter and intra communicators. If inter-communicators
+    are used, then only the 'all to all' functions are bi-directional, others
+    are uni-directional.
 
-        Some recv/send buffer can be specified with a :var:`IN_PLACE`, this
-        is exactly the same as the **Standard** MPI_IN_PLACE.
+    Some recv/send buffer can be specified with a :var:`IN_PLACE`, this
+    is exactly the same as the **Standard** MPI_IN_PLACE.
+    
+    The non-blocking version here returns a :class:`Requests` object 
+    for later testing
+    and completion. The requests object should not be freed manually before
+    completion.
+    
+    In all cases, the datatype argument mush be exactly a :class:`Datatype` 
+    instance or
+    an array of such. This is different from the point-to-point
+    communication, where you can pass a string to indicate a basic type. One
+    exception is ``alltoallw()`` and ``ialltoallw()``, in which the datatype 
+    arguments is an array of original MPI datatype as returned by method :func:`Datatype::raw()` 
+    (this design avoid the problem when using non-blocking collective operation, and also avoid 
+    overhead in converting the datatype from high-level instance to MPI 
+    original one).
+
+    Please refer to the **Standard** for the detailed semantics of these collective calls.
+    
+    .. function::   \
+        void barrier() const
+        void bcast( void *buf, int count, const Datatype &dtype, int root) const
+        void bcast(const Datapacket &dpacket, int root) const
         
-        The non-blocking version here returns a :class:`Requests` object 
-        for later testing
-        and completion. The requests object should not be freed manually before
-        completion.
+    .. function::   \
+        void gather( const void *sendbuf, int sendcount, const Datatype &sendtype, void *recvbuf, int recvcount, const Datatype &recvtype, int root) const
+        void gather(const void *sendbuf, void *recvbuf, \
+            int count, const Datatype &dtype, int root) const
+        void gather(const ConstDatapacket &send_dpacket, \
+            void *recvbuf, int root) const
+        void gather(const ConstDatapacket &send_dpacket, \
+            const Datapacket &recv_dpacket, \
+            int root) const
+
+        Gather calls.
         
-        In all cases, the datatype argument mush be exactly a :class:`Datatype` 
-        instance or
-        an array of such. This is different from the point-to-point
-        communication, where you can pass a string to indicate a basic type. One
-        exception is ``alltoallw()`` and ``ialltoallw()``, in which the datatype 
-        arguments is an array of original MPI datatype as returned by method :func:`Datatype::raw()` 
-        (this design avoid the problem when using non-blocking collective operation, and also avoid 
-        overhead in converting the datatype from high-level instance to MPI 
-        original one).
+        (1): MPI standard-compliant.
+        
+        (2)：Send and recv share the same datatype and count.
+        
+        (3,4): Same as (2) but the datatype and count are taken from 
+        ``send_dpacket``.
+        
+        ``recvbuf``, ``recvcount``, ``recvtype`` - only significant at root. The send buffer 
+        signature must match the recv buffer signature at root.
 
-        Please refer to the **Standard** for the detailed semantics of these collective calls.
+        For intra-communicator, ``sendbuf = IN_PLACE`` at root means in-place 
+        sending. Then the ``sendcount`` and ``sendtype`` are ignored.
 
-    **Examples:**
+        For inter-communicator, in group A, root process passes ``root=ROOT``, other
+        processes pass ``root=PROC_NULL``. In group B, all pass ``root`` eq to the 
+        rank of root in A.
+        
+    .. function::   \
+        void gatherv(const void *sendbuf, int sendcount, const Datatype &sendtype, void *recvbuf, const int recvcounts[], const int displs[], const Datatype &recvtype, int root ) const
+        void gatherv(const ConstDatapacket &send_dpacket, void *recvbuf, \
+            ContiguousBuffer<const int> recvcounts, \
+            ContiguousBuffer<const int> displs,\
+            const Datatype &recvtype, int root) const
+        void gatherv(const ConstDatapacket &send_dpacket, \
+            const Datapacket &recv_dpacket, \
+            ContiguousBuffer<const int> recvcounts, \
+            ContiguousBuffer<const int> displs, int root) const
 
-    A typical point-to-point communication is displayed. The process with rank 0 send 
-    a vector of values to each of the other processes::
+        Variant of ``gather``, allowing processes sending different number of items.
+        
+        (1): MPI standard-compliant.
+        
+        (2): Use abstract concept arguments - Datapacket and ContiguousBuffer.
+        
+        (3): Same as (2) but recv datatype is inferred from the datapacket.
 
-        int rank = comm.rank(), size = comm.size();
-        HIPP::MPI::Mutex mtx(comm);    // Initialize a mutex for exclusive printing.
+        ``recvbuf``, ``recvcounts``, ``displs``, ``recvtype`` specify the place to put the received data - 
+        significant only at root.
+        
+        ``sendbuf = IN_PLACE`` is still available.
 
-        constexpr int count = 5, tag = 0;
-        if( rank == 0 ){
-            // Process 0 sends a vector of values to each of the other processes.
-            for(int i=1; i<size; ++i){      
-                vector<double> out_buff(count, i);
-                comm.send(i, tag, out_buff);
-            }
-        }else{
-            // Receive the vector of values from rank-0 process. Then print it.
-            vector<double> in_buff(count);
-            comm.recv(0, tag, in_buff.data(), count, HIPP::MPI::DOUBLE);
+    .. function::   \
+        void scatter(const void *sendbuf, int sendcount, const Datatype &sendtype, void *recvbuf, int recvcount, const Datatype &recvtype, int root )const
+        void scatter(const void *sendbuf, void *recvbuf, int count, const Datatype &dtype, int root) const 
+        void scatter(const void *sendbuf, const Datapacket &recv_dpacket, int root) const
+        void scatter(const ConstDatapacket &send_dpacket,\
+            const Datapacket &recv_dpacket, int root) const
 
-            mtx.lock();                // Avoid the entanglement of output.
-            cout << "Rank " << rank << " receives ";
-            HIPP::prt_a(cout, in_buff) << endl;
-            mtx.unlock();
-        }
+        Scatter calls.
 
-    We display two ways of specifying the communication buffer by using either 
-    a single vector or a standard MPI triplet ``(address, count, datatype)``.
-    Four ways of specifying buffer are avaiable, see :ref:`API/MPI/Point-to-point Communication <api-mpi-comm-point-to-point>`.
-    The output is (order may be different at runs)
+        (1): MPI standard-compliant.
+        
+        (2): Send and recv share the same datatype and count.
+        
+        (3,4): Same as (2) but datatype and count are taken from ``recv_dpacket``.
+        
+        ``sendbuf``, ``sendcount``, ``sendtype`` - only significant at root. The send buffer
+        signature at root must match each recv buffer signature. Every 
+        location in the send buffer cannot be read more than once.
 
-    .. code-block:: text
+        For intra-communicator, ``recvbuf = IN_PLACE`` at root mean in-place 
+        sending. Then ``recvbuf`` and ``recvcount`` are ignored.
 
-        Rank 4 receives 4,4,4,4,4
-        Rank 2 receives 2,2,2,2,2
-        Rank 1 receives 1,1,1,1,1
-        Rank 3 receives 3,3,3,3,3
+        For inter-communicator, in group A, root process passes ``root=ROOT``, other
+        processes pass ``root=PROC_NULL``. In group B, all pass ``root`` eq to the 
+        rank of root in A.
+        
+    .. function::   \
+        void scatterv(const void *sendbuf, const int sendcounts[], const int displs[], const Datatype &sendtype, void *recvbuf, int recvcount, const Datatype &recvtype, int root) const
+        void scatterv(const void *sendbuf, ContiguousBuffer<const int> sendcounts, ContiguousBuffer<const int> displs, const Datatype &sendtype, const Datapacket &recv_dpacket, int root) const
+        void scatterv(const ConstDatapacket &send_dpacket, \
+            ContiguousBuffer<const int> sendcounts, \
+            ContiguousBuffer<const int> displs,\
+            const Datapacket &recv_dpacket, int root) const
 
-    To show an alternative way of point-to-point communication, 
-    we use the non-standard mode ('ready' mode here). To use the 'ready' mode, 
-    the receive side prepares the receive buffer and start a non-blocking 
-    receive. It then notifies the sender to ask a response::
+        Variants of scatter, allowing sending to processes different number of 
+        items.
+        
+        (1): MPI standard-compliant.
+        
+        (2): Use abstract concept arguments - Datapacket and ContiguousBuffer.
+        
+        (3): Same as (2) but send datatype is inferred from the datapacket.
+
+        The send buffer arguments are ignored at all processes except the root.
+        ``recvbuf = IN_PLACE`` is still available.
+
+    .. function::   \
+        void allgather( const void *sendbuf, int sendcount, \
+            const Datatype &sendtype,\
+            void *recvbuf, int recvcount, const Datatype &recvtype ) const
+        void allgather(const void *sendbuf, void *recvbuf, \
+            int count, const Datatype &dtype) const
+        void allgather(const ConstDatapacket &send_dpacket,\
+            void *recvbuf) const
+        void allgather(const ConstDatapacket &send_dpacket,\
+            const Datapacket &recv_dpacket) const
+        void allgatherv(\
+            const void *sendbuf, int sendcount, const Datatype &sendtype, \
+            void *recvbuf, const int recvcounts[], const int displs[],\
+            const Datatype &recvtype ) const
+        void allgatherv(\
+            const ConstDatapacket &send_dpacket, void *recvbuf, \
+            ContiguousBuffer<const int> recvcounts, \
+            ContiguousBuffer<const int> displs,\
+            const Datatype &recvtype) const
+        void allgatherv(\
+            const ConstDatapacket &send_dpacket, const Datapacket &recv_dpacket,\
+            ContiguousBuffer<const int> recvcounts, \
+            ContiguousBuffer<const int> displs) const
+
+        All-variant to the gather/gatherv call - all processes received the data.
+
+    .. function::   \
+        void alltoall( const void *sendbuf, int sendcount, const Datatype &sendtype,\
+            void *recvbuf, int recvcount, const Datatype &recvtype ) const
+        void alltoall(const void *sendbuf, void *recvbuf, \
+            int count, const Datatype &dtype) const
+        
+        All-to-all calls.
+        
+        (1): MPI standard-compliant.
+        
+        (2): send buffer and recv buffer share the same count and datatype.
+
+        If send buffer is ``IN_PLACE``, the data are taken from and replace the recv
+        buffer.
+
     
-        if( rank == 0 ){
-            /**
-            * Process 0 waits for each of the other processes to send a notification.
-            * Then it make a response.
-            * The notification has no data, so buff = NULL, count = 0, 
-            * datatype = any ("char" here).
-            * The reponse uses a 'ready' mode because the target must get ready.
-            */
-            for(int i=1; i<size; ++i){
-                // 
-                auto status = comm.recv(HIPP::MPI::ANY_SOURCE, tag, NULL, 0, "char");
-                vector<double> out_buff(count, i);
-                comm.rsend(status.source(), tag, out_buff);
-            }
-        }else{
-            /**
-            * Prepare a buffer 'in_buff' and start the non-blocking recv.
-            * Then, notify process 0 and wait for response.
-            */
-            vector<double> in_buff(count);
-            auto request = comm.irecv(0, tag, in_buff);
-            comm.send(0, tag, NULL, 0, "char");
-            request.wait();
+    .. function::   \
+        void alltoallv( const void *sendbuf, const int sendcounts[], \
+            const int senddispls[], const Datatype &sendtype,\
+            void *recvbuf, const int recvcounts[], const int recvdispls[], \
+            const Datatype &recvtype ) const
+        void alltoallw( const void *sendbuf, const int sendcounts[], \
+            const int senddispls[], const Datatype::mpi_t sendtypes[],\
+            void *recvbuf, const int recvcounts[], const int recvdispls[], \
+            const Datatype::mpi_t recvtypes[] ) const
+        
+    .. function::   \
+        void reduce( const void *sendbuf, void *recvbuf, int count, \
+            const Datatype &dtype, const Oppacket &op, int root ) const
+        void reduce(const ConstDatapacket &send_dpacket, void *recvbuf,\
+            const Oppacket &op, int root) const
+        void reduce(const void *sendbuf, const Datapacket &recv_dpacket,\
+            const Oppacket &op, int root) const
+        void reduce(const ConstDatapacket &send_dpacket, \
+            const Datapacket &recv_dpacket,\
+            const Oppacket &op, int root) const
+        void allreduce( const void *sendbuf, void *recvbuf, int count, \
+            const Datatype &dtype, const Oppacket &op ) const
+        void allreduce(const ConstDatapacket &send_dpacket, void *recvbuf, \
+            const Oppacket &op ) const
+        void allreduce(const void *sendbuf, const Datapacket &recv_dpacket,\
+            const Oppacket &op ) const
+        void allreduce(const ConstDatapacket &send_dpacket, \
+            const Datapacket &recv_dpacket, const Oppacket &op) const
 
-            mtx.lock();                 // Avoid the entanglement of output.
-            cout << "Rank " << rank << " receives ";
-            HIPP::prt_a(cout, in_buff) << endl;
-            mtx.unlock();
-        }
+        Reduce calls.
+        
+        (1): MPI standard-compliant.
+        
+        (2,4): count and datatype are taken from ``send_dpacket``.
+        
+        (3): count and datatype are taken from ``recv_dpacket``.
+
+        The same applies to ``allreduce()``.
+
+        Set ``sendbuf=IN_PLACE`` at root implies in-place reduction, i.e., at root,
+        data are taken from recv buffer and the results overwrite it.
+
+    .. function::   \
+        static void reduce_local(const ConstDatapacket &in_dpacket, void *inoutbuf, \
+            const Oppacket &op)
+        static void reduce_local(const ConstDatapacket &in_dpacket, \
+            const Datapacket &inout_dpacket, const Oppacket &op)
+
+        Reduce_local calls.
+        
+        (1): MPI standard-compliant.
+        
+        (2,3): count and datatype are taken from ``in_dpacket``.
+        
+    .. function::   \
+        void reduce_scatter_block( const void *sendbuf, void *recvbuf, \
+            int recvcount, const Datatype &dtype, const Oppacket &op ) const
+        void reduce_scatter( const void *sendbuf, void *recvbuf, \
+            const int recvcounts[], const Datatype &dtype, \
+            const Oppacket &op )const
+        void scan( const void *sendbuf, void *recvbuf, \
+            int count, const Datatype &dtype, const Oppacket &op ) const
+        void exscan( const void *sendbuf, void *recvbuf, \
+            int count, const Datatype &dtype, const Oppacket &op ) const
+
+    .. function::   \
+        Requests ibarrier() const
+        Requests ibcast( \
+            void *buf, int count, const Datatype &dtype, int root) const
+        Requests ibcast(const Datapacket &dpacket, int root) const
     
-    The output is similar to the previous example using standard send/recv.
+    .. function::   \
+        Requests igather( \
+            const void *sendbuf, int sendcount, const Datatype &sendtype, \
+            void *recvbuf, int recvcount, const Datatype &recvtype, int root) const
+        Requests igather(const void *sendbuf, void *recvbuf, \
+            int count, const Datatype &dtype, int root) const
+        Requests igather(const ConstDatapacket &send_dpacket, \
+            void *recvbuf, int root) const
+        Requests igather(const ConstDatapacket &send_dpacket, \
+            const Datapacket &recv_dpacket, int root) const
+        Requests igatherv(\
+            const void *sendbuf, int sendcount, const Datatype &sendtype, \
+            void *recvbuf, const int recvcounts[], const int displs[],\
+            const Datatype &recvtype, int root ) const
+        Requests igatherv(\
+            const ConstDatapacket &send_dpacket, void *recvbuf, \
+            ContiguousBuffer<const int> recvcounts, \
+            ContiguousBuffer<const int> displs, \
+            const Datatype &recvtype, int root ) const
+        Requests igatherv(\
+            const ConstDatapacket &send_dpacket, const Datapacket &recv_dpacket,\
+            ContiguousBuffer<const int> recvcounts, \
+            ContiguousBuffer<const int> displs, int root) const
+
+    .. function::   \
+        Requests iscatter(\
+            const void *sendbuf, int sendcount, const Datatype &sendtype,\
+            void *recvbuf, int recvcount, const Datatype &recvtype, int root )const
+        Requests iscatter(const void *sendbuf, void *recvbuf, \
+            int count, const Datatype &dtype, int root) const
+        Requests iscatter(const void *sendbuf, \
+            const Datapacket &recv_dpacket, int root) const
+        Requests iscatter(const ConstDatapacket &send_dpacket,\
+            const Datapacket &recv_dpacket, int root) const
+        Requests iscatterv(\
+            const void *sendbuf, const int sendcounts[], const int displs[], \
+            const Datatype &sendtype,\
+            void *recvbuf, int recvcount, const Datatype &recvtype, int root) const
+        Requests iscatterv(\
+            const void *sendbuf, ContiguousBuffer<const int> sendcounts, \
+            ContiguousBuffer<const int> displs, const Datatype &sendtype,\
+            const Datapacket &recv_dpacket, int root) const
+        Requests iscatterv(\
+            const ConstDatapacket send_dpacket, ContiguousBuffer<const int> sendcounts, \
+            ContiguousBuffer<const int> displs,\
+            const Datapacket &recv_dpacket, int root) const
+
+    .. function::   \
+        Requests iallgather( const void *sendbuf, int sendcount, \
+            const Datatype &sendtype,\
+            void *recvbuf, int recvcount, const Datatype &recvtype ) const
+        Requests iallgather(const void *sendbuf, void *recvbuf, int count, \
+            const Datatype &dtype) const
+        Requests iallgather(const ConstDatapacket &send_dpacket, void *recvbuf) const
+        Requests iallgather(const ConstDatapacket &send_dpacket, \
+            const Datapacket &recv_dpacket) const
+        Requests iallgatherv(\
+            const void *sendbuf, int sendcount, const Datatype &sendtype, \
+            void *recvbuf, const int recvcounts[], const int displs[],\
+            const Datatype &recvtype ) const
+        Requests iallgatherv(\
+            const ConstDatapacket &send_dpacket,\
+            void *recvbuf, ContiguousBuffer<const int> recvcounts, \
+            ContiguousBuffer<const int> displs,\
+            const Datatype &recvtype ) const
+        Requests iallgatherv(\
+            const ConstDatapacket &send_dpacket, const Datapacket &recv_dpacket, \
+            ContiguousBuffer<const int> recvcounts, \
+            ContiguousBuffer<const int> displs) const
+
+    .. function::   \
+        Requests ialltoall( const void *sendbuf, int sendcount, \
+            const Datatype &sendtype,\
+            void *recvbuf, int recvcount, const Datatype &recvtype ) const
+        Requests ialltoall(const void *sendbuf, void *recvbuf, int count, \
+            const Datatype &dtype) const
+        Requests ialltoallv( const void *sendbuf, const int sendcounts[], \
+            const int senddispls[], const Datatype &sendtype,\
+            void *recvbuf, const int recvcounts[], const int recvdispls[], \
+            const Datatype &recvtype ) const
+        Requests ialltoallw( const void *sendbuf, const int sendcounts[], \
+            const int senddispls[], const Datatype::mpi_t sendtypes[],\
+            void *recvbuf, const int recvcounts[], const int recvdispls[], \
+            const Datatype::mpi_t recvtypes[] ) const
+
+    .. function::   \
+        Requests ireduce( const void *sendbuf, void *recvbuf, int count, \
+            const Datatype &dtype, const Oppacket &op, int root ) const
+        Requests ireduce( const ConstDatapacket &send_dpacket, void *recvbuf, \
+            const Oppacket &op, int root ) const
+        Requests ireduce(const void *sendbuf, const Datapacket &recv_dpacket, \
+            const Oppacket &op, int root ) const
+        Requests ireduce(const ConstDatapacket &send_dpacket, \
+            const Datapacket &recv_dpacket, const Oppacket &op, int root ) const
+        Requests iallreduce( const void *sendbuf, void *recvbuf, int count, \
+            const Datatype &dtype, const Oppacket &op ) const
+        Requests iallreduce( const ConstDatapacket &send_dpacket, void *recvbuf, \
+            const Oppacket &op ) const
+        Requests iallreduce(const void *sendbuf, const Datapacket &recv_dpacket,\
+            const Oppacket &op ) const
+        Requests iallreduce(const ConstDatapacket &send_dpacket, \
+            const Datapacket &recv_dpacket,\
+            const Oppacket &op ) const
+        Requests ireduce_scatter_block( const void *sendbuf, void *recvbuf, \
+            int recvcount, const Datatype &dtype, const Oppacket &op ) const
+        Requests ireduce_scatter( const void *sendbuf, void *recvbuf, \
+            const int recvcounts[], const Datatype &dtype, \
+            const Oppacket &op )const
+        Requests iscan( const void *sendbuf, void *recvbuf, \
+            int count, const Datatype &dtype, const Oppacket &op ) const
+        Requests iexscan( const void *sendbuf, void *recvbuf, \
+            int count, const Datatype &dtype, const Oppacket &op ) const
+
+
+**Examples:**
+
+A typical point-to-point communication is displayed. The process with rank 0 send 
+a vector of values to each of the other processes::
+
+    int rank = comm.rank(), size = comm.size();
+    HIPP::MPI::Mutex mtx(comm);    // Initialize a mutex for exclusive printing.
+
+    constexpr int count = 5, tag = 0;
+    if( rank == 0 ){
+        // Process 0 sends a vector of values to each of the other processes.
+        for(int i=1; i<size; ++i){      
+            vector<double> out_buff(count, i);
+            comm.send(i, tag, out_buff);
+        }
+    }else{
+        // Receive the vector of values from rank-0 process. Then print it.
+        vector<double> in_buff(count);
+        comm.recv(0, tag, in_buff.data(), count, HIPP::MPI::DOUBLE);
+
+        mtx.lock();                // Avoid the entanglement of output.
+        cout << "Rank " << rank << " receives ";
+        HIPP::prt_a(cout, in_buff) << endl;
+        mtx.unlock();
+    }
+
+We display two ways of specifying the communication buffer by using either 
+a single vector or a standard MPI triplet ``(address, count, datatype)``.
+Four ways of specifying buffer are avaiable, see :ref:`API/MPI/Point-to-point Communication <api-mpi-comm-point-to-point>`.
+The output is (order may be different at runs)
+
+.. code-block:: text
+
+    Rank 4 receives 4,4,4,4,4
+    Rank 2 receives 2,2,2,2,2
+    Rank 1 receives 1,1,1,1,1
+    Rank 3 receives 3,3,3,3,3
+
+To show an alternative way of point-to-point communication, 
+we use the non-standard mode ('ready' mode here). To use the 'ready' mode, 
+the receive side prepares the receive buffer and start a non-blocking 
+receive. It then notifies the sender to ask a response::
+
+    if( rank == 0 ){
+        /**
+        * Process 0 waits for each of the other processes to send a notification.
+        * Then it make a response.
+        * The notification has no data, so buff = NULL, count = 0, 
+        * datatype = any ("char" here).
+        * The reponse uses a 'ready' mode because the target must get ready.
+        */
+        for(int i=1; i<size; ++i){
+            // 
+            auto status = comm.recv(HIPP::MPI::ANY_SOURCE, tag, NULL, 0, "char");
+            vector<double> out_buff(count, i);
+            comm.rsend(status.source(), tag, out_buff);
+        }
+    }else{
+        /**
+        * Prepare a buffer 'in_buff' and start the non-blocking recv.
+        * Then, notify process 0 and wait for response.
+        */
+        vector<double> in_buff(count);
+        auto request = comm.irecv(0, tag, in_buff);
+        comm.send(0, tag, NULL, 0, "char");
+        request.wait();
+
+        mtx.lock();                 // Avoid the entanglement of output.
+        cout << "Rank " << rank << " receives ";
+        HIPP::prt_a(cout, in_buff) << endl;
+        mtx.unlock();
+    }
+
+The output is similar to the previous example using standard send/recv.
 
 
 Class Group: the Process Collection

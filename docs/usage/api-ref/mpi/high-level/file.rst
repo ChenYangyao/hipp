@@ -153,65 +153,65 @@ Class File: the Parallel I/O Handler
 
     .. function:: \
         template<typename ...Args> \
-        Status read_at( offset_t offset, Args && ...args )
+            Status read_at( offset_t offset, Args && ...args )
         template<typename ...Args> \
-        Status read_at_all( offset_t offset, Args && ...args )
+            Status read_at_all( offset_t offset, Args && ...args )
         template<typename ...Args> \
-        Status write_at( offset_t offset, Args && ...args )
+            Status write_at( offset_t offset, Args && ...args )
         template<typename ...Args> \
-        Status write_at_all( offset_t offset, Args && ...args )
+            Status write_at_all( offset_t offset, Args && ...args )
         template<typename ...Args> \
-        Requests iread_at( offset_t offset, Args && ...args )
+            Requests iread_at( offset_t offset, Args && ...args )
         template<typename ...Args> \
-        Requests iwrite_at( offset_t offset, Args && ...args )
+            Requests iwrite_at( offset_t offset, Args && ...args )
         template<typename ...Args> \
-        void read_at_all_begin( offset_t offset, Args && ...args )
+            void read_at_all_begin( offset_t offset, Args && ...args )
         Status read_at_all_end( void *buf )
         template<typename ...Args> \
-        void write_at_all_begin( offset_t offset, Args && ...args )
-        Status write_at_all_end( void *buf )
+            void write_at_all_begin( offset_t offset, Args && ...args )
+        Status write_at_all_end( const void *buf )
         void seek(offset_t offset, int whence)
         void seek(offset_t offset, const string &whence)
         offset_t get_position()const
         offset_t get_byte_offset( offset_t offset )const
         template<typename ...Args> \
-        Status read( Args && ...args )
+            Status read( Args && ...args )
         template<typename ...Args> \
-        Status read_all( Args && ...args )
+            Status read_all( Args && ...args )
         template<typename ...Args> \
-        Status write( Args && ...args )
+            Status write( Args && ...args )
         template<typename ...Args> \
-        Status write_all( Args && ...args )
+            Status write_all( Args && ...args )
         template<typename ...Args> \
-        Requests iread( Args && ...args )
+            Requests iread( Args && ...args )
         template<typename ...Args> \
-        Requests iwrite( Args && ...args )
+            Requests iwrite( Args && ...args )
         template<typename ...Args> \
-        void read_all_begin( Args && ...args )
+            void read_all_begin( Args && ...args )
         Status read_all_end( void *buf )
         template<typename ...Args> \
-        void write_all_begin( Args && ...args )
-        Status write_all_end( void *buf )
+            void write_all_begin( Args && ...args )
+        Status write_all_end( const void *buf );
         void seek_shared(offset_t offset, int whence)
         void seek_shared(offset_t offset, const string &whence)
         offset_t get_position_shared()const
         template<typename ...Args> \
-        Status read_shared( Args && ...args )
+            Status read_shared( Args && ...args )
         template<typename ...Args> \
-        Status read_ordered( Args && ...args )
+            Status read_ordered( Args && ...args )
         template<typename ...Args> \
-        Status write_shared( Args && ...args )
+            Status write_shared( Args && ...args )
         template<typename ...Args> \
-        Status write_ordered( Args && ...args )
+            Status write_ordered( Args && ...args )
         template<typename ...Args> \
-        Requests iread_shared( Args && ...args )
+            Requests iread_shared( Args && ...args )
         template<typename ...Args> \
-        Requests iwrite_shared( Args && ...args )
+            Requests iwrite_shared( Args && ...args )
         template<typename ...Args> \
-        void read_ordered_begin( Args && ...args )
+            void read_ordered_begin( Args && ...args )
         Status read_ordered_end( void *buf )
         template<typename ...Args> \
-        void write_ordered_begin( Args && ...args )
-        Status write_ordered_end( void *buf )
+            void write_ordered_begin( Args && ...args )
+        Status write_ordered_end( const void *buf );
 
     Data access calls. Please refer to MPI **Standard** for their usage.

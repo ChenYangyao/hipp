@@ -33,15 +33,17 @@ void more_on_buffer(Comm comm) {
         comm.send(1, tag, outbuf, 5, "double");
         comm.send(1, tag, outbuf, 5);
 
-        double x; 
-        short a[5];
+        double x {}; 
+        short a[5] {};
         string s = "hello"; 
         vector<int> v(5);
+        std::array<long, 4> arr {};
 
-        comm.send(1, tag, a);
         comm.send(1, tag, x);
+        comm.send(1, tag, a);
         comm.send(1, tag, s);
         comm.send(1, tag, v);
+        comm.send(1, tag, arr);
     }else if(rank == 1) {
         comm.recv(0, tag, inbuf, 5, DOUBLE);
         pout << "Got {", pout(inbuf, inbuf+5), "}", endl;
@@ -52,16 +54,17 @@ void more_on_buffer(Comm comm) {
         comm.recv(0, tag, inbuf, 5);
         pout << "Got {", pout(inbuf, inbuf+5), "}", endl;
 
+        double x;
         short a[5];
-        double x; vector<char> s(20); vector<int> v(5);
-        comm.recv(0, tag, a);
+        vector<char> s(20, '\0'); vector<int> v(5);
+        std::array<long, 4> arr;
         comm.recv(0, tag, x);
+        comm.recv(0, tag, a);
         comm.recv(0, tag, s);
         comm.recv(0, tag, v);
-        pout << "Got ", pout(a,a+5), endl;
-        pout << "Got ", x, endl;
-        pout << "Got ", s, endl;
-        pout << "Got ", v, endl;
+        comm.recv(0, tag, arr);
+        pout << "Got x=", x, ", a=", pout(a,a+5), ", s=", s.data(), 
+            ", v=", v, ", arr=", arr, endl;
     }
 }
 

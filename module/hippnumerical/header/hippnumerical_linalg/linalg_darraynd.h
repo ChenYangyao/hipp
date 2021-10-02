@@ -38,6 +38,49 @@ struct DArrayBase {
         explicit constexpr size_hint_t(size_t _size) : size(_size) {}
     };
 };
+} // namespace HIPP::NUMERICAL
+
+namespace HIPP {
+
+/** The contiguous buffer API. */
+_HIPP_TEMPHD
+struct ContiguousBufferTraits<const HIPP::NUMERICAL::_HIPP_TEMPCLS > 
+: ContiguousBufferTraits<
+    std::add_const_t<typename HIPP::NUMERICAL::_HIPP_TEMPCLS::value_t > * >
+{
+    typedef ContiguousBufferTraits<std::add_const_t<
+        typename HIPP::NUMERICAL::_HIPP_TEMPCLS::value_t > * > 
+        _parent_t;
+    typedef const HIPP::NUMERICAL::_HIPP_TEMPCLS buffer_t;
+
+    constexpr ContiguousBufferTraits(buffer_t &a) noexcept 
+        : _parent_t(a.data(), a.size()) {}
+};
+
+_HIPP_TEMPHD
+struct ContiguousBufferTraits<HIPP::NUMERICAL::_HIPP_TEMPCLS > 
+: ContiguousBufferTraits<
+    typename HIPP::NUMERICAL::_HIPP_TEMPCLS::value_t * >
+{
+    typedef ContiguousBufferTraits<
+        typename HIPP::NUMERICAL::_HIPP_TEMPCLS::value_t * > _parent_t;
+    typedef HIPP::NUMERICAL::_HIPP_TEMPCLS buffer_t;
+
+    constexpr ContiguousBufferTraits(buffer_t &a) noexcept 
+        : _parent_t(a.data(), a.size()) {}
+};
+
+_HIPP_TEMPHD
+ContiguousBufferTraits(const HIPP::NUMERICAL::_HIPP_TEMPCLS &)
+-> ContiguousBufferTraits<const HIPP::NUMERICAL::_HIPP_TEMPCLS >;
+
+_HIPP_TEMPHD
+ContiguousBufferTraits(HIPP::NUMERICAL::_HIPP_TEMPCLS &)
+-> ContiguousBufferTraits<HIPP::NUMERICAL::_HIPP_TEMPCLS >;
+
+} // namespace HIPP
+
+namespace HIPP::NUMERICAL {
 
 /**
 Dynamic Array with fixed compile-time rank (i.e., the number of dimensions).
@@ -801,7 +844,10 @@ _HIPP_UNARY_OP_DEF(~)
     _HIPP_TEMPCLS operator op(const _HIPP_TEMPCLS &lhs,  \
         const _HIPP_TEMPCLS &rhs) \
     { \
-        _chk_size_match(lhs.size(), rhs.size(), emFLPFB); \
+        if( lhs.size() != rhs.size() ) \
+            ErrLogic::throw_(ErrLogic::eLENGTH, emFLPFB, \
+                "  ... Sizes do not match (got ", lhs.size(), \
+                " and ", rhs.size(), ")\n"); \
         _HIPP_TEMPCLS ret(lhs.shape(), \
             typename _HIPP_TEMPCLS::size_hint_t(lhs.size())); \
         const size_t n = lhs.size(); \
@@ -1097,11 +1143,11 @@ template<typename ...SizeTs>
 size_t _HIPP_TEMPCLS::_indices_to_pos(size_t prev, 
     size_t id0, SizeTs ...ids) noexcept 
 {
-    constexpr size_t rem_rank = sizeof...(SizeTs), 
-        next_dim = RANK - rem_rank;
+    constexpr size_t rem_rank = sizeof...(SizeTs);
     if constexpr ( rem_rank == 0 ) {
         return prev + id0;
     }else {
+        constexpr size_t next_dim = RANK - rem_rank;
         return _indices_to_pos( (prev + id0)*_shape[next_dim], ids...); 
     }
 }

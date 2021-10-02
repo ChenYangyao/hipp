@@ -484,7 +484,7 @@ first matrix::
     assert( r00[1] == 2 );
     assert( r00[2] == 3 );
 
-RawArray Traits 
+RawArray Protocol
 """"""""""""""""""""
 
 .. class:: template<typename ValueT, size_t ...Ds> HIPP::RawArrayTraits< SArray<ValueT, Ds...> >

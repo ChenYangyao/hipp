@@ -75,7 +75,7 @@ Pack & Pack::operator=(Pack &&o) noexcept {
     return *this; 
 }
 
-Pack & Pack::push(const Datapacket &in_dpacket) {
+Pack & Pack::push(const ConstDatapacket &in_dpacket) {
     int insize = size(in_dpacket, _comm);
     _check_and_resize(insize);
 
@@ -92,37 +92,37 @@ Pack & Pack::pop(const Datapacket &out_dpacket) {
 
     return *this;
 }
-Datapacket Pack::as_sendbuf() const { 
-    return { get_base(), int(get_position()), PACKED }; 
+ConstDatapacket Pack::as_sendbuf() const { 
+    return { get_base(), static_cast<int>(get_position()), PACKED }; 
 }
 
 Datapacket Pack::as_recvbuf() { 
-    return { get_base(), int(get_size()), PACKED }; 
+    return { get_base(), static_cast<int>(get_size()), PACKED }; 
 }
 
-void Pack::pack(const Datapacket &in_dpacket, 
+void Pack::pack(const ConstDatapacket &in_dpacket, 
     void *outbuf, int outsize, int &position, const Comm &comm)
 {
-    const auto &dp = in_dpacket;
-    _obj_raw_t::pack(dp._buff, dp._size, dp._dtype.raw(), 
+    const auto &[p,n,dt] = in_dpacket;
+    _obj_raw_t::pack(p, n, dt.raw(), 
         outbuf, outsize, position, comm.raw());
 }
 
 void Pack::unpack(const void *inbuf, int insize, int &position,
     const Datapacket &out_dpacket, const Comm &comm)
 {
-    const auto &dp = out_dpacket;
+    const auto &[p,n,dt] = out_dpacket;
     _obj_raw_t::unpack(inbuf, insize, position, 
-        dp._buff, dp._size, dp._dtype.raw(), comm.raw());
+        p, n, dt.raw(), comm.raw());
 }
 
 int Pack::size(int incount, const Datatype &dtype, const Comm &comm) {
     return _obj_raw_t::size(incount, dtype.raw(), comm.raw());
 }
 
-int Pack::size(const Datapacket &in_dpacket, const Comm &comm) {
-    const auto &dp = in_dpacket;
-    return size(dp._size, dp._dtype, comm);
+int Pack::size(const ConstDatapacket &in_dpacket, const Comm &comm) {
+    const auto &[p,n,dt] = in_dpacket;
+    return size(n, dt, comm);
 }
 
 ExternalPack::ExternalPack(const string &datarep) 
@@ -153,7 +153,7 @@ ExternalPack & ExternalPack::operator=(ExternalPack &&o) noexcept {
     return *this; 
 }
 
-ExternalPack & ExternalPack::push(const Datapacket &in_dpacket)
+ExternalPack & ExternalPack::push(const ConstDatapacket &in_dpacket)
 {
     aint_t insize = size(in_dpacket, _datarep);
     _check_and_resize(insize);
@@ -169,21 +169,21 @@ ExternalPack & ExternalPack::pop(const Datapacket &out_dpacket)
     return *this;
 }
 
-Datapacket ExternalPack::as_sendbuf() const { 
-    return { get_base(), int(get_position()), BYTE }; 
+ConstDatapacket ExternalPack::as_sendbuf() const { 
+    return { get_base(), static_cast<int>(get_position()), BYTE }; 
 }
 
 Datapacket ExternalPack::as_recvbuf() { 
-    return { get_base(), int(get_size()), BYTE }; 
+    return { get_base(), static_cast<int>(get_size()), BYTE }; 
 }
 
-void ExternalPack::pack(const Datapacket &in_dpacket, 
+void ExternalPack::pack(const ConstDatapacket &in_dpacket, 
     void *outbuf, aint_t outsize, aint_t &position, 
     const string &datarep) 
 {
-    const auto &dp = in_dpacket;
+    const auto &[p,n,dt] = in_dpacket;
     _obj_raw_t::pack_external(datarep.c_str(), 
-        dp._buff, dp._size, dp._dtype.raw(), 
+        p, n, dt.raw(), 
         outbuf, outsize, position);   
 }
 
@@ -191,9 +191,9 @@ void ExternalPack::unpack(const void *inbuf, aint_t insize,
     aint_t &position, const Datapacket &out_dpacket, 
     const string &datarep)
 {
-    const auto &dp = out_dpacket;
+    const auto &[p,n,dt] = out_dpacket;
     _obj_raw_t::unpack_external(datarep.c_str(), inbuf, insize, position, 
-        dp._buff, dp._size, dp._dtype.raw());
+        p, n, dt.raw());
 }
 
 aint_t ExternalPack::size(int incount, const Datatype &dtype, 
@@ -202,11 +202,11 @@ aint_t ExternalPack::size(int incount, const Datatype &dtype,
     return _obj_raw_t::external_size(datarep.c_str(), incount, dtype.raw());
 }
 
-aint_t ExternalPack::size(const Datapacket &in_dpacket, 
+aint_t ExternalPack::size(const ConstDatapacket &in_dpacket, 
     const string &datarep)
 {
-    const auto &dp = in_dpacket;
-    return size(dp._size, dp._dtype, datarep);
+    const auto &[p,n,dt] = in_dpacket;
+    return size(n, dt, datarep);
 }
 
 } // namespace HIPP::MPI

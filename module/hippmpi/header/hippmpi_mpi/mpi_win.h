@@ -1,7 +1,7 @@
 /**
- * creat: Yangyao CHEN, 2020/10/11
- *      [write   ] Win - the high-level RMA window interface for MPI system
- */ 
+create: Yangyao CHEN, 2020/10/11
+    [write   ] Win - the high-level RMA window interface for MPI system
+*/ 
 
 #ifndef _HIPPMPI_MPI_WIN_H_
 #define _HIPPMPI_MPI_WIN_H_
@@ -21,13 +21,13 @@ class SyncGuard;
 class Comm;
 
 /**
- * Win represents a RMA window object (internally, MPI_Win). It can be created
- * by, e.g., Comm::win_create().
- * 
- * Win can perform RMA operation by, e.g., put, get, accumulate methods, and 
- * perform synchronization by, e.g., fence (for active target access), 
- * lock/unlock (for passive target access).
- */
+Win represents a RMA window object (internally, MPI_Win). It can be created
+by, e.g., Comm::win_create().
+
+Win can perform RMA operation by, e.g., put, get, accumulate methods, and 
+perform synchronization by, e.g., fence (for active target access), 
+lock/unlock (for passive target access).
+*/
 class Win: public MPIObj<_Win>{
 public:
     typedef MPIObj<_Win> _obj_base_t;
@@ -64,33 +64,33 @@ public:
     friend ostream & operator<<(ostream &os, const Win &win);
 
     /**
-     * free the current window object, and set it to a null value as returned by
-     * nullval().
-     * free() can be called at any time and multiple times.
-     */
+    free the current window object, and set it to a null value as returned by
+    nullval().
+    free() can be called at any time and multiple times.
+    */
     void free() noexcept;
     /**
-     * query the information of the instance.
-     * is_null() - whether this is a null window object (internally, 
-     *  MPI_WIN_NULL).
-     * 
-     * shared_query() - for window created with shared memory, we can query
-     * the base pointer (return value), its size and displacement unit, given
-     * the rank of the remote window.
-     * 
-     * get_attr() - get cache attribute, including the predefined values.
-     * The predefined attribute can also be access by get_base(), get_size(),
-     * get_disp_unit(), get_create_flavor(), and get_model().
-     * 
-     * get_group() - return the processes group associated with this window.
-     * 
-     * get_info() and set_info() - get used hints and set new hints.
-     * 
-     * attach() and detach() - attach and detach dynamic memory to the local 
-     * window. Only valid if the window is created with DYNAMIC flavor.
-     * 
-     * nullval - returun a nullval (internally MPI_WIN_NULL)
-     */
+    query the information of the instance.
+    is_null() - whether this is a null window object (internally, 
+     MPI_WIN_NULL).
+    
+    shared_query() - for window created with shared memory, we can query
+    the base pointer (return value), its size and displacement unit, given
+    the rank of the remote window.
+    
+    get_attr() - get cache attribute, including the predefined values.
+    The predefined attribute can also be access by get_base(), get_size(),
+    get_disp_unit(), get_create_flavor(), and get_model().
+    
+    get_group() - return the processes group associated with this window.
+    
+    get_info() and set_info() - get used hints and set new hints.
+    
+    attach() and detach() - attach and detach dynamic memory to the local 
+    window. Only valid if the window is created with DYNAMIC flavor.
+    
+    nullval - returun a nullval (internally MPI_WIN_NULL)
+    */
     bool is_null() const;
     void * shared_query(int rank, aint_t &size, int &disp_unit) const;
     bool get_attr(int keyval, void * &attr_val) const;
@@ -107,55 +107,56 @@ public:
     static Win nullval() noexcept;
     
     /**
-     * RMA communication calls. 
-     * Here the Datapacket of the origin buffer/result buffer should be 
-     * specified by either triplet or vector or string (see class definition 
-     * of Datapacket). The Datapacket of the target window should be specified
-     * by triplet {(aint_t)displacement, (int)size, (Datatype)datatype}.
-     * Since all RMA calls are not guaranteed blocking, make sure your buffer is 
-     * not released until the synchronization calls are made.
-     * 
-     * put() -  put data in origin buffer to target window. 
-     * get() -  get the data in the target window into origin buffer.
-     * accumulate() -   accumulate the origin buffer, with operation 'op', to 
-     *          the target window.
-     * get_accumulate() -   similar to accumulate but also fetch the data before
-     *          accumulating.
-     * The second version of each call accepts only a 'target_disp', which means 
-     * the size and datatype are the same as the 'origin_dpacket'.
-     * 
-     * fetch_and_op() is a simplified version of get_accumulate() which assume
-     * size = 1. The template version can be applied to predefined datatypes.
-     * 
-     * compare_and_swap() is a important synchronization call, which compare
-     * the data in 'compare' with the data in target window. If the same, write
-     * the data in 'origin_addr' to the target window. The data in target window
-     * (before writing) is always returned in 'result_addr'.
-     * The template version accepts predefined datatypes.
-     * 
-     * The non-blocking version (rput, rget, ...) returns a request object which
-     * can be waited or tested later. Non-blocking version is only valid in 
-     * passive target access.
-     */
-    void put(int target_rank, const Datapacket &origin_dpacket, 
-        const Datapacket &target_dpacket);
-    void put(int target_rank, const Datapacket &origin_dpacket, 
+    RMA communication calls. 
+    Here the Datapacket of the origin buffer/result buffer should be 
+    specified by either triplet or vector or string (see class definition 
+    of Datapacket). The Datapacket of the target window should be specified
+    by triplet {(aint_t)displacement, (int)size, (Datatype)datatype}.
+    Since all RMA calls are not guaranteed blocking, make sure your buffer is 
+    not released until the synchronization calls are made.
+    
+    put() -  put data in origin buffer to target window. 
+    get() -  get the data in the target window into origin buffer.
+    accumulate() -   accumulate the origin buffer, with operation 'op', to 
+             the target window.
+    get_accumulate() -   similar to accumulate but also fetch the data before
+             accumulating.
+    The second version of each call accepts only a 'target_disp', which means 
+    the size and datatype are the same as the 'origin_dpacket'.
+    
+    fetch_and_op() is a simplified version of get_accumulate() which assume
+    size = 1. The template version can be applied to predefined datatypes.
+    
+    compare_and_swap() is a important synchronization call, which compare
+    the data in 'compare' with the data in target window. If the same, write
+    the data in 'origin_addr' to the target window. The data in target window
+    (before writing) is always returned in 'result_addr'.
+    The template version accepts predefined datatypes.
+    
+    The non-blocking version (rput, rget, ...) returns a request object which
+    can be waited or tested later. Non-blocking version is only valid in 
+    passive target access.
+    */
+    void put(int target_rank, const ConstDatapacket &origin_dpacket, 
+        const ConstDatapacket &target_dpacket);
+    void put(int target_rank, const ConstDatapacket &origin_dpacket, 
         aint_t target_disp);
         
     void get(int target_rank, const Datapacket &origin_dpacket, 
-        const Datapacket &target_dpacket);
+        const ConstDatapacket &target_dpacket);
     void get(int target_rank, const Datapacket &origin_dpacket, 
         aint_t target_disp);
 
     void accumulate(int target_rank, const Oppacket &op, 
-        const Datapacket &origin_dpacket, const Datapacket &target_dpacket);
+        const ConstDatapacket &origin_dpacket, 
+        const ConstDatapacket &target_dpacket);
     void accumulate(int target_rank, const Oppacket &op, 
-        const Datapacket &origin_dpacket, aint_t target_disp);
+        const ConstDatapacket &origin_dpacket, aint_t target_disp);
     
     void get_accumulate(int target_rank, const Oppacket &op, 
         const Datapacket &result_dpacket, 
-        const Datapacket &origin_dpacket, 
-        const Datapacket &target_dpacket);
+        const ConstDatapacket &origin_dpacket, 
+        const ConstDatapacket &target_dpacket);
     void get_accumulate(int target_rank, const Oppacket &op, 
         const Datapacket &result_dpacket, const void *origin_addr, 
         aint_t target_disp);
@@ -174,41 +175,42 @@ public:
     void compare_and_swap(int target_rank, T &result, const T &compare, 
         const T &origin, aint_t target_disp);
     
-    Requests rput(int target_rank, const Datapacket &origin_dpacket, 
-        const Datapacket &target_dpacket);
-    Requests rput(int target_rank, const Datapacket &origin_dpacket, 
+    Requests rput(int target_rank, const ConstDatapacket &origin_dpacket, 
+        const ConstDatapacket &target_dpacket);
+    Requests rput(int target_rank, const ConstDatapacket &origin_dpacket, 
         aint_t target_disp);
         
     Requests rget(int target_rank, const Datapacket &origin_dpacket, 
-        const Datapacket &target_dpacket);
+        const ConstDatapacket &target_dpacket);
     Requests rget(int target_rank, const Datapacket &origin_dpacket, 
         aint_t target_disp);
 
     Requests raccumulate(int target_rank, const Oppacket &op, 
-        const Datapacket &origin_dpacket, const Datapacket &target_dpacket);
+        const ConstDatapacket &origin_dpacket, 
+        const ConstDatapacket &target_dpacket);
     Requests raccumulate(int target_rank, const Oppacket &op, 
-        const Datapacket &origin_dpacket, aint_t target_disp);
+        const ConstDatapacket &origin_dpacket, aint_t target_disp);
     
     Requests rget_accumulate(int target_rank, const Oppacket &op, 
         const Datapacket &result_dpacket, 
-        const Datapacket &origin_dpacket, 
-        const Datapacket &target_dpacket);
+        const ConstDatapacket &origin_dpacket, 
+        const ConstDatapacket &target_dpacket);
     Requests rget_accumulate(int target_rank, const Oppacket &op, 
         const Datapacket &result_dpacket, const void *origin_addr, 
         aint_t target_disp);
 
     /**
-     * RMA synchronization calls.
-     * These calls either finish the RMA operations or synchoronize the public
-     * and private buffer (if in a SEPARATE model). Look at the MPI standard
-     * specifications before using them.
-     * 
-     * The 'guard' version (with a suffix 'g') adopts RAII convention. When
-     * called, it returns a guard object. The corresponding epoch-end operation 
-     * (fence, complete, wait, ...) is automatically called at the destruction 
-     * of the guard object (user may end the epoch in advanced by calling 
-     * release() of the guard object).
-     */
+    RMA synchronization calls.
+    These calls either finish the RMA operations or synchoronize the public
+    and private buffer (if in a SEPARATE model). Look at the MPI standard
+    specifications before using them.
+    
+    The 'guard' version (with a suffix 'g') adopts RAII convention. When
+    called, it returns a guard object. The corresponding epoch-end operation 
+    (fence, complete, wait, ...) is automatically called at the destruction 
+    of the guard object (user may end the epoch in advanced by calling 
+    release() of the guard object).
+    */
     void fence(int assert=0);
     void start(const Group &group, int assert=0);
     void complete();
@@ -240,16 +242,16 @@ protected:
 
 namespace _mpi_win_helper{
 /**
- * SyncGuard - the Win synchronization guard object. Typically usage is
- * 
- *  auto win = comm.win_create(...);
- *  void *outbuf, *inbuf;
- *  { // Start a local block. Guard is destructed at the end of the block.
- *      auto g = win.fence_g();
- *      win.put(outbuf);
- *      win.get(inbuf);   }
- *  // Reuse the outbuf and inbuf now.
- */
+SyncGuard - the Win synchronization guard object. Typically usage is
+
+auto win = comm.win_create(...);
+void *outbuf, *inbuf;
+{ // Start a local block. Guard is destructed at the end of the block.
+    auto g = win.fence_g();
+    win.put(outbuf);
+    win.get(inbuf);   }
+// Reuse the outbuf and inbuf now.
+*/
 class SyncGuard {
 public:
     enum: int { syncOVER=0,
@@ -280,13 +282,13 @@ inline Win Win::_from_raw(mpi_t obj, int state) noexcept{
 template<typename T>
 void Win::fetch_and_op(int target_rank, const Oppacket &op, 
     T &result, const T &origin, aint_t target_disp){
-    fetch_and_op(target_rank, op, *_TypeCvt<T>::datatype, 
+    fetch_and_op(target_rank, op, TypeCvt<T>::datatype(), 
         &result, &origin, target_disp);
 }
 template<typename T>
 void Win::compare_and_swap(int target_rank, T &result, const T &compare, 
     const T &origin, aint_t target_disp){
-    compare_and_swap(target_rank, *_TypeCvt<T>::datatype, &result, &compare, 
+    compare_and_swap(target_rank, TypeCvt<T>::datatype(), &result, &compare, 
         &origin, target_disp);
 }
 

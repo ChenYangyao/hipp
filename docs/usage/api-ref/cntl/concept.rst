@@ -398,16 +398,19 @@ ContiguousBuffer
 
         Value type of the buffer element, and its const counterpart.
 
-    .. function:: \
+    .. function:: constexpr ContiguousBuffer()
         template<typename T> constexpr ContiguousBuffer(T *p, size_t n) noexcept
         template<typename T> ContiguousBuffer( T &x )
 
-        Constructors
+        Constructors.
         
-        (1) by passing a pointer ``p`` to the buffer starting address and a size 
+        (1) Default constructor - an empty buffer as initialized with (2) by passing 
+        ``p=nullptr, n=0``.
+        
+        (2) by passing a pointer ``p`` to the buffer starting address and a size 
         ``n`` indicating the number of elements.
         
-        (2) by any other ContiguousBuffer protocol compliant object typed ``T``, 
+        (3) by any other ContiguousBuffer protocol compliant object typed ``T``, 
         i.e., ``ContiguousBufferTraits<T>::is_buffer == true``. ``T`` can also
         be a ContiguousBuffer with proper ``value_t``, e.g., copy-construct
         a ``ContiguousBuffer<const int>`` from ``ContiguousBuffer<int>`` is allowed.

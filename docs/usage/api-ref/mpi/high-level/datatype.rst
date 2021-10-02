@@ -856,7 +856,7 @@ Class Pack
         ``*this`` is returned which enables chain of methods on the same instance.
 
     .. function:: \
-        static void pack(const ConstDatapacket &in_dpacket, 
+        static void pack(const ConstDatapacket &in_dpacket, \
             void *outbuf, int outsize, int &position, const Comm &comm)
         static void unpack(const void *inbuf, int insize, int &position, \
             const Datapacket &out_dpacket, const Comm &comm)

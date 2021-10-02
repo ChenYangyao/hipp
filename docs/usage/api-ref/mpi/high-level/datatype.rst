@@ -797,7 +797,7 @@ Class Pack
                             because it can be adjusted by :func:`set_size`.
 
     .. function:: \
-        Pack & push(const Datapacket &in_dpacket)
+        Pack & push(const ConstDatapacket &in_dpacket)
         Pack & pop(const Datapacket &out_dpacket)
 
         ``push()`` packs ``in_dpacket`` into the buffer. It automatically resizes the
@@ -810,7 +810,7 @@ Class Pack
         ``*this`` is returned which enables chain of methods on the same instance.
 
     .. function:: \
-        Datapacket as_sendbuf() const
+        ConstDatapacket as_sendbuf() const
         Datapacket as_recvbuf()
 
         ``as_sendbuf()`` returns a buffer descriptor that can be used in sending operations. 
@@ -856,12 +856,12 @@ Class Pack
         ``*this`` is returned which enables chain of methods on the same instance.
 
     .. function:: \
-        void pack(const Datapacket &in_dpacket,  \
+        static void pack(const ConstDatapacket &in_dpacket, 
             void *outbuf, int outsize, int &position, const Comm &comm)
-        void unpack(const void *inbuf, int insize, int &position, \
+        static void unpack(const void *inbuf, int insize, int &position, \
             const Datapacket &out_dpacket, const Comm &comm)
-        int size(int incount, const Datatype &dtype, const Comm &comm)
-        int size(const Datapacket &in_dpacket, const Comm &comm)
+        static int size(int incount, const Datatype &dtype, const Comm &comm)
+        static int size(const ConstDatapacket &in_dpacket, const Comm &comm)
 
         The functions mapped to the standard MPI calls.
 
@@ -892,13 +892,13 @@ Class ExternalPack
         Constructors.
 
     .. function:: \
-        ExternalPack & push(const Datapacket &in_dpacket)
+        ExternalPack & push(const ConstDatapacket &in_dpacket)
         ExternalPack & pop(const Datapacket &out_dpacket)
 
         Pack/unpack data into/from the current buffer.
 
     .. function:: \
-        Datapacket as_sendbuf() const
+        ConstDatapacket as_sendbuf() const
         Datapacket as_recvbuf()
 
         Return buffer descriptor that may be used in sending/recving calls.
@@ -920,7 +920,7 @@ Class ExternalPack
         Attribute setters.
 
     .. function:: \
-        static void pack(const Datapacket &in_dpacket, \
+        static void pack(const ConstDatapacket &in_dpacket, \
             void *outbuf, aint_t outsize, aint_t &position, \ 
             const string &datarep="external32")
         static void unpack(const void *inbuf, aint_t insize, \
@@ -928,7 +928,7 @@ Class ExternalPack
             const string &datarep="external32")
         static aint_t size(int incount, const Datatype &dtype,  \
             const string &datarep="external32")
-        static aint_t size(const Datapacket &in_dpacket, \
+        static aint_t size(const ConstDatapacket &in_dpacket, \
             const string &datarep="external32")
 
         Methods mapped to the standard MPI calls.

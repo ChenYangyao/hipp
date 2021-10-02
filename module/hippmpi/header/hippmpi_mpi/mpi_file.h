@@ -17,10 +17,10 @@ public:
     using _obj_base_t::_obj_base_t;
 
     /**
-     * @amode: could be "r", "w", "wr", "c" ("create"), "excl", 
-     *  "delete_on_close", "unique_open", "sequential", "a" ("append"),
-     *  or their comma-separated combination, e.g., "wr,c".
-     */
+    @amode: could be "r", "w", "wr", "c" ("create"), "excl", 
+    "delete_on_close", "unique_open", "sequential", "a" ("append"),
+    or their comma-separated combination, e.g., "wr,c".
+    */
     File( const Comm &comm, const string &name, 
         const string &amode, const Info &info = Info::nullval() );
 
@@ -74,7 +74,7 @@ public:
     Status read_at_all_end( void *buf );
     template<typename ...Args> 
     void write_at_all_begin( offset_t offset, Args && ...args );
-    Status write_at_all_end( void *buf );
+    Status write_at_all_end( const void *buf );
 
     void seek(offset_t offset, int whence);
     void seek(offset_t offset, const string &whence);
@@ -103,7 +103,7 @@ public:
     Status read_all_end( void *buf );
     template<typename ...Args> 
     void write_all_begin( Args && ...args );
-    Status write_all_end( void *buf );
+    Status write_all_end( const void *buf );
 
     void seek_shared(offset_t offset, int whence);
     void seek_shared(offset_t offset, const string &whence);
@@ -126,7 +126,7 @@ public:
     Status read_ordered_end( void *buf );
     template<typename ...Args> 
     void write_ordered_begin( Args && ...args );
-    Status write_ordered_end( void *buf );
+    Status write_ordered_end( const void *buf );
 protected:
     static const std::unordered_map<string, int> _name2mode;
     static const std::unordered_map<int, string> _mode2name;
@@ -142,29 +142,29 @@ inline ostream & operator<<( ostream &os, const File &file ){
 
 template<typename ...Args> 
 Status File::read_at( offset_t offset, Args && ...args ){
-    Datapacket dp( std::forward<Args>(args)... );
-    return _obj_ptr->read_at(offset, dp._buff, dp._size, dp._dtype.raw());
+    auto [p,n,dt] = Datapacket( std::forward<Args>(args)... );
+    return _obj_ptr->read_at(offset, p, n, dt.raw());
 }
 template<typename ...Args> 
 Status File::read_at_all( offset_t offset, Args && ...args ){
-    Datapacket dp( std::forward<Args>(args)... );
-    return _obj_ptr->read_at_all( offset, dp._buff, dp._size, dp._dtype.raw());
+    auto [p,n,dt] = Datapacket( std::forward<Args>(args)... );
+    return _obj_ptr->read_at_all( offset, p, n, dt.raw());
 }
 template<typename ...Args> 
 Status File::write_at( offset_t offset, Args && ...args ){
-    Datapacket dp( std::forward<Args>(args)... );
-    return _obj_ptr->write_at(offset, dp._buff, dp._size, dp._dtype.raw());
+    auto [p,n,dt] = ConstDatapacket( std::forward<Args>(args)... );
+    return _obj_ptr->write_at(offset, p, n, dt.raw());
 }
 template<typename ...Args> 
 Status File::write_at_all( offset_t offset, Args && ...args ){
-    Datapacket dp( std::forward<Args>(args)... );
-    return _obj_ptr->write_at_all(offset, dp._buff, dp._size, dp._dtype.raw());
+    auto [p,n,dt] = ConstDatapacket( std::forward<Args>(args)... );
+    return _obj_ptr->write_at_all(offset, p, n, dt.raw());
 }
 template<typename ...Args> 
 Requests File::iread_at( offset_t offset, Args && ...args ){
-    Datapacket dp( std::forward<Args>(args)... );
+    auto [p,n,dt] = Datapacket( std::forward<Args>(args)... );
     return Requests::_from_raw(
-        _obj_ptr->iread_at(offset, dp._buff, dp._size, dp._dtype.raw()), 0);
+        _obj_ptr->iread_at(offset, p, n, dt.raw()), 0);
 }
 /*template<typename ...Args> 
 Requests File::iread_at_all( offset_t offset, Args && ...args ){
@@ -174,9 +174,9 @@ Requests File::iread_at_all( offset_t offset, Args && ...args ){
 }*/
 template<typename ...Args> 
 Requests File::iwrite_at( offset_t offset, Args && ...args ){
-    Datapacket dp( std::forward<Args>(args)... );
+    auto [p,n,dt] = ConstDatapacket( std::forward<Args>(args)... );
     return Requests::_from_raw(
-        _obj_ptr->iwrite_at(offset, dp._buff, dp._size, dp._dtype.raw()), 0);
+        _obj_ptr->iwrite_at(offset, p, n, dt.raw()), 0);
 }
 /*template<typename ...Args> 
 Requests File::iwrite_at_all( offset_t offset, Args && ...args ){
@@ -188,18 +188,18 @@ Requests File::iwrite_at_all( offset_t offset, Args && ...args ){
 
 template<typename ...Args> 
 void File::read_at_all_begin( offset_t offset, Args && ...args ){
-    Datapacket dp( std::forward<Args>(args)... );
-    _obj_ptr->read_at_all_begin( offset, dp._buff, dp._size, dp._dtype.raw() );
+    auto [p,n,dt] = Datapacket( std::forward<Args>(args)... );
+    _obj_ptr->read_at_all_begin( offset, p, n, dt.raw() );
 }
 inline Status File::read_at_all_end( void *buf ){
     return _obj_ptr->read_at_all_end( buf );
 }
 template<typename ...Args> 
 void File::write_at_all_begin( offset_t offset, Args && ...args ){
-    Datapacket dp( std::forward<Args>(args)... );
-    _obj_ptr->write_at_all_begin( offset, dp._buff, dp._size, dp._dtype.raw() );
+    auto [p,n,dt] = ConstDatapacket( std::forward<Args>(args)... );
+    _obj_ptr->write_at_all_begin( offset, p, n, dt.raw() );
 }
-inline Status File::write_at_all_end( void *buf ){
+inline Status File::write_at_all_end( const void *buf ){
     return _obj_ptr->write_at_all_end( buf );
 }
 
@@ -217,68 +217,68 @@ inline offset_t File::get_byte_offset( offset_t offset )const{
 }
 template<typename ...Args> 
 Status File::read( Args && ...args ){
-    Datapacket dp( std::forward<Args>(args)... );
-    return _obj_ptr->read( dp._buff, dp._size, dp._dtype.raw() );
+    auto [p,n,dt] = Datapacket( std::forward<Args>(args)... );
+    return _obj_ptr->read( p, n, dt.raw() );
 }
 template<typename ...Args> 
 Status File::read_all( Args && ...args ){
-    Datapacket dp( std::forward<Args>(args)... );
-    return _obj_ptr->read_all( dp._buff, dp._size, dp._dtype.raw() );
+    auto [p,n,dt] = Datapacket( std::forward<Args>(args)... );
+    return _obj_ptr->read_all( p, n, dt.raw() );
 }
 template<typename ...Args> 
 Status File::write( Args && ...args ){
-    Datapacket dp( std::forward<Args>(args)... );
-    return _obj_ptr->write( dp._buff, dp._size, dp._dtype.raw() );
+    auto [p,n,dt] = ConstDatapacket( std::forward<Args>(args)... );
+    return _obj_ptr->write( p, n, dt.raw() );
 }
 template<typename ...Args> 
 Status File::write_all( Args && ...args ){
-    Datapacket dp( std::forward<Args>(args)... );
-    return _obj_ptr->write_all( dp._buff, dp._size, dp._dtype.raw() );
+    auto [p,n,dt] = ConstDatapacket( std::forward<Args>(args)... );
+    return _obj_ptr->write_all( p, n, dt.raw() );
 }
 
 template<typename ...Args> 
 Requests File::iread( Args && ...args ){
-    Datapacket dp( std::forward<Args>(args)... );
+    auto [p,n,dt] = Datapacket( std::forward<Args>(args)... );
     return Requests::_from_raw(
-        _obj_ptr->iread(dp._buff, dp._size, dp._dtype.raw()), 
+        _obj_ptr->iread(p, n, dt.raw()), 
         0);
 }
 /*template<typename ...Args> 
 Requests File::iread_all( Args && ...args ){
-    Datapacket dp( std::forward<Args>(args)... );
+    auto [p,n,dt] = Datapacket( std::forward<Args>(args)... );
     return Requests::_from_raw(
-        _obj_ptr->iread_all(dp._buff, dp._size, dp._dtype.raw()), 
+        _obj_ptr->iread_all(p, n, dt.raw()), 
         0);
 }*/
 template<typename ...Args> 
 Requests File::iwrite( Args && ...args ){
-    Datapacket dp( std::forward<Args>(args)... );
+    auto [p,n,dt] = ConstDatapacket( std::forward<Args>(args)... );
     return Requests::_from_raw(
-        _obj_ptr->iwrite(dp._buff, dp._size, dp._dtype.raw()), 
+        _obj_ptr->iwrite(p, n, dt.raw()), 
         0);
 }
 /*template<typename ...Args> 
 Requests File::iwrite_all( Args && ...args ){
-    Datapacket dp( std::forward<Args>(args)... );
+    auto [p,n,dt] = Datapacket( std::forward<Args>(args)... );
     return Requests::_from_raw(
-        _obj_ptr->iwrite_all(dp._buff, dp._size, dp._dtype.raw()), 
+        _obj_ptr->iwrite_all(p, n, dt.raw()), 
         0);
 }*/
 
 template<typename ...Args> 
 void File::read_all_begin( Args && ...args ){
-    Datapacket dp( std::forward<Args>(args)... );
-    _obj_ptr->read_all_begin(dp._buff, dp._size, dp._dtype.raw());
+    auto [p,n,dt] = Datapacket( std::forward<Args>(args)... );
+    _obj_ptr->read_all_begin(p, n, dt.raw());
 }
 inline Status File::read_all_end( void *buf ){
     return _obj_ptr->read_all_end(buf);
 }
 template<typename ...Args> 
 void File::write_all_begin( Args && ...args ){
-    Datapacket dp( std::forward<Args>(args)... );
-    _obj_ptr->write_all_begin(dp._buff, dp._size, dp._dtype.raw());
+    auto [p,n,dt] = ConstDatapacket( std::forward<Args>(args)... );
+    _obj_ptr->write_all_begin(p, n, dt.raw());
 }
-inline Status File::write_all_end( void *buf ){
+inline Status File::write_all_end( const void *buf ){
     return _obj_ptr->write_all_end(buf);
 }
 
@@ -293,50 +293,50 @@ inline offset_t File::get_position_shared()const{
 }
 template<typename ...Args> 
 Status File::read_shared( Args && ...args ){
-    Datapacket dp( std::forward<Args>(args)... );
-    return _obj_ptr->read_shared( dp._buff, dp._size, dp._dtype.raw() );
+    auto [p,n,dt] = Datapacket( std::forward<Args>(args)... );
+    return _obj_ptr->read_shared( p, n, dt.raw() );
 }
 template<typename ...Args> 
 Status File::read_ordered( Args && ...args ){
-    Datapacket dp( std::forward<Args>(args)... );
-    return _obj_ptr->read_ordered( dp._buff, dp._size, dp._dtype.raw() );
+    auto [p,n,dt] = Datapacket( std::forward<Args>(args)... );
+    return _obj_ptr->read_ordered( p, n, dt.raw() );
 }
 template<typename ...Args> 
 Status File::write_shared( Args && ...args ){
-    Datapacket dp( std::forward<Args>(args)... );
-    return _obj_ptr->write_shared( dp._buff, dp._size, dp._dtype.raw() );
+    auto [p,n,dt] = ConstDatapacket( std::forward<Args>(args)... );
+    return _obj_ptr->write_shared( p, n, dt.raw() );
 }
 template<typename ...Args> 
 Status File::write_ordered( Args && ...args ){
-    Datapacket dp( std::forward<Args>(args)... );
-    return _obj_ptr->write_ordered( dp._buff, dp._size, dp._dtype.raw() );
+    auto [p,n,dt] = ConstDatapacket( std::forward<Args>(args)... );
+    return _obj_ptr->write_ordered( p, n, dt.raw() );
 }
 template<typename ...Args> 
 Requests File::iread_shared( Args && ...args ){
-    Datapacket dp( std::forward<Args>(args)... );
+    auto [p,n,dt] = Datapacket( std::forward<Args>(args)... );
     return Requests::_from_raw(
-        _obj_ptr->iread_shared( dp._buff, dp._size, dp._dtype.raw() ), 0);
+        _obj_ptr->iread_shared( p, n, dt.raw() ), 0);
 }
 template<typename ...Args> 
 Requests File::iwrite_shared( Args && ...args ){
-    Datapacket dp( std::forward<Args>(args)... );
+    auto [p,n,dt] = ConstDatapacket( std::forward<Args>(args)... );
     return Requests::_from_raw(
-        _obj_ptr->iwrite_shared( dp._buff, dp._size, dp._dtype.raw() ), 0);
+        _obj_ptr->iwrite_shared( p, n, dt.raw() ), 0);
 }
 template<typename ...Args> 
 void File::read_ordered_begin( Args && ...args ){
-    Datapacket dp( std::forward<Args>(args)... );
-    _obj_ptr->read_ordered_begin( dp._buff, dp._size, dp._dtype.raw() );
+    auto [p,n,dt] = Datapacket( std::forward<Args>(args)... );
+    _obj_ptr->read_ordered_begin( p, n, dt.raw() );
 }
 inline Status File::read_ordered_end( void *buf ){
     return _obj_ptr->read_ordered_end(buf);
 }
 template<typename ...Args> 
 void File::write_ordered_begin( Args && ...args ){
-    Datapacket dp( std::forward<Args>(args)... );
-    _obj_ptr->write_ordered_begin( dp._buff, dp._size, dp._dtype.raw() );
+    auto [p,n,dt] = ConstDatapacket( std::forward<Args>(args)... );
+    _obj_ptr->write_ordered_begin( p, n, dt.raw() );
 }
-inline Status File::write_ordered_end( void *buf ){
+inline Status File::write_ordered_end( const void *buf ){
     return _obj_ptr->write_ordered_end(buf);
 }
 

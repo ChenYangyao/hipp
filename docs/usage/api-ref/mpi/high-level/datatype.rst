@@ -31,24 +31,34 @@ Class Datatype
         =================================================== ====================================================
 
 
+
+    .. type::   ContiguousBuffer<const int> int_buf_t
+                ContiguousBuffer<const aint_t> aint_buf_t
+
+        Contiguous buffer types that provide unified interfaces for all :class:`ContiguousBufferTraits` -comformable types.
+
+        ``int_but_t``: contiguous buffer of constant integers. It is used, e.g., to specify the 
+        the lengths and displacements of the chunks in a customized datatype.
+        
+        ``aint_buf_t``: contiguous buffer of constant address-size integers. It is used, e.g., 
+        to specify the (byte-)displacements of chunks in a customized datatype.
+
+
     .. function::   ostream &info( ostream &os = cout, int fmt_cntl = 1 ) const
                     friend ostream & operator<<( ostream &os, const Datatype &dtype )
 
-        ``info()`` prints the information of the current instance to the stream 
-        ``os``.
-    
-        :arg fmt_cntl:   control the amount of information to be printed, 0 for a 
-                 short and inline priting, 1 for a verbose, multi-line version.
-        :return: The argument ``os`` is returned.
-    
-        The overloaded ``<<`` operator is equivalent to ``info()`` with 
-        ``fmt_cntl==0``.
+        ``info()`` prints a short (``fmt_cntl=0``) or a verbose (``fmt_cntl=1``) 
+        description of the current instance to the stream ``os``.
+
+        Operator ``<<`` is equivalent to ``info()`` with ``fmt_cntl=0``.
+
+        The passed stream ``os`` is returned.
     
     .. function:: void free() noexcept
 
         Free the object and set it to null value as returned by :func:`nullval`.
         It is safe to call this function at any time, or even multiple times, 
-        except for exactly the predifined objects (they are `const`, but a 
+        except for exactly the predefined objects (they are ``const``, but a 
         non-const copy can be freed). 
 
 
@@ -72,70 +82,155 @@ Class Datatype
 
     .. function::   Datatype dup() const
                     static Datatype nullval() noexcept
-                    Datatype resized( aint_t lb, aint_t ext ) const
+
+        New datatype constructors.
 
         ``dup()`` creates a duplication of the current datatype.
         
-        ``nullval()`` returns a null value, corresponding to 
-        ``MPI_DATATYPE_NULL`` internally.
+        ``nullval()`` returns a null value, corresponding to ``MPI_DATATYPE_NULL`` internally.
+
+
+    .. function::  \
+        Datatype resized(aint_t lb, aint_t ext) const
+        Datatype contiguous(int count) const
+        Datatype vector(int count, int blklen, int stride) const
+        Datatype hvector(int count, int blklen, aint_t stride) const
+        Datatype indexed_block(int count, int blklen, const int displs[]) const
+        Datatype indexed_block(int blklen, int_buf_t displs) const
+        Datatype hindexed_block(int count, int blklen, const aint_t displs[]) const
+        Datatype hindexed_block(int blklen, aint_buf_t displs) const
+        Datatype indexed(int count, const int blklens[], const int displs[]) const
+        Datatype indexed(int_buf_t blklens, int_buf_t displs) const
+        Datatype hindexed(int count, const int blklens[], \
+            const aint_t displs[]) const
+        Datatype hindexed(int_buf_t blklens, aint_buf_t displs) const
+        static Datatype struct_(int count, const int blklens[], \
+            const aint_t displs[], const mpi_t dtypes[])
+        static Datatype struct_(int count, const int blklens[], \
+            const aint_t displs[], const Datatype dtypes[])
+        static Datatype struct_(int_buf_t blklens, aint_buf_t displs, \
+            ContiguousBuffer<const Datatype> dtypes)
+
+        New datatype constructors. Assume the current instance describe a datatype
+        ``T``:
+
+        ``resized``: set the lower bound and extent to ``lb`` and ``ext``, respectively,
+        and return the new datatype.
         
-        ``resized()`` creates a resized datatype with new lower bound ``lb`` and extent ``ext``. 
+        ``contiguous``: contiguous-layout ``count`` items, each typed ``T``.
+        
+        ``vector``: a vector datatype that consists of ``counts`` blocks. Each block 
+        has ``blklen`` contiguous items typed T. Blocks are separated by ``stride`` 
+        (in the unit of ``T``).
+        
+        ``hvector``: similar to ``vector`` except that ``stride`` is in the unit of
+        byte.
 
+        ``indexed_block``: similar to ``vector`` but further allowing unequal strides
+        specified by displacements ``displs`` (in the unit of T).
 
-    .. function::   Datatype contiguous( int count ) const
-                    Datatype vector( int count, int blklen, int stride ) const
-                    Datatype hvector( int count, int blklen, aint_t stride ) const
-                    Datatype indexed_block( int blklen, const std::vector<int> &displs ) const
-                    Datatype hindexed_block( int blklen, \
-                        const std::vector<aint_t> &displs ) const
-                    Datatype indexed( const std::vector<int> &blklens, \
-                        const std::vector<int> &displs ) const
-                    Datatype hindexed( const std::vector<int> &blklens, \
-                        const std::vector<aint_t> &displs ) const
-                    static Datatype struct_( const std::vector<int> &blklens, \
-                        const std::vector<aint_t> &displs, const std::vector<Datatype> &dtypes)
+        ``hindexed_block``: similar to ``indexed_block`` except that displs is in the 
+        unit of byte.
 
-        New datatype creation methods;
+        ``indexed``: similar to ``indexed_block`` but allowing unequal sized blocks 
+        specified by ``blklens``.
 
-        ``contiguous()`` creates a datatype with contiguous ``count`` elements of the current
-        datatype. 
+        ``hindexed``: similar to ``indexed`` except that ``displs`` are in the unit of 
+        byte.
 
-        ``vector()`` creates a vector datatype of the current datatype, 
-        consisting of ``count`` blocks, each with
-        ``blklen`` contiguous elements, separated with stride ``stride`` (in the 
-        unit of the current datatype). ``hvector()`` is similar, but the ``stride`` is in bytes. 
+        ``struct_``: most general case. Blocks has different lengths, byte 
+        displacements, and datatypes specified by ``dtypes``.
 
-        ``indexed_block()`` further allows non-constant stride. The displacements
-        of blocks are specified by ``displs`` (in the unit of the current datatype ).
-        ``hindexed_block()`` specifies the displacements in bytes. 
+    .. function::   \
+        Datatype darray(int size, int rank, int ndims, \
+            const int gsizes[], const int distribs[], \
+            const int dargs[], const int psizes[], int order = ORDER_C)const
+        Datatype darray(int size, int rank, int_buf_t gsizes, int_buf_t distribs, \
+            int_buf_t dargs, int_buf_t psizes, int order = ORDER_C)const
+        Datatype subarray(int ndims, const int sizes[], const int subsizes[], \
+            const int starts[], int order = ORDER_C)const
+        Datatype subarray(int_buf_t sizes, int_buf_t subsizes, int_buf_t starts, \
+            int order = ORDER_C)const
 
-        ``indexed()`` allows further flexibility - the blocks can have different lengths specified 
-        by ``blklens``.
-        ``hindexed()`` uses displacements in bytes;
+        For the convenience of distributing array data among processes, the 
+        following two datatypes are defined:
 
-        ``struct_`` is the most general one - the datatypes of blocks can be different 
-        and specified by ``dtypes``.
+        ``darray``: Cartesian decompose the array type T into blocks, return the 
+        datatype that corresponds to one of them.
 
-    .. function::   Datatype darray( int size, int rank, const std::vector<int> &gsizes, \
-                        const std::vector<int> &distribs, \
-                        const std::vector<int> &dargs,\
-                        const std::vector<int> &psizes, int order = ORDER_C )const
-                    Datatype subarray( const std::vector<int> &sizes, \
-                        const std::vector<int> &subsizes, \
-                        const std::vector<int> &starts, int order = ORDER_C )const
+        - ``size, rank``: total number of blocks and the index of the desired block
+          (assuming row-major order).
+        - ``gsizes``: dimensions of the whole array.
+        - ``distribs``: specifying the distribution algorithm at dimensions. Each can be
+        
+            - ``DISTRIBUTE_NONE`` (the first block owns all, the others get none).
+            - ``DISTRIBUTE_BLOCK`` (each block is contiguous).
+            - ``DISTRIBUTE_CYCLIC`` (each block cyclicly owns elements).
+        
+        - ``dargs``: arguments to the distribution algorithm. Each can be
+            
+            - ``DISTRIBUTE_DFLT_DARG``: most uniform way for BLOCK distribution, 
+              and 1 for CYCLIC.
+            - an integer: size of the block (must has darg * psize >= gsize at this
+              dimension) for BLOCK distribution, or the size each cyclic chunk.
+        
+        - ``psizes``: number of blocks at dimensions. ``1`` for non-distribution at 
+          this dimension.
 
-        New datatype creation methods for distributed data.
+        ``subarray``: a subarray datatype in a larger array typed T.
+        
+        ``sizes``: dimensions of the whole array.
+        ``subsizes, starts``: dimensions at starting location of the subarray.
+        ``order``: ``ORDER_C`` or ``ORDER_FORTRAN``, the storage order.
 
-        ``darray()`` creates a datatype which describes a part of a large distributed array.
-        ``size`` and ``rank`` are the number of parts and the index of the target part. 
-        The array may have any dimension, with ``psizes`` specifying the number of process at each direction, 
-        ``gsizes`` describing the size
-        of the global array at each direction, ``distribs`` and ``dargs`` describing the 
-        distribution method (``distribs`` can be :var:`DISTRIBUTE_BLOCK` or 
-        :var:`DISTRIBUTE_CYCLIC` or :var:`DISTRIBUTE_NONE` for each dimension; 
-        ``dargs`` is block size, can be :var:`DISTRIBUTE_DFLT_DARG` for nearly uniform distribution or 
-        can be a interger).
-        ``order`` can be :var:`ORDER_C` or :var:`ORDER_FORTRAN`.
+    
+    .. function:: \
+        static void add_customized_cache(Datatype *dtype)
+        static void clear_customized_cache() noexcept
+
+        ``add_customized_cache``: 
+        add a user-defined datatype to the cache, so that it is freed at the exit of 
+        the MPI environment.
+        
+        ``clear_customized_cache``: clean the cache, so that all datatypes gets 
+        freed (only if all the copies of the ``Datatype`` instance gets destroyed
+        will the underlying datatype get freed).
+
+    .. function:: \
+        static void add_named_datatype(const string &name, const Datatype *dtype)
+        static void remove_named_datatype(const string &name)
+
+        Add or remove a named datatype, so that the method :func:`from_name` accepts
+        that name.
+
+    .. function:: \
+        template<typename NativeT> \
+        static const Datatype & from_type() noexcept
+
+        Get the Datatype instance from its C++ type. 
+
+        ``NativeT``: a :class:`DatatypeTraits` -comformable type, i.e., ``DatatypeTraits<NativeT>::has_mpi_datatype -> true``.
+
+        User may extend the traits by adding specializations.
+
+    .. function:: \
+        static const Datatype & from_name(const string &name)
+
+        Map string to Datatype instance.
+    
+        ``name``: a string, could be one of the following:
+
+        (1). ``byte``, ``char``, ``bool``; 
+        
+        (2). ``X``, ``signed X``, ``unsigned X`` where X is either char, short, int, long, or long long;
+        
+        (3). ``intX_t``, ``uintX_t`` where X can be either 8, 16, 32, or 64;
+        
+        (4). ``float``, ``double``, ``long double``.
+
+        Other named datatype are allowed if manually added, e.g., with 
+        ``add_named_datatype()``.
+
 
 .. _api-mpi-predefined-dtype:
 
@@ -210,6 +305,186 @@ Predefined Datatypes
     Predefined datatypes for reduction operations (such as :var:`MINLOC` and :var:`MAXLOC`). 
 
 
+DatatypeTraits
+""""""""""""""""""
+
+:class:`~HIPP::MPI::DatatypeTraits` is defined for mapping a C++ type to its MPI Datatype. 
+``DatatypeTraits`` defines the 
+Datatype protocol.
+
+If a C++ type, ``T``, has specialization ``DatatypeTraits<T>``, and satisfies
+the following requirements, it is compliant to this protocol.
+
+(1). Has a member ``static constexpr bool has_mpi_datatype = true``.
+
+(2). Has a member constexpr bool value, ``is_prededefined``. If ``T`` has a 
+predefined standard MPI datatype, ``is_predefined=true``. Otherwise 
+``false``. Any customized datatype, defined by HIPP or by the user, 
+should define this to ``false``.
+
+(3). Have a member typedef ``native_t=T``.
+
+(4). If predefined, has a member ``static const Datatype * datatype`` which 
+points to a ``Datatype`` instance. Otherwise has a method 
+``static const Datatype & datatype()`` which returns the reference to 
+a ``Datatype`` instance.
+
+(5). If predefined, has a member ``static const char * mpi_name`` which points
+to an name to the datatype. Otherwise has a method 
+``static string mpi_name()`` which returns to a string of the datatype name.
+
+To satisfy (1) and (2), the best choice is to define the specialization to 
+derive from :class:`~HIPP::MPI::DatatypeTraitsCustomized`.
+
+The requirement (5) is only for debugging purpose. It is valid to return an 
+empty string.
+
+.. class DatatypeTraitsPredefined::
+
+    static constexpr bool has_mpi_datatype = true
+    static constexpr bool is_predefined = true
+
+
+.. class DatatypeTraitsCustomized::
+
+    static constexpr bool has_mpi_datatype = true
+    static constexpr bool is_predefined = false
+
+
+
+.. class:: template<typename NativeT, typename V =void> DatatypeTraits
+
+    inline static constexpr bool has_mpi_datatype = false
+
+The followings are specializations for C++ native types that has predefined MPI datatype 
+counterpart. 
+
+Supported types are
+
+- ``bool``, ``char``, ``signed char`` or ``unsigned char``;
+- ``X`` or  ``unsigned X``, where ``X`` can be ``short``, ``int``, ``long`` 
+  or ``long long``;
+- ``float``, ``double`` or ``long double``;
+- ``std::complex<float>``, ``std::complex<double>`` 
+  or ``std::complex<long double>``.
+
+Their const qualified types are also supported, referring to the same Datatype object.
+
+.. class:: template<> DatatypeTraits<char >
+
+.. class:: template<> DatatypeTraits<signed char >
+
+.. class:: template<> DatatypeTraits<short >
+
+.. class:: template<> DatatypeTraits<int >
+
+.. class:: template<> DatatypeTraits<long >
+
+.. class:: template<> DatatypeTraits<long long >
+
+.. class:: template<> DatatypeTraits<unsigned char >
+
+.. class:: template<> DatatypeTraits<unsigned short >
+
+.. class:: template<> DatatypeTraits<unsigned int >
+
+.. class:: template<> DatatypeTraits<unsigned long >
+
+.. class:: template<> DatatypeTraits<unsigned long long >
+
+.. class:: template<> DatatypeTraits<float >
+
+.. class:: template<> DatatypeTraits<double >
+
+.. class:: template<> DatatypeTraits<long double >
+
+.. class:: template<> DatatypeTraits<bool >
+
+.. class:: template<> DatatypeTraits<std::complex<float> >
+
+.. class:: template<> DatatypeTraits<std::complex<double> >
+
+.. class:: template<> DatatypeTraits<std::complex<long double> >
+
+.. class:: template<> DatatypeTraits<const char >
+
+.. class:: template<> DatatypeTraits<const signed char >
+
+.. class:: template<> DatatypeTraits<const short >
+
+.. class:: template<> DatatypeTraits<const int >
+
+.. class:: template<> DatatypeTraits<const long >
+
+.. class:: template<> DatatypeTraits<const long long >
+
+.. class:: template<> DatatypeTraits<const unsigned char >
+
+.. class:: template<> DatatypeTraits<const unsigned short >
+
+.. class:: template<> DatatypeTraits<const unsigned int >
+
+.. class:: template<> DatatypeTraits<const unsigned long >
+
+.. class:: template<> DatatypeTraits<const unsigned long long >
+
+.. class:: template<> DatatypeTraits<const float >
+
+.. class:: template<> DatatypeTraits<const double >
+
+.. class:: template<> DatatypeTraits<const long double >
+
+.. class:: template<> DatatypeTraits<const bool >
+
+.. class:: template<> DatatypeTraits<const std::complex<float> >
+
+.. class:: template<> DatatypeTraits<const std::complex<double> >
+
+.. class:: template<> DatatypeTraits<const std::complex<long double> >
+
+.. class:: template<typename NativeT> DatatypeTraits<NativeT, std::enable_if_t< \
+    RawArrayTraits<NativeT>::is_array && \
+    DatatypeTraits<typename RawArrayTraits<NativeT>::value_t>::has_mpi_datatype > >  \
+    : public DatatypeTraitsCustomized
+
+    Specialization for any RawArray protocol (see :class:`~HIPP::RawArrayTraits`).
+
+    A RawArray type with scalar type ``value_t`` and number of elements ``size``
+    is mapped to the MPI contiguous datatype sized ``size`` with element type 
+    ``value_t``.
+
+DatatypeConverter
+""""""""""""""""""
+
+The followings are the interfaces of the type mapping. 
+Do not add specialization to this class template.
+Instead, define specialization to ``DatatypeTraits``.
+
+.. class:: template<typename NativeT, typename V> TypeCvt
+    
+    .. member:: static constexpr bool has_mpi_datatype = false
+
+.. class:: template<typename NativeT> TypeCvt<NativeT, std::enable_if_t<DatatypeTraits<NativeT>::is_predefined> > 
+
+    .. member:: static constexpr bool has_mpi_datatype = true
+
+    .. type:: DatatypeTraits<NativeT> traits_t
+        typename traits_t::native_t native_t
+    
+    .. function:: static const Datatype & datatype() noexcept
+        static string mpi_name()
+
+.. class:: template<typename NativeT> TypeCvt<NativeT, std::enable_if_t< ! DatatypeTraits<NativeT>::is_predefined> > 
+
+    .. member:: static constexpr bool has_mpi_datatype = true
+    
+    .. type:: DatatypeTraits<NativeT> traits_t
+        typename traits_t::native_t native_t
+
+    .. function:: static const Datatype & datatype()
+        static string mpi_name()
+
+
 Class Datapacket
 ----------------------------------------
 
@@ -279,23 +554,23 @@ difference.
         Ordinary types are suppoeted, like ``char``, ``int``, ``unsigned short``, ``float``, ``bool``, 
         etc. Any types that are DatatypeTraits-conformable are also supported (see class :class:`DatatypeTraits` for the protocol definition).
         
-        (6) The buffer is inferred from the argument. The library tries to infer
+        (6). The buffer is inferred from the argument. The library tries to infer
         the buffer by the following order until success:
 
-            - If ``T`` is Predefined DatatypeTraits-conformable, treat ``x`` as a single 
-              data element. Examples include a single int, double, etc.
-            - If ``T`` is ContiguousBufferTraits-conformable 
-              (see class :class:`ContiguousBufferTraits` for the protocol definition) and its element is 
-              Predefined DatatypeTraits-conformable, treat ``x`` as a sequence of 
-              data elements typed ContiguousBuffer<T>::value_t.
-              e.g., ``vector<int> v{1,2,3,4,5}`` gives the buffer 
-              ``{v.data(), 5, INT}``.
-            - If ``T`` is Customized DatatypeTraits-conformable, treat ``x`` as a single 
-              data element.
-            - If T is ContiguousBufferTraits-conformable and its element is Customized 
-              DatatypeTraits-conformable, treat ``x`` as a sequence of 
-              data elements typed ContiguousBuffer<T>::value_t.
-            - If all the above inferences failed, raise a compile error.
+        - If ``T`` is Predefined DatatypeTraits-conformable, treat ``x`` as a single 
+          data element. Examples include a single int, double, etc.
+        - If ``T`` is ContiguousBufferTraits-conformable 
+          (see class :class:`ContiguousBufferTraits` for the protocol definition) and its element is 
+          Predefined DatatypeTraits-conformable, treat ``x`` as a sequence of 
+          data elements typed ContiguousBuffer<T>::value_t.
+          e.g., ``vector<int> v{1,2,3,4,5}`` gives the buffer 
+          ``{v.data(), 5, INT}``.
+        - If ``T`` is Customized DatatypeTraits-conformable, treat ``x`` as a single 
+          data element.
+        - If T is ContiguousBufferTraits-conformable and its element is Customized 
+          DatatypeTraits-conformable, treat ``x`` as a sequence of 
+          data elements typed ContiguousBuffer<T>::value_t.
+        - If all the above inferences failed, raise a compile error.
         
         Note that in any of the constructors, the data buffer must be non-const.
     

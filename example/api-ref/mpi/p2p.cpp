@@ -20,13 +20,15 @@ int main(int argc, char const *argv[]) {
         comm.send(dest, tag, a);                  // Use the HIPP style.
         
         // The underlying implementation.
-        auto [buff, size, dtype] = ConstDatapacket {a};      // Construct the Datapacket and extract buffer specificaton.
+        // Construct the Datapacket and extract buffer specificaton.
+        auto [buff, size, dtype] = ConstDatapacket {a};      
         
         assert(buff == (void *)&a[0]);
         assert(size == 3);
         assert(dtype.raw() == MPI_INT);
         
-        comm.send(dest, tag, buff, size, dtype);        // Forward the buffer specification.
+        // Forward the buffer specification.
+        comm.send(dest, tag, buff, size, dtype);        
 
 
     }else if( rank == 1 ) {

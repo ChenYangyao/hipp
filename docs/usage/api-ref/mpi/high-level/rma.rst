@@ -123,50 +123,58 @@ Class Win: the RMA Window
 
         ``nullval()`` - returun a nullval (internally ``MPI_WIN_NULL``).
     
-    .. function::   void put(int target_rank, const Datapacket &origin_dpacket, const Datapacket &target_dpacket)
-                    void put(int target_rank, const Datapacket &origin_dpacket, aint_t target_disp)
-                    void get(int target_rank, const Datapacket &origin_dpacket, const Datapacket &target_dpacket)
-                    void get(int target_rank, const Datapacket &origin_dpacket, aint_t target_disp)
-                    void accumulate(int target_rank, const Oppacket &op, const Datapacket &origin_dpacket, const Datapacket &target_dpacket)
-                    void accumulate(int target_rank, const Oppacket &op, const Datapacket &origin_dpacket, aint_t target_disp)
-                    void get_accumulate(int target_rank, const Oppacket &op, \
-                        const Datapacket &result_dpacket, \
-                        const Datapacket &origin_dpacket, \
-                        const Datapacket &target_dpacket)
-                    void get_accumulate(int target_rank, const Oppacket &op, \
-                        const Datapacket &result_dpacket, const void *origin_addr, \
-                        aint_t target_disp)
-                    void fetch_and_op(int target_rank, const Oppacket &op, \
-                        const Datatype &dtype, \
-                        void *result_addr, const void *origin_addr, aint_t target_disp)
-                    template<typename T> \
-                    void fetch_and_op(int target_rank, const Oppacket &op, \
-                        T &result, const T &origin, aint_t target_disp)
-                    void compare_and_swap(int target_rank, const Datatype &dtype, \
-                        void *result_addr, const void *compare_addr, \
-                        const void *origin_addr, aint_t target_disp)
-                    template<typename T>\
-                    void compare_and_swap(int target_rank, T &result, const T &compare, \
-                        const T &origin, aint_t target_disp)
-                    Requests rput(int target_rank, const Datapacket &origin_dpacket, \
-                        const Datapacket &target_dpacket)
-                    Requests rput(int target_rank, const Datapacket &origin_dpacket, \
-                        aint_t target_disp)
-                    Requests rget(int target_rank, const Datapacket &origin_dpacket, \
-                        const Datapacket &target_dpacket)
-                    Requests rget(int target_rank, const Datapacket &origin_dpacket, \
-                        aint_t target_disp)
-                    Requests raccumulate(int target_rank, const Oppacket &op, \
-                        const Datapacket &origin_dpacket, const Datapacket &target_dpacket)
-                    Requests raccumulate(int target_rank, const Oppacket &op, \
-                        const Datapacket &origin_dpacket, aint_t target_disp)
-                    Requests rget_accumulate(int target_rank, const Oppacket &op,\ 
-                        const Datapacket &result_dpacket, \
-                        const Datapacket &origin_dpacket, \
-                        const Datapacket &target_dpacket)
-                    Requests rget_accumulate(int target_rank, const Oppacket &op, \
-                        const Datapacket &result_dpacket, const void *origin_addr, \
-                        aint_t target_disp)
+    .. function::   
+        void put(int target_rank, const ConstDatapacket &origin_dpacket, \
+            const ConstDatapacket &target_dpacket)
+        void put(int target_rank, const ConstDatapacket &origin_dpacket, \
+            aint_t target_disp)    
+        void get(int target_rank, const Datapacket &origin_dpacket, \
+            const ConstDatapacket &target_dpacket)
+        void get(int target_rank, const Datapacket &origin_dpacket, aint_t target_disp)
+        void accumulate(int target_rank, const Oppacket &op, \
+            const ConstDatapacket &origin_dpacket, \
+            const ConstDatapacket &target_dpacket)
+        void accumulate(int target_rank, const Oppacket &op, \
+            const ConstDatapacket &origin_dpacket, aint_t target_disp)
+        void get_accumulate(int target_rank, const Oppacket &op, \
+            const Datapacket &result_dpacket, \
+            const ConstDatapacket &origin_dpacket, \
+            const ConstDatapacket &target_dpacket)
+        void get_accumulate(int target_rank, const Oppacket &op, \
+            const Datapacket &result_dpacket, const void *origin_addr, \
+            aint_t target_disp)
+        void fetch_and_op(int target_rank, const Oppacket &op, \
+            const Datatype &dtype, \
+            void *result_addr, const void *origin_addr, aint_t target_disp)
+        template<typename T> \
+        void fetch_and_op(int target_rank, const Oppacket &op, \
+            T &result, const T &origin, aint_t target_disp)
+        void compare_and_swap(int target_rank, const Datatype &dtype, \
+            void *result_addr, const void *compare_addr, \
+            const void *origin_addr, aint_t target_disp)
+        template<typename T>\
+        void compare_and_swap(int target_rank, T &result, const T &compare, \
+            const T &origin, aint_t target_disp)
+        Requests rput(int target_rank, const ConstDatapacket &origin_dpacket, \
+            const ConstDatapacket &target_dpacket)
+        Requests rput(int target_rank, const ConstDatapacket &origin_dpacket, \
+            aint_t target_disp)
+        Requests rget(int target_rank, const Datapacket &origin_dpacket, \
+            const ConstDatapacket &target_dpacket)
+        Requests rget(int target_rank, const Datapacket &origin_dpacket, \
+            aint_t target_disp)
+        Requests raccumulate(int target_rank, const Oppacket &op, \
+            const ConstDatapacket &origin_dpacket, \
+            const ConstDatapacket &target_dpacket)
+        Requests raccumulate(int target_rank, const Oppacket &op, \
+            const ConstDatapacket &origin_dpacket, aint_t target_disp)
+        Requests rget_accumulate(int target_rank, const Oppacket &op, \
+            const Datapacket &result_dpacket, \
+            const ConstDatapacket &origin_dpacket, \
+            const ConstDatapacket &target_dpacket)
+        Requests rget_accumulate(int target_rank, const Oppacket &op, \
+            const Datapacket &result_dpacket, const void *origin_addr, \
+            aint_t target_disp)
 
         RMA communication calls. 
 

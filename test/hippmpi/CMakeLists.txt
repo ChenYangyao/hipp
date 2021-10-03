@@ -19,8 +19,11 @@ function(addmpitest src nproc)
             LD_LIBRARY_PATH=${CMAKE_INSTALL_PREFIX}/lib:$ENV{LD_LIBRARY_PATH})
 endfunction(addmpitest)
 
+addmpitest(env.test 4)
 addmpitest(p2p 4)
 addmpitest(pack 4)
+addmpitest(collective 4)
+addmpitest(datatype.test 4)
 
 if(enable-hdf5)
     prtkeyproc("Test on hippmpi_mpprof enabled")

@@ -185,7 +185,7 @@ _HIPP_TEMPHD
 auto _HIPP_TEMPARG seed(seed_t seed) 
 -> UniformRealRandomNumber & 
 {
-    _engine.seed(seed);
+    _engine->seed(seed);
     return *this;
 }
 
@@ -235,7 +235,7 @@ auto _HIPP_TEMPARG get(const param_t &param) -> result_t {
 }
 _HIPP_TEMPHD
 auto _HIPP_TEMPARG get(result_t a, result_t b) -> result_t {
-    get(param_t(a,b));
+    return get(param_t(a,b));
 }
 
 _HIPP_TEMPHD

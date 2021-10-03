@@ -94,7 +94,7 @@ protected:
 
 _HIPP_TEMPHD
 const Datatype & Counter _HIPP_TEMPARG::_value_mpi_t
-    = *_TypeCvt<typename Counter _HIPP_TEMPARG::value_t>::datatype;
+    = TypeCvt<typename Counter _HIPP_TEMPARG::value_t>::datatype();
 
 _HIPP_TEMPHD
 Counter _HIPP_TEMPARG::Counter( 

@@ -1,34 +1,30 @@
-#include <mpi_datapacket.h>
-namespace HIPP{
-namespace MPI{
+#include "mpi_datapacket.h"
+namespace HIPP::MPI {
 
-Datapacket::Datapacket( const void *buff, int size, Datatype dtype ) noexcept
-    :_buff((void *)buff), _size(size), _dtype(dtype){ }
-Datapacket::Datapacket( const void *buff, int size, const string &dtype )
-    :_buff((void *)buff), _size(size), _dtype(NULL)
-{
-    auto it = _typecvt.find( dtype );
-    if( it == _typecvt.end() )
-        ErrLogic::throw_(ErrLogic::eDOMAIN, emFLPFB, 
-            "  ... cannot find datatype ", dtype, '\n');
-    _dtype = *it->second;
-}
-Datapacket & Datapacket::operator=(const Datapacket &p) noexcept{
-    if( this != &p ){
-        _buff = p._buff;
-        _size = p._size;
-        _dtype = p._dtype;
+ostream & Datapacket::info(ostream &os, int fmt_cntl) const {
+    PStream ps(os);
+    if( fmt_cntl == 0 ) {
+        ps << "Datapacket{buff=", _buff, ", size", _size, 
+            ", dtype=", _dtype, "}";
+    } else {
+        ps << HIPPCNTL_CLASS_INFO(HIPP::MPI::Datapacket), 
+            "  Buffer{buff=", _buff, ", size=", _size, "}\n",
+            _dtype, '\n';
     }
-    return *this;
-}
-Datapacket & Datapacket::operator=(Datapacket &&p) noexcept{
-    if( this != &p ){
-        _buff = p._buff;
-        _size = p._size;
-        _dtype = std::move(p._dtype);
-    }
-    return *this;
+    return os;
 }
 
-} // namespace MPI
-} // namespace HIPP
+ostream & ConstDatapacket::info(ostream &os, int fmt_cntl) const {
+    PStream ps(os);
+    if( fmt_cntl == 0 ) {
+        ps << "Datapacket{buff=", _buff, ", size", _size, 
+            ", dtype=", _dtype, "}";
+    } else {
+        ps << HIPPCNTL_CLASS_INFO(HIPP::MPI::Datapacket), 
+            "  Buffer{buff=", _buff, ", size=", _size, "}\n",
+            _dtype, '\n';
+    }
+    return os;
+}
+
+} // namespace HIPP::MPI

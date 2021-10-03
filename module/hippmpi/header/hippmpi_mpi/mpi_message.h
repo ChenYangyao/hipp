@@ -52,13 +52,13 @@ protected:
 
 template<typename ...Args>
 Status Message::mrecv(Args && ...args){
-    Datapacket dp( std::forward<Args>(args)... );
-    return _Comm::mrecv(dp._buff, dp._size, dp._dtype.raw(), _message);
+    auto [p,n,dt] = Datapacket( std::forward<Args>(args)... );
+    return _Comm::mrecv(p, n, dt.raw(), _message);
 }
 template<typename ...Args>
 Requests Message::imrecv(Args && ...args){
-    Datapacket dp( std::forward<Args>(args)... );
-    auto rq = _Comm::imrecv(dp._buff, dp._size, dp._dtype.raw(), _message);
+    auto [p,n,dt] = Datapacket( std::forward<Args>(args)... );
+    auto rq = _Comm::imrecv(p, n, dt.raw(), _message);
     return Requests::_from_raw(rq, 0);
 }
 

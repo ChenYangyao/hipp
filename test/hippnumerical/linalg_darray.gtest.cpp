@@ -176,10 +176,12 @@ TEST_F(DArrayIntTest, STLLikeAPI) {
     auto b = a1.begin(), e = a1.end();
     EXPECT_EQ(b+a1.size(), e);
     for(size_t i=0; i<a1.size(); ++i){
-        *b++ == a1[i];
+        auto x = *b++, y = a1[i];
+        EXPECT_EQ(x, y);
     }
     for(auto p=b; p!=e; ++p){
-        *p == a1[p-b];
+        auto x = *p, y = a1[p-b];
+        EXPECT_EQ(x, y);
     }
 
     auto cb = a1.cbegin(), ce = a1.cend();
@@ -219,6 +221,43 @@ TEST_F(DArrayIntTest, ReshapeAndConversion) {
     ASSERT_EQ(v4.size(), a1.size());
     for(size_t i=0; i<a1.size(); ++i){
         EXPECT_EQ(v4[i], a1[i]);
+    }
+}
+
+TEST_F(DArrayIntTest, ReshapeSize) {
+    a3_t a1({2,2,3}, 1);
+    a1.resize(12); 
+    
+    a1.resize(24);
+    ASSERT_EQ(a1.size(), 24);
+    bool sz_eq = ( a1.shape() == shape3_t{4,2,3} ).all();
+    ASSERT_TRUE( sz_eq );
+    for(int i=0; i<12; ++i){
+        EXPECT_EQ(a1.at(i), 1);
+        EXPECT_EQ(a1.at(i+12), 0);
+    }
+
+    a1.resize(48, 2);
+    ASSERT_EQ(a1.size(), 48);
+    sz_eq = ( a1.shape() == shape3_t{8,2,3} ).all();
+    ASSERT_TRUE( sz_eq );
+
+    for(int i=0; i<12; ++i){
+        EXPECT_EQ(a1.at(i), 1);
+        EXPECT_EQ(a1.at(i+12), 0);
+        EXPECT_EQ(a1.at(i+24), 2);
+        EXPECT_EQ(a1.at(i+36), 2);
+    }
+
+    a1.resize({8,2,3});
+    a1.resize({2,2,3});
+    a1.resize({4,2,3}, 2);
+    ASSERT_EQ(a1.size(), 24);
+    sz_eq = ( a1.shape() == shape3_t{4,2,3} ).all();
+    ASSERT_TRUE( sz_eq );
+    for(int i=0; i<12; ++i){
+        EXPECT_EQ(a1.at(i), 1);
+        EXPECT_EQ(a1.at(i+12), 2);
     }
 }
 

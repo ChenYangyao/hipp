@@ -115,8 +115,9 @@ Contributors
    :hidden:
 
    usage/tutorial/cntl/index
-   usage/tutorial/simd/index
+   usage/tutorial/numerical/index
    usage/tutorial/mpi/index
+   usage/tutorial/simd/index
    usage/tutorial/io/index
 
 .. toctree::
@@ -125,8 +126,8 @@ Contributors
    :hidden:
 
    usage/api-ref/cntl/index
+   usage/api-ref/numerical/index
    usage/api-ref/mpi/index
    usage/api-ref/io/index
    usage/api-ref/simd/index
    usage/api-ref/algorithm/index
-   usage/api-ref/numerical/index

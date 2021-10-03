@@ -484,10 +484,12 @@ first matrix::
     assert( r00[1] == 2 );
     assert( r00[2] == 3 );
 
-RawArray Traits 
+RawArray Protocol
 """"""""""""""""""""
 
-.. class:: template<typename ValueT, size_t ...Ds> RawArrayTraits< SArray<ValueT, Ds...> >
+.. class:: template<typename ValueT, size_t ...Ds> HIPP::RawArrayTraits< SArray<ValueT, Ds...> >
+
+.. class:: template<typename ValueT, size_t ...Ds> HIPP::RawArrayTraits< const SArray<ValueT, Ds...> > 
 
     ``SArray`` follows the raw-array concept, i.e., it is binary compatible to a 
     raw array typed ``ValueT [D0][D1][...]`` where ``{D0,D1,...} = Ds``.

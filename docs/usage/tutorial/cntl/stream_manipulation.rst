@@ -12,85 +12,101 @@ formatted printing functions and classes are described here, mainly for producin
 log records along the execution of the program. Binary IO for large computation 
 data is described in the separate :doc:`IO Module <../io/index>`.
 
-All the example codes in the below sections can be downloaded at:  :download:`cntl/basic-stream-manip.cpp </../example/tutorial/cntl/basic-stream-manip.cpp>`.
+All the example codes in the below sections can be downloaded at:  
+:download:`cntl/basic-stream-manip.cpp </../example/tutorial/cntl/basic-stream-manip.cpp>`.
+
+The following example codes assume a namespace declarations::
+
+    using namespace HIPP;
+    using namespace std;
+
+which expose all the standard library and HIPP CNTL module interfaces.
 
 .. _tutor-cntl-pstream:
 
 Printing Anything With the Pretty Stream 
 -----------------------------------------
 
-When there are some objects of basic datatypes (e.g. ``double``, ``std::string``)
-and objects in the STL containers, you may write them to ``std::cout`` or other streams
-to see what they are. For example::
+As ``std::ostream``, numeric types like ``double``, ``int``, or string type ``std::string``
+can be directly put into the Pretty Stream::
 
     double a = 1.0;
     int b = 2;
     string c = "foo";
-    vector<string> d = {"bar", "baz"};
-    std::unordered_map<string, string> e = {{"a", "f(a)"}, {"b", "f(b)"}};
-    std::pair<string, int> f = {"pair-key", 1};
-    std::tuple<string, int, vector<double> > g = {"tuple-elem", 1, {1.,2.,3.}};
 
-Typically this is a burden, e.g., for a vector type you have to use a for-loop (or other 
-generic algorithm functions). With HIPP's pretty stream (see :class:`HIPP::PStream` for the API),
-this is much easier::
-
-    HIPP::pout << 
+    pout << 
         "a = ", a, '\n',
         "b = ", b, '\n',
-        "c = ", c, '\n',
-        "d = ", d, '\n',
-        "e = ", e, '\n',
-        "f = ", f, '\n',
-        "g = ", g, '\n';
+        "c = ", c, endl;
 
-Here, :var:`HIPP::pout` is a static instance of :class:`HIPP::PStream` 
-which is directed to the standard output stream 
-(just like what ``std::cout`` does). The output is 
+The whole output sequence is started by ``<<`` on the Pretty Stream :var:`~HIPP::pout`, 
+followed by zero or more comma separate arguments. This is a little bit different from the standard 
+``std::cout``.
 
-.. code-block:: text 
+Output:
+
+.. code-block:: text
 
     a = 1
     b = 2
     c = foo
+
+For STL containers and utilities, you can still put them into Pretty Stream,  such 
+as the ``std::vector``, ``std::unordered_map``, ``std::pair``, and ``std::tuple``::
+
+    vector<string> d = {"bar", "baz"};
+    unordered_map<string, string> e = {{"a", "f(a)"}, {"b", "f(b)"}};
+    pair<string, int> f = {"pair-key", 1};
+    tuple<string, int, vector<double> > g = {"tuple-elem", 1, {1.,2.,3.}};
+
+    pout << 
+        "d = ", d, '\n',
+        "e = ", e, '\n',
+        "f = ", f, '\n',
+        "g = ", g, endl;
+
+Output:
+
+.. code-block:: text
+
     d = bar,baz
     e = b:f(b),a:f(a)
     f = pair-key:1
-    g = tuple-elem:1:1,2,3
-
-For array-like objects, e.g., N-dimensional raw-arrays, HIPP also provides convenient 
-priting utilities for them. For example, you have the 1-d and 2-d arrays::
+    g = tuple-elem:1:1,2,
+    
+For raw arrays or iterable ranges, use the ``pout(b, e)`` to convert them 
+to a printable object. To get more control of the print format, 
+use :class:`~HIPP::PrtArray` class::
 
     int arr1d[5] = {1,2,3,4,5};
     int arr2d[2][3] = {{1,2,3}, {4,5,6}};
 
-Then you can format them as::
+    pout << 
+        "arr1d = ", pout(arr1d, arr1d+5), '\n',
+        "arr1d = ", PrtArray(arr1d, arr1d+5), '\n',
+        "arr2d = \n", PrtArray(arr2d[0], arr2d[0]+6).ncol(3).width(4), endl;
 
-    HIPP::pout << 
-        "arr1d = ", HIPP::pout(arr1d, arr1d+5), '\n',
-        "arr1d = ", HIPP::PrtArray(arr1d, arr1d+5), '\n',
-        "arr2d = \n", HIPP::PrtArray(arr2d[0], arr2d[0]+6).ncol(3).width(4), endl;
+Output:
 
-which produces output 
-
-.. code-block:: text 
+.. code-block:: text
 
     arr1d = 1,2,3,4,5
     arr1d = 1,2,3,4,5
     arr2d = 
-       1,   2,   3,
-       4,   5,   6
+        1,   2,   3,
+        4,   5,   6
 
-Note that the first usage ``HIPP::pout(b, e)`` is valid for any input 
+
+Note that the first usage ``pout(b, e)`` is valid for any input 
 iterator pair ``[b, e)``. The range referred by them is printed as 
-a comma-separated sequence. The :class:`HIPP::PrtArray` class is more general.
-For the 1-d range ``[b, e)``, just use ``HIPP::PrtArray(b, e)`` to 
-format it. For a 2-d range, use :func:`ncol <HIPP::PrtArray::ncol>` to 
-specify the number of columns, and use :func:`width <HIPP::PrtArray::width>` 
+a comma-separated sequence. The :class:`~HIPP::PrtArray` class is more general.
+For the 1-d range ``[b, e)``, just use ``PrtArray(b, e)`` to 
+format it. For a 2-d range, use method :func:`~HIPP::PrtArray::ncol` to 
+specify the number of columns, and use method :func:`~HIPP::PrtArray::width` 
 to limit the field width so that elements in the same column are aligned.
 
 Printing User-defined Classes 
-"""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""
 For any user-defined class, if you want to print it to a Pretty Stream, just 
 overload the ``operator<<`` on ``std::ostream``. For example, if you have 
 a ``Person`` class, you may define the ``operator<<`` like::
@@ -106,17 +122,30 @@ a ``Person`` class, you may define the ``operator<<`` like::
     } 
 
 Then, any ``Person`` instance can be printed into a Pretty Stream. For example, 
-you may print it into :var:`HIPP::pout`::
+you may print it into :var:`~HIPP::pout`::
 
     Person albert = {"Albert", "Einstein", 120},
         edwin = {"Edwin", "Hubble", 100};
-    HIPP::pout << albert, " and ", edwin, endl;
+    pout << albert, " and ", edwin, endl;
 
 This gives the output 
 
 .. code-block::
 
     Albert Einstein (120) and Edwin Hubble (100)
+
+For any other types without ``operator<<`` overloads, HIPP automatically synthesize 
+a compiler-dependent formated print. For example::
+
+    struct AnyClass {};
+    
+    pout << "AnyClass: ", AnyClass(), endl;
+
+Output:
+
+.. code-block:: text
+
+    AnyClass: <8AnyClass instance at 0x7ffebcd287ff>
 
 Using Pretty Stream for Files and Strings
 """""""""""""""""""""""""""""""""""""""""""
@@ -125,11 +154,11 @@ C++ standard library uses a unified model for standard output/standard error,
 for file, and for string stream. You can use HIPP's Pretty Stream to 
 put formatted content into them.
 
-Once you have a file stream, just construct a :class:`HIPP::PStream` instance on 
+Once you have a file stream, just construct a :class:`~HIPP::PStream` instance on 
 that file::
 
     ofstream fs("filestream.dat");
-    HIPP::PStream ps_for_fs(fs);
+    PStream ps_for_fs(fs);
 
 Just like what we did on the standard output, we can put anything to the Pretty 
 Stream now::
@@ -152,7 +181,7 @@ For example, the ``std::stringstream``::
 
 The content in that string stream can be obtained by its ``str()`` method::
 
-    HIPP::pout << "The content of stringstream is ", ss.str();
+    pout << "The content of stringstream is ", ss.str();
 
 
 C-style Formatted Output
@@ -164,14 +193,14 @@ are more convenient. In C++ applications, standard streams have type
 call the C-style functions on them. 
 
 HIPP provides some shortcuts for C-style output. 
-The function :func:`HIPP::prt_f` allows formatted printing on a 
+The function :func:`~HIPP::prt_f` allows formatted printing on a 
 C++ stream using C-style formattor. For example::
 
     double a = 3.1415; 
     int b = 111;
-    HIPP::prt_f(cout, "a=%10.6f, b=%6d\n", a, b);
+    prt_f(cout, "a=%10.6f, b=%6d\n", a, b);
 
-Which has the same effect as calling ``printf``. :func:`HIPP::prt_f` also works
+Which has the same effect as calling ``printf``. :func:`~HIPP::prt_f` also works
 when using other streams, like ``std::ofstream`` and ``std::ostringstream``. The output 
 of above codes is 
 
@@ -193,17 +222,17 @@ For example, in a N-body simulations, particle data at a time step (called "snap
 may be too large to be contained in a single file. So, 
 we have to create multiple files,
 each containing a small "part" of the particles. The filename can be 
-created by function :func:`HIPP::str`, which converts all of its arguments into 
+created by function :func:`~HIPP::str`, which converts all of its arguments into 
 a single string::
 
     int snapshot = 100, part_id = 1;
-    string filename1 = HIPP::str("snapshot", snapshot, ".", part_id);
+    string filename1 = str("snapshot", snapshot, ".", part_id);
 
 where ``filename1`` will be ``"snapshot100.1"``. Sometimes, 
 more format controlling is necessary, 
-then a C-style formatted string factory :func:`HIPP::str_f` can be used::
+then a C-style formatted string factory :func:`~HIPP::str_f` can be used::
 
-    filename2 = HIPP::str_f("snapshot%.4d.%.4d", snapshot, part_id);
+    filename2 = str_f("snapshot%.4d.%.4d", snapshot, part_id);
 
 where ``filename2`` will be ``"snapshot0100.0001"``.
 

@@ -69,7 +69,7 @@ MutexGuard::operator bool() const noexcept{
 }
 } // namespace _mpe_sync_lock_helper
 
-const Datatype & SpinLock::_value_mpi_t = *_TypeCvt<value_t>::datatype;
+const Datatype & SpinLock::_value_mpi_t = TypeCvt<value_t>::datatype();
 
 SpinLock::SpinLock(const Comm &comm, int n_locks)
 : _win(nullptr), _n_locks(n_locks), _n_procs(comm.size())
@@ -163,7 +163,7 @@ void SpinLock::_chk_lock_id(int lock_id){
             ", max=", _n_locks-1, ")\n");
 }
 
-const Datatype & Mutex::_value_mpi_t = *_TypeCvt<value_t>::datatype;
+const Datatype & Mutex::_value_mpi_t = TypeCvt<value_t>::datatype();
 
 Mutex::Mutex(const Comm &comm, int n_locks)
 :_win(nullptr), _n_locks(n_locks), _n_procs(comm.size()), _rank(comm.rank())

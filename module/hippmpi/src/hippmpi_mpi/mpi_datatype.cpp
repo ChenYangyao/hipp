@@ -6,239 +6,348 @@ Datatype::Datatype() noexcept:
     _obj_base_t( std::make_shared<_obj_raw_t>(_obj_raw_t::nullval(), 0) ){ }
 
 ostream & Datatype::info( ostream &os, int fmt_cntl ) const{
-    if(fmt_cntl == 0 ){
-        prt( os, HIPPCNTL_CLASS_INFO_INLINE(HIPP::MPI::Datatype) );
-        if( is_null() ) prt(os, "Null");
-        else{
-            int _size = size();
-            aint_t lb, ext, tlb, text;
-            extent( lb, ext ); true_extent(tlb, text);
-            prt( os, "size: ", _size, ", lower bound: ", lb, "(", tlb, ")", 
-                ", extent: ", ext, "(", text, ")" );
-        }
+    PStream ps(os);
+    bool null_dtype = is_null();
+    if( null_dtype ) {
+        if( fmt_cntl == 0 ) 
+            ps << "Datatype{Null}";
+        else
+            ps << HIPPCNTL_CLASS_INFO(HIPP::MPI::Datatype), " Null\n";
+        return os;
     }
-    if(fmt_cntl >= 1){
-        prt( os, HIPPCNTL_CLASS_INFO(HIPP::MPI::Datatype) );
-        if( is_null() ) prt(os, "  Null") << endl;
-        else{
-            int _size = size();
-            aint_t lb, ext, tlb, text;
-            extent( lb, ext ); true_extent(tlb, text);
-            prt( os, "  Size info (size=", _size, 
-                ", lower bound/true lower bound=", lb, "/", tlb, 
-                ", extent/true extent=", ext, "/", text, ")" ) << endl;
-        }
+    int _size = size();
+    aint_t lb, ext, tlb, text;
+    extent( lb, ext ); 
+    true_extent(tlb, text);
+    if(fmt_cntl == 0){
+        ps << "Datatype{size=", _size, ", lower bound=", lb, ", extent=", ext, 
+            ", true lower bound=", tlb, ", true extent=", text, "}";
+    } else {
+        ps << HIPPCNTL_CLASS_INFO(HIPP::MPI::Datatype),
+            "  Size{", _size, "}\n",
+            "  Lower bound{", lb, ", true=", tlb, "}\n",
+            "  Extent{", ext, ", true=", text, "}\n";
     }
     return os;
 }
+
 void Datatype::free() noexcept{
     *this = nullval();
 }
+
 bool Datatype::is_null() const{
     return _obj_ptr->is_null();
 }
+
 void Datatype::extent( aint_t &lb, aint_t &ext ) const{
     _obj_ptr->extent(lb, ext);
 }
+
 void Datatype::true_extent( aint_t &lb, aint_t &ext ) const{
     _obj_ptr->true_extent(lb, ext);
 }
+
 int Datatype::size() const{
     return _obj_ptr->size();
 }
+
 Datatype Datatype::dup() const{
     mpi_t obj = _obj_ptr->dup();
     return _from_raw( obj, _obj_raw_t::stFREE );
 }
+
 Datatype Datatype::nullval() noexcept{
     return _from_raw( _obj_raw_t::nullval(), 0 );
 }
+
 Datatype Datatype::resized( aint_t lb, aint_t ext ) const{
     return _from_raw( _obj_raw_t::resized( raw(), lb, ext ), 
         _obj_raw_t::stFREE | _obj_raw_t::stCOMMIT );
 }
+
 Datatype Datatype::contiguous( int count ) const{
     return _from_raw( _obj_raw_t::contiguous( count, raw() ),
         _obj_raw_t::stFREE | _obj_raw_t::stCOMMIT);
 }
+
 Datatype Datatype::vector( int count, int blklen, int stride ) const{
     return _from_raw( _obj_raw_t::vector( count, blklen, stride, raw() ),
         _obj_raw_t::stFREE | _obj_raw_t::stCOMMIT);
 }
+
 Datatype Datatype::hvector( int count, int blklen, aint_t stride ) const{
     return _from_raw( _obj_raw_t::hvector( count, blklen, stride, raw() ),
         _obj_raw_t::stFREE | _obj_raw_t::stCOMMIT);
 }
-Datatype Datatype::indexed_block( int blklen, 
-    const std::vector<int> &displs ) const{
+
+Datatype Datatype::indexed_block(int count, int blklen, 
+    const int displs[]) const
+{
     return _from_raw( 
-        _obj_raw_t::indexed_block( displs.size(), 
-            blklen, displs.data(), raw() ),
+        _obj_raw_t::indexed_block(count, blklen, displs, raw()),
         _obj_raw_t::stFREE | _obj_raw_t::stCOMMIT);
 }
-Datatype Datatype::hindexed_block( int blklen, 
-    const std::vector<aint_t> &displs ) const{
+
+Datatype Datatype::indexed_block(int blklen, int_buf_t displs) const {
+    const auto &[p, n] = displs;
+    return indexed_block(static_cast<int>(n), blklen, p);
+}
+
+Datatype Datatype::hindexed_block(int count, int blklen, 
+    const aint_t displs[]) const 
+{
     return _from_raw( 
-        _obj_raw_t::hindexed_block( displs.size(),
-            blklen, displs.data(), raw() ),
+        _obj_raw_t::hindexed_block(count, blklen, displs, raw()),
         _obj_raw_t::stFREE | _obj_raw_t::stCOMMIT);
 }
-Datatype Datatype::indexed( const std::vector<int> &blklens, 
-    const std::vector<int> &displs ) const{
-    if( blklens.size() != displs.size() )
-        ErrLogic::throw_(ErrLogic::eLENGTH, emFLPFB, "  ... argument sizes"
-            " do not match (blklens.size=", blklens.size(), ", displs.size=",
-            displs.size(), ")\n" );
+
+Datatype Datatype::hindexed_block(int blklen, aint_buf_t displs) const {
+    const auto &[p, n] = displs;
+    return hindexed_block(static_cast<int>(n), blklen, p);
+}
+
+Datatype Datatype::indexed(int count, const int blklens[], 
+    const int displs[]) const
+{
     return _from_raw( 
-        _obj_raw_t::indexed( displs.size(),
-            blklens.data(), displs.data(), raw() ),
+        _obj_raw_t::indexed(count, blklens, displs, raw()),
         _obj_raw_t::stFREE | _obj_raw_t::stCOMMIT);
 }
-Datatype Datatype::hindexed( const std::vector<int> &blklens, 
-    const std::vector<aint_t> &displs ) const{
-    if( blklens.size() != displs.size() )
-        ErrLogic::throw_(ErrLogic::eLENGTH, emFLPFB, "  ... argument sizes"
-            " do not match (blklens.size=", blklens.size(), ", displs.size=",
-            displs.size(), ")\n" );
+
+Datatype Datatype::indexed(int_buf_t blklens, int_buf_t displs) const {
+    const auto &[plen, nlen] = blklens;
+    const auto &[pdisp, ndisp] = displs;
+    if( nlen != ndisp )
+        ErrLogic::throw_(ErrLogic::eLENGTH, emFLPFB, 
+        "  ... lengths of blklens (", nlen, ") != displs (", ndisp, ")\n");
+    return indexed(static_cast<int>(nlen), plen, pdisp);
+}
+
+Datatype Datatype::hindexed(int count, const int blklens[], 
+    const aint_t displs[]) const
+{
     return _from_raw( 
-        _obj_raw_t::hindexed( displs.size(),
-            blklens.data(), displs.data(), raw() ),
+        _obj_raw_t::hindexed(count, blklens, displs, raw()),
         _obj_raw_t::stFREE | _obj_raw_t::stCOMMIT);
 }
-Datatype Datatype::struct_( const std::vector<int> &blklens, 
-    const std::vector<aint_t> &displs, const std::vector<Datatype> &dtypes){
-    if( blklens.size() != displs.size() || blklens.size() != dtypes.size() )
-        ErrLogic::throw_(ErrLogic::eLENGTH, emFLPFB, "  ... argument sizes"
-            " do not match (blklens.size=", blklens.size(), ", displs.size=",
-            displs.size(), ", dtypes.size=", dtypes.size(), ")\n" );
-    std::vector<mpi_t> _dtypes;
-    for(const auto &dtype: dtypes) _dtypes.push_back( dtype.raw() );
-    return _from_raw( 
-        _obj_raw_t::struct_( displs.size(),
-            blklens.data(), displs.data(), _dtypes.data() ),
-        _obj_raw_t::stFREE | _obj_raw_t::stCOMMIT);
+
+Datatype Datatype::hindexed(int_buf_t blklens, aint_buf_t displs) const {
+    const auto &[plen, nlen] = blklens;
+    const auto &[pdisp, ndisp] = displs;
+    if( nlen != ndisp )
+        ErrLogic::throw_(ErrLogic::eLENGTH, emFLPFB, 
+        "  ... lengths of blklens (", nlen, ") != displs (", ndisp, ")\n");
+    return hindexed(static_cast<int>(nlen), plen, pdisp);
 }
-Datatype Datatype::darray( int size, int rank, const std::vector<int> &gsizes, 
-    const std::vector<int> &distribs, 
-    const std::vector<int> &dargs,
-    const std::vector<int> &psizes, int order )const{
-    size_t sizeg = gsizes.size(), sized = distribs.size(),
-        sizea = dargs.size(), sizep = psizes.size();
-    if( sizeg != sized || sizeg != sizea || sizeg != sizep )
-        ErrLogic::throw_(ErrLogic::eLENGTH, emFLPFB, "  ... argument sizes"
-            "do not match (gsizes/distribs/dargs/psizes.size=", sizeg, '/',
-            sized, '/', sizea, '/', sizep, ")\n" );
+
+Datatype Datatype::struct_(int count, const int blklens[], 
+    const aint_t displs[], const mpi_t dtypes[]) 
+{
     return _from_raw( 
-        _obj_raw_t::darray( size, rank, sizeg, gsizes.data(),
-            distribs.data(), dargs.data(), psizes.data(), order, raw() ), 
+        _obj_raw_t::struct_(count, blklens, displs, dtypes),
+        _obj_raw_t::stFREE | _obj_raw_t::stCOMMIT);    
+}
+
+Datatype Datatype::struct_(int count, const int blklens[], 
+    const aint_t displs[], const Datatype dtypes[]) 
+{
+    std::vector<mpi_t> _dtypes(count);
+    for(int i=0; i<count; ++i) _dtypes[i] = dtypes[i].raw();
+    return struct_(count, blklens, displs, _dtypes.data());
+}
+
+Datatype Datatype::struct_(int_buf_t blklens, aint_buf_t displs, 
+    ContiguousBuffer<const Datatype> dtypes)
+{
+    const auto &[plen, nlen] = blklens;
+    const auto &[pdisp, ndisp] = displs;
+    const auto &[pdtype, ndtype] = dtypes;
+    if( nlen != ndisp || nlen != ndtype )
+        ErrLogic::throw_(ErrLogic::eLENGTH, emFLPFB, 
+        "  ... lengths of blklens (", nlen, "), displs (", ndisp, 
+        "), and dtypes (", ndtype, ") do not match\n" );
+    return struct_(static_cast<int>(nlen), plen, pdisp, pdtype);
+}
+
+Datatype Datatype::darray(int size, int rank, int ndims, 
+    const int gsizes[], const int distribs[], 
+    const int dargs[], const int psizes[], int order)const
+{
+    return _from_raw( 
+        _obj_raw_t::darray( size, rank, ndims, gsizes,
+            distribs, dargs, psizes, order, raw()), 
         _obj_raw_t::stFREE | _obj_raw_t::stCOMMIT );
 }
-Datatype Datatype::subarray( const std::vector<int> &sizes, 
-    const std::vector<int> &subsizes, 
-    const std::vector<int> &starts, int order )const{
-    size_t size1 = sizes.size(), size2 = subsizes.size(),
-        size3 = starts.size();
-    if( size1 != size2 || size1 != size3 )
-        ErrLogic::throw_(ErrLogic::eLENGTH, emFLPFB, "  ... argument sizes"
-            "do not match (sizes/subsizes/starts.size=", size1, '/',
-            size2, '/', size3, ")\n" );
+
+Datatype Datatype::darray(int size, int rank, int_buf_t gsizes, 
+    int_buf_t distribs, int_buf_t dargs, int_buf_t psizes, int order)const
+{
+    const auto &[pgsize, ngsize] = gsizes;
+    const auto &[pdist, ndist] = distribs;
+    const auto &[pdarg, ndarg] = dargs;
+    const auto &[ppsize, npsize] = psizes;
+    if( ngsize != ndist || ngsize != ndarg || ngsize != npsize )
+        ErrLogic::throw_(ErrLogic::eLENGTH, emFLPFB, 
+            "  ... lengths of gsizes, distribs, dargs, and psizes (", 
+            ngsize, ", ", ndist, ", ", ndarg, ", and ", npsize, 
+            ") do not match\n");
+    return darray(size, rank, static_cast<int>(ngsize), pgsize,
+            pdist, pdarg, ppsize, order);
+}
+
+Datatype Datatype::subarray(int ndims, const int sizes[], const int subsizes[], 
+    const int starts[], int order)const
+{
     return _from_raw( 
-        _obj_raw_t::subarray( size1, sizes.data(), subsizes.data(), 
-            starts.data(), order, raw() ), 
+        _obj_raw_t::subarray(ndims, 
+            sizes, subsizes, starts, order, raw()), 
         _obj_raw_t::stFREE | _obj_raw_t::stCOMMIT );
 }
 
+Datatype Datatype::subarray(int_buf_t sizes, int_buf_t subsizes, 
+    int_buf_t starts, int order)const
+{
+    const auto &[psz, nsz] = sizes;
+    const auto &[psub, nsub] = subsizes;
+    const auto &[pst, nst] = starts;
+    if( nsz != nsub || nsz != nst ) 
+        ErrLogic::throw_(ErrLogic::eLENGTH, emFLPFB, 
+            "  ... lengths of sizes (", nsz, "), subsizes (", nsub, 
+            "), and starts (", nst, ") do not match\n");
+    return subarray(static_cast<int>(nsz), 
+            psz, psub, pst, order);
+} 
 
-#define _HIPPMPI_MPI_PRETYPE(name, mpiname) \
-    const Datatype name{ std::make_shared<_Datatype>(mpiname, 0) };
+void Datatype::add_customized_cache(Datatype *dtype) {
+    _customized_cache.push_back(dtype);
+}
 
-_HIPPMPI_MPI_PRETYPE(CHAR, MPI_CHAR)
-_HIPPMPI_MPI_PRETYPE(WCHAR, MPI_WCHAR)
+void Datatype::clear_customized_cache() noexcept {
+    for(const auto &p_dtype: _customized_cache)
+        p_dtype->operator=(Datatype {nullptr});
+    _customized_cache.clear();
+}
 
-_HIPPMPI_MPI_PRETYPE(SIGNED_CHAR, MPI_SIGNED_CHAR)
-_HIPPMPI_MPI_PRETYPE(SHORT, MPI_SHORT)
-_HIPPMPI_MPI_PRETYPE(INT, MPI_INT)
-_HIPPMPI_MPI_PRETYPE(LONG, MPI_LONG)
-_HIPPMPI_MPI_PRETYPE(LLONG, MPI_LONG_LONG)
+void Datatype::add_named_datatype(const string &name, const Datatype *dtype) {
+    auto it = _name2types.find(name);
+    if( it != _name2types.end() )
+        ErrLogic::throw_(ErrLogic::eOUTOFRANGE, 
+            emFLPFB, "  ... datatype named ", name, 
+            " already exists");
+    _name2types.emplace(name, dtype);
+}
 
-_HIPPMPI_MPI_PRETYPE(UNSIGNED_CHAR, MPI_UNSIGNED_CHAR)
-_HIPPMPI_MPI_PRETYPE(UNSIGNED_SHORT, MPI_UNSIGNED_SHORT)
-_HIPPMPI_MPI_PRETYPE(UNSIGNED_INT, MPI_UNSIGNED)
-_HIPPMPI_MPI_PRETYPE(UNSIGNED_LONG, MPI_UNSIGNED_LONG)
-_HIPPMPI_MPI_PRETYPE(UNSIGNED_LLONG, MPI_UNSIGNED_LONG_LONG)
+void Datatype::remove_named_datatype(const string &name) {
+    size_t n = _name2types.erase(name);
+    if( n == 0 )
+        ErrLogic::throw_(ErrLogic::eOUTOFRANGE, 
+            emFLPFB, "  ... datatype named ", name, " is not found");
+}
 
-_HIPPMPI_MPI_PRETYPE(FLOAT, MPI_FLOAT)
-_HIPPMPI_MPI_PRETYPE(DOUBLE, MPI_DOUBLE)
-_HIPPMPI_MPI_PRETYPE(LDOUBLE, MPI_LONG_DOUBLE)
+void Datatype::_init_predefined_datatypes() noexcept {
+    CHAR = _from_raw(MPI_CHAR, 0);
+    WCHAR = _from_raw(MPI_WCHAR, 0);
 
-_HIPPMPI_MPI_PRETYPE(C_BOOL, MPI_C_BOOL)
-_HIPPMPI_MPI_PRETYPE(INT8, MPI_INT8_T)
-_HIPPMPI_MPI_PRETYPE(INT16, MPI_INT16_T)
-_HIPPMPI_MPI_PRETYPE(INT32, MPI_INT32_T)
-_HIPPMPI_MPI_PRETYPE(INT64, MPI_INT64_T)
-_HIPPMPI_MPI_PRETYPE(UINT8, MPI_UINT8_T)
-_HIPPMPI_MPI_PRETYPE(UINT16, MPI_UINT16_T)
-_HIPPMPI_MPI_PRETYPE(UINT32, MPI_UINT32_T)
-_HIPPMPI_MPI_PRETYPE(UINT64, MPI_UINT64_T)
-_HIPPMPI_MPI_PRETYPE(C_COMPLEX, MPI_C_COMPLEX)
-_HIPPMPI_MPI_PRETYPE(C_FLOAT_COMPLEX, MPI_C_FLOAT_COMPLEX)
-_HIPPMPI_MPI_PRETYPE(C_DOUBLE_COMPLEX, MPI_C_DOUBLE_COMPLEX)
-_HIPPMPI_MPI_PRETYPE(C_LDOUBLE_COMPLEX, MPI_C_LONG_DOUBLE_COMPLEX)
+    SIGNED_CHAR = _from_raw(MPI_SIGNED_CHAR, 0);
+    SHORT = _from_raw(MPI_SHORT, 0);
+    INT = _from_raw(MPI_INT, 0);
+    LONG = _from_raw(MPI_LONG, 0);
+    LLONG = _from_raw(MPI_LONG_LONG, 0);
 
-_HIPPMPI_MPI_PRETYPE(BYTE, MPI_BYTE)
-_HIPPMPI_MPI_PRETYPE(PACKED, MPI_PACKED)
-_HIPPMPI_MPI_PRETYPE(AINT, MPI_AINT)
-_HIPPMPI_MPI_PRETYPE(OFFSET, MPI_OFFSET)
-_HIPPMPI_MPI_PRETYPE(COUNT, MPI_COUNT)
+    UNSIGNED_CHAR = _from_raw(MPI_UNSIGNED_CHAR, 0);
+    UNSIGNED_SHORT = _from_raw(MPI_UNSIGNED_SHORT, 0);
+    UNSIGNED_INT = _from_raw(MPI_UNSIGNED, 0);
+    UNSIGNED_LONG = _from_raw(MPI_UNSIGNED_LONG, 0);
+    UNSIGNED_LLONG = _from_raw(MPI_UNSIGNED_LONG_LONG, 0);
+    
+    INT8 = _from_raw(MPI_INT8_T, 0);
+    INT16 = _from_raw(MPI_INT16_T, 0);
+    INT32 = _from_raw(MPI_INT32_T, 0);
+    INT64 = _from_raw(MPI_INT64_T, 0);
+    
+    UINT8 = _from_raw(MPI_UINT8_T, 0);
+    UINT16 = _from_raw(MPI_UINT16_T, 0);
+    UINT32 = _from_raw(MPI_UINT32_T, 0);
+    UINT64 = _from_raw(MPI_UINT64_T, 0);
+    
+    FLOAT = _from_raw(MPI_FLOAT, 0);
+    DOUBLE = _from_raw(MPI_DOUBLE, 0);
+    LDOUBLE = _from_raw(MPI_LONG_DOUBLE, 0);
+    
+    C_COMPLEX = _from_raw(MPI_C_COMPLEX, 0);
+    C_FLOAT_COMPLEX = _from_raw(MPI_C_FLOAT_COMPLEX, 0);
+    C_DOUBLE_COMPLEX = _from_raw(MPI_C_DOUBLE_COMPLEX, 0);
+    C_LDOUBLE_COMPLEX = _from_raw(MPI_C_LONG_DOUBLE_COMPLEX, 0);
+    
+    C_BOOL = _from_raw(MPI_C_BOOL, 0);
+    BOOL = _from_raw(MPI_CXX_BOOL, 0);
+    FLOAT_COMPLEX = _from_raw(MPI_CXX_FLOAT_COMPLEX, 0);
+    DOUBLE_COMPLEX = _from_raw(MPI_CXX_DOUBLE_COMPLEX, 0);
+    LDOUBLE_COMPLEX = _from_raw(MPI_CXX_LONG_DOUBLE_COMPLEX, 0);
+    
+    BYTE = _from_raw(MPI_BYTE, 0);
+    PACKED = _from_raw(MPI_PACKED, 0);
+    AINT = _from_raw(MPI_AINT, 0);
+    OFFSET = _from_raw(MPI_OFFSET, 0);
+    COUNT = _from_raw(MPI_COUNT, 0);
+    FLOAT_INT = _from_raw(MPI_FLOAT_INT, 0);
+    DOUBLE_INT = _from_raw(MPI_DOUBLE_INT, 0);
+    LDOUBLE_INT = _from_raw(MPI_LONG_DOUBLE_INT, 0);
+    SHORT_INT = _from_raw(MPI_SHORT_INT, 0);
+    INT_INT = _from_raw(MPI_2INT, 0);
+    LONG_INT = _from_raw(MPI_LONG_INT, 0);
+}
 
-_HIPPMPI_MPI_PRETYPE(BOOL, MPI_CXX_BOOL)
-_HIPPMPI_MPI_PRETYPE(FLOAT_COMPLEX, MPI_CXX_FLOAT_COMPLEX)
-_HIPPMPI_MPI_PRETYPE(DOUBLE_COMPLEX, MPI_CXX_DOUBLE_COMPLEX)
-_HIPPMPI_MPI_PRETYPE(LDOUBLE_COMPLEX, MPI_CXX_LONG_DOUBLE_COMPLEX)
+void Datatype::_free_predefined_datatypes() noexcept { 
+    clear_customized_cache();
+}
 
-_HIPPMPI_MPI_PRETYPE(FLOAT_INT, MPI_FLOAT_INT)
-_HIPPMPI_MPI_PRETYPE(DOUBLE_INT, MPI_DOUBLE_INT)
-_HIPPMPI_MPI_PRETYPE(LDOUBLE_INT, MPI_LONG_DOUBLE_INT)
-_HIPPMPI_MPI_PRETYPE(SHORT_INT, MPI_SHORT_INT)
-_HIPPMPI_MPI_PRETYPE(INT_INT, MPI_2INT)
-_HIPPMPI_MPI_PRETYPE(LONG_INT, MPI_LONG_INT)
+Datatype CHAR {nullptr};
+Datatype WCHAR {nullptr};
+Datatype SIGNED_CHAR {nullptr};
+Datatype SHORT {nullptr};
+Datatype INT {nullptr};
+Datatype LONG {nullptr};
+Datatype LLONG {nullptr};
+Datatype UNSIGNED_CHAR {nullptr};
+Datatype UNSIGNED_SHORT {nullptr};
+Datatype UNSIGNED_INT {nullptr};
+Datatype UNSIGNED_LONG {nullptr};
+Datatype UNSIGNED_LLONG {nullptr};
+Datatype INT8 {nullptr};
+Datatype INT16 {nullptr};
+Datatype INT32 {nullptr};
+Datatype INT64 {nullptr};
+Datatype UINT8 {nullptr};
+Datatype UINT16 {nullptr};
+Datatype UINT32 {nullptr};
+Datatype UINT64 {nullptr};
+Datatype FLOAT {nullptr};
+Datatype DOUBLE {nullptr};
+Datatype LDOUBLE {nullptr};
+Datatype C_COMPLEX {nullptr};
+Datatype C_FLOAT_COMPLEX {nullptr};
+Datatype C_DOUBLE_COMPLEX {nullptr};
+Datatype C_LDOUBLE_COMPLEX {nullptr};
+Datatype C_BOOL {nullptr};
+Datatype BOOL {nullptr};
+Datatype FLOAT_COMPLEX {nullptr};
+Datatype DOUBLE_COMPLEX {nullptr};
+Datatype LDOUBLE_COMPLEX {nullptr};
+Datatype BYTE {nullptr};
+Datatype PACKED {nullptr};
+Datatype AINT {nullptr};
+Datatype OFFSET {nullptr};
+Datatype COUNT {nullptr};
+Datatype FLOAT_INT {nullptr};
+Datatype DOUBLE_INT {nullptr};
+Datatype LDOUBLE_INT {nullptr};
+Datatype SHORT_INT {nullptr};
+Datatype INT_INT {nullptr};
+Datatype LONG_INT {nullptr};
 
-#undef _HIPPMPI_MPI_PRETYPE
-
-#define _HIPPMPI_MPI_TYPECVT(_native_t, _datatype, _mpi_name)\
-const Datatype *const _TypeCvt<_native_t>::datatype = &_datatype; \
-const char *const _TypeCvt<_native_t>::mpi_name = #_mpi_name;
-
-_HIPPMPI_MPI_TYPECVT(char, CHAR, MPI_CHAR)
-/*_HIPPMPI_MPI_TYPECVT(int8_t, INT8, MPI_INT8_T)
-_HIPPMPI_MPI_TYPECVT(int16_t, INT16, MPI_INT16_T)
-_HIPPMPI_MPI_TYPECVT(int32_t, INT32, MPI_INT32_T)
-_HIPPMPI_MPI_TYPECVT(int64_t, INT64, MPI_INT64_T)
-_HIPPMPI_MPI_TYPECVT(uint8_t, UINT8, MPI_UINT8_T)
-_HIPPMPI_MPI_TYPECVT(uint16_t, UINT16, MPI_UINT16_T)
-_HIPPMPI_MPI_TYPECVT(uint32_t, UINT32, MPI_UINT32_T)
-_HIPPMPI_MPI_TYPECVT(uint64_t, UINT64, MPI_UINT64_T)*/
-_HIPPMPI_MPI_TYPECVT(signed char, INT8, MPI_INT8_T)
-_HIPPMPI_MPI_TYPECVT(short, INT16, MPI_INT16_T)
-_HIPPMPI_MPI_TYPECVT(int, INT32, MPI_INT32_T)
-_HIPPMPI_MPI_TYPECVT(long, INT64, MPI_INT64_T)
-_HIPPMPI_MPI_TYPECVT(long long, LLONG, MPI_LONG_LONG)
-_HIPPMPI_MPI_TYPECVT(unsigned char, UINT8, MPI_UINT8_T)
-_HIPPMPI_MPI_TYPECVT(unsigned short, UINT16, MPI_UINT16_T)
-_HIPPMPI_MPI_TYPECVT(unsigned int, UINT32, MPI_UINT32_T)
-_HIPPMPI_MPI_TYPECVT(unsigned long, UINT64, MPI_UINT64_T)
-_HIPPMPI_MPI_TYPECVT(unsigned long long, UNSIGNED_LLONG, MPI_UNSIGNED_LONG_LONG)
-_HIPPMPI_MPI_TYPECVT(float, FLOAT, MPI_FLOAT)
-_HIPPMPI_MPI_TYPECVT(double, DOUBLE, MPI_DOUBLE)
-_HIPPMPI_MPI_TYPECVT(long double, LDOUBLE, MPI_LONG_DOUBLE)
-_HIPPMPI_MPI_TYPECVT(bool, BOOL, MPI_CXX_BOOL)
-_HIPPMPI_MPI_TYPECVT(std::complex<float>, FLOAT_COMPLEX, MPI_CXX_FLOAT_COMPLEX)
-_HIPPMPI_MPI_TYPECVT(std::complex<double>, DOUBLE_COMPLEX, MPI_CXX_DOUBLE_COMPLEX)
-_HIPPMPI_MPI_TYPECVT(std::complex<long double>, LDOUBLE_COMPLEX, MPI_CXX_LONG_DOUBLE_COMPLEX)
-
-#undef _HIPPMPI_MPI_TYPECVT
-
-const std::unordered_map<string, const Datatype *> _typecvt = {
+std::unordered_map<string, const Datatype *> 
+Datatype::_name2types = {
     {"byte", &BYTE},
     {"wchar", &WCHAR},
     {"bool", &BOOL},

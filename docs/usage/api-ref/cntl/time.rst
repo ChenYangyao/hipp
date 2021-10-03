@@ -27,10 +27,13 @@ Ticker
 
         Typedefs.
         
-        - ``clock_t``:    clock type for timing.
-        - ``point_t``:    time point used internally by the clock.
-        - ``dur_t``:      duration of event used by Ticker.
-        - ``index_t``:    index of the recorded events.
+        ``clock_t`` :    clock type for timing.
+        
+        ``point_t`` :    time point used internally by the clock.
+        
+        ``dur_t`` :      duration of event used by Ticker.
+        
+        ``index_t`` :    index of the recorded events.
     
     .. struct:: record_t
 
@@ -93,6 +96,23 @@ Ticker
 
         The second overload is equivalent to set ``add_entry = 1`` and leave an 
         additional information ``s`` for the record.
+
+
+    .. function:: \
+        double duration(int update=1)
+
+        Return the time elapsed in seconds since the last update of the internal 
+        clock. 
+        
+        :arg update: if ``true``, update the internal clock.
+    
+    .. function:: \
+        const point_t & last_time_point() const
+        static point_t now()
+
+        ``last_time_point()`` : get the last-updated time point of the internal clock.
+        
+        ``now()`` : get the time point of now.
 
     .. function:: \
         record_t & query(index_t index)

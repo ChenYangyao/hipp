@@ -7,7 +7,7 @@ The following classes are all defined within namespace ``HIPP::MPI``.
 
 .. namespace:: HIPP::MPI
 
-Class Datatype: the Type of Data Element
+Class Datatype
 ------------------------------------------
 
 .. class:: Datatype 
@@ -31,24 +31,34 @@ Class Datatype: the Type of Data Element
         =================================================== ====================================================
 
 
+
+    .. type::   ContiguousBuffer<const int> int_buf_t
+                ContiguousBuffer<const aint_t> aint_buf_t
+
+        Contiguous buffer types that provide unified interfaces for all :class:`ContiguousBufferTraits` -comformable types.
+
+        ``int_but_t``: contiguous buffer of constant integers. It is used, e.g., to specify the 
+        the lengths and displacements of the chunks in a customized datatype.
+        
+        ``aint_buf_t``: contiguous buffer of constant address-size integers. It is used, e.g., 
+        to specify the (byte-)displacements of chunks in a customized datatype.
+
+
     .. function::   ostream &info( ostream &os = cout, int fmt_cntl = 1 ) const
                     friend ostream & operator<<( ostream &os, const Datatype &dtype )
 
-        ``info()`` prints the information of the current instance to the stream 
-        ``os``.
-    
-        :arg fmt_cntl:   control the amount of information to be printed, 0 for a 
-                 short and inline priting, 1 for a verbose, multi-line version.
-        :return: The argument ``os`` is returned.
-    
-        The overloaded ``<<`` operator is equivalent to ``info()`` with 
-        default ``fmt_cntl``.
+        ``info()`` prints a short (``fmt_cntl=0``) or a verbose (``fmt_cntl=1``) 
+        description of the current instance to the stream ``os``.
+
+        Operator ``<<`` is equivalent to ``info()`` with ``fmt_cntl=0``.
+
+        The passed stream ``os`` is returned.
     
     .. function:: void free() noexcept
 
         Free the object and set it to null value as returned by :func:`nullval`.
         It is safe to call this function at any time, or even multiple times, 
-        except for exactly the predifined objects (they are `const`, but a 
+        except for exactly the predefined objects (they are ``const``, but a 
         non-const copy can be freed). 
 
 
@@ -72,75 +82,160 @@ Class Datatype: the Type of Data Element
 
     .. function::   Datatype dup() const
                     static Datatype nullval() noexcept
-                    Datatype resized( aint_t lb, aint_t ext ) const
+
+        New datatype constructors.
 
         ``dup()`` creates a duplication of the current datatype.
         
-        ``nullval()`` returns a null value, corresponding to 
-        ``MPI_DATATYPE_NULL`` internally.
+        ``nullval()`` returns a null value, corresponding to ``MPI_DATATYPE_NULL`` internally.
+
+
+    .. function::  \
+        Datatype resized(aint_t lb, aint_t ext) const
+        Datatype contiguous(int count) const
+        Datatype vector(int count, int blklen, int stride) const
+        Datatype hvector(int count, int blklen, aint_t stride) const
+        Datatype indexed_block(int count, int blklen, const int displs[]) const
+        Datatype indexed_block(int blklen, int_buf_t displs) const
+        Datatype hindexed_block(int count, int blklen, const aint_t displs[]) const
+        Datatype hindexed_block(int blklen, aint_buf_t displs) const
+        Datatype indexed(int count, const int blklens[], const int displs[]) const
+        Datatype indexed(int_buf_t blklens, int_buf_t displs) const
+        Datatype hindexed(int count, const int blklens[], \
+            const aint_t displs[]) const
+        Datatype hindexed(int_buf_t blklens, aint_buf_t displs) const
+        static Datatype struct_(int count, const int blklens[], \
+            const aint_t displs[], const mpi_t dtypes[])
+        static Datatype struct_(int count, const int blklens[], \
+            const aint_t displs[], const Datatype dtypes[])
+        static Datatype struct_(int_buf_t blklens, aint_buf_t displs, \
+            ContiguousBuffer<const Datatype> dtypes)
+
+        New datatype constructors. Assume the current instance describe a datatype
+        ``T``:
+
+        ``resized``: set the lower bound and extent to ``lb`` and ``ext``, respectively,
+        and return the new datatype.
         
-        ``resized()`` creates a resized datatype with new lower bound ``lb`` and extent ``ext``. 
+        ``contiguous``: contiguous-layout ``count`` items, each typed ``T``.
+        
+        ``vector``: a vector datatype that consists of ``counts`` blocks. Each block 
+        has ``blklen`` contiguous items typed T. Blocks are separated by ``stride`` 
+        (in the unit of ``T``).
+        
+        ``hvector``: similar to ``vector`` except that ``stride`` is in the unit of
+        byte.
 
+        ``indexed_block``: similar to ``vector`` but further allowing unequal strides
+        specified by displacements ``displs`` (in the unit of T).
 
-    .. function::   Datatype contiguous( int count ) const
-                    Datatype vector( int count, int blklen, int stride ) const
-                    Datatype hvector( int count, int blklen, aint_t stride ) const
-                    Datatype indexed_block( int blklen, const std::vector<int> &displs ) const
-                    Datatype hindexed_block( int blklen, \
-                        const std::vector<aint_t> &displs ) const
-                    Datatype indexed( const std::vector<int> &blklens, \
-                        const std::vector<int> &displs ) const
-                    Datatype hindexed( const std::vector<int> &blklens, \
-                        const std::vector<aint_t> &displs ) const
-                    static Datatype struct_( const std::vector<int> &blklens, \
-                        const std::vector<aint_t> &displs, const std::vector<Datatype> &dtypes)
+        ``hindexed_block``: similar to ``indexed_block`` except that displs is in the 
+        unit of byte.
 
-        New datatype creation methods;
+        ``indexed``: similar to ``indexed_block`` but allowing unequal sized blocks 
+        specified by ``blklens``.
 
-        ``contiguous()`` creates a datatype with contiguous ``count`` elements of the current
-        datatype. 
+        ``hindexed``: similar to ``indexed`` except that ``displs`` are in the unit of 
+        byte.
 
-        ``vector()`` creates a vector datatype of the current datatype, 
-        consisting of ``count`` blocks, each with
-        ``blklen`` contiguous elements, separated with stride ``stride`` (in the 
-        unit of the current datatype). ``hvector()`` is similar, but the ``stride`` is in bytes. 
+        ``struct_``: most general case. Blocks has different lengths, byte 
+        displacements, and datatypes specified by ``dtypes``.
 
-        ``indexed_block()`` further allows non-constant stride. The displacements
-        of blocks are specified by ``displs`` (in the unit of the current datatype ).
-        ``hindexed_block()`` specifies the displacements in bytes. 
+    .. function::   \
+        Datatype darray(int size, int rank, int ndims, \
+            const int gsizes[], const int distribs[], \
+            const int dargs[], const int psizes[], int order = ORDER_C)const
+        Datatype darray(int size, int rank, int_buf_t gsizes, int_buf_t distribs, \
+            int_buf_t dargs, int_buf_t psizes, int order = ORDER_C)const
+        Datatype subarray(int ndims, const int sizes[], const int subsizes[], \
+            const int starts[], int order = ORDER_C)const
+        Datatype subarray(int_buf_t sizes, int_buf_t subsizes, int_buf_t starts, \
+            int order = ORDER_C)const
 
-        ``indexed()`` allows further flexibility - the blocks can have different lengths specified 
-        by ``blklens``.
-        ``hindexed()`` uses displacements in bytes;
+        For the convenience of distributing array data among processes, the 
+        following two datatypes are defined:
 
-        ``struct_`` is the most general one - the datatypes of blocks can be different 
-        and specified by ``dtypes``.
+        ``darray``: Cartesian decompose the array type T into blocks, return the 
+        datatype that corresponds to one of them.
 
-    .. function::   Datatype darray( int size, int rank, const std::vector<int> &gsizes, \
-                        const std::vector<int> &distribs, \
-                        const std::vector<int> &dargs,\
-                        const std::vector<int> &psizes, int order = ORDER_C )const
-                    Datatype subarray( const std::vector<int> &sizes, \
-                        const std::vector<int> &subsizes, \
-                        const std::vector<int> &starts, int order = ORDER_C )const
+        - ``size, rank``: total number of blocks and the index of the desired block
+          (assuming row-major order).
+        - ``gsizes``: dimensions of the whole array.
+        - ``distribs``: specifying the distribution algorithm at dimensions. Each can be
+        
+            - ``DISTRIBUTE_NONE`` (the first block owns all, the others get none).
+            - ``DISTRIBUTE_BLOCK`` (each block is contiguous).
+            - ``DISTRIBUTE_CYCLIC`` (each block cyclicly owns elements).
+        
+        - ``dargs``: arguments to the distribution algorithm. Each can be
+            
+            - ``DISTRIBUTE_DFLT_DARG``: most uniform way for BLOCK distribution, 
+              and 1 for CYCLIC.
+            - an integer: size of the block (must has darg * psize >= gsize at this
+              dimension) for BLOCK distribution, or the size each cyclic chunk.
+        
+        - ``psizes``: number of blocks at dimensions. ``1`` for non-distribution at 
+          this dimension.
 
-        New datatype creation methods for distributed data.
+        ``subarray``: a subarray datatype in a larger array typed T.
+        
+        ``sizes``: dimensions of the whole array.
+        ``subsizes, starts``: dimensions at starting location of the subarray.
+        ``order``: ``ORDER_C`` or ``ORDER_FORTRAN``, the storage order.
 
-        ``darray()`` creates a datatype which describes a part of a large distributed array.
-        ``size`` and ``rank`` are the number of parts and the index of the target part. 
-        The array may have any dimension, with ``psizes`` specifying the number of process at each direction, 
-        ``gsizes`` describing the size
-        of the global array at each direction, ``distribs`` and ``dargs`` describing the 
-        distribution method (``distribs`` can be :var:`DISTRIBUTE_BLOCK` or 
-        :var:`DISTRIBUTE_CYCLIC` or :var:`DISTRIBUTE_NONE` for each dimension; 
-        ``dargs`` is block size, can be :var:`DISTRIBUTE_DFLT_DARG` for nearly uniform distribution or 
-        can be a interger).
-        ``order`` can be :var:`ORDER_C` or :var:`ORDER_FORTRAN`.
+    
+    .. function:: \
+        static void add_customized_cache(Datatype *dtype)
+        static void clear_customized_cache() noexcept
+
+        ``add_customized_cache``: 
+        add a user-defined datatype to the cache, so that it is freed at the exit of 
+        the MPI environment.
+        
+        ``clear_customized_cache``: clean the cache, so that all datatypes gets 
+        freed (only if all the copies of the ``Datatype`` instance gets destroyed
+        will the underlying datatype get freed).
+
+    .. function:: \
+        static void add_named_datatype(const string &name, const Datatype *dtype)
+        static void remove_named_datatype(const string &name)
+
+        Add or remove a named datatype, so that the method :func:`from_name` accepts
+        that name.
+
+    .. function:: \
+        template<typename NativeT> \
+        static const Datatype & from_type() noexcept
+
+        Get the Datatype instance from its C++ type. 
+
+        ``NativeT``: a :class:`DatatypeTraits` -comformable type, i.e., ``DatatypeTraits<NativeT>::has_mpi_datatype -> true``.
+
+        User may extend the traits by adding specializations.
+
+    .. function:: \
+        static const Datatype & from_name(const string &name)
+
+        Map string to Datatype instance.
+    
+        ``name``: a string, could be one of the following:
+
+        (1). ``byte``, ``char``, ``bool``; 
+        
+        (2). ``X``, ``signed X``, ``unsigned X`` where X is either char, short, int, long, or long long;
+        
+        (3). ``intX_t``, ``uintX_t`` where X can be either 8, 16, 32, or 64;
+        
+        (4). ``float``, ``double``, ``long double``.
+
+        Other named datatype are allowed if manually added, e.g., with 
+        ``add_named_datatype()``.
+
 
 .. _api-mpi-predefined-dtype:
 
 Predefined Datatypes 
-"""""""""""""""""""""""""
+""""""""""""""""""""""""""""""
 
 .. var::    extern const Datatype CHAR
             extern const Datatype WCHAR
@@ -210,144 +305,444 @@ Predefined Datatypes
     Predefined datatypes for reduction operations (such as :var:`MINLOC` and :var:`MAXLOC`). 
 
 
-Class Datapacket: the Data Buffer Descriptor
-"""""""""""""""""""""""""""""""""""""""""""""""
+DatatypeTraits
+""""""""""""""""""
+
+:class:`~HIPP::MPI::DatatypeTraits` is defined for mapping a C++ type to its MPI Datatype. 
+``DatatypeTraits`` defines the 
+Datatype protocol.
+
+If a C++ type, ``T``, has specialization ``DatatypeTraits<T>``, and satisfies
+the following requirements, it is compliant to this protocol.
+
+(1). Has a member ``static constexpr bool has_mpi_datatype = true``.
+
+(2). Has a member constexpr bool value, ``is_prededefined``. If ``T`` has a 
+predefined standard MPI datatype, ``is_predefined=true``. Otherwise 
+``false``. Any customized datatype, defined by HIPP or by the user, 
+should define this to ``false``.
+
+(3). Have a member typedef ``native_t=T``.
+
+(4). If predefined, has a member ``static const Datatype * datatype`` which 
+points to a ``Datatype`` instance. Otherwise has a method 
+``static const Datatype & datatype()`` which returns the reference to 
+a ``Datatype`` instance.
+
+(5). If predefined, has a member ``static const char * mpi_name`` which points
+to an name to the datatype. Otherwise has a method 
+``static string mpi_name()`` which returns to a string of the datatype name.
+
+To satisfy (1) and (2), the best choice is to define the specialization to 
+derive from :class:`~HIPP::MPI::DatatypeTraitsCustomized`.
+
+The requirement (5) is only for debugging purpose. It is valid to return an 
+empty string.
+
+.. class DatatypeTraitsPredefined::
+
+    static constexpr bool has_mpi_datatype = true
+    static constexpr bool is_predefined = true
+
+
+.. class DatatypeTraitsCustomized::
+
+    static constexpr bool has_mpi_datatype = true
+    static constexpr bool is_predefined = false
+
+
+
+.. class:: template<typename NativeT, typename V =void> DatatypeTraits
+
+    inline static constexpr bool has_mpi_datatype = false
+
+The followings are specializations for C++ native types that has predefined MPI datatype 
+counterpart. 
+
+Supported types are
+
+- ``bool``, ``char``, ``signed char`` or ``unsigned char``;
+- ``X`` or  ``unsigned X``, where ``X`` can be ``short``, ``int``, ``long`` 
+  or ``long long``;
+- ``float``, ``double`` or ``long double``;
+- ``std::complex<float>``, ``std::complex<double>`` 
+  or ``std::complex<long double>``.
+
+Their const qualified types are also supported, referring to the same Datatype object.
+
+.. class:: template<> DatatypeTraits<char >
+
+.. class:: template<> DatatypeTraits<signed char >
+
+.. class:: template<> DatatypeTraits<short >
+
+.. class:: template<> DatatypeTraits<int >
+
+.. class:: template<> DatatypeTraits<long >
+
+.. class:: template<> DatatypeTraits<long long >
+
+.. class:: template<> DatatypeTraits<unsigned char >
+
+.. class:: template<> DatatypeTraits<unsigned short >
+
+.. class:: template<> DatatypeTraits<unsigned int >
+
+.. class:: template<> DatatypeTraits<unsigned long >
+
+.. class:: template<> DatatypeTraits<unsigned long long >
+
+.. class:: template<> DatatypeTraits<float >
+
+.. class:: template<> DatatypeTraits<double >
+
+.. class:: template<> DatatypeTraits<long double >
+
+.. class:: template<> DatatypeTraits<bool >
+
+.. class:: template<> DatatypeTraits<std::complex<float> >
+
+.. class:: template<> DatatypeTraits<std::complex<double> >
+
+.. class:: template<> DatatypeTraits<std::complex<long double> >
+
+.. class:: template<> DatatypeTraits<const char >
+
+.. class:: template<> DatatypeTraits<const signed char >
+
+.. class:: template<> DatatypeTraits<const short >
+
+.. class:: template<> DatatypeTraits<const int >
+
+.. class:: template<> DatatypeTraits<const long >
+
+.. class:: template<> DatatypeTraits<const long long >
+
+.. class:: template<> DatatypeTraits<const unsigned char >
+
+.. class:: template<> DatatypeTraits<const unsigned short >
+
+.. class:: template<> DatatypeTraits<const unsigned int >
+
+.. class:: template<> DatatypeTraits<const unsigned long >
+
+.. class:: template<> DatatypeTraits<const unsigned long long >
+
+.. class:: template<> DatatypeTraits<const float >
+
+.. class:: template<> DatatypeTraits<const double >
+
+.. class:: template<> DatatypeTraits<const long double >
+
+.. class:: template<> DatatypeTraits<const bool >
+
+.. class:: template<> DatatypeTraits<const std::complex<float> >
+
+.. class:: template<> DatatypeTraits<const std::complex<double> >
+
+.. class:: template<> DatatypeTraits<const std::complex<long double> >
+
+.. class:: template<typename NativeT> DatatypeTraits<NativeT, std::enable_if_t< \
+    RawArrayTraits<NativeT>::is_array && \
+    DatatypeTraits<typename RawArrayTraits<NativeT>::value_t>::has_mpi_datatype > >  \
+    : public DatatypeTraitsCustomized
+
+    Specialization for any RawArray protocol (see :class:`~HIPP::RawArrayTraits`).
+
+    A RawArray type with scalar type ``value_t`` and number of elements ``size``
+    is mapped to the MPI contiguous datatype sized ``size`` with element type 
+    ``value_t``.
+
+DatatypeConverter
+""""""""""""""""""
+
+The followings are the interfaces of the type mapping. 
+Do not add specialization to this class template.
+Instead, define specialization to ``DatatypeTraits``.
+
+.. class:: template<typename NativeT, typename V> TypeCvt
+    
+    .. member:: static constexpr bool has_mpi_datatype = false
+
+.. class:: template<typename NativeT> TypeCvt<NativeT, std::enable_if_t<DatatypeTraits<NativeT>::is_predefined> > 
+
+    .. member:: static constexpr bool has_mpi_datatype = true
+
+    .. type:: DatatypeTraits<NativeT> traits_t
+        typename traits_t::native_t native_t
+    
+    .. function:: static const Datatype & datatype() noexcept
+        static string mpi_name()
+
+.. class:: template<typename NativeT> TypeCvt<NativeT, std::enable_if_t< ! DatatypeTraits<NativeT>::is_predefined> > 
+
+    .. member:: static constexpr bool has_mpi_datatype = true
+    
+    .. type:: DatatypeTraits<NativeT> traits_t
+        typename traits_t::native_t native_t
+
+    .. function:: static const Datatype & datatype()
+        static string mpi_name()
+
+
+Class Datapacket
+----------------------------------------
+
+A datapacket is defined, in the high-level interface, as a pack of the 
+standard MPI data buffer specification, i.e., 
+``{buff_addr, buff_size, datatype}``.
+
+Datapacket gives the communications calls flexibility, in that multiple types
+of objects can be directly passed in as buffer.
+
+The Datapacket type has tuple-like API for structured binding, e.g., ::
+
+    std::vector<int> v {1,2,3};
+    auto [buff, size, datatype] = Datapacket(v);
+
+Here, buff, size, datatype are reference type to ``void *``, ``int`` and ``Datatype``, 
+respectively.
+
+The const variant, ``ConstDatapacket`` refers to a constant buffer, (i.e., the
+buff_addr is a pointer to constant buffer). The non-const variant, 
+``Datapacket`` refers the non-const buffer. They are the same except this 
+difference.
 
 .. class::  Datapacket 
-
-    A ``Datapacket`` instance describes a data/message buffer in the communication (i.e., data packet).
-    As in the **Standard** MPI interface, a data buffer is described by a 
-    triplet ``(addr, size, datatype)``.  ``Datapacket`` encapsulates these three 
-    into a single object to make the communication calls more elegant.
-
-    HIPP provides a variety of ways to specify a data packet, including using the Standard MPI 
-    triplet, using a scalar variable, or using an array-like variable. See the constructors 
-    below for the details.
 
     **Memory management methods:**
     
     .. table::
         :class: tight-table
         
-        =================================================== ==================================================
+        =================================================== =================================================================================
         Method                                              Detail 
-        =================================================== ==================================================
-        default constructor                                 Not available.
-        copy constructor |br| and ``operator=(&&)``         Defined; ``noexcept``.
-        move constructor |br| and ``operator=(const &)``    Defined; ``noexcept``.
-        =================================================== ==================================================
+        =================================================== =================================================================================
+        copy constructor |br| and ``operator=(&&)``         Defined; ``noexcept``. The result refers to the same data buffer.
+        move constructor |br| and ``operator=(const &)``    Defined; ``noexcept``. The result takes over the move-from buffer-specification.
+        ``~Datapacket``                                     ``noexcept``
+        =================================================== =================================================================================
 
     .. _api-mpi-dpacket-constructor:
 
-    .. function::   Datapacket(const void *buff, int size, Datatype dtype) noexcept
-                    Datapacket(const void *buff, int size, const string &dtype)
-                    Datapacket(const string &buff) noexcept
-                    template<typename T, std::enable_if_t<_is_intern_dtype<T>(), int> =0> \
-                    Datapacket(const T &buff) noexcept
-                    template<typename T, std::enable_if_t<_is_intern_dtype<T>(), size_t> N> \
-                    Datapacket(const T (&buff)[N]) noexcept
-                    template<typename T, std::enable_if_t<_is_intern_dtype<T>(), int> =0> \
-                    Datapacket(const T *buff, size_t n) noexcept
-                    template<typename T, std::enable_if_t<_is_intern_dtype<T>(), size_t> N> \
-                    Datapacket(const std::array<T, N> &buff) noexcept
-                    template<typename T, typename A, std::enable_if_t<_is_intern_dtype<T>(), int> =0> \
-                    Datapacket(const vector<T,A> &buff) noexcept
+    .. function::   \
+            Datapacket() noexcept 
+            Datapacket(void *buff, int size, Datatype dtype) noexcept
+            Datapacket(void *buff, int size, const string &dtype)
+            Datapacket(string &s) noexcept
+            template<typename T, std::enable_if_t<_has_def<T>(), int> =0 > \
+                Datapacket(T *buff, int n) noexcept
+            template<typename T> \
+                Datapacket(T &x)
 
-        Data packet constructors. A variety of ways can be used to construct a data packet, by providing the 
-        following arguments:
+        Constructors.
 
-        .. table::
-            :class: fix-width-table tight-table
-            :widths: 30 70
-            
-            =================================================== ===========================================================================================
-            Arguments                                           Description 
-            =================================================== ===========================================================================================
-            Standard triplet                                    ``(buff, size, dtype)``, where ``buff`` is the starting address, ``size``
-                                                                is the number of elements and ``dtype`` is the datatype of each element. |br|
-                                                                ``dtype`` can be either :class:`Datatype` or ``std::string`` (automatically converted to 
-                                                                :class:`Datatype`; see below for valid strings for datatype).
-            A string or a arithmetic scalar variable            ``std::string`` or any arithmetic scalar (see below for valid scalars). In C++, 
-                                                                a ``std::string`` is not writable, so that it can not be used in any receiving call.
-            An array-like object of arithmetic scalars          raw array (e.g., ``int [3]``), raw buffer
-                                                                (e.g., a ``int *`` that points to ``n`` integers), ``std::array`` or ``std::vector``
-            =================================================== ===========================================================================================
+        (1). Default constructor - equivalent to (2) with arguments 
+        ``{BOTTOM, 0, INT}``.
         
-        When constructing a data packet with the standard triplet, a ``std::string`` can be used to specify the datatype. Valid 
-        strings are:
+        (2). MPI standard buffer specification, i.e., with a triplet of starting 
+        address, number of data items, and datatype of each item.
         
-        - ``"byte"``, ``"char"`` or ``"bool"``;
-        - ``"X"``, ``"signed X"`` or ``"unsigned X"``, where ``X`` can be ``char``, ``short``, ``int``, ``long`` or ``long long``;
-        - ``"intX_t"`` or ``"uintX_t"``, where ``X`` can be ``8``, ``16``, ``32`` or ``64``;
-        - ``"float"``, ``"double"``, ``"long double"``.
+        (3). The same as (2), but specify the datatype by its name. The actual used
+        datatype is like that returned by :func:`Datatype::from_name`. Ordinary names are 
+        supported, e.g., ``char``, ``int``, ``unsigned short``, ``float``, ``int16_t``, ``bool``, etc.
+        
+        (4). Equivalent to (2) with arguments ``{s.data(), s.size(), CHAR}``.
 
-        .. _api-mpi-dpacket-predefined-type:
+        (5). The same as (2), but the datatype is inferred from the pointed type 
+        ``T``. The actual used datatype is like that return by :func:`Datatype::from_type`.
+        Ordinary types are suppoeted, like ``char``, ``int``, ``unsigned short``, ``float``, ``bool``, 
+        etc. Any types that are DatatypeTraits-conformable are also supported (see class :class:`DatatypeTraits` for the protocol definition).
+        
+        (6). The buffer is inferred from the argument. The library tries to infer
+        the buffer by the following order until success:
 
-        Where the "arithmetic scalar" are referred, we mean one of the following C++ types:
-
-        - ``bool``, ``char``, ``signed char`` or ``unsigned char``;
-        - ``X`` or  ``unsigned X``, where ``X`` can be ``short``, ``int``, ``long`` or ``long long``;
-        - ``float``, ``double`` or ``long double``;
-        - ``std::complex<float>``, ``std::complex<double>`` or ``std::complex<long double>``.
+        - If ``T`` is Predefined DatatypeTraits-conformable, treat ``x`` as a single 
+          data element. Examples include a single int, double, etc.
+        - If ``T`` is ContiguousBufferTraits-conformable 
+          (see class :class:`ContiguousBufferTraits` for the protocol definition) and its element is 
+          Predefined DatatypeTraits-conformable, treat ``x`` as a sequence of 
+          data elements typed ContiguousBuffer<T>::value_t.
+          e.g., ``vector<int> v{1,2,3,4,5}`` gives the buffer 
+          ``{v.data(), 5, INT}``.
+        - If ``T`` is Customized DatatypeTraits-conformable, treat ``x`` as a single 
+          data element.
+        - If T is ContiguousBufferTraits-conformable and its element is Customized 
+          DatatypeTraits-conformable, treat ``x`` as a sequence of 
+          data elements typed ContiguousBuffer<T>::value_t.
+        - If all the above inferences failed, raise a compile error.
+        
+        Note that in any of the constructors, the data buffer must be non-const.
     
     .. function::   Datapacket(aint_t disp, int size, Datatype dtype) noexcept
                     Datapacket(aint_t disp, int size, const string &dtype)
 
-        Sometimes, triplet is used to specify a memory segement relative to 
+        Sometimes, triplet is used to specify a memory segment relative to 
         a base address (e.g., in RMA operations). In such cases, the first 
         part of the triplet is a displacement relative to the base address. 
         
         The ``Datapacket`` type can represent such triplets, too. Internally, the
         displacement is stored by casting into a ``void *``.
 
-    **Examples:**
+    .. function:: \
+        ostream &info(ostream &os = cout, int fmt_cntl = 1) const
+        friend ostream & operator<<(ostream &os, const Datapacket &dpacket)
 
-    In the point-to-point communication, the send/recv call needs data buffer as argument.
-    Traditionally, MPI uses triplet ``(addr, size, datatype)`` to describe the data buffer.
-    In HIPP, the following send (or recv) calls are valid and equivalent for ``std::vector``::
+        ``info()`` prints short (``fmt_cntl=0``) or verbose (``fmt_cntl=1``) information 
+        about the instance to
+        the stream ``os``. 
+        
+        The ``<<`` operator is equivalent to ``info()`` with ``fmt_cntl=0``.
 
-        vector<int> send_buff(10), recv_buff(10);
+    .. function:: \
+        void * const & get_buff() const noexcept
+        int const & get_size() const noexcept
+        Datatype const & get_dtype() const noexcept
+        void * & get_buff() noexcept
+        int & get_size() noexcept
+        Datatype & get_dtype() noexcept
 
-        comm.send(dest, tag, send_buff);
-        comm.send(dest, tag, &send_buff[0], 10, HIPP::MPI::INT);
-        comm.send(dest, tag, &send_buff[0], 10, "int");
+        Getters.
+        
+        ``get_buff()``, ``get_size()``, ``get_dtype()`` return the buffer starting address,
+        buffer size, and datatype, respectively.
 
-        comm.recv(src, tag, recv_buff);
-        comm.recv(src, tag, &recv_buff[0], 10, HIPP::MPI::INT);
-        comm.recv(src, tag, &recv_buff[0], 10, "int");
+Tuple-like API are defined for ``Datapacket``:
 
-    Note that in a send (or recv) call, HIPP uses the arguments after ``src`` (or ``dest``) and ``tag`` to construct a 
-    ``Datapacket`` instance, and uses members in this data packet as the buffer arguments
-    to the underlying MPI library.
+.. function:: \
+    template<std::size_t I> decltype(auto) get( Datapacket &dp )
+    template<std::size_t I> decltype(auto) get( const Datapacket &dp )
+    template<std::size_t I> decltype(auto) get( Datapacket &&dp )
 
-    ``std::string`` can be used as a sending buffer, but not a receiving buffer. You must provide a buffer by 
-    yourself in the receiving call, like using a ``std::vector``::
+.. class:: template<> std::tuple_size<Datapacket>
+    
+    .. member:: static constexpr std::size_t value = 3
 
-        string send_str = "content to send";
-        vector<char> recv_str(128);
+.. class:: template<> std::tuple_element<0, Datapacket>
 
-        comm.send(dest, tag, send_str);
-        comm.recv(src, tag, recv_str);
+    .. type:: type = void *
 
-    Arithematic scalars and raw arrays (or raw buffers) of them can be easily send/recv, like::
+.. class:: template<> std::tuple_element<1, HIPP::MPI::Datapacket>
+    
+    .. type:: type = int
 
-        int x,
-            arr[3],
-            *buff = new int [3];
+.. class:: template<> std::tuple_element<2, HIPP::MPI::Datapacket>
 
-        comm.send(dest, tag, x);
-        comm.send(dest, tag, arr);
-        comm.send(dest, tag, buff, 3);
-
-        // Or equivalently, using the standard triplet as buffer descriptor
-        comm.send(dest, tag, &x, 1, HIPP::MPI::INT);
-        comm.send(dest, tag, arr, 3, HIPP::MPI::INT);
-        comm.send(dest, tag, buff, 3, HIPP::MPI::INT);
+    .. type:: type = Datatype
 
 
+**Examples:**
 
-Class Pack and ExternalPack
----------------------------------
+In the point-to-point communication, the send/recv call needs data buffer as argument.
+Traditionally, MPI uses triplet ``{addr, size, datatype}`` to describe the data buffer.
+In HIPP, the following send (or recv) calls are valid and equivalent for ``std::vector``::
+
+    vector<int> send_buff(10), recv_buff(10);
+
+    comm.send(dest, tag, send_buff);
+    comm.send(dest, tag, &send_buff[0], 10, INT);
+    comm.send(dest, tag, &send_buff[0], 10, "int");
+
+    comm.recv(src, tag, recv_buff);
+    comm.recv(src, tag, &recv_buff[0], 10, INT);
+    comm.recv(src, tag, &recv_buff[0], 10, "int");
+
+Note that in a send (or recv) call, HIPP uses the arguments after ``src`` (or ``dest``) and ``tag`` to construct a 
+``Datapacket`` instance, and uses members in this data packet as the buffer arguments
+to the underlying MPI library.
+
+``std::string`` can be used as a sending buffer, but not a receiving buffer. You must provide a buffer by 
+yourself in the receiving call, like using a ``std::vector``::
+
+    string send_str = "content to send";
+    vector<char> recv_str(128);
+
+    comm.send(dest, tag, send_str);
+    comm.recv(src, tag, recv_str);
+
+Arithematic scalars and raw arrays (or raw buffers) of them can be easily send/recv, like::
+
+    int x,
+        arr[3],
+        *buff = new int [3];
+
+    comm.send(dest, tag, x);
+    comm.send(dest, tag, arr);
+    comm.send(dest, tag, buff, 3);
+
+    // Or equivalently, using the standard triplet as buffer descriptor
+    comm.send(dest, tag, &x, 1, HIPP::MPI::INT);
+    comm.send(dest, tag, arr, 3, HIPP::MPI::INT);
+    comm.send(dest, tag, buff, 3, HIPP::MPI::INT);
+
+
+Class ConstDatapacket
+----------------------------------------
+
+.. class:: ConstDatapacket
+
+    See the docs for Datapacket.
+
+
+    .. function:: 
+        ConstDatapacket() noexcept
+        ConstDatapacket(const void *buff, int size, Datatype dtype) noexcept
+        ConstDatapacket(const void *buff, int size, const string &dtype)
+        ConstDatapacket(const string &s) noexcept
+        template<typename T, std::enable_if_t<_has_def<T>(), int> =0 > \
+            ConstDatapacket(const T *buff, int n) noexcept
+        template<typename T> \
+            ConstDatapacket(const T &x)
+
+    .. function:: \
+        ConstDatapacket(aint_t disp, int size, Datatype dtype) noexcept 
+        ConstDatapacket(aint_t disp, int size, const string &dtype)
+
+    .. function:: \
+        ConstDatapacket(const Datapacket &p) noexcept
+
+        It is valid to use a ``Datapacket`` as a ``ConstDatapacket``. The 
+        constructed ``ConstDatapacket`` refers to the same buffer, has the same
+        size, and share the same datatype as ``p``.
+
+    .. function:: \
+        ostream &info(ostream &os = cout, int fmt_cntl = 1) const
+        friend ostream & operator<<(ostream &os, const ConstDatapacket &dpacket)
+
+    .. function:: \
+        const void * const & get_buff() const noexcept
+        int const & get_size() const noexcept
+        Datatype const & get_dtype() const noexcept
+        const void * & get_buff() noexcept
+        int & get_size() noexcept
+        Datatype & get_dtype() noexcept
+
+Tuple-like API are defined for ``ConstDatapacket``:
+
+.. function:: \
+    template<std::size_t I> decltype(auto) get( ConstDatapacket &dp )
+    template<std::size_t I> decltype(auto) get( const ConstDatapacket &dp )
+    template<std::size_t I> decltype(auto) get( ConstDatapacket &&dp )
+
+.. class:: template<> std::tuple_size<ConstDatapacket>
+    
+    .. member:: static constexpr std::size_t value = 3
+
+.. class:: template<> std::tuple_element<0, ConstDatapacket>
+
+    .. type:: type = const void *
+
+.. class:: template<> std::tuple_element<1, HIPP::MPI::ConstDatapacket>
+    
+    .. type:: type = int
+
+.. class:: template<> std::tuple_element<2, HIPP::MPI::ConstDatapacket>
+
+    .. type:: type = Datatype
+
+
+Class Pack
+------------------------
 
 .. class:: Pack 
 
@@ -402,7 +797,7 @@ Class Pack and ExternalPack
                             because it can be adjusted by :func:`set_size`.
 
     .. function:: \
-        Pack & push(const Datapacket &in_dpacket)
+        Pack & push(const ConstDatapacket &in_dpacket)
         Pack & pop(const Datapacket &out_dpacket)
 
         ``push()`` packs ``in_dpacket`` into the buffer. It automatically resizes the
@@ -415,7 +810,7 @@ Class Pack and ExternalPack
         ``*this`` is returned which enables chain of methods on the same instance.
 
     .. function:: \
-        Datapacket as_sendbuf() const
+        ConstDatapacket as_sendbuf() const
         Datapacket as_recvbuf()
 
         ``as_sendbuf()`` returns a buffer descriptor that can be used in sending operations. 
@@ -461,12 +856,12 @@ Class Pack and ExternalPack
         ``*this`` is returned which enables chain of methods on the same instance.
 
     .. function:: \
-        void pack(const Datapacket &in_dpacket,  \
+        static void pack(const ConstDatapacket &in_dpacket, \
             void *outbuf, int outsize, int &position, const Comm &comm)
-        void unpack(const void *inbuf, int insize, int &position, \
+        static void unpack(const void *inbuf, int insize, int &position, \
             const Datapacket &out_dpacket, const Comm &comm)
-        int size(int incount, const Datatype &dtype, const Comm &comm)
-        int size(const Datapacket &in_dpacket, const Comm &comm)
+        static int size(int incount, const Datatype &dtype, const Comm &comm)
+        static int size(const ConstDatapacket &in_dpacket, const Comm &comm)
 
         The functions mapped to the standard MPI calls.
 
@@ -478,6 +873,8 @@ Class Pack and ExternalPack
 
         ``size()`` returns the maximal buffer size in byte that may be used in ``pack()``.
 
+Class ExternalPack
+------------------------
 
 .. class:: ExternalPack
 
@@ -495,13 +892,13 @@ Class Pack and ExternalPack
         Constructors.
 
     .. function:: \
-        ExternalPack & push(const Datapacket &in_dpacket)
+        ExternalPack & push(const ConstDatapacket &in_dpacket)
         ExternalPack & pop(const Datapacket &out_dpacket)
 
         Pack/unpack data into/from the current buffer.
 
     .. function:: \
-        Datapacket as_sendbuf() const
+        ConstDatapacket as_sendbuf() const
         Datapacket as_recvbuf()
 
         Return buffer descriptor that may be used in sending/recving calls.
@@ -523,7 +920,7 @@ Class Pack and ExternalPack
         Attribute setters.
 
     .. function:: \
-        static void pack(const Datapacket &in_dpacket, \
+        static void pack(const ConstDatapacket &in_dpacket, \
             void *outbuf, aint_t outsize, aint_t &position, \ 
             const string &datarep="external32")
         static void unpack(const void *inbuf, aint_t insize, \
@@ -531,14 +928,14 @@ Class Pack and ExternalPack
             const string &datarep="external32")
         static aint_t size(int incount, const Datatype &dtype,  \
             const string &datarep="external32")
-        static aint_t size(const Datapacket &in_dpacket, \
+        static aint_t size(const ConstDatapacket &in_dpacket, \
             const string &datarep="external32")
 
         Methods mapped to the standard MPI calls.
 
 
-Class Op: the Operation
----------------------------
+Class Op
+-------------
 
 .. class::  Op
 
@@ -547,13 +944,16 @@ Class Op: the Operation
 
     **Memory management methods:**
     
-    =================================================== ==================================================
-    Method                                              Detail 
-    =================================================== ==================================================
-    default constructor                                 Not available.
-    copy constructor |br| and ``operator=(const &)``    Defined; ``noexcept``.
-    move constructor |br| and ``operator=(&&)``         Defined; ``noexcept``.
-    =================================================== ==================================================
+    .. table::
+        :class: tight-table
+    
+        =================================================== ==================================================
+        Method                                              Detail 
+        =================================================== ==================================================
+        default constructor                                 Not available.
+        copy constructor |br| and ``operator=(const &)``    Defined; ``noexcept``.
+        move constructor |br| and ``operator=(&&)``         Defined; ``noexcept``.
+        =================================================== ==================================================
 
     .. type::   MPI_User_function user_fn_t
 
@@ -611,7 +1011,7 @@ Class Op: the Operation
         the constructor of Op.
 
 Predefined Operations
-"""""""""""""""""""""""""
+""""""""""""""""""""""""""""
 
 .. var::    extern Op MAX 
             extern Op MIN
@@ -629,8 +1029,8 @@ Predefined Operations
             extern Op NO_OP
 
 
-Class Oppacket: the Operation Descriptor
-"""""""""""""""""""""""""""""""""""""""""
+Class Oppacket
+-----------------
 
 .. class:: Oppacket
 

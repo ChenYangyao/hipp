@@ -231,20 +231,21 @@ public:
     */
     ostream & info(ostream &os=cout, int fmt_cntl=1) const {
         PStream ps(os);
-        ps << HIPPCNTL_CLASS_INFO_INLINE(HIPP::RawArrayTraits);
-        _prt(ps);
-        if(fmt_cntl >= 1) ps << '\n'; 
+        if( fmt_cntl == 0 ) {
+            ps << "RawArrayTraits{"; _prt(ps); ps << "}";
+        }else{
+            ps << HIPPCNTL_CLASS_INFO(RawArrayTraits), "  ";
+            _prt(ps); ps << '\n';
+        }
         return os;
     }
     friend ostream & operator<< (ostream &os, const RawArrayTraits &t) {
-        PStream ps(os);
-        ps << "HIPP::RawArrayTraits "; t._prt(ps);
-        return os;
+        return t.info(os, 0);
     }
 private:
     void _prt(PStream &ps) const {
-        ps << "(sizeof value_t=", sizeof(value_t),  
-            ", rank=", rank, ", size=", size, ", extents={", extents, "})";
+        ps << "sizeof value_t=", sizeof(value_t),  
+            ", rank=", rank, ", size=", size, ", extents={", extents, "}";
     }
 };
 

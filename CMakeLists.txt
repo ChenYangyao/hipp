@@ -13,7 +13,7 @@ define_colors()
 
 # Options
 if(NOT CMAKE_CXX_FLAGS)
-    set(CMAKE_CXX_FLAGS "-O3 -Wall" CACHE STRING "cxx flags" FORCE)
+    set(CMAKE_CXX_FLAGS "-O3 -Wall -pthread" CACHE STRING "cxx flags" FORCE)
 endif()
 
 option(enable-mpi "install mpi component?" OFF)
@@ -79,8 +79,10 @@ include(CTest)
 if(BUILD_TESTING)
     # Compile googletest as part of the project
     prtkeyproc("Configure googletest ...")
-    set(BUILD_GMOCK OFF CACHE BOOL "")
+
+    set(BUILD_GMOCK ON CACHE BOOL "")
     set(INSTALL_GTEST OFF CACHE BOOL "")
+    
     add_subdirectory("third-party/googletest" "third-party/googletest" EXCLUDE_FROM_ALL)
 
     add_subdirectory(test)

@@ -35,8 +35,6 @@
 // This file is #included in gtest/internal/gtest-internal.h.
 // Do not include this header file separately!
 
-// GOOGLETEST_CM0001 DO NOT DELETE
-
 #ifndef GOOGLETEST_INCLUDE_GTEST_INTERNAL_GTEST_FILEPATH_H_
 #define GOOGLETEST_INCLUDE_GTEST_INTERNAL_GTEST_FILEPATH_H_
 
@@ -195,7 +193,7 @@ class GTEST_API_ FilePath {
 
   void Normalize();
 
-  // Returns a pointer to the last occurence of a valid path separator in
+  // Returns a pointer to the last occurrence of a valid path separator in
   // the FilePath. On Windows, for example, both '/' and '\' are valid path
   // separators. Returns NULL if no path separator was found.
   const char* FindLastPathSeparator() const;

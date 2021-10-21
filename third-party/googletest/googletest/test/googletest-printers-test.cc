@@ -201,7 +201,7 @@ OutputStream& operator<<(OutputStream& os,
   return os;
 }
 
-// A user-defined streamable but recursivly-defined container type in
+// A user-defined streamable but recursively-defined container type in
 // a user namespace, it mimics therefore std::filesystem::path or
 // boost::filesystem::path.
 class PathLike {
@@ -448,6 +448,24 @@ TEST(PrintBuiltInTypeTest, Size_t) {
   EXPECT_EQ("-2", Print(static_cast<ssize_t>(-2)));  // ssize_t.
 #endif  // !GTEST_OS_WINDOWS
 }
+
+// gcc/clang __{u,}int128_t values.
+#if defined(__SIZEOF_INT128__)
+TEST(PrintBuiltInTypeTest, Int128) {
+  // Small ones
+  EXPECT_EQ("0", Print(__int128_t{0}));
+  EXPECT_EQ("0", Print(__uint128_t{0}));
+  EXPECT_EQ("12345", Print(__int128_t{12345}));
+  EXPECT_EQ("12345", Print(__uint128_t{12345}));
+  EXPECT_EQ("-12345", Print(__int128_t{-12345}));
+
+  // Large ones
+  EXPECT_EQ("340282366920938463463374607431768211455", Print(~__uint128_t{}));
+  __int128_t max_128 = static_cast<__int128_t>(~__uint128_t{} / 2);
+  EXPECT_EQ("-170141183460469231731687303715884105728", Print(~max_128));
+  EXPECT_EQ("170141183460469231731687303715884105727", Print(max_128));
+}
+#endif  // __SIZEOF_INT128__
 
 // Floating-points.
 TEST(PrintBuiltInTypeTest, FloatingPoints) {
@@ -1612,61 +1630,6 @@ TEST(PrintToStringTest, WorksForCharArrayWithEmbeddedNul) {
                           "\n    As Text: \"From ä — ẑ\"");
 }
 
-#if GTEST_HAS_RTTI
-template <typename T>
-class PrintToStringTest : public testing::Test {
- public:
-  using TestType = T;
-};
-
-struct PrintBase {
-  virtual ~PrintBase() = default;
-};
-struct PrintDerived : PrintBase {};
-
-using PrintToStringTestTypes =
-    testing::Types<void, int, const volatile int*, PrintBase, PrintDerived>;
-TYPED_TEST_SUITE(PrintToStringTest, PrintToStringTestTypes);
-
-// Returns `true` if `haystack` contains `needle`.
-//
-// FIXME: Replace with `EXPECT_THAT(haystack, HasSubstr(needle))` once
-// GoogleTest starts depending on GoogleMock.
-bool ContainsSubstr(const std::string& haystack, const std::string& needle) {
-  return haystack.find(needle) != std::string::npos;
-}
-
-TYPED_TEST(PrintToStringTest, IncludesNameWithTypeInfoAndTypeIndex) {
-  const ::std::type_info& info = typeid(typename TestFixture::TestType);
-  SCOPED_TRACE(info.name());
-  EXPECT_TRUE(ContainsSubstr(PrintToString(info), info.name()));
-  EXPECT_TRUE(
-      ContainsSubstr(PrintToString(::std::type_index{info}), info.name()));
-}
-
-TEST(PrintToStringTest, IncludesNameWithTypeInfoAndTypeIndexViaBaseRef) {
-  PrintDerived derived;
-  PrintBase& base = derived;
-
-  {
-    const ::std::type_info& derived_info = typeid(derived);
-    SCOPED_TRACE(derived_info.name());
-    EXPECT_TRUE(
-        ContainsSubstr(PrintToString(derived_info), derived_info.name()));
-    EXPECT_TRUE(ContainsSubstr(PrintToString(::std::type_index{derived_info}),
-                               derived_info.name()));
-  }
-  {
-    const ::std::type_info& base_ref_info = typeid(base);
-    SCOPED_TRACE(base_ref_info.name());
-    EXPECT_TRUE(
-        ContainsSubstr(PrintToString(base_ref_info), base_ref_info.name()));
-    EXPECT_TRUE(ContainsSubstr(PrintToString(::std::type_index{base_ref_info}),
-                               base_ref_info.name()));
-  }
-}
-#endif  // GTEST_HAS_RTTI
-
 TEST(IsValidUTF8Test, IllFormedUTF8) {
   // The following test strings are ill-formed UTF-8 and are printed
   // as hex only (or ASCII, in case of ASCII bytes) because IsValidUTF8() is
@@ -1928,6 +1891,7 @@ TEST_F(PrintAnyTest, NonEmpty) {
 
 #if GTEST_INTERNAL_HAS_OPTIONAL
 TEST(PrintOptionalTest, Basic) {
+  EXPECT_EQ("(nullopt)", PrintToString(internal::Nullopt()));
   internal::Optional<int> value;
   EXPECT_EQ("(nullopt)", PrintToString(value));
   value = {7};

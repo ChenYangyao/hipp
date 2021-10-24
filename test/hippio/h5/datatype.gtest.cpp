@@ -1,14 +1,16 @@
 #include <gtest/gtest.h>
 #include <hippio.h>
+
 namespace HIPP {
 namespace IO {
+namespace H5 {
 namespace {
 
 
-/* H5Datatype */
-class H5DatatypeTest: public ::testing::Test {
+/* Datatype */
+class DatatypeTest: public ::testing::Test {
 protected:
-    typedef H5Datatype h5d;
+    typedef Datatype h5d;
     struct compound_t {
         int a;
         double b[3];
@@ -18,9 +20,9 @@ protected:
     };
 
     vector<compound_t> comps;
-    H5File f {nullptr};
+    File f {nullptr};
 
-    H5DatatypeTest(): comps(5)
+    DatatypeTest(): comps(5)
     {
         for(size_t i=0; i<5; ++i){
             auto &e = comps[i];
@@ -36,12 +38,12 @@ protected:
                     }
         }
     }
-    ~H5DatatypeTest() override {}
+    ~DatatypeTest() override {}
     void SetUp() override {}
     void TearDown() override {}
 
     void open(const string &TestName) {
-        f = H5File("H5DatatypeTest_"+TestName+".h5", "w");
+        f = File("DatatypeTest_"+TestName+".h5", "w");
     }
     void chk_comp( const compound_t &e1, const compound_t &e2 ){
         EXPECT_EQ(e1.a, e2.a);
@@ -54,8 +56,8 @@ protected:
                     EXPECT_EQ(e1.e[j][k][r], e2.e[j][k][r]);
                 }
     }
-    H5XTable<compound_t> get_xtbl() {
-        H5XTable<compound_t> tbl_manip {
+    XTable<compound_t> get_xtbl() {
+        XTable<compound_t> tbl_manip {
             "a", &compound_t::a, 
             "b", &compound_t::b, 
             "d", &compound_t::d, 
@@ -65,8 +67,8 @@ protected:
     }
 };
 
-TEST_F(H5DatatypeTest, CompoundInsert){
-    auto dtype = h5d::create(h5d::COMPOUND_C, sizeof(compound_t));
+TEST_F(DatatypeTest, CompoundInsert){
+    auto dtype = h5d::create(h5d::cCOMPOUND, sizeof(compound_t));
     dtype.insert("a", h5d::offset(&compound_t::a), NATIVE_INT_T)
         .insert("b", &compound_t::b)
         .insert("d", h5d::offset(&compound_t::d), NATIVE_SHORT_T)
@@ -85,7 +87,7 @@ TEST_F(H5DatatypeTest, CompoundInsert){
         chk_comp(comps_in[i], comps[i]);
 }
 
-TEST_F(H5DatatypeTest, CompoundConvenient){
+TEST_F(DatatypeTest, CompoundConvenient){
     auto dtype = h5d::create_compound(
         "a", &compound_t::a, 
         "b", &compound_t::b, 
@@ -105,9 +107,9 @@ TEST_F(H5DatatypeTest, CompoundConvenient){
 }
 
 /* Data records I/O using XTable */
-TEST_F(H5DatatypeTest, CompoundH5XTableWR){
+TEST_F(DatatypeTest, CompoundXTableWR){
     auto tbl_manip = get_xtbl();
-    open("CompoundH5XTableWR");
+    open("CompoundXTableWR");
     tbl_manip.write(comps, f);
     
     vector<compound_t> comps_in = 
@@ -118,9 +120,9 @@ TEST_F(H5DatatypeTest, CompoundH5XTableWR){
         chk_comp(comps_in[i], comps[i]);
 }
 
-TEST_F(H5DatatypeTest, CompoundH5XTableWRRecords){
+TEST_F(DatatypeTest, CompoundXTableWRRecords){
     auto tbl_manip = get_xtbl();
-    open("CompoundH5XTableWRRecords");
+    open("CompoundXTableWRRecords");
     tbl_manip.write_records(comps, f, "comps");
     
     vector<compound_t> comps_in = 
@@ -132,5 +134,6 @@ TEST_F(H5DatatypeTest, CompoundH5XTableWRRecords){
 }
 
 } // namespace
+}
 } // namespace IO
 } // namespace HIPP

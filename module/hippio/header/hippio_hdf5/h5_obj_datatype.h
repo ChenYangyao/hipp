@@ -1,211 +1,642 @@
 /**
- * creat: Yangyao CHEN, 2020/01/11
- *      [write   ] 
- *      @H5Datatype: HDF5 high-level datatype object.
- */ 
+create: Yangyao CHEN, 2020/01/11
+    [write   ] Datatype: HDF5 high-level datatype object.
+*/ 
 
 #ifndef _HIPPIO_H5_OBJ_DATATYPE_H_
 #define _HIPPIO_H5_OBJ_DATATYPE_H_
-#include "h5_obj_base.h"
-namespace HIPP{
-namespace IO{
 
-class H5Datatype: public H5Obj<_H5Datatype>{
+#include "h5_obj_named_base.h"
+
+namespace HIPP::IO::H5 {
+
+typedef _DatatypeArch DatatypeArch;
+class Group;
+class Attr;
+class Dataset;
+
+/**
+Datatype describe the bit-level memory layout, representation and conversion
+of data element in HDF5 dataset and attribute.
+
+Class ``Datatype`` encapsulate the methods available on datatype. 
+
+The library predefines a set of native and standard datatypes, based on which, 
+or from scratch, customized datatype can be derived. 
+
+The datatype class is copyable and movable (both in construction and 
+assignment). The copy, move and destruction are ``noexcept``. The copy operation 
+is shallow - the resulting object always refers to the same HDF5 resource
+as the source object. The move operation sets the move-from objects an empty
+state.
+*/
+class Datatype: public NamedObj {
 public:
-    typedef H5Obj<_H5Datatype> _obj_base_t;
+    typedef NamedObj parent_t;
     
-    typedef _obj_raw_t::class_t class_t;
-    static constexpr class_t 
-        COMPOUND_C = _obj_raw_t::COMPOUND_C, 
-        OPAQUE_C = _obj_raw_t::OPAQUE_C,
-        ENUM_C = _obj_raw_t::ENUM_C,
-        STRING_C = _obj_raw_t::STRING_C;
-    
-    using _obj_base_t::_obj_base_t;
-
-    bool equal( const H5Datatype &dtype ) const;
-    size_t size() const;
-
-    H5Datatype copy() const;
-    void resize( size_t size );
-
-    static H5Datatype create(class_t c, size_t size);
-    template<typename record_t, typename field_t, typename ...Args>
-    static H5Datatype create_compound(
-        const string &field_name, field_t record_t::*field_ptr,
-        Args &&...args);
-    H5Datatype & insert(const string &name, size_t offset, const H5Datatype &dtype);
-    template<typename record_t, typename field_t>
-    H5Datatype & insert(const string &name, field_t record_t::*field_ptr);
-    H5Datatype & pack();
-    unsigned nmembers() const;
-    unsigned member_index(const string &name) const;
-    class_t member_class(unsigned idx) const;
-    size_t member_offset(unsigned idx) const;
-    H5Datatype member_type(unsigned idx) const;
-    string member_name(unsigned idx) const;
-
-    template<typename record_t, typename field_t>
-    static constexpr size_t offset(field_t record_t::*field_ptr) noexcept;
+    typedef _Datatype _obj_raw_t;
+    typedef std::shared_ptr<_obj_raw_t> _obj_ptr_t;
 
     /**
-     * array datatype creator and visitor
-     */
-    H5Datatype create_array(const vector<hsize_t> &dims) const;
-    template<typename raw_array_t>
-    static H5Datatype create_array();
+    Datatype classes. The first four can be passed into method :func:`create` 
+    to create new datatypes. All of them may be returned by :func:`get_class` 
+    or :func:`member_class`.
+    */
+    typedef _obj_raw_t::class_t class_t;
+    inline static constexpr class_t 
+        cCOMPOUND  = _obj_raw_t::cCOMPOUND, 
+        cOPAQUE    = _obj_raw_t::cOPAQUE,
+        cENUM      = _obj_raw_t::cENUM,
+        cSTRING    = _obj_raw_t::cSTRING,
+        cARRAY     = _obj_raw_t::cARRAY,
+        cINTEGER   = _obj_raw_t::cINTEGER,
+        cFLOAT     = _obj_raw_t::cFLOAT,
+        cBITFIELD  = _obj_raw_t::cBITFIELD,
+        cREFERENCE = _obj_raw_t::cREFERENCE,
+        cVLEN      = _obj_raw_t::cVLEN;
+    
+    /**
+    May initialized with ``nullptr`` for an empty instance referring to no 
+    underlying datatype object, i.e., ``has_referenced() -> false``.
+    */
+    using parent_t::parent_t;
+
+    /** Produce a deep copy of the datatype. */
+    Datatype copy() const;
+
+    /** 
+    Commite the datatype to file. The committed datatype (named datatype) 
+    may be shared by many objects.
+    */
+    void commit(Group &group, const string &name, const Proplist &lcprop,
+        Proplist &tcprop, Proplist &taprop);
+
+    /**
+    Lock the datatype so that it cannot be changed. All the predefined datatypes
+    are already locked.
+    */
+    void lock();
+    
+    /**
+    Retrieve the meta-info from the datatype instance, whether or not it is 
+    committed, whether it is equal to another datatype instance, its size, 
+    and its datatype class.
+    */
+    bool committed() const;
+    bool equal(const Datatype &dtype) const;
+    size_t size() const;
+    class_t get_class() const;
+
+    /**
+    resize(): sets the size of the current datatype instance.
+
+    resized(): produces a resized copy (i.e., similar to ``copy()`` and then
+    ``resize()``).
+    */
+    void resize(size_t size);
+    Datatype resized(size_t size) const;
+
+    /** For ATOMIC datatypes, set the numerical precision to ``precision``. */
+    void set_precision(size_t precision);
+
+    /** 
+    General new datatype creators. 
+
+    @c: datatype class. Can be ``cCOMPOUND`` | ``cOPAQUE`` | ``cENUM`` | 
+    ``cSTRING``.
+    @size: the size in bytes.
+
+    More specific creators like ``create_compound()`` and ``create_array()`` 
+    are easier in most cases.
+    */
+    static Datatype create(class_t c, size_t size);
+
+    /** 
+    Methods for the creation of COMPOUND datatypes. 
+
+    create_compound(name1, ptr1, name2, ptr2, ...): 
+    directly creates a new compound datatype (usually corresponding to a C++ 
+    struct/class). Arguments are passed pair-wisely to define the name and
+    and datatype detail of each member in the COMPOUND datatype. The detail
+    is described by the member pointer from which the datatype and offset 
+    are inferred by the library.
+    
+    The C++ type of the member can be any valid type to ``Datatype::from_type`` 
+    (e.g., ``int``, ``float[3][4][5]``). 
+
+    create_compound(size): create an empty COMPOUND datatype sized ``size`` 
+    bytes. 
+    
+    Members can be inserted later by :func:`insert`.
+    */
+    static Datatype create_compound(size_t size);
+
+    template<typename Record, typename Member, typename ...Args>
+    static Datatype create_compound(const string &mem_name, 
+        Member Record::*mem_ptr, Args &&...args);
+
+    /**
+    insert(): inserts a new field into the current compound datatype.
+    
+    (1): insert(name, offset, dtype) inserts a member whose name is ``name``, 
+    offset is ``offset`` and datatype is ``dtype``.
+
+    (2): insert(name, field_ptr) inserts a member whose name is name and whose 
+    datatype, offset are inferred from member-pointer ``field_ptr``. 
+    The member can be any type that is mappable to a HDF5 datatype using 
+    ``Datatype::from_type``, (e.g., int, float[3][4][5]). 
+    */
+    Datatype & insert(const string &mem_name, size_t mem_offset, 
+        const Datatype &mem_dtype);
+
+    template<typename Record, typename Member>
+    Datatype & insert(const string &mem_name, Member Record::*mem_ptr);
+    
+    /**
+    Manually find the offset of a member typed ``Member`` in a structured 
+    type ``Record``. 
+    */
+    template<typename Record, typename Member>
+    static constexpr ptrdiff_t offset(Member Record::*mem_ptr) noexcept;
+
+    /**
+    Recursively removes the paddings in members to make the datatype 
+    more memory efficient.
+    */
+    Datatype & pack();
+
+    /**
+    members() returns the number of members in the current compound 
+    datatype instance.
+
+    member_index(name) returns the index to the member named name for a 
+    compound/enum datatype. 
+    
+    member_name(idx) converts the index back to the name. Index can be any 
+    number in the range [0, N-1] where N is returned by ``nmembers()``.
+
+    The datatype class, offset, and type can be retrieved by ``member_class()``,
+    ``member_offset()`` and ``member_type()``.
+    */
+    unsigned nmembers() const;
+    unsigned member_index(const string &name) const;
+    string member_name(unsigned idx) const;
+    class_t member_class(unsigned idx) const;
+    size_t member_offset(unsigned idx) const;
+    Datatype member_type(unsigned idx) const;
+
+
+    /**
+    ARRAY datatype creator and visitor.
+
+    create_array() creates an array datatype with given dimensions ``dims``.
+
+    create_array_for<Array>() creates an ARRAY datatype for any RawArray 
+    protocol type, e.g., int a[2][3], std::array<std::array<float, 3>, 2>.
+    */
+    Datatype create_array(const Dimensions &dims) const;
+    
+    template<typename RawArray, DatatypeArch TA = DatatypeArch::NATIVE>
+    static Datatype create_array_for();
+
+    /** Retrieve the array information. */
     unsigned array_ndims() const;
-    vector<hsize_t> array_dims() const;
-protected:
-    static H5Datatype _from_raw(id_t h5_id) noexcept;
-    template<typename T, typename M, typename ...Args>
-    static void _compound_insert(H5Datatype &dtype, 
-        const string &name, M T::*field_ptr, Args &&...args);
+    Dimensions array_dims() const;
+
+    /**
+    Map from a C++ type to its corresponding HDF5 datatype.
+    @NativeT: a DatatypeTraits comformable type, i.e., 
+        ``DatatypeTraits<NativeT>::has_h5_datatype == true``.
+    @TA: the architecture specifier.
+
+    User may extend the traits by adding specializations.
+    */
+    template<typename NativeT, DatatypeArch TA = DatatypeArch::NATIVE>
+    static const Datatype & from_type();
+
+    /**
+    Infer the datatype from an C++ object.
+    e.g., 
+    ``buff = double``, the returned datatype is a scalar double type.
+    ``buff = vector<int>``, the returned datatype is a scalar integer type.
+    */
+    template<typename T>
+    static Datatype from_buff(const T &buff);
+
+    /** Return the intermediate-level wrapper objects. */
+    _obj_raw_t & obj_raw() noexcept;
+    const _obj_raw_t & obj_raw() const noexcept;
+private: 
+    friend class Attr;
+    friend class Dataset;
+
+    template<typename R, typename M, typename ...Args>
+    void _compound_insert(const string &mem_name, 
+        M R::*mem_ptr, Args &&...args);
+
+    template<typename ...Args>
+    static _obj_ptr_t _ptr_from_raw(Args &&...args);
+    template<typename ...Args>
+    static Datatype _from_raw(Args &&...args);
 };
 
 /**
- * We also define the high-level object counterpart for the pre-defined HDF5
- * datatype. 
- */
-#define _HIPPIO_H5_PRE_OBJ(obj_name) extern const H5Datatype obj_name;
-
-_HIPPIO_H5_PRE_OBJ(NATIVE_CHAR_T)
-_HIPPIO_H5_PRE_OBJ(NATIVE_SCHAR_T)
-_HIPPIO_H5_PRE_OBJ(NATIVE_SHORT_T)
-_HIPPIO_H5_PRE_OBJ(NATIVE_INT_T)
-_HIPPIO_H5_PRE_OBJ(NATIVE_LONG_T)
-_HIPPIO_H5_PRE_OBJ(NATIVE_LLONG_T)
-_HIPPIO_H5_PRE_OBJ(NATIVE_UCHAR_T)
-_HIPPIO_H5_PRE_OBJ(NATIVE_USHORT_T)
-_HIPPIO_H5_PRE_OBJ(NATIVE_UINT_T)
-_HIPPIO_H5_PRE_OBJ(NATIVE_ULONG_T)
-_HIPPIO_H5_PRE_OBJ(NATIVE_ULLONG_T)
-_HIPPIO_H5_PRE_OBJ(NATIVE_FLOAT_T)
-_HIPPIO_H5_PRE_OBJ(NATIVE_DOUBLE_T)
-
-_HIPPIO_H5_PRE_OBJ(C_S1_T)
-
-_HIPPIO_H5_PRE_OBJ(STD_I8LE_T)
-_HIPPIO_H5_PRE_OBJ(STD_I16LE_T)
-_HIPPIO_H5_PRE_OBJ(STD_I32LE_T)
-_HIPPIO_H5_PRE_OBJ(STD_I64LE_T)
-_HIPPIO_H5_PRE_OBJ(STD_U8LE_T)
-_HIPPIO_H5_PRE_OBJ(STD_U16LE_T)
-_HIPPIO_H5_PRE_OBJ(STD_U32LE_T)
-_HIPPIO_H5_PRE_OBJ(STD_U64LE_T)
-_HIPPIO_H5_PRE_OBJ(IEEE_F32LE_T)
-_HIPPIO_H5_PRE_OBJ(IEEE_F64LE_T)
-
-_HIPPIO_H5_PRE_OBJ(STD_I8BE_T)
-_HIPPIO_H5_PRE_OBJ(STD_I16BE_T)
-_HIPPIO_H5_PRE_OBJ(STD_I32BE_T)
-_HIPPIO_H5_PRE_OBJ(STD_I64BE_T)
-_HIPPIO_H5_PRE_OBJ(STD_U8BE_T)
-_HIPPIO_H5_PRE_OBJ(STD_U16BE_T)
-_HIPPIO_H5_PRE_OBJ(STD_U32BE_T)
-_HIPPIO_H5_PRE_OBJ(STD_U64BE_T)
-_HIPPIO_H5_PRE_OBJ(IEEE_F32BE_T)
-_HIPPIO_H5_PRE_OBJ(IEEE_F64BE_T)
-
-#undef _HIPPIO_H5_PRE_OBJ
-
-namespace _h5_obj_datatype_helper {
-
-/**
-@T: record_type.
-@M: field type.
+Predefined the high-level object counterparts for the pre-defined HDF5
+datatypes. 
 */
-template<typename T, typename M>
-struct Field {
-    typedef RawArrayTraits<M> traits_t;
-    static constexpr bool is_array = traits_t::is_array;
-    typedef std::conditional_t<is_array, typename traits_t::value_t, M>
-        scalar_t;
-    static constexpr size_t n_scalar = sizeof(M) / sizeof(scalar_t);
+#define _HIPPIO_H5_PRE_T(obj_name, obj_def) \
+    inline extern const Datatype obj_name \
+    { std::make_shared<Datatype::_obj_raw_t>(obj_def, 0) };
 
-    /** Initialize by a member pointer. */
-    explicit Field(M T::* mem_ptr) noexcept: _mem_ptr(mem_ptr){}
-    
-    static H5Datatype get_dtype() {
-        typedef H5Datatype::_obj_raw_t _obj_raw_t;
+_HIPPIO_H5_PRE_T(NATIVE_FLOAT_T,    H5T_NATIVE_FLOAT)
+_HIPPIO_H5_PRE_T(NATIVE_DOUBLE_T,   H5T_NATIVE_DOUBLE)
+_HIPPIO_H5_PRE_T(NATIVE_LDOUBLE_T,  H5T_NATIVE_LDOUBLE)
+_HIPPIO_H5_PRE_T(NATIVE_CHAR_T,     H5T_NATIVE_CHAR)
+_HIPPIO_H5_PRE_T(NATIVE_SCHAR_T,    H5T_NATIVE_SCHAR)
+_HIPPIO_H5_PRE_T(NATIVE_SHORT_T,    H5T_NATIVE_SHORT)
+_HIPPIO_H5_PRE_T(NATIVE_INT_T,      H5T_NATIVE_INT)
+_HIPPIO_H5_PRE_T(NATIVE_LONG_T,     H5T_NATIVE_LONG)
+_HIPPIO_H5_PRE_T(NATIVE_LLONG_T,    H5T_NATIVE_LLONG)
+_HIPPIO_H5_PRE_T(NATIVE_UCHAR_T,    H5T_NATIVE_UCHAR)
+_HIPPIO_H5_PRE_T(NATIVE_USHORT_T,   H5T_NATIVE_USHORT)
+_HIPPIO_H5_PRE_T(NATIVE_UINT_T,     H5T_NATIVE_UINT)
+_HIPPIO_H5_PRE_T(NATIVE_ULONG_T,    H5T_NATIVE_ULONG)
+_HIPPIO_H5_PRE_T(NATIVE_ULLONG_T,   H5T_NATIVE_ULLONG)
 
-        id_t raw_dtype = H5TypeNative<scalar_t>::h5_id;
-        
-        if constexpr( is_array ){
-            auto dims = get_dims();
-            id_t new_type = _obj_raw_t::create_array(
-                raw_dtype, dims.size(), dims.data());
-            return H5Datatype {
-                std::make_shared<_obj_raw_t>(new_type, _obj_raw_t::stFREE) };
-        }else {
-            return H5Datatype {
-                std::make_shared<_obj_raw_t>(raw_dtype, 0) };
-        }
-    }
-    
-    size_t get_offset() const {
-        return (size_t)(ptrdiff_t)(void *)&( ((T *)(NULL))->*_mem_ptr );
-    }
+_HIPPIO_H5_PRE_T(C_S1_T, H5T_C_S1)
 
-    static vector<hsize_t> get_dims() {
-        if constexpr(is_array) {
-            auto dims = traits_t::extents;
-            vector<hsize_t> out(dims.begin(), dims.end());
-            return out;
-        }else {
-            return vector<hsize_t> {1};
-        }
-    }
+_HIPPIO_H5_PRE_T(IEEE_F32LE_T,      H5T_IEEE_F32LE)
+_HIPPIO_H5_PRE_T(IEEE_F64LE_T,      H5T_IEEE_F64LE)
+_HIPPIO_H5_PRE_T(STD_I8LE_T,        H5T_STD_I8LE)
+_HIPPIO_H5_PRE_T(STD_I16LE_T,       H5T_STD_I16LE)
+_HIPPIO_H5_PRE_T(STD_I32LE_T,       H5T_STD_I32LE)
+_HIPPIO_H5_PRE_T(STD_I64LE_T,       H5T_STD_I64LE)
+_HIPPIO_H5_PRE_T(STD_U8LE_T,        H5T_STD_U8LE)
+_HIPPIO_H5_PRE_T(STD_U16LE_T,       H5T_STD_U16LE)
+_HIPPIO_H5_PRE_T(STD_U32LE_T,       H5T_STD_U32LE)
+_HIPPIO_H5_PRE_T(STD_U64LE_T,       H5T_STD_U64LE)
 
-    const M T::*_mem_ptr;
+_HIPPIO_H5_PRE_T(IEEE_F32BE_T,      H5T_IEEE_F32BE)
+_HIPPIO_H5_PRE_T(IEEE_F64BE_T,      H5T_IEEE_F64BE)
+_HIPPIO_H5_PRE_T(STD_I8BE_T,        H5T_STD_I8BE)
+_HIPPIO_H5_PRE_T(STD_I16BE_T,       H5T_STD_I16BE)
+_HIPPIO_H5_PRE_T(STD_I32BE_T,       H5T_STD_I32BE)
+_HIPPIO_H5_PRE_T(STD_I64BE_T,       H5T_STD_I64BE)
+_HIPPIO_H5_PRE_T(STD_U8BE_T,        H5T_STD_U8BE)
+_HIPPIO_H5_PRE_T(STD_U16BE_T,       H5T_STD_U16BE)
+_HIPPIO_H5_PRE_T(STD_U32BE_T,       H5T_STD_U32BE)
+_HIPPIO_H5_PRE_T(STD_U64BE_T,       H5T_STD_U64BE)
+
+#undef _HIPPIO_H5_PRE_T
+
+
+/**
+The traits system that maps C++ types to the corresponding HDF5 datatypes.
+*/
+
+template<typename NativeT, 
+    DatatypeArch TA = DatatypeArch::NATIVE, 
+    typename V=void>
+struct DatatypeTraits {
+    inline static constexpr bool has_h5_datatype = false;
 };
-} // namespace _h5_obj_datatype_helper
 
-template<typename record_t, typename field_t, typename ...Args>
-H5Datatype H5Datatype::create_compound(
-    const string &field_name, field_t record_t::*field_ptr,
-    Args &&...args) 
+class DatatypeTraitsPredefined {
+public:
+    inline static constexpr bool has_h5_datatype = true,
+        is_predefined = true;
+};
+
+class DatatypeTraitsCustomized {
+public:
+    inline static constexpr bool has_h5_datatype = true,
+        is_predefined = false;
+};
+
+/** Specialization for native types. */
+#define _HIPPIO_H5_PRE_T(_native_t, _h5_t, _h5_name) \
+template<> \
+struct DatatypeTraits<_native_t, DatatypeArch::NATIVE> \
+: DatatypeTraitsPredefined { \
+    typedef _native_t native_t; \
+    inline static const Datatype &datatype = _h5_t; \
+    inline static const char *native_name = #_native_t; \
+    inline static const char *h5_name = #_h5_name; \
+};
+
+_HIPPIO_H5_PRE_T(float,               NATIVE_FLOAT_T,   H5T_NATIVE_FLOAT)
+_HIPPIO_H5_PRE_T(double,              NATIVE_DOUBLE_T,  H5T_NATIVE_DOUBLE)
+_HIPPIO_H5_PRE_T(long double,         NATIVE_LDOUBLE_T, H5T_NATIVE_LDOUBLE)
+_HIPPIO_H5_PRE_T(char,                NATIVE_CHAR_T,    H5T_NATIVE_CHAR)
+_HIPPIO_H5_PRE_T(signed char,         NATIVE_SCHAR_T,   H5T_NATIVE_SCHAR)
+_HIPPIO_H5_PRE_T(short,               NATIVE_SHORT_T,   H5T_NATIVE_SHORT)
+_HIPPIO_H5_PRE_T(int,                 NATIVE_INT_T,     H5T_NATIVE_INT)
+_HIPPIO_H5_PRE_T(long,                NATIVE_LONG_T,    H5T_NATIVE_LONG)
+_HIPPIO_H5_PRE_T(long long,           NATIVE_LLONG_T,   H5T_NATIVE_LLONG)
+_HIPPIO_H5_PRE_T(unsigned char,       NATIVE_UCHAR_T,   H5T_NATIVE_UCHAR)
+_HIPPIO_H5_PRE_T(unsigned short,      NATIVE_USHORT_T,  H5T_NATIVE_USHORT)
+_HIPPIO_H5_PRE_T(unsigned int,        NATIVE_UINT_T,    H5T_NATIVE_UINT)
+_HIPPIO_H5_PRE_T(unsigned long,       NATIVE_ULONG_T,   H5T_NATIVE_ULONG)
+_HIPPIO_H5_PRE_T(unsigned long long,  NATIVE_ULLONG_T,  H5T_NATIVE_ULLONG)
+
+_HIPPIO_H5_PRE_T(const float,               NATIVE_FLOAT_T,   H5T_NATIVE_FLOAT)
+_HIPPIO_H5_PRE_T(const double,              NATIVE_DOUBLE_T,  H5T_NATIVE_DOUBLE)
+_HIPPIO_H5_PRE_T(const long double,         NATIVE_LDOUBLE_T, H5T_NATIVE_LDOUBLE)
+_HIPPIO_H5_PRE_T(const char,                NATIVE_CHAR_T,    H5T_NATIVE_CHAR)
+_HIPPIO_H5_PRE_T(const signed char,         NATIVE_SCHAR_T,   H5T_NATIVE_SCHAR)
+_HIPPIO_H5_PRE_T(const short,               NATIVE_SHORT_T,   H5T_NATIVE_SHORT)
+_HIPPIO_H5_PRE_T(const int,                 NATIVE_INT_T,     H5T_NATIVE_INT)
+_HIPPIO_H5_PRE_T(const long,                NATIVE_LONG_T,    H5T_NATIVE_LONG)
+_HIPPIO_H5_PRE_T(const long long,           NATIVE_LLONG_T,   H5T_NATIVE_LLONG)
+_HIPPIO_H5_PRE_T(const unsigned char,       NATIVE_UCHAR_T,   H5T_NATIVE_UCHAR)
+_HIPPIO_H5_PRE_T(const unsigned short,      NATIVE_USHORT_T,  H5T_NATIVE_USHORT)
+_HIPPIO_H5_PRE_T(const unsigned int,        NATIVE_UINT_T,    H5T_NATIVE_UINT)
+_HIPPIO_H5_PRE_T(const unsigned long,       NATIVE_ULONG_T,   H5T_NATIVE_ULONG)
+_HIPPIO_H5_PRE_T(const unsigned long long,  NATIVE_ULLONG_T,  H5T_NATIVE_ULLONG)
+
+
+#undef _HIPPIO_H5_PRE_T
+
+/** Specialization for standard types. */
+#define _HIPPIO_H5_PRE_T(_native_t, _h5_t, _h5_name) \
+template<> \
+struct DatatypeTraits<_native_t, DatatypeArch::STD> \
+: DatatypeTraitsPredefined { \
+    typedef _native_t native_t; \
+    inline static const Datatype &datatype = _h5_t; \
+    inline static const char *native_name = #_native_t; \
+    inline static const char *h5_name = #_h5_name; \
+};
+
+_HIPPIO_H5_PRE_T(float,               IEEE_F32LE_T, H5T_IEEE_F32LE)
+_HIPPIO_H5_PRE_T(double,              IEEE_F64LE_T, H5T_IEEE_F64LE)
+_HIPPIO_H5_PRE_T(long double,         IEEE_F64LE_T, H5T_IEEE_F64LE)
+_HIPPIO_H5_PRE_T(char,                STD_I8LE_T,   H5T_STD_I8LE)
+_HIPPIO_H5_PRE_T(signed char,         STD_I8LE_T,   H5T_STD_I8LE)
+_HIPPIO_H5_PRE_T(short,               STD_I16LE_T,  H5T_STD_I16LE)
+_HIPPIO_H5_PRE_T(int,                 STD_I32LE_T,  H5T_STD_I32LE)
+_HIPPIO_H5_PRE_T(long,                STD_I64LE_T,  H5T_STD_I64LE)
+_HIPPIO_H5_PRE_T(long long,           STD_I64LE_T,  H5T_STD_I64LE)
+_HIPPIO_H5_PRE_T(unsigned char,       STD_U8LE_T,   H5T_STD_U8LE)
+_HIPPIO_H5_PRE_T(unsigned short,      STD_U16LE_T,  H5T_STD_U16LE)
+_HIPPIO_H5_PRE_T(unsigned int,        STD_U32LE_T,  H5T_STD_U32LE)
+_HIPPIO_H5_PRE_T(unsigned long,       STD_U64LE_T,  H5T_STD_U64LE)
+_HIPPIO_H5_PRE_T(unsigned long long,  STD_U64LE_T,  H5T_STD_U64LE)
+
+_HIPPIO_H5_PRE_T(const float,               IEEE_F32LE_T, H5T_IEEE_F32LE)
+_HIPPIO_H5_PRE_T(const double,              IEEE_F64LE_T, H5T_IEEE_F64LE)
+_HIPPIO_H5_PRE_T(const long double,         IEEE_F64LE_T, H5T_IEEE_F64LE)
+_HIPPIO_H5_PRE_T(const char,                STD_I8LE_T,   H5T_STD_I8LE)
+_HIPPIO_H5_PRE_T(const signed char,         STD_I8LE_T,   H5T_STD_I8LE)
+_HIPPIO_H5_PRE_T(const short,               STD_I16LE_T,  H5T_STD_I16LE)
+_HIPPIO_H5_PRE_T(const int,                 STD_I32LE_T,  H5T_STD_I32LE)
+_HIPPIO_H5_PRE_T(const long,                STD_I64LE_T,  H5T_STD_I64LE)
+_HIPPIO_H5_PRE_T(const long long,           STD_I64LE_T,  H5T_STD_I64LE)
+_HIPPIO_H5_PRE_T(const unsigned char,       STD_U8LE_T,   H5T_STD_U8LE)
+_HIPPIO_H5_PRE_T(const unsigned short,      STD_U16LE_T,  H5T_STD_U16LE)
+_HIPPIO_H5_PRE_T(const unsigned int,        STD_U32LE_T,  H5T_STD_U32LE)
+_HIPPIO_H5_PRE_T(const unsigned long,       STD_U64LE_T,  H5T_STD_U64LE)
+_HIPPIO_H5_PRE_T(const unsigned long long,  STD_U64LE_T,  H5T_STD_U64LE)
+
+#undef _HIPPIO_H5_PRE_T
+
+/** 
+char *, const char *, string and their top-level const countparts are very 
+special examples.
+They are treated as HDF5 STRING atomic datatype and used with resized version
+of the predefined datatype.
+
+The ``size()`` method includes space for the null-term.
+*/
+template<>
+struct DatatypeTraits<const char *, DatatypeArch::RESIZED_FIX> 
+: DatatypeTraitsPredefined
 {
-    auto dtype = create(COMPOUND_C, sizeof(record_t));
-    _compound_insert(dtype, field_name, field_ptr, std::forward<Args>(args)...);
-    return dtype;
-}
+    typedef const char *native_t;
+    inline static const Datatype &datatype = C_S1_T;
+    inline static const char *native_name = "const char *";
+    inline static const char *h5_name = "H5T_C_S1";
 
-template<typename record_t, typename field_t>
-H5Datatype & H5Datatype::insert(const string &name, field_t record_t::*field_ptr) {
-    using namespace _h5_obj_datatype_helper;
-    Field f { field_ptr };
-    insert(name, f.get_offset(), f.get_dtype());
-    return *this;
-}
+    DatatypeTraits(native_t s) noexcept : _tr(s) {}
 
-template<typename record_t, typename field_t>
-constexpr size_t H5Datatype::offset(field_t record_t::*field_ptr) noexcept {
-    return (size_t)(ptrdiff_t)(void *)&( ((record_t *)(NULL))->*field_ptr );
-}
+    size_t size() const noexcept { return _tr.size(); }
+    native_t buff() const noexcept { return _tr.buff(); }
+protected:
+    _DatatypeTraits<native_t, _DatatypeArch::RESIZED_FIX> _tr;
+};
 
-inline H5Datatype H5Datatype::_from_raw(id_t h5_id) noexcept {
-    return H5Datatype(std::make_shared<_obj_raw_t>(h5_id, _obj_raw_t::stFREE));
-}
-template<typename raw_array_t>
-H5Datatype H5Datatype::create_array(){
-    using namespace _h5_obj_datatype_helper;
-    struct wrap_t { raw_array_t m; };
-    Field f { &wrap_t::m };
-    return f.get_dtype();
-}
-template<typename T, typename M, typename ...Args>
-void H5Datatype::_compound_insert(H5Datatype &dtype, 
-    const string &name, M T::*field_ptr, Args &&...args)
+template<>
+struct DatatypeTraits<const char *const, DatatypeArch::RESIZED_FIX> 
+: DatatypeTraitsPredefined
 {
-    dtype.insert(name, field_ptr);
+    typedef const char * const native_t;
+    inline static const Datatype &datatype = C_S1_T;
+    inline static const char *native_name = "const char * const";
+    inline static const char *h5_name = "H5T_C_S1";
 
-    static_assert( (sizeof...(Args))%2==0 );
-    if constexpr( sizeof...(Args) > 0 ){
-        _compound_insert(dtype, std::forward<Args>(args)...);
+    DatatypeTraits(native_t s) noexcept : _tr(s) {}
+
+    size_t size() const noexcept { return _tr.size(); }
+    native_t buff() const noexcept { return _tr.buff(); }
+protected:
+    _DatatypeTraits<native_t, _DatatypeArch::RESIZED_FIX> _tr;
+};
+
+template<>
+struct DatatypeTraits<char *, DatatypeArch::RESIZED_FIX> 
+: DatatypeTraitsPredefined
+{
+    typedef char *native_t;
+    inline static const Datatype &datatype = C_S1_T;
+    inline static const char *native_name = "char *";
+    inline static const char *h5_name = "H5T_C_S1";
+
+    DatatypeTraits(native_t s) noexcept : _tr(s) {}
+
+    size_t size() const noexcept { return _tr.size(); }
+    native_t buff() const noexcept { return _tr.buff(); }
+protected:
+    _DatatypeTraits<native_t, _DatatypeArch::RESIZED_FIX> _tr;
+};
+
+template<>
+struct DatatypeTraits<char * const, DatatypeArch::RESIZED_FIX> 
+: DatatypeTraitsPredefined
+{
+    typedef char * const native_t;
+    inline static const Datatype &datatype = C_S1_T;
+    inline static const char *native_name = "char * const";
+    inline static const char *h5_name = "H5T_C_S1";
+
+    DatatypeTraits(native_t s) noexcept : _tr(s) {}
+
+    size_t size() const noexcept { return _tr.size(); }
+    native_t buff() const noexcept { return _tr.buff(); }
+protected:
+    _DatatypeTraits<native_t, _DatatypeArch::RESIZED_FIX> _tr;
+};
+
+template<>
+struct DatatypeTraits<string, DatatypeArch::RESIZED_FIX> 
+: DatatypeTraitsPredefined 
+{
+    typedef string native_t;
+    inline static const Datatype &datatype = C_S1_T;
+    inline static const char *native_name = "string";
+    inline static const char *h5_name = "H5T_C_S1";
+
+    DatatypeTraits(native_t &s) noexcept : _tr(s) {}
+
+    size_t size() const noexcept { return _tr.size(); }
+    char * buff() const noexcept { return _tr.buff(); }
+protected:
+    _DatatypeTraits<native_t, _DatatypeArch::RESIZED_FIX> _tr;
+};
+
+template<>
+struct DatatypeTraits<const string, DatatypeArch::RESIZED_FIX> 
+: DatatypeTraitsPredefined 
+{
+    typedef const string native_t;
+    inline static const Datatype &datatype = C_S1_T;
+    inline static const char *native_name = "const string";
+    inline static const char *h5_name = "H5T_C_S1";
+
+    DatatypeTraits(native_t &s) noexcept : _tr(s) {}
+
+    size_t size() const noexcept { return _tr.size(); }
+    const char * buff() const noexcept { return _tr.buff(); }
+protected:
+    _DatatypeTraits<native_t, _DatatypeArch::RESIZED_FIX> _tr;
+};
+
+
+/**
+RawArray specializations.
+*/
+template<typename NativeT>
+struct DatatypeTraits<NativeT, DatatypeArch::NATIVE, 
+    std::enable_if_t< 
+        RawArrayTraits<NativeT>::is_array && 
+        DatatypeTraits<
+            typename RawArrayTraits<NativeT>::value_t, 
+            DatatypeArch::NATIVE>::has_h5_datatype > 
+> : DatatypeTraitsCustomized 
+{
+    typedef NativeT native_t;
+
+    typedef RawArrayTraits<NativeT> raw_array_traits_t;
+    typedef typename raw_array_traits_t::value_t scalar_t;
+
+    inline static const Datatype datatype 
+        = Datatype::create_array_for<native_t, DatatypeArch::NATIVE>(); 
+    inline static const char *native_name = "RawArray Protocol";
+    inline static const char *h5_name = "RawArray Native Datatype";
+};
+
+template<typename NativeT>
+struct DatatypeTraits<NativeT, DatatypeArch::STD, 
+    std::enable_if_t< 
+        RawArrayTraits<NativeT>::is_array && 
+        DatatypeTraits<
+            typename RawArrayTraits<NativeT>::value_t, 
+            DatatypeArch::STD>::has_h5_datatype > 
+> : DatatypeTraitsCustomized 
+{
+    typedef NativeT native_t;
+
+    typedef RawArrayTraits<NativeT> raw_array_traits_t;
+    typedef typename raw_array_traits_t::value_t scalar_t;
+
+    inline static const Datatype datatype 
+        = Datatype::create_array_for<native_t, DatatypeArch::STD>(); 
+    inline static const char *native_name = "RawArray Protocol";
+    inline static const char *h5_name = "RawArray Standard Datatype";
+};
+
+/**
+Interface of the type mapping. Do not add specialization to this class template.
+Instead, define specialization to DatatypeTraits.
+*/
+template<typename NativeT, 
+    DatatypeArch TA = DatatypeArch::NATIVE, 
+    typename V=void>
+struct TypeCvt {
+    inline static constexpr bool has_h5_datatype = false;
+};
+
+template<typename NativeT, DatatypeArch TA>
+struct TypeCvt<NativeT, TA, 
+    std::enable_if_t<DatatypeTraits<NativeT, TA>::has_h5_datatype> 
+> {
+    inline static constexpr bool has_h5_datatype = true;
+    typedef DatatypeTraits<NativeT, TA> traits_t;
+    typedef NativeT native_t;
+
+    static string h5_name() { 
+        return traits_t::h5_name;
     }
-}
+    static string native_name() { 
+        return traits_t::native_name;
+    }
+    static const Datatype & datatype() noexcept {
+        return traits_t::datatype;
+    }
+};
 
-} // namespace IO
-} // namespace HIPP
+
+/**
+Auxiliary class for mapping a field of a structured type to HDF5 datatype.
+@R, M: the record/structured type and its member type.
+    M must have DatatypeTraits defined.
+*/
+template<typename R, typename M>
+struct TypeCvtField {
+    typedef M R::*mem_ptr_t;
+    typedef TypeCvt<M> type_cvt_t;
+
+    typedef R record_t;
+    typedef M field_t;
+
+    typedef RawArrayTraits<field_t> raw_array_traits_t;
+
+    explicit constexpr TypeCvtField(mem_ptr_t mem_ptr) noexcept;
+
+    ptrdiff_t offset() const noexcept;
+
+    constexpr static size_t size() noexcept;
+    static const Datatype & datatype() noexcept;
+
+    constexpr static bool is_raw_array() noexcept;
+    /**
+    If the field is RawArray,
+    value_datatype() returns its value_t's datatype, extents() returns its 
+    extents. Otherwise return the datatype of itself and {1}.
+    The return of extents() is std::array<size_t, N>.
+    */
+    static const Datatype & value_datatype() noexcept;
+    constexpr static auto extents() noexcept;
+protected:
+    mem_ptr_t _mem_ptr;
+};
+
+template<typename T, typename V=void>
+struct TypeCvtBuff {
+    inline static constexpr bool is_vector = false;
+};
+template<typename T, typename A>
+struct TypeCvtBuff< vector<T, A> > {
+    inline static constexpr bool is_vector = true;
+    typedef T value_t;
+    typedef A alloc_t;
+};
+template<typename T, typename A>
+struct TypeCvtBuff< const vector<T, A> > {
+    inline static constexpr bool is_vector = true;
+    typedef T value_t;
+    typedef A alloc_t;
+};
+
+} // namespace HIPP::IO::H5
+
 #endif	//_HIPPIO_H5_OBJ_DATATYPE_H_

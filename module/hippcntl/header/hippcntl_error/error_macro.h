@@ -46,7 +46,7 @@ main.cpp, main begins execution
     ", [func] ", __func__, ' '
 #define emFLF \
     "[file] ", __FILE__, \
-    ", [ line ] ", __LINE__, \
+    ", [line] ", __LINE__, \
     ", [func] ", __func__, ' '
 
 #define emPF "[func] ", __PRETTY_FUNCTION__, ' '
@@ -55,11 +55,11 @@ main.cpp, main begins execution
     ", [func] ", __PRETTY_FUNCTION__, ' '
 #define emFLPF \
     "[file] ", __FILE__, \
-    ", [ line ] ", __LINE__, \
+    ", [line] ", __LINE__, \
     ", [func] ", __PRETTY_FUNCTION__, ' '
 #define emFLPFB \
     "[file] ", __FILE__, \
-    "\n[ line ] ", __LINE__, \
+    "\n[line] ", __LINE__, \
     "\n[func] ", __PRETTY_FUNCTION__, '\n'
 
 #define emsF __func__

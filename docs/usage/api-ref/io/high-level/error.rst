@@ -1,14 +1,18 @@
 Error Handling
 ================================
 
-The following classes are all defined within namespace ``HIPP::IO``.
+.. include:: /global.rst
 
-.. namespace:: HIPP::IO 
+The following classes are all defined within namespace ``HIPP::IO::H5``.
 
-Class ErrH5: the Exception Handler 
+.. namespace:: HIPP::IO::H5
+
+ErrH5
 -------------------------------------
 
 .. class::  ErrH5: public HIPP::ErrAppH5, public HIPP::ErrClassDefault
+
+    The exception thrown on the error of any HDF5 call.
 
     .. type::   herr_t errno_t
                 int flag_t
@@ -44,14 +48,12 @@ Class ErrH5: the Exception Handler
         
         ``set_errno`` set the error number.
 
-    
-    
     .. function::   template<typename ReturnType, typename ...Args>\
                         static void check( ReturnType r, Args &&... args )
                     template<typename ReturnType, typename ...Args>\
                         static void throw_( ReturnType r, Args &&... args )
 
-        Convinient function for detect, report errors and throw exceptions.
+        Convenient function for detect, report errors and throw exceptions.
 
         ``check(r, ...args)`` tests if ``r < 0``. If so, call ``throw_(r, args)``. 
         Otherwise nothing happens.
@@ -69,3 +71,5 @@ Class ErrH5: the Exception Handler
         
         ``err_cntl_flag()`` retrive the current flag, ``err_cntl_flag(flag)`` 
         set the flag.
+
+        The flag is thread-specific.

@@ -1,197 +1,341 @@
 Datatype, Dataspace and Dataset
 ==================================
 
-The following classes are all defined within namespace ``HIPP::IO``.
+.. include:: /global.rst
 
-.. namespace:: HIPP::IO
+The following classes are all defined within namespace ``HIPP::IO::H5``.
 
+.. namespace:: HIPP::IO::H5
 
-Class H5Datatype
+Datatype
 -----------------
 
-.. class:: H5Datatype
+.. class:: Datatype : public NamedObj
     
-    In HDF5 format, every dataset has a datatype which describes the type (i.e., interpretation of each byte) 
-    of the element in the dataset. 
+    Datatype describe the bit-level memory layout, representation and conversion
+    of data element in HDF5 dataset and attribute.
+
+    Class ``Datatype`` encapsulates the methods available on datatypes. 
+
+    The library predefines a set of native and standard datatypes, based on which, 
+    or from scratch, customized datatype can be derived. 
+
+    **Memory management:** 
+    The datatype class is copyable and movable (both in construction and 
+    assignment). The copy, move and destruction are ``noexcept``. The copy operation 
+    is shallow - the resulting object always refers to the same HDF5 resource
+    as the source object. The move operation sets the move-from objects an empty
+    state.
+
+    .. type:: NamedObj parent_t
+        _Datatype _obj_raw_t
+        std::shared_ptr<_obj_raw_t> _obj_ptr_t
+
+    .. _api-io-h5-dtype-class-enum:
+
+    .. type:: class_t
+
+    .. member:: static constexpr class_t cCOMPOUND
+                static constexpr class_t cOPAQUE
+                static constexpr class_t cENUM
+                static constexpr class_t cSTRING
+                static constexpr class_t cARRAY
+                static constexpr class_t cINTEGER
+                static constexpr class_t cFLOAT
+                static constexpr class_t cBITFIELD
+                static constexpr class_t cREFERENCE
+                static constexpr class_t cVLEN
+
+        Datatype classes. The first four can be passed into method :func:`create` 
+        to create new datatypes. All of them may be returned by :func:`get_class` 
+        or :func:`member_class`.
+
+    **Constructors:** class ``Datatype`` "inherits" all constructors from its 
+    parent class.
+
+    .. function:: Datatype copy() const
+
+        Produce a deep copy of the datatype.
+
+    .. function:: void commit(Group &group, const string &name, const Proplist &lcprop, \
+            Proplist &tcprop, Proplist &taprop)
+
+        Commite the datatype to file. The committed datatype (named datatype) 
+        may be shared by many objects.
+
+    .. function:: void lock()
+
+        Lock the datatype so that it cannot be changed. All the predefined datatypes
+        are already locked.
     
-    HDF5 pre-defines several sets of datatypes (standard or platform-dependent). The predefined datatypes 
-    are listed below in :ref:`Predefined Datatypes <api-io-dtype-predefined>`.
+    .. function:: bool committed() const
+        bool equal(const Datatype &dtype) const
+        size_t size() const
+        class_t get_class() const
 
-    User may define new datatypes, derived from predefined datatypes or other 
-    user-defined datatypes.
+        Retrieve the meta-info from the datatype instance, whether or not it is 
+        committed, whether it is equal to another datatype instance, its size, 
+        and its datatype class.
 
-    ``H5Datatype`` instance can be copy-constructed, copy-assigned, move-constructed and move-assigned.
-    The copy, move operations and destructor are all noexcept. The copy operations are shallow-copy, i.e., 
-    instances of source and target refer to the same underlying datatype object (like a ``shared_ptr``).
+    .. function:: void resize(size_t size)
+        Datatype resized(size_t size) const
+    
+        ``resize()``: sets the size of the current datatype instance.
 
-    .. _api-io-dtype-class-enum:
+        ``resized()``: produces a resized copy (i.e., similar to ``copy()`` and then
+        ``resize()``).
 
-    .. enum:: class_t 
+    **Example:** get datatype for string object::
 
-        .. enumerator:: COMPOUND_C
-                        OPAQUE_C
-                        ENUM_C
-                        STRING_C
+        string s = "hello, world";              // String to save into file.
 
-        Enumerators of datatype classes. They can be passed into method :func:`create` 
-        (to create new user-defined datatypes) or returned by :func:`member_class` (to detect classes 
-        of existing datatypes).
+    To write it to a HDF5 file, first define a STRING datatype for it by::
 
-    .. function::   bool equal( const H5Datatype &dtype ) const
-                    size_t size() const
+        auto str_dtype = H5::C_S1_T.copy();
+        str_dtype.resize( s.size() + 1 );       // Reserve the space for `\0`
+
+    Or, equivalently, use resized copy directly::
         
-        Datatype information query functions.
+        str_dtype = H5::C_S1_T.resized( s.size() + 1 );
 
-        ``equal(dtype)`` tests whether the current instance is the same datatype 
-        as dtype.
+    Then, just create a datatype with this datatype, and write the string::
 
-        ``size()`` returns the size in bytes of the current instance.
+        H5::File file("str_dtype.h5");
+        file.create_dataset("s", str_dtype, H5::Dataspace::vSCALAR).write_str(s);
 
-    .. H5Datatype copy() const
+    The above ``create_dataset()`` is equivalent to either of the following two 
+    calls::
 
-        Copy the current datatype.
+        file.create_dataset_str("s", s.size()+1).write_str(s);
+        file.create_dataset_for_str("s", s).write_str(s);
 
-    .. void resize( size_t size )
+    The content of the file shown by ``h5dump`` is :
 
-        Reset the size of the current instance. 
+    .. code-block:: text 
+
+        HDF5 "str_dtype.h5" {
+        GROUP "/" {
+        DATASET "s" {
+            DATATYPE  H5T_STRING {
+                STRSIZE 13;
+                STRPAD H5T_STR_NULLTERM;
+                CSET H5T_CSET_ASCII;
+                CTYPE H5T_C_S1;
+            }
+            DATASPACE  SCALAR
+            DATA {
+            (0): "hello, world"
+            }
+        }
+        }
+        }
+
+    .. function:: void set_precision(size_t precision)
+
+        For ATOMIC datatypes, set the numerical precision to ``precision``.
+
+    .. function:: static Datatype create(class_t c, size_t size)
+
+        General new datatype creators. 
+
+        ``c``: datatype class. Can be ``cCOMPOUND`` | ``cOPAQUE`` | ``cENUM`` | 
+        ``cSTRING``.
+
+        ``size``: the size in bytes.
+
+        More specific creators like ``create_compound()`` and ``create_array()`` 
+        are easier in most cases.
+
+    .. function:: static Datatype create_compound(size_t size)
+        template<typename Record, typename Member, typename ...Args>\
+        static Datatype create_compound(const string &mem_name, \
+            Member Record::*mem_ptr, Args &&...args)
+
+        Methods for the creation of COMPOUND datatypes. 
+
+        ``create_compound(name1, ptr1, name2, ptr2, ...)``: 
+        directly creates a new compound datatype (usually corresponding to a C++ 
+        struct/class). Arguments are passed pair-wisely to define the name and
+        and datatype detail of each member in the COMPOUND datatype. The detail
+        is described by the member pointer from which the datatype and offset 
+        are inferred by the library.
         
-        For example, a fixed-length C-string type can be constructed by copy :var:`C_S1_T`
-        and resize it to desired length. 
+        The C++ type of the member can be any valid type to :expr:`Datatype::from_type` 
+        (e.g., ``int``, ``float[3][4][5]``). 
 
-    .. function::   static H5Datatype create(class_t c, size_t size)
-                    template<typename record_t, typename field_t, typename ...Args>\
-                    static H5Datatype create_compound(\
-                        const string &field_name, field_t record_t::*field_ptr,\
-                        Args &&...args)
-                    H5Datatype & insert(const string &name, size_t offset, const H5Datatype &dtype)
-                    template<typename record_t, typename field_t>\
-                    H5Datatype & insert(const string &name, field_t record_t::*field_ptr)
-                    H5Datatype & pack()
-                    unsigned nmembers() const
-                    unsigned member_index(const string &name) const
-                    class_t member_class(unsigned idx) const
-                    size_t member_offset(unsigned idx) const
-                    H5Datatype member_type(unsigned idx) const
-                    string member_name(unsigned idx) const
-                    template<typename record_t, typename field_t>\
-                    static constexpr size_t offset(field_t record_t::*field_ptr) noexcept
-
-        Compound datatype creation and information-query methods.
-
-        ``create()`` creates a new datatype with datatype-class ``c`` and size in bytes ``size``.
-        Valid datatype-classes are defined in :ref:`Dtatype Classes <api-io-dtype-class-enum>`.
+        ``create_compound(size)``: create an empty COMPOUND datatype sized ``size`` 
+        bytes. 
         
-        ``create_compound(name1, ptr1, ...)`` directly creates a new compound datatype (usually corresponding to 
-        a C++ struct/class). For each member of the datatype, you pass two arguments to describe it:
-        the name and a member-pointer to it. The member can be one of the numeric 
-        :ref:`Predefined Datatypes <api-io-dtype-predefined>` 
-        or its raw array (e.g., ``int``, ``float[3][4][5]``). The library will infer its (native) datatype, offset and 
-        size from the member-pointer.
+        Members can be inserted later by :func:`insert`.
 
-        ``insert()`` inserts a member into the compound datatype. There are two overloads:
-        
-        -   ``insert(name, offset, dtype)`` inserts a member whose name is ``name``, offset is ``offset``
-            and datatype is ``dtype`` (which may be a predefined or user-defined datatype).
-        -   ``insert(name, field_ptr)`` inserts a member whose name is ``name`` and whose datatype, 
-            offset and size (if it is a raw array) are infered from member-pointer ``field_ptr``.
-            This is valid for any of the numeric :ref:`Predefined Datatypes <api-io-dtype-predefined>`
-            or its raw array.
+        **Example:** create a compound datatype. Assume the following structured 
+        C++ type is defined in a application::
 
-        -   ``pack()`` recursively removes the paddings in members to make the datatype more memory efficient.
-
-        ``nmembers()`` returns the number of members in the current compound datatype instance.
-
-        ``member_index(name)`` returns the index to the member named ``name`` for a compound/enum datatype. 
-        ``member_name(idx)`` converts the index back to the name. Index can be any number in the range ``[0, N-1]`` where 
-        ``N`` is returned by ``nmembers()``.
-
-        ``member_class(idx)``, ``member_offset(idx)``, ``member_type(idx)``.
-
-
-        To create a compound datatype of, e.g. a structured C++ type ``T``, call 
-        ``H5Datatype::create(H5Datatype::COMPOUND_C, sizeof(T))`` to get a new datatype instance, 
-        and call ``insert()`` to add information of each field of ``T``. 
-        
-        For example, a dark matter halo in cosmological simulation can be described by 
-        the following C++ type::
-
-            // for storing the properties of a dark matter halo
-            class DarkMatterHalo {
-            public:
-                long long id;
-                double position[3];
-                float tidal_tensor[3][3];
-                double radius;
+            struct S {
+                int a;
+                double b[3];
+                float c[2][3];
+                array<array<long, 3>, 4> d;
             };
 
-        To create a corresponding HDF5 datatype for I/O, you write::
+        To save data of such type into a HDF5 file, define a compound datatype 
+        for it by::
 
-            /* Create compound datatype for DarkMatterHalo. */
-            auto dtype = H5Datatype::create(
-                H5Datatype::COMPOUND_C, sizeof(DarkMatterHalo));
-            dtype.insert("ID",           H5Datatype::offset(&DarkMatterHalo::id), NATIVE_LLONG_T)
-                 .insert("Position",     &DarkMatterHalo::position)
-                 .insert("Tidal Tensor", &DarkMatterHalo::tidal_tensor)
-                 .insert("Radius",       &DarkMatterHalo::radius);
+            auto dtype = H5::Datatype::create( H5::Datatype::cCOMPOUND, sizeof(S) );
         
-        Note that you can insert each field by ``(name, offset, datatype)`` (like "ID" above)
-        or simply by ``(name, field_ptr)`` where ``field_ptr`` is the pointer to 
-        that member (like "Position", "Tidal Tensor", "Radius" above). 
+            // Or, equivalently
+            dtype = H5::Datatype::create_compound(sizeof(S));
 
-        If your C++ structure contains only numeric types (such as ``DarkMatterHalo`` here),
-        it is easier to create the compound datatype directly using a single function call::
+        Then, insert each member by either offset + datatype, or a member pointer::
 
-            /* Another way to create a compound datatype. */
-            auto dtype = H5Datatype::create_compound(
-                "ID",           &DarkMatterHalo::id,
-                "Position",     &DarkMatterHalo::position,
-                "Tidal Tensor", &DarkMatterHalo::tidal_tensor,
-                "Radius",       &DarkMatterHalo::radius);
+            // Insert the members.
+            dtype.insert("a", &S::a);
+            dtype.insert("b", &S::b);
 
-        Now you perform I/O using the new datatype::
+            // Or, insert by offset and datatype.
+            dtype.insert("c", H5::Datatype::offset(&S::c), 
+                H5::Datatype::from_type<float[2][3]>());
+            dtype.insert("d", H5::Datatype::offset(&S::d), 
+                H5::Datatype::from_type<array<array<long, 3>, 4> >());
+        
+        The above steps can be confused into one call::
 
-            /* Write halo instances into a new file */
-            vector<DarkMatterHalo> halos(10), halos_in(10);
-            H5File file("halos.h5", "w");
-            file.create_dataset("Halos", dtype, {10}).write(halos.data(), dtype);
+            dtype = H5::Datatype::create_compound("a", &S::a, 
+                "b", &S::b, 
+                "c", &S::c, 
+                "d", &S::d);
 
-            /* Load it back */
-            file.open_dataset("Halos").read(halos_in.data(), dtype);
-    
-        Using ``h5dump halos.h5`` you see the output
+        Finally, perform I/O with this new datatype::
+            
+            S data[10];
+            H5::File file("compound_creation.h5");
+            file.create_dataset("s-data", dtype, {10}).write(data, dtype);
 
-        .. code-block:: text
+        The content in the file shown by ``h5dump`` is 
 
-            HDF5 "halos.h5" {
+        .. code-block:: text 
+
+            HDF5 "compound_creation.h5" {
             GROUP "/" {
-            DATASET "Halos" {
+            DATASET "s-data" {
                 DATATYPE  H5T_COMPOUND {
-                    H5T_STD_I64LE "ID";
-                    H5T_ARRAY { [3] H5T_IEEE_F64LE } "Position";
-                    H5T_ARRAY { [3][3] H5T_IEEE_F32LE } "Tidal Tensor";
-                    H5T_IEEE_F64LE "Radius";
+                    H5T_STD_I32LE "a";
+                    H5T_ARRAY { [3] H5T_IEEE_F64LE } "b";
+                    H5T_ARRAY { [2][3] H5T_IEEE_F32LE } "c";
+                    H5T_ARRAY { [4][3] H5T_STD_I64LE } "d";
                 }
                 DATASPACE  SIMPLE { ( 10 ) / ( 10 ) }
                 DATA {
-                    (0): { 0,[ 0, 0, 0 ], [ 0, 0, 0, 0, 0, 0, 0, 0, 0 ], 0}, 
-                    ....
+                (0): {
+                        1411410160,
+                        [ 9.88131e-324, 6.95258e-310, 6.93459e-310 ],
+                        ...
+                    }
                 }
-            }}}
+            }
+            }
+            }
 
-    .. function::   H5Datatype create_array(const vector<hsize_t> &dims) const
-                    template<typename raw_array_t> \
-                    static H5Datatype create_array()
-                    unsigned array_ndims() const
-                    vector<hsize_t> array_dims() const
+    .. function:: Datatype & insert(const string &mem_name, size_t mem_offset, \
+        const Datatype &mem_dtype)
+        template<typename Record, typename Member> \
+        Datatype & insert(const string &mem_name, Member Record::*mem_ptr)
 
-        Array datatype creation and information-query functions.
+        Inserts a new field into the current compound datatype.
+    
+        (1): ``insert(name, offset, dtype)`` inserts a member whose name is ``name``, 
+        offset is ``offset`` and datatype is ``dtype``.
+
+        (2): ``insert(name, field_ptr)`` inserts a member whose name is name and whose 
+        datatype, offset are inferred from member-pointer ``field_ptr``. 
+        The member can be any type that is mappable to a HDF5 datatype using 
+        :expr:`Datatype::from_type`, (e.g., int, float[3][4][5]). 
+    
+
+    .. function:: template<typename Record, typename Member> \
+        static constexpr ptrdiff_t offset(Member Record::*mem_ptr) noexcept
+
+        Manually find the offset of a member typed ``Member`` in a structured 
+        type ``Record``. 
+
+    .. function:: Datatype & pack()
+
+        Recursively removes the paddings in members to make the datatype 
+        more memory efficient.
+
+    .. function:: unsigned nmembers() const
+        unsigned member_index(const string &name) const
+        string member_name(unsigned idx) const
+        class_t member_class(unsigned idx) const
+        size_t member_offset(unsigned idx) const
+        Datatype member_type(unsigned idx) const
+
+        ``members()`` returns the number of members in the current compound 
+        datatype instance.
+
+        ``member_index(name)`` returns the index to the member named name for a 
+        compound/enum datatype. 
+        
+        ``member_name(idx)`` converts the index back to the name. Index can be any 
+        number in the range [0, N-1] where N is returned by ``nmembers()``.
+
+        The datatype class, offset, and type can be retrieved by ``member_class()``,
+        ``member_offset()`` and ``member_type()``.
+
+
+    .. function:: Datatype create_array(const Dimensions &dims) const
+        template<typename RawArray, DatatypeArch TA = DatatypeArch::NATIVE> \
+        static Datatype create_array_for()
+
+        ARRAY datatype creator and visitor.
+
+        ``create_array()`` creates an array datatype with given dimensions ``dims``.
+
+        ``create_array_for<Array>()`` creates an ARRAY datatype for any RawArray 
+        protocol type, e.g., ``int a[2][3]``, ``std::array<std::array<float, 3>, 2>``.
+    
+    .. function:: unsigned array_ndims() const
+        Dimensions array_dims() const
+
+        Retrieve the array information.
+
+    .. function:: template<typename NativeT, DatatypeArch TA = DatatypeArch::NATIVE> \
+        static const Datatype & from_type();
+
+        Map from a C++ type to its corresponding HDF5 datatype.
+        
+        ``NativeT``: a DatatypeTraits comformable type, i.e., 
+        ``DatatypeTraits<NativeT>::has_h5_datatype == true``.
+        
+        ``TA``: the architecture specifier.
+
+        User may extend the traits by adding specializations.
+
+    .. function:: template<typename T> \
+        static Datatype from_buff(const T &buff)
+
+        Infer the datatype from an C++ object. For example:
+        
+        - ``buff = double``, the returned datatype is a scalar double type.
+        - ``buff = vector<int>``, the returned datatype is a scalar integer type.
+
+    .. function:: _obj_raw_t & obj_raw() noexcept
+        const _obj_raw_t & obj_raw() const noexcept
+
+        Return a reference to the intermediate-level HDF5 object.
+
+    .. function::   bool equal( const H5Datatype &dtype ) const
+
 
 .. _api-io-dtype-predefined:
 
-Predefined datatypes 
+Predefined Datatypes 
 """"""""""""""""""""""""
 
-.. var::    extern const H5Datatype NATIVE_CHAR_T
+.. var::    extern const H5Datatype NATIVE_FLOAT_T
+            extern const H5Datatype NATIVE_DOUBLE_T
+            extern const H5Datatype NATIVE_LDOUBLE_T
+            extern const H5Datatype NATIVE_CHAR_T
             extern const H5Datatype NATIVE_SCHAR_T
             extern const H5Datatype NATIVE_SHORT_T
             extern const H5Datatype NATIVE_INT_T
@@ -202,16 +346,15 @@ Predefined datatypes
             extern const H5Datatype NATIVE_UINT_T
             extern const H5Datatype NATIVE_ULONG_T
             extern const H5Datatype NATIVE_ULLONG_T
-            extern const H5Datatype NATIVE_FLOAT_T
-            extern const H5Datatype NATIVE_DOUBLE_T
     
     The predefined datatypes that correspond to the native numeric types
-    in this platform: ``char``, ``signed char``, 
+    in this platform: ``float``, ``double``, ``long double``, ``char``, ``signed char``, 
     ``short``, ``int``, ``long``, ``long long``, ``unsigned char``, 
-    ``unsigned short``, ``unsigned int``, ``unsigned long``, ``unsigned long long``
-    ``float`` and ``double``.
+    ``unsigned short``, ``unsigned int``, ``unsigned long``, and ``unsigned long long``.
 
-.. var::    extern const H5Datatype STD_I8LE_T
+.. var::    extern const H5Datatype IEEE_F32LE_T
+            extern const H5Datatype IEEE_F64LE_T
+            extern const H5Datatype STD_I8LE_T
             extern const H5Datatype STD_I16LE_T
             extern const H5Datatype STD_I32LE_T
             extern const H5Datatype STD_I64LE_T
@@ -219,8 +362,8 @@ Predefined datatypes
             extern const H5Datatype STD_U16LE_T
             extern const H5Datatype STD_U32LE_T
             extern const H5Datatype STD_U64LE_T
-            extern const H5Datatype IEEE_F32LE_T
-            extern const H5Datatype IEEE_F64LE_T
+            extern const H5Datatype IEEE_F32BE_T
+            extern const H5Datatype IEEE_F64BE_T
             extern const H5Datatype STD_I8BE_T
             extern const H5Datatype STD_I16BE_T
             extern const H5Datatype STD_I32BE_T
@@ -228,9 +371,7 @@ Predefined datatypes
             extern const H5Datatype STD_U8BE_T
             extern const H5Datatype STD_U16BE_T
             extern const H5Datatype STD_U32BE_T
-            extern const H5Datatype STD_U64BE_T
-            extern const H5Datatype IEEE_F32BE_T
-            extern const H5Datatype IEEE_F64BE_T
+            extern const H5Datatype STD_U64BE_T   
 
     The predefined datatypes that correspond to the standard numeric types (i.e., 
     machine-independent). They are usually used as the "file-type" in the 
@@ -247,211 +388,656 @@ Predefined datatypes
     C string can be obtained by copying this instance and calling 
     :func:`resize <H5Datatype::resize>` to change it to desired length.
 
-Class H5Dataspace
+Datatype Traits and Converter
+""""""""""""""""""""""""""""""""""
+
+.. type:: _DatatypeArch DatatypeArch
+
+
+``TypeCvt``: interface of the type mapping. Do not add specialization to this 
+class template. Instead, define specialization to DatatypeTraits.
+
+.. class:: template<typename NativeT, DatatypeArch TA = DatatypeArch::NATIVE, typename V=void> \
+        TypeCvt 
+
+    .. member:: static constexpr bool has_h5_datatype = false
+
+.. class:: template<typename NativeT, DatatypeArch TA> \
+    TypeCvt<NativeT, TA, std::enable_if_t<DatatypeTraits<NativeT, TA>::has_h5_datatype> >
+    
+    .. member:: static constexpr bool has_h5_datatype = true
+    
+    .. type::   DatatypeTraits<NativeT, TA> traits_t
+                NativeT native_t
+
+    .. function:: \
+        static string h5_name()
+        static string native_name()
+        static const Datatype & datatype() noexcept
+
+
+Dataspace
 --------------------
 
-.. class::   H5Dataspace
+.. class:: Dataspace: public Obj
 
-    In HDF5 format, every dataset has a dataspace which describe its shape. In the I/O process, 
-    a dataspace instance also defines which part of the data in the memory or in the file is
-    involved.
-
-    ``H5Dataspace`` instance can be copy-constructed, copy-assigned, move-constructed and move-assigned.
-    The copy, move operations and destructor are all noexcept. The copy operations are shallow-copy, i.e., 
-    instances of source and target refer to the same underlying dataspace object (like a ``shared_ptr``).
-
-    .. _api-io-dspace-class-enum:
-
-    .. enum:: class_t 
-
-    .. enumerator:: class_t::NULL_C
-                    class_t::SIMPLE_C
-                    class_t::SCALAR_C
-
-        Enumerators of dataspace classes. They can be passed into :func:`create` method
-        to create new dataspaces.
-
-    .. var::    static const H5Dataspace allval
-                static const H5Dataspace nullval
-                static const H5Dataspace scalarval
-
-        Predefined dataspaces. 
-        
-        -   ``allval`` represents all data in a dataset or a memory buffer,
-            whose exact meaning depends on the context. 
-        -  ``nullval`` represents an empty dataspace.
-        -   ``scalarval`` represents the dataspace for a single element, although the its datatype 
-            may be complex.
-
-    .. function::   H5Dataspace( const vector<hsize_t> &dims )
-                    H5Dataspace( const vector<hsize_t> &dims, const vector<hsize_t> &maxdims )
-
-        Constructors - create simple dataspaces (i.e., regular array, dataspace class = ``SIMPLE_C``). 
-        ``dims`` specifies its shape (i.e., number of element at each dimension). If a ``maxdims``
-        is also provided, the maximal number of element at each dimension may be larger than used, 
-        which means you may extend its shape later.
+    Dataspace describe the layout of elements in a dataset or attribute.
  
-    .. function::   static H5Dataspace create(class_t type)
-                    static H5Dataspace create_null()
-                    static H5Dataspace create_scalar()
-                    static H5Dataspace create_simple()
+    Class ``Dataspace`` encapsulates the methods available on dataspaces. 
 
-        Create a new dataspace instance. ``type`` may be one of the :ref:`Dataspace Classes <api-io-dspace-class-enum>`.
-        For convenience, we also provide three functions to create null, scalar and simple dataspace, respectively.
+    **Memory management:** 
+    The dataspace class is copyable and movable (both in construction and 
+    assignment). The copy, move and destruction are ``noexcept``. The copy operation 
+    is shallow - the resulting object always refers to the same HDF5 resource
+    as the source object. 
+    The move operation sets the move-from object an empty state.
 
-    .. function::   int ndims( )const
-                    vector<hsize_t> dims( )const
-                    vector<hsize_t> maxdims( )const
-                    hsize_t size() const
+    .. type:: Obj parent_t
+        _Dataspace _obj_raw_t
+        std::shared_ptr<_obj_raw_t> _obj_ptr_t
 
-        Query the information of current dataspace instance.
-
-        ``ndims()`` returns the number of dimensions (i.e., rank). ``dims()`` returns the number 
-        of elements in each dimension. 
-        ``maxdims()`` returns the maximal number of elements in 
-        each dimension. 
-        ``size()`` returns the total number of elements (i.e., the product of all 
-        values returned by ``dims()``).
+    .. type:: _obj_raw_t::class_t class_t
     
-    .. function::   void select_hyperslab( const vector<hsize_t> &start, const vector<hsize_t> &count )
-                    void select_hyperslab( const string &op, const hsize_t *start, const hsize_t *count, \
-                            const hsize_t *stride = NULL, const hsize_t *block = NULL );
-                            hssize_t get_select_npoint()const
+    .. member:: \ 
+            static constexpr class_t cNULL   =  _obj_raw_t::cNULL
+            static constexpr class_t cSIMPLE =  _obj_raw_t::cSIMPLE
+            static constexpr class_t cSCALAR =  _obj_raw_t::cSCALAR
 
-        Select a hyperslab in the current dataspace. 
-        ``op`` can be either "set", "or" ("|"), "and" ("&"), "xor" ("^"), "notb", "nota". 
+        Dataspace type.
         
-        In the first overload, op = "set", ``stride = 1`` in all dimension, ``block=1`` in all dimension.
+        
+    .. type:: _obj_raw_t::seloper_t seloper_t
+    
+    .. member:: \
+            static constexpr seloper_t selSET     =   _obj_raw_t::selSET
+            static constexpr seloper_t selOR      =   _obj_raw_t::selOR
+            static constexpr seloper_t selAND     =   _obj_raw_t::selAND
+            static constexpr seloper_t selXOR     =   _obj_raw_t::selXOR
+            static constexpr seloper_t selNOTB    =   _obj_raw_t::selNOTB
+            static constexpr seloper_t selNOTA    =   _obj_raw_t::selNOTA
+            static constexpr seloper_t selAPPEND  =   _obj_raw_t::selAPPEND
+            static constexpr seloper_t selPREPEND =   _obj_raw_t::selPREPEND
 
-        In the second overload, setting ``stride`` or ``block`` to ``NULL`` means "1" in all dimensions.
+            Dataspace selection operator.
+
+    .. type:: _obj_raw_t::seltype_t seltype_t
+    
+    .. member:: \
+        static constexpr seltype_t selNONE_T       = _obj_raw_t::selNONE_T
+        static constexpr seltype_t selALL_T        = _obj_raw_t::selALL_T
+        static constexpr seltype_t selPOINTS_T     = _obj_raw_t::selPOINTS_T
+        static constexpr seltype_t selHYPERSLABS_T = _obj_raw_t::selHYPERSLABS_T
+
+        Dataspace selection type.
+
+    .. member:: \
+        static const Dataspace vALL
+        static const Dataspace vNULL
+        static const Dataspace vSCALAR
+
+        Predefined dataspace values.
+
+        ``allval`` represents "all" data in a dataset or a memory buffer whose exact meaning depends on the context. 
+        
+        ``nullval`` represents an empty dataspace.
+        
+        ``scalarval`` represents the dataspace for a single element, although its datatype 
+        may be composite such as ARRAY or COMPOUND.
+
+        
+    **Constructors:** Class ``Dataspace`` "inherits" all constructors from its parent class.
 
 
-Class H5Dataset 
+    .. function:: \
+        Dataspace(std::initializer_list<hsize_t> dims)
+        Dataspace(vector<hsize_t> & dims)
+        Dataspace(const Dimensions &dims)
+        Dataspace(const Dimensions &dims, const Dimensions &maxdims)
+
+        Create a new, SIMPLE class dataspace (i.e., regular array, classed 
+        ``cSIMPLE``).
+
+        ``dims``: current dimensions of the array, i.e., number of elements along 
+        axes.
+        
+        ``maxdims```: maximum limit of dimensions. If provided larger than ``dims``,
+        the size of the dataset created with such dataspace 
+        may be extended later.
+        
+        The maximal available rank is limited by the HDF5 implementation.
+
+        (1-3): ``maxdims = dims``.
+        
+        (4): set ``dims`` and ``max_dims`` separately.
+
+    .. function:: \
+        ostream & info(ostream &os=cout, int fmt_cntl=0) const
+        friend ostream & operator<< (ostream &os, const Dataspace &dspace)
+
+        Print information of the instance to stream ``os``.
+        
+        ``fmt_cntl``: format controller. ``0`` for a inline, short message and ``1``
+        for a verbose one.
+
+        ``operator <<`` is equivalent to ``info()`` with default format controller.
+
+    .. function:: \
+        static Dataspace create(class_t type)
+        static Dataspace create_null()
+        static Dataspace create_scalar()
+        static Dataspace create_simple()
+
+        (1): create data space from scratch.
+        
+        ``type``: cSIMPLE | cNULL | cSCALAR. The dataspace class.
+
+        (2-4): shortcuts of (1).
+
+    .. function:: \
+        Dataspace copy() const
+        void extent_copy(Dataspace &dst_dspace) const
+
+        ``copy()``: return an exact copy of the dataspace.
+        
+        ``extent_copy()``: copy the current extent to ``dst_dspace``. May change its 
+        dataspace class.
+
+    .. function:: \
+        class_t get_type() const
+
+        Get dataspace class.
+        
+
+    .. function:: \
+        int ndims() const
+        Dimensions dims() const
+        Dimensions maxdims() const
+        hsize_t size() const
+        hsize_t maxsize() const
+
+        For SIMPLE dataspace, retrieve its information by the following methods:
+        
+        ``ndims()``, ``dims()``, ``maxdims()``: return its extents, i.e., number of dimensions 
+        (rank), dimensions and maximal dimensions.
+        
+        ``size()``: number of elements, i.e., product of ``dims()``.
+        
+        ``maxsize()``: maximal number of elements, i.e., product of ``maxdims()``.
+
+    .. function:: \
+        void select_none()
+        void select_all()
+
+        Selections that can be applied to SIMPLE dataspace - select none or all.
+
+    .. function:: \
+        void select_hyperslab(const Hyperslab &hs)
+        void select_hyperslab(const string &op, const Hyperslab &hs)
+        void select_hyperslab(seloper_t op, const Hyperslab &hs)
+        void select_hyperslab(const string &op,\
+            const hsize_t *start, const hsize_t *count, \
+            const hsize_t *stride = NULL, const hsize_t *block = NULL)
+        void select_hyperslab(seloper_t op, \
+            const hsize_t *start, const hsize_t *count, \
+            const hsize_t *stride = NULL, const hsize_t *block = NULL)
+
+        Hyperslab selections.
+
+        ``select_hyperslab()`` allows selects a hyperslab of elements starting at the 
+        offset ``start`` with ``count`` blocks at each dimension.
+        Each block has ``block`` elements and ``stride`` to the next block.
+        
+        ``op(string)``: specifies how to operator with the current selection. Must be 
+        "set" ("=") | "or" ("|") | "and" ("&") | "xor" (^) | "notb" | "nota", 
+        
+        ``op(seloper_t)``: see the predefined members of selection operations.
+        
+        (1): "set" selection by a ``Hyperslab`` instance.
+        
+        (2,3): same with (1), but allow a ``op``.
+        
+        (4,5): same with (2,3), but using raw buffers for the hyperslab 
+        specification. 
+
+        In (1-3), the Hyperslab may have empty stride or block, means ``1`` at all 
+        dimensions. None-empty members must have the same length as the rank 
+        of the dataspace.
+            
+        In (4,5), ``stride`` or ``block`` could be `NULL``, means ``1`` at all 
+        dimensions.
+
+        In all cases, the sub-setting cannot extend over the dataspace boundary.
+
+    .. function:: \
+        Dataspace combine_hyperslab(const string &op, const Hyperslab &hs) const
+        Dataspace combine_hyperslab(seloper_t op, const Hyperslab &hs) const
+
+        Combine the current hyperslab selection with ``hs`` using operation ``op``.
+        Return the result.
+
+        The ``hs`` argument has the same requirement as in ``select_hyperslab``.
+        If the current instance is not a hyperslab, it is freed as ``sel_all()``
+        and then combined with ``hs``.
+
+    .. function:: \
+        Dataspace combine_select(const string &op, const Dataspace &dspace2) const
+        Dataspace combine_select(seloper_t op, const Dataspace &dspace2) const
+
+        Combine the selection of current instance with ``dspace2`` using ``op``.
+        Return the result. The extent is taken from the current instance.
+
+    .. function:: \
+        Dataspace hyperslabed(const Hyperslab &hs) const
+
+        Return a dataspace whose current extent is copy from the current instance
+        with a hyperslab selection specified by ``hs``.
+
+    .. function:: \
+        void select_elements(const Points &points)
+        void select_elements(const string &op, const Points &points)
+        void select_elements(seloper_t op, const Points &points)
+        void select_elements(const string &op, size_t n_elems,  \
+            const hsize_t coords[])
+        void select_elements(seloper_t op, size_t n_elems, const hsize_t coords[])
+
+        Element-base selection - select a list of coordinates in the dataspace.
+        
+        (1): use a Points instance for selection with ``op == "set"``.
+
+        (2,3): allow an operation with existing selection.
+        
+        (4,5): the same as (2,3), but using a raw buffer for coordinates.
+        
+        ``op (string)``: "set" ("=") | "append" ("+") | "prepend". 
+        
+        ``op (seloper_t)``: using member constants.
+        
+        ``points``: a 1-D row-major flatten array shaped (n_elems, rank). Rank is 
+        not used and is inferred from the dataspace instance.
+        
+        ``coords``: use raw buffer with same effect as ``points``. The ``rank`` is 
+        inferred from the dataspace instance.
+
+    .. function:: \
+        Dataspace elemented(const Points &points) const
+
+        Return a dataspace whose current extent is copy from the current instance
+        with a element selection specified by ``hs``.
+        
+    .. function:: \
+        hssize_t get_select_npoints() const
+        seltype_t get_select_type() const
+        bool select_valid() const
+
+        Retrieve selection information from the dataspace.
+        
+        ``get_select_npoints()``: return the number of elements selected. 
+
+        ``get_select_type()``: return the selection type.
+        
+        ``select_valid()``: whether or not the selection is valid, i.e., within the
+        current dataspace extent.
+
+    .. function:: \
+        _obj_raw_t & obj_raw() noexcept
+        const _obj_raw_t & obj_raw() const noexcept
+
+        Return the intermediate-level wrapper objects.
+
+Dataset 
 ---------------------
 
-.. class::  H5Dataset
+.. class:: Dataset: public NamedObj
 
-    The API for HDF5 dataset.
+    Datasets are named objects stored in HDF5 files.
 
-    ``H5Dataset`` instance can be copy-constructed, copy-assigned, move-constructed and move-assigned.
-    The copy, move operations and destructor are all noexcept. The copy operations are shallow-copy, i.e., 
-    instances of source and target refer to the same underlying dataset object (like a ``shared_ptr``).
+    Class ``Dataset`` encapsulates the methods available on datasets. 
 
-    .. function::   H5Dataspace dataspace()
-                    const H5Dataspace dataspace() const
-                    H5Datatype datatype()
-                    const H5Datatype datatype() const
-
-        Retrive the information (i.e., dataspace and datatype) of the dataset instance. 
+    **Memory management:** 
+    The dataset class is copyable and movable (both in construction and 
+    assignment). The copy, move and destruction are ``noexcept``. The copy operation 
+    is shallow - the resulting object always refers to the same HDF5 resource
+    as the source object. The move operation sets the move-from object an empty
+    state.
     
-    .. function::   template<typename T>\
-                        H5Attr create_attr(\
-                            const string &name, const vector<hsize_t> &dims, \
-                            const string &flag="trunc")
-                    H5Attr create_attr(\
-                        const string &name, const H5Datatype &dtype, \
-                        const vector<hsize_t> &dims, const string &flag="trunc")
-                    template<typename T>\
-                    H5Attr create_attr_scalar(\
-                        const string &name, const string &flag="trunc")
-                    H5Attr create_attr_str(\
-                        const string &name, size_t len, const string &flag="trunc")
-        
-        Create a new attribute (or open an existing attribute) under the current dataset.
+    .. type:: NamedObj parent_t
+        _Dataset _obj_raw_t
+        std::shared_ptr<_obj_raw_t> _obj_ptr_t
 
-        The template parameter and argument list are the same with :func:`H5File::create_dataset` and its variants. 
-        The difference is that you cannot specify any property list.
-        
-
-    .. function::   H5Attr open_attr(const string &name)
-                    bool attr_exists(const string &name) const
-
-        Opens an existing attribute of name ``name``. If not existing, throw an error :class:`ErrH5`.
-
-        ``attr_exists()`` checks whether an attribute has been existed.
     
-    .. function::   template<typename T, typename A>\
-                        void write( const vector<T, A> &buff, const H5Dataspace &memspace = H5Dataspace::allval, \
-                        const H5Dataspace &filespace=H5Dataspace::allval, \
-                        const H5Proplist &xprop=H5Proplist::defaultval )
-                    template<typename T>\
-                        void write( const T *buff, \
-                            const H5Dataspace &memspace = H5Dataspace::allval, \
-                            const H5Dataspace &filespace=H5Dataspace::allval,\
-                            const H5Proplist &xprop=H5Proplist::defaultval )
-                    void write( const string &buff, \
-                        const H5Proplist &xprop=H5Proplist::defaultval )
-                    template<typename T, typename A>\
-                        void write( const vector<T, A> &buff, \
-                            const H5Datatype &memtype,\
-                            const H5Dataspace &memspace = H5Dataspace::allval, \
-                            const H5Dataspace &filespace=H5Dataspace::allval, \
-                            const H5Proplist &xprop=H5Proplist::defaultval )
-                    template<typename T>\
-                        void write( const T *buff, \
-                            const H5Datatype &memtype,\
-                            const H5Dataspace &memspace = H5Dataspace::allval, \
-                            const H5Dataspace &filespace=H5Dataspace::allval, \
-                            const H5Proplist &xprop=H5Proplist::defaultval )
+    **Constructors:** Class ``Dataset`` "inherits" all constructors from its parent class.
+
+    .. function:: \
+        Dataspace dataspace() const
+        Datatype datatype() const
+
+        Return copy of the dataspace or datatype of the dataset.
         
-        Write data in ``buff`` into the dataset. Type and number of elements in the `buff` must be compatible with the 
-        dataset. Five overloads are provided for: 
+        The datatype is read-only. 
+        If the datatype is named, it is opened and returned.
 
-        (1) ``const vector<T, A> & buff``: write a vector of elements of type T. T must be a numeric 
-            :ref:`Predefined Datatypes <api-io-dtype-predefined>` (i.e., int, float) or ``std::string``.
-            For the numeric types, the total number of elements in the vector must be compatible with the dataset' size 
-            (i.e., the product of actual dims). 
-            For the string, the total number of strings and the maximal length of these strings must br compatible with 
-            the dataset's dims.
-        (2) ``const T *buff``: same as the vector version (1), but use data in the raw buffer.
-        (3) ``const string &``: write a single string.
-        (4) ``const vector<T, A> &buff, const H5Datatype &memtype``: same as the vector version (1), but now T could
-            be any type whose datatype is described by ``memtype```.
-        (5) ``const T *buff, const H5Datatype &memtype``: same as (4), but using a raw buffer.
+    .. function:: \
+        static Proplist create_proplist(const string &cls)
+        Proplist proplist(const string &cls) const
 
-    .. function::   template<typename T, typename A>\
-                        void read( vector<T, A> &buff,\
-                            const H5Dataspace &memspace = H5Dataspace::allval, \
-                            const H5Dataspace &filespace=H5Dataspace::allval,\
-                            const H5Proplist &xprop=H5Proplist::defaultval ) const
-                    template<typename T>\
-                        void read( T *buff,\
-                            const H5Dataspace &memspace = H5Dataspace::allval, \
-                            const H5Dataspace &filespace=H5Dataspace::allval,\
-                            const H5Proplist &xprop=H5Proplist::defaultval ) const
-                    void read( string &buff, \
-                        const H5Proplist &xprop=H5Proplist::defaultval ) const
-                    template<typename T, typename A>\
-                        void read( vector<T, A> &buff, const H5Datatype &memtype,\
-                            const H5Dataspace &memspace = H5Dataspace::allval, \
-                            const H5Dataspace &filespace=H5Dataspace::allval,\
-                            const H5Proplist &xprop=H5Proplist::defaultval ) const
-                    template<typename T>\
-                        void read( T *buff, const H5Datatype &memtype,\
-                            const H5Dataspace &memspace = H5Dataspace::allval, \
-                            const H5Dataspace &filespace=H5Dataspace::allval,\
-                            const H5Proplist &xprop=H5Proplist::defaultval ) const
+        ``create_proplist()``: create a property list for dataset operation.
+        
+        ``cls``: creation property list of dataset. Can be
 
-        Read data in the dataset instance into ``buff``. This the inverse of the :func:`write` method, so we still 
-        provide five overloads. The detailed requirement for each overload is the same as :func:`write`.
+        .. table:: 
+            :class: tight-table
 
-        The first and the third overloads automatically resize the buffer. In all other cases the buffers must have 
-        correct shapes.
+            ===================================== ==================================
+            ``cls``                               Description
+            ===================================== ==================================
+            ``"c"`` | ``"create"``                dataset creation.
+            ``"a"`` | ``"access"``                dataset access.
+            ``"x"`` | ``"xfer"`` | ``"transfer"`` data transfer.
+            ===================================== ==================================
 
-    .. function::   static H5Proplist create_proplist(const string &cls)
-                    H5Proplist proplist(const string &cls) const
+        ``proplist()``: retrieve the property list of the current dataset. Only 
+        dataset creation and access property list can be retrieved. 
+        
+    .. function:: \
+        void write(const void *buff,  \
+            const Datatype &memtype,  \
+            const Dataspace &memspace  = Dataspace::vALL, \
+            const Dataspace &filespace = Dataspace::vALL, \
+            const Proplist &xprop      = Proplist::vDFLT)
+        template<typename T> \
+        void write(const T &buff,  \
+            const Dataspace &memspace  = Dataspace::vALL, \
+            const Dataspace &filespace = Dataspace::vALL, \
+            const Proplist &xprop      = Proplist::vDFLT)
+        template<typename T> \
+        void write_scalar(const T &x)
+        void write_str(const string &s)
+        void write_str(const char *s)
+        void write_str(const vector<string> &ss)
+        void write_str(const string ss[], size_t n_str)
+        template<size_t N_STR> \
+        void write_str(const string (&ss)[N_STR])
+        void write_str(const char * const *ss, size_t n_str)
+        template<size_t N> \
+        void write_str(const char ss[][N], size_t n_str)
+        template<size_t N_STR, size_t N> \
+        void write_str(const char (&ss)[N_STR][N])
 
-        Dataset property list manipulation methods.
+        Write data into the dataset.
+        
+        (1): The most general method that is the direct HDF5 C API counterpart. 
+        Write a buffer starting at ``buff`` to the dataset. ``memtype``, 
+        ``memspace`` and ``filespace`` specify the memory datatype, memory 
+        dataspace and dataset dataspace in the file.
 
-        ``create_proplist(cls)`` creates a property list with given class ``cls``. Possible values for ``cls`` include
+        (2): Write an object. The ``buff`` argument can be
+        
+        - A raw pointer. The memory datatype is inferred from is point-to type 
+          by :expr:`Datatype::from_type`. If ``memspace`` is all-space, the file
+          space is used for it.
+        - any object that is resolvable by :class:`ConstDatapacket`, including 
+          numerical scalars (e.g., ``int``, ``float``), 
+          general arrays or numerical types (e.g., ``std::array<int, 4>``, 
+          ``std::vector<int>``), or general arrays of raw arrays 
+          (e.g., ``std::vector< std::array<int, 4> >``).
+          If ``memspace`` is all-space, it is inferred from the object itself.
 
-        - "c" or "create": properties for dataset creation.
-        - "a" or "access": properties for dataset access.
-        - "x" or "xfer" or "transfer": properties for dataset transfer.
+        Other methods are defined for special cases. All of them use the default 
+        property list :expr:`Proplist::vDFLT`.
 
-        ``proplist()`` retrives the property list of current dataset instance. ``cls`` can be either "c" (or "create") or "a" (or "access").
+        (3): Write a scalar. The datatype is inferred from T as if calling 
+        :expr:`Datatype::from_type<T>()`.
+
+        (4-11): write a string or a list of strings as fix-length ATOMIC string
+        datatype. In the list-of-strings case, the size of the string is taken from 
+        the maximum of the strings. 
+        
+        In all cases, the dataset must be created with consistent dataspace and
+        datatype.
+
+    .. function:: \
+        template<typename T, \
+            std::enable_if_t<!std::is_pointer_v<T>, int > =0> \
+            void write_hyperslab(const T &buff, const Hyperslab &hs)
+        template<typename T, \
+            std::enable_if_t<!std::is_pointer_v<T>, int > =0> \
+            void write_elements(const T &buff, const Points &points)
+        template<typename T, \
+            std::enable_if_t<!std::is_pointer_v<T>, int > =0> \
+            void write_element(const T &x, const Dimensions &coord)
+
+        Write data into the selected part of the dataset.
+        
+        ``write_hyperslab()`` : the filespace is selected by a hyperslab.
+        
+        ``write_elements()``: the filespace is selected by a list of elements of given
+        coordinates.
+        
+        ``write_element()``: a single element in the filespace is selected.
+
+        These methods are equivalenent to first get the full filespace, 
+        call ``select_hyperslab()`` or ``select_elements()`` on it, and then 
+        call ``write(buff, Datapace::vALL, filespace)`` (for hyperslab and elements)
+        or ``write(buff, Datapace::vSCALAR, filespace)`` (for a single element).
+        
+    .. function:: \
+        void read(void *buff,  \
+            const Datatype &memtype, \
+            const Dataspace &memspace  = Dataspace::vALL,  \
+            const Dataspace &filespace = Dataspace::vALL, \
+            const Proplist &xprop      = Proplist::vDFLT) const
+        template<typename T> \
+        void read(T &&buff, const Dataspace &memspace = Dataspace::vALL,  \
+            const Dataspace &filespace = Dataspace::vALL, \
+            const Proplist &xprop = Proplist::vDFLT) const
+        template<typename T> \
+        void read_scalar(T &x)
+        void read_str(string &s)
+        void read_str(char *s)
+        void read_str(vector<string> &ss)
+        void read_str(string ss[])
+        template<size_t N> \
+        void read_str(char ss[][N])
+
+        Read data from the dataset.
+        
+        (1): The most general method that is the direct HDF5 C API counterpart. 
+        Read into buffer starting at ``buff`` from the dataset. ``memtype``, 
+        ``memspace`` and ``filespace`` specify the memory datatype, memory 
+        dataspace and dataset dataspace in the file.
+
+        (2): Read into an object. The ``buff`` argument can be
+        
+        - A raw pointer. The memory datatype is inferred from is point-to type 
+          by :expr:`Datatype::from_type`. If ``memspace`` is all-space, the file
+          space is used for it.
+        - ``std::vector<T, Alloc>``. ``T`` must be valid argument to 
+          :expr:`Datatype::from_type` (e.g., numerical scalar or raw-array).
+          If ``memspace`` is all-space, it is taken from filespace. 
+          The vector is always resized to exactly hold the selected elements. 
+          If the resize operation cannot exactly fits the need, an ``ErrLogic``
+          is thrown.
+        - any object that is resolvable by :class:`ConstDatapacket`, including 
+          numerical scalars (e.g., ``int``, ``float``), 
+          general arrays or numerical types (e.g., ``std::array<int, 4>``).
+          If ``memspace`` is all-space, it is inferred from the object itself.
+
+        Other methods are defined for special cases. All of them use the default 
+        property list :expr:`Proplist::vDFLT`.
+
+        (3): Read a scalar. The datatype is inferred from ``T`` as if calling 
+        :expr:`Datatype::from_type<T>()`.
+
+        (4-8): Read a string or a list of strings as fix-length ATOMIC string
+        datatype. In the list-of-strings case, the size of the string is taken from 
+        the maximum of the strings. 
+        The ``std::string`` or ``std::vector`` is auto-resized to fit the data. 
+        Otherwise (e.g., ``char *``), the buffer must be large enough to hold
+        the string that is read.
+        
+        In all cases, the dataset must has consistent dataspace and datatype.
+
+    .. function:: \
+        template<typename T, typename A>  \
+        void read_hyperslab(vector<T, A> &v, const Hyperslab &hs) const
+        template<typename T, typename A> \
+        void read_elements(vector<T, A> &v, const Points &points) const
+        template<typename T> \
+        void read_element(T &x, const Dimensions &coord) const
+
+        Read data from the selected part of the dataset.
+        
+        ``read_hyperslab()``: the filespace is selected by a hyperslab.
+        
+        ``read_elements()``: the filespace is selected by a list of elements of given
+        coordinates.
+
+        ``read_element()``: a single element in the filespace is selected.
+
+        These methods are equivalenent to first get the full filespace, 
+        call ``select_hyperslab()`` or ``select_elements()`` on it, and then 
+        call ``read(v, Datapace::vALL, filespace)`` (for hyperslab and elements)
+        or ``read(x, Datapace::vSCALAR, filespace)`` (for a single element).
+
+    .. function:: \
+        _obj_raw_t & obj_raw() noexcept
+        const _obj_raw_t & obj_raw() const noexcept
+
+        Return a reference to the intermediate-level HDF5 object.
+
+DatasetManager
+----------------
+
+.. class:: DatasetManager
+
+    Tha manager provides commonly used shortcuts for dataset creation and 
+    access.
+
+    .. type:: Group refobj_t
+
+    .. function:: \
+        DatasetManager() noexcept
+        explicit DatasetManager(refobj_t obj) noexcept
+
+        Constructors.
+        
+        (1): refers to an empty dataset object. I/O may not be performed in this 
+        case.
+        
+        (2): refers to given dataset.
+
+    .. function:: \
+        ~DatasetManager() noexcept = default
+        DatasetManager(const DatasetManager &) noexcept = default
+        DatasetManager(DatasetManager &&) noexcept = default
+        DatasetManager & operator=(const DatasetManager &) noexcept = default
+        DatasetManager & operator=(DatasetManager &&) noexcept = default
+
+        The dataset manager is copyable and movable. The copy is shallow with 
+        resulting instance referring to the same dataset.
+        The move is destroyable, leaving the move-from instance an empty state.
+
+    .. function:: \
+        refobj_t refobj() const
+
+        Retrieve the referred object, i.e., the dataset object.
+
+    .. function:: \    
+        void reset(refobj_t obj) noexcept
+        void reset() noexcept
+
+        Reset the referred object.
+        
+        (1): to a given dataset object.
+        
+        (2): to an empty state.
+        
+    .. function:: \
+        template<typename T> \
+        void put(const string &name, const T &x)
+        template<typename T> \
+        void put_str(const string &name, const T &x)
+        template<typename T> \
+        void put_slab(const string &name, const T &x, const Hyperslab &filespace)
+        template<typename T> \
+        void put_ats(const string &name, const T &x, const Points &coords)
+        template<typename T> \
+        void put_at(const string &name, const T &x, const Dimensions &coord)
+
+        Put operations - write data into dataset of given ``name``.
+        
+        (1): Create a dataset with given ``name`` whose datatype are dataspace are 
+        determined from the data ``x`` and write ``x`` into it.
+        If the dataset already exists, open it and update its contents to ``x``
+        where ``x`` must have consistent datatype and size.
+        ``x`` may be anything that can be used in :expr:`Group::create_dataset_for`
+        except the string overloads.
+
+        (2): the same as (1), but using string data ``x`` acceptable by 
+        :expr`Group::create_dataset_for_str`. Examples include single strings
+        (``std::string`` or C-style string ``const char *`` ), vector of 
+        strings (``std::vector<std::string>``) or array of strings 
+        (``std::string[N]``), 2-D character array (``const char [N_STR][N]``,
+        resolved as ``N_STR`` strings with fixed length ``N``).
+        The string dataset is created as scalar or 1-D dataspace, with fixed-length 
+        ATOMIC STRING datatype.
+
+        (3): Put the data ``x`` into an existsing dataset of given ``name``. The
+        filespace of the dataset is selected by a hyperslab ``filespace``.
+
+        (4): Put a list of data elements ``x`` at the given coordinates in an 
+        existing dataset of given ``name``.
+
+        (5): Put a single data element ``x`` at the given coordinate in an 
+        existing dataset of given ``name``.
+
+    .. function:: \
+        template<typename T> \
+        void get(const string &name, T &x)
+        template<typename T> \
+        void get_str(const string &name, T &x)
+        template<typename T> \
+        void slab(const string &name, T &x, const Hyperslab &filespace)
+        template<typename T> \
+        void ats(const string &name, T &x, const Points &coords)
+        template<typename T> \
+        void at(const string &name, T &x, const Dimensions &coord)
+        template<typename T> \
+        T get(const string &name)
+        template<typename T> \
+        T get_str(const string &name)
+        template<typename T> \
+        T slab(const string &name, const Hyperslab &filespace)
+        template<typename T> \
+        T ats(const string &name, const Points &coords)
+        template<typename T> \
+        T at(const string &name, const Dimensions &coord)
+
+        Get operations: read data from existing dataset of given ``name``.
+        
+        In all case, the dataset must have consistent datatype and dataspace with
+        the argument ``x``.
+
+        (1-5): are similar to ``put`` but perform reading here.
+        
+        (6-10): are similar to (1-5), respectively, but return the data which are
+        read (i.e., the object typed ``T`` gets default-initialized, be read into, 
+        and returned).
+
+    .. function:: \
+        bool exists(const string &name)
+
+        Find whether or not a dataset of given ``name`` exists in the parent 
+        object.
+
+    .. function:: \
+        Dataset open(const string &name)
+
+        Open an existing dataset named ``name``.
 
 
+
+        
 
 
     

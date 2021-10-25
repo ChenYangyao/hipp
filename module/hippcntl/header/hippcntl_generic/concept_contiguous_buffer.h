@@ -8,14 +8,15 @@ create: Yangyao CHEN, 2021/09/15
 #define _HIPPCNTL_CONCEPT_CONTIGUOUS_BUFFER_H_
 #include "generic_base.h"
 #include "concept_raw_array.h"
-
+#include "concept_dynamic_array.h"
 namespace HIPP {
 
 /**
 ContiguousBuffer protocol. 
 
-For any type T that does not satisfying this protocol, member ``is_buffer`` is 
-false and ``buffer_t`` is ``T`` itself.
+For any type ``T`` that does not satisfy this protocol, member ``is_buffer`` is 
+``false`` and ``buffer_t`` is ``T`` itself.
+
 Otherwise, the following members must be defined for the specialization of
 ``ContiguousBufferTraits``:
 - ``is_buffer``: ``true``.
@@ -48,7 +49,8 @@ A special case is ``T = ValueT *`` or ``T = const ValueT *``, i.e., the
 buffer-host type is a pointer. In this case, the specialization class is used.
 
 Predefined contiguous-buffer-compliant types include any RawArray-compliant 
-type (i.e., C-style raw array, std::array) and std::vector.
+type (i.e., C-style raw array, std::array) and DynamicArray-compliant 
+type (e.g., std::vector).
 */
 template<typename T, typename V=void>
 class ContiguousBufferTraits {
@@ -102,7 +104,8 @@ public:
     {
         PStream ps(os);
         auto [p, n] = cbt;
-        ps << "ContiguousBufferTraits{buff=[const]", (void *)p, ", size=", n, "}";
+        ps << "ContiguousBufferTraits{buff=[const]", 
+            (void *)p, ", size=", n, "}";
         return os;
     }
 
@@ -168,8 +171,9 @@ template<typename ValueT>
 ContiguousBufferTraits(ValueT *, size_t n) -> ContiguousBufferTraits<ValueT *>;
 
 /** 
-Specialization for raw array concept (include C-style raw array, std::array, 
-etc. ). In these case, they are treated as row-major storage 1D buffer.
+Specialization for RawArray protocol objects 
+(include C-style raw array, std::array, etc. ). In these case, they are 
+treated as row-major storage 1D buffer.
 
 e.g.,
 std::array<std::array<double, 3>, 2> arr1 {};
@@ -200,8 +204,8 @@ template<typename RawArrayT,
 ContiguousBufferTraits(RawArrayT &) -> ContiguousBufferTraits<RawArrayT>;
 
 /** 
-Specialization for std::vector. For any vector v, v.data(), v.size() are used
-as buffer specification. 
+Specialization for DynamicArray protocol objects (e.g., std::vector). 
+Any of these object is treated as row-major 1D buffer.
 
 e.g.,
 const vector<int> a1{1,2,3};
@@ -211,36 +215,24 @@ ContiguousBufferTraits<vector<int> > cbt1 {a1};
                                         // explicit set the template argument
 ContiguousBufferTraits cbt2 {a2};       // auto deduced
 */
-template<typename ValueT, typename Allocator>
-struct ContiguousBufferTraits< const vector<ValueT, Allocator> >
-: ContiguousBufferTraits< const ValueT * >
+template<typename DynArrayT>
+struct ContiguousBufferTraits< 
+    DynArrayT,
+    std::enable_if_t< DynamicArrayTraits<DynArrayT>::is_array >
+> : ContiguousBufferTraits< typename DynamicArrayTraits<DynArrayT>::value_t * >
 {
-    typedef ContiguousBufferTraits< const ValueT * > _parent_t;
-    typedef const vector<ValueT, Allocator> buffer_t;
+    typedef DynamicArrayTraits<DynArrayT> _traits_t;
+    typedef ContiguousBufferTraits< typename _traits_t::value_t * > _parent_t;
+    typedef DynArrayT buffer_t;
+    typedef typename _parent_t::value_t value_t;
 
-    constexpr ContiguousBufferTraits( buffer_t &vec ) noexcept
-        : _parent_t( vec.data(), vec.size() ) {}
+    ContiguousBufferTraits( buffer_t &arr )
+        : _parent_t( _traits_t(arr).buff(), _traits_t(arr).size() ) {}
 };
-
-template<typename ValueT, typename Allocator>
-struct ContiguousBufferTraits< vector<ValueT, Allocator> >
-: ContiguousBufferTraits< ValueT * >
-{
-    typedef ContiguousBufferTraits< ValueT * > _parent_t;
-    typedef vector<ValueT, Allocator> buffer_t;
-
-    constexpr ContiguousBufferTraits( buffer_t &vec ) noexcept
-        : _parent_t( vec.data(), vec.size() ) {}
-};
-
-template<typename ValueT, typename Allocator>
-ContiguousBufferTraits(const vector<ValueT, Allocator> &) 
--> ContiguousBufferTraits<const vector<ValueT, Allocator> >;
-
-template<typename ValueT, typename Allocator>
-ContiguousBufferTraits(vector<ValueT, Allocator> &) 
--> ContiguousBufferTraits<vector<ValueT, Allocator> >;
-    
+template<typename DynArrayT, 
+    std::enable_if_t<DynamicArrayTraits<DynArrayT>::is_array, int> = 0>
+ContiguousBufferTraits(DynArrayT &) -> ContiguousBufferTraits<DynArrayT>;
+  
 
 /**
 ContiguousBuffer object refers a buffer of element type ``ValueT``.

@@ -7,7 +7,7 @@ The following classes are all defined within namespace ``HIPP::MPI``.
 
 .. namespace:: HIPP::MPI
 
-Class Datatype
+Datatype
 ------------------------------------------
 
 .. class:: Datatype 
@@ -550,7 +550,7 @@ difference.
         (4). Equivalent to (2) with arguments ``{s.data(), s.size(), CHAR}``.
 
         (5). The same as (2), but the datatype is inferred from the pointed type 
-        ``T``. The actual used datatype is like that return by :func:`Datatype::from_type`.
+        ``T``. The actual used datatype is like that return by :expr:`Datatype::from_type`.
         Ordinary types are suppoeted, like ``char``, ``int``, ``unsigned short``, ``float``, ``bool``, 
         etc. Any types that are DatatypeTraits-conformable are also supported (see class :class:`DatatypeTraits` for the protocol definition).
         

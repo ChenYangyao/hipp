@@ -19,7 +19,7 @@ class Dataset;
 Datatype describe the bit-level memory layout, representation and conversion
 of data element in HDF5 dataset and attribute.
 
-Class ``Datatype`` encapsulate the methods available on datatype. 
+Class ``Datatype`` encapsulates the methods available on datatypes. 
 
 The library predefines a set of native and standard datatypes, based on which, 
 or from scratch, customized datatype can be derived. 
@@ -27,7 +27,7 @@ or from scratch, customized datatype can be derived.
 The datatype class is copyable and movable (both in construction and 
 assignment). The copy, move and destruction are ``noexcept``. The copy operation 
 is shallow - the resulting object always refers to the same HDF5 resource
-as the source object. The move operation sets the move-from objects an empty
+as the source object. The move operation sets the move-from object an empty
 state.
 */
 class Datatype: public NamedObj {
@@ -55,9 +55,8 @@ public:
         cREFERENCE = _obj_raw_t::cREFERENCE,
         cVLEN      = _obj_raw_t::cVLEN;
     
-    /**
-    May initialized with ``nullptr`` for an empty instance referring to no 
-    underlying datatype object, i.e., ``has_referenced() -> false``.
+    /** 
+    Class ``Datatype`` "inherits" all constructors from its parent class.
     */
     using parent_t::parent_t;
 
@@ -121,8 +120,8 @@ public:
     is described by the member pointer from which the datatype and offset 
     are inferred by the library.
     
-    The C++ type of the member can be any valid type to ``Datatype::from_type`` 
-    (e.g., ``int``, ``float[3][4][5]``). 
+    The C++ type of the member can be any valid type to 
+    :expr:`Datatype::from_type` (e.g., ``int``, ``float[3][4][5]``). 
 
     create_compound(size): create an empty COMPOUND datatype sized ``size`` 
     bytes. 
@@ -144,7 +143,7 @@ public:
     (2): insert(name, field_ptr) inserts a member whose name is name and whose 
     datatype, offset are inferred from member-pointer ``field_ptr``. 
     The member can be any type that is mappable to a HDF5 datatype using 
-    ``Datatype::from_type``, (e.g., int, float[3][4][5]). 
+    :expr:`Datatype::from_type`, (e.g., int, float[3][4][5]). 
     */
     Datatype & insert(const string &mem_name, size_t mem_offset, 
         const Datatype &mem_dtype);
@@ -223,7 +222,7 @@ public:
     template<typename T>
     static Datatype from_buff(const T &buff);
 
-    /** Return the intermediate-level wrapper objects. */
+    /** Return a reference to the intermediate-level HDF5 object. */
     _obj_raw_t & obj_raw() noexcept;
     const _obj_raw_t & obj_raw() const noexcept;
 private: 

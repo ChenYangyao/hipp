@@ -14,13 +14,13 @@ simply the C++ application development.
 All the definitions in the CNTL module are in the top-level namespace ``HIPP``. 
 To use them 
 
-- include the header **<hippcntl.h>**;
+- include the header ``<hippcntl.h>``;
 - link the library ``libhippcntl.so``. 
 
 .. _api-cntl-convention:
 
-The following namespace declaration are adopted for clarity in all example 
-codes in thie API-ref::
+The following namespace declarations are adopted for clarity in all example 
+codes in this API-ref::
 
   using namespace HIPP;
   using namespace std;

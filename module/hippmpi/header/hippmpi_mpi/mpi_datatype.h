@@ -196,7 +196,7 @@ public:
     User may extend the traits by adding specializations.
     */
     template<typename NativeT>
-    static const Datatype & from_type() noexcept;
+    static const Datatype & from_type();
 
     /**
     Map string to Datatype instance.
@@ -464,7 +464,7 @@ private:
 Interface of the type mapping. Do not add specialization to this class template.
 Instead, define specialization to DatatypeTraits.
 */
-template<typename NativeT, typename V>
+template<typename NativeT, typename V=void>
 struct TypeCvt {
     inline static constexpr bool has_mpi_datatype = false;
 };
@@ -517,7 +517,7 @@ inline Datatype Datatype::_from_raw( mpi_t dtype, int state ) noexcept{
 }
 
 template<typename NativeT>
-inline const Datatype & Datatype::from_type() noexcept {
+inline const Datatype & Datatype::from_type() {
     return TypeCvt<NativeT>::datatype();
 }
 

@@ -205,7 +205,7 @@ Datatype
 
     .. function:: \
         template<typename NativeT> \
-        static const Datatype & from_type() noexcept
+        static const Datatype & from_type()
 
         Get the Datatype instance from its C++ type. 
 
@@ -453,14 +453,14 @@ Their const qualified types are also supported, referring to the same Datatype o
     is mapped to the MPI contiguous datatype sized ``size`` with element type 
     ``value_t``.
 
-DatatypeConverter
-""""""""""""""""""
+The Datatype Converter
+""""""""""""""""""""""""
 
 The followings are the interfaces of the type mapping. 
 Do not add specialization to this class template.
 Instead, define specialization to ``DatatypeTraits``.
 
-.. class:: template<typename NativeT, typename V> TypeCvt
+.. class:: template<typename NativeT, typename V=void> TypeCvt
     
     .. member:: static constexpr bool has_mpi_datatype = false
 

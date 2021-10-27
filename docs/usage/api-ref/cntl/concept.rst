@@ -14,6 +14,81 @@ The following variables, functions and classes are all defined within the namesp
 The RawArray Concept
 -----------------------
 
+RawArrayTraits gives features for a raw-array-like type.
+User may add specializations to this generic class.
+
+Given type ``T``, if ``T`` is not RawArray, then the member
+
+- ``constexpr bool is_array = false``.
+- type ``value_t`` is aliased to ``T``.
+
+Otherwise ``T`` is RawArray, satisfying
+
+- ``constexpr bool is_array = true``.
+- ``array_t`` is aliased to the corresponding raw array type with the same 
+  layout as ``T``, and ``value_t`` is aliased to the type of the array element.
+- ``constexpr size_t rank, size`` give the rank (no. of dimensions) and total
+  number of elements, respectively.
+- ``constexpr std::array<size_t, rank> extents, strides`` give extent of any
+  dimension and the stride to the next element along this dimension.
+
+For example::
+
+    RawArrayTraits<int [3][4]>::extents;                                    // => std::array{3,4}.
+    RawArrayTraits< std::array<std::array<double, 4>, 3> >::extents;        // => std::array{3,4}.
+
+If an array has ``const`` value, or the array itself is ``const``, the ``value_t``, 
+i.e., type of the array element, is also ``const``. e.g.::
+
+    RawArrayTraits<const int [3][4]>::value_t             // => const int
+    RawArrayTraits<std::array<const int, 3> >::value_t    // => const int
+    RawArrayTraits<const std::array<int, 3> >::value_t    // => const int
+    RawArrayTraits<const std::array<int, 3> >::array_t    // => const int [3]
+
+
+RawArrayTraits 
+""""""""""""""""""""
+
+.. class:: template<typename T, typename V=void> RawArrayTraits
+    
+    .. member:: static constexpr bool is_array = false
+    .. type:: T value_t
+
+
+.. class:: template<typename RawArrayT> RawArrayTraits < RawArrayT >
+
+    Specialization for a raw array type.
+
+    .. type:: RawArrayT array_t
+        std::remove_all_extents_t<array_t> value_t
+
+        The raw array type and its scalar type.
+
+    .. member:: static constexpr bool is_array = true
+        static constexpr size_t rank = std::rank_v<array_t>
+        static constexpr size_t size = RawArrayHelper::size<array_t>()
+        static constexpr std::array<size_t, rank> extents = RawArrayHelper::extents<array_t>()
+        static constexpr std::array<size_t, rank> strides = RawArrayHelper::strides<array_t>()
+
+        ``is_array`` tells whether or not the template parameter is an raw-array-like type.
+        If true, ``rank``, ``size``, ``extents``, and ``strides`` gives its details.
+
+    .. function:: ostream & info(ostream &os=cout, int fmt_cntl=1) const
+        friend ostream & operator<< (ostream &os, const RawArrayTraits &t)
+
+        Print the traits detail.
+        
+        :arg fmt_cntl: ``0`` for a inline message, ``1`` for a long and verbose block message.
+
+        ``operator<<`` prints a inline message.
+
+.. class:: template<typename T, size_t N> RawArrayTraits< std::array<T, N> >
+
+.. class:: template<typename T, size_t N> RawArrayTraits< const std::array<T, N> > 
+
+    Specialization for the ``std::array`` and its const version. 
+    It is defined according to the corresponding raw-array type.
+
 RawArrayHelper
 """"""""""""""""
 
@@ -96,79 +171,281 @@ RawArrayHelper
             const std::array<std::array<double, 4>, 3 >     // => const double[3][4].
 
 
-RawArrayTraits 
-""""""""""""""""""""
+.. _api-cntl-concept-dynamic-array:
 
-RawArrayTraits gives features for a raw-array-like type.
-User may add specializations to this generic class.
+The DynamicArray Concept 
+----------------------------
 
-Given type ``T``, if ``T`` is not RawArray, then the member
+DynamicArray protocol: For any type ``T`` that does not satisfy this protocol, 
 
-- ``constexpr bool is_array = false``.
-- type ``value_t`` is aliased to ``T``.
+- member compile-time ``bool is_array = false``.
+- member type ``value_t`` is aliased as ``T``.
 
-Otherwise ``T`` is RawArray, satisfying
+Otherwise, the following conditions are required for the specialization of
+``DynamicArrayTraits`` on ``T``:
 
-- ``constexpr bool is_array = true``.
-- ``array_t`` is aliased to the corresponding raw array type with the same 
-  layout as ``T``, and ``value_t`` is aliased to the type of the array element.
-- ``constexpr size_t rank, size`` give the rank (no. of dimensions) and total
-  number of elements, respectively.
-- ``constexpr std::array<size_t, rank> extents, strides`` give extent of any
-  dimension and the stride to the next element along this dimension.
+- member compile-time ``bool is_array = true``.
+- member compile-time ``size_t rank`` is set to the rank of the dynamic array.
+- member type ``array_t`` is aliased as ``T``.
+- member type ``value`` is aliased as the element type of the dynamic array.
+- the traits can be constructed by passing ``T &``, with the public member 
+  ``array_t &array`` refers to that passed instance.
+- the call of methods ``buff()``, ``size()``, ``extents()``, ``strides()`` on 
+  the traits instance return the buffer starting address (type ``value_t *``), 
+  number of element in the array (``size_t``), extent of the array at any 
+  dimension (``std::array<size_t, rank>``), and stride to the next element
+  at any dimension (``std::array<size_t, rank>``).
 
-For example::
+Predefined DynamicArray-compliant type include ``std::vector`` and its const 
+const-qualified version. Traits for the later always has const-qualified 
+``value_t``.
 
-    RawArrayTraits<int [3][4]>::extents;                                    // => std::array{3,4}.
-    RawArrayTraits< std::array<std::array<double, 4>, 3> >::extents;        // => std::array{3,4}.
 
-If an array has ``const`` value, or the array itself is ``const``, the ``value_t``, 
-i.e., type of the array element, is also ``const``. e.g.::
+.. class:: template<typename T, typename V=void> DynamicArrayTraits
 
-    RawArrayTraits<const int [3][4]>::value_t             // => const int
-    RawArrayTraits<std::array<const int, 3> >::value_t    // => const int
-    RawArrayTraits<const std::array<int, 3> >::value_t    // => const int
-    RawArrayTraits<const std::array<int, 3> >::array_t    // => const int [3]
-
-.. class:: template<typename T, typename V=void> RawArrayTraits
-    
     .. member:: static constexpr bool is_array = false
     .. type:: T value_t
 
-
-.. class:: template<typename RawArrayT> RawArrayTraits < RawArrayT >
-
-    Specialization for a raw array type.
-
-    .. type:: RawArrayT array_t
-        std::remove_all_extents_t<array_t> value_t
-
-        The raw array type and its scalar type.
+.. class:: template<typename ValueT, typename Allocator> DynamicArrayTraits< vector<ValueT, Allocator> >
 
     .. member:: static constexpr bool is_array = true
-        static constexpr size_t rank = std::rank_v<array_t>
-        static constexpr size_t size = RawArrayHelper::size<array_t>()
-        static constexpr std::array<size_t, rank> extents = RawArrayHelper::extents<array_t>()
-        static constexpr std::array<size_t, rank> strides = RawArrayHelper::strides<array_t>()
+                static constexpr size_t rank = 1
 
-        ``is_array`` tells whether or not the template parameter is an raw-array-like type.
-        If true, ``rank``, ``size``, ``extents``, and ``strides`` gives its details.
+    .. type::   vector<ValueT, Allocator> array_t
+                ValueT value_t
 
-    .. function:: ostream & info(ostream &os=cout, int fmt_cntl=1) const
-        friend ostream & operator<< (ostream &os, const RawArrayTraits &t)
+    .. function:: \
+        DynamicArrayTraits(array_t &a)
 
-        Print the traits detail.
+    .. function:: \
+        value_t * buff() const noexcept 
+        size_t size() const noexcept 
+        std::array<size_t, rank> extents() const noexcept 
+        std::array<size_t, rank> strides() const noexcept 
+
+    .. member:: array_t &array
+
+
+.. class:: template<typename ValueT, typename Allocator> DynamicArrayTraits< const vector<ValueT, Allocator> >
+
+    .. member:: static constexpr bool is_array = true
+                static constexpr size_t rank = 1
+
+    .. type:: \
+        const vector<ValueT, Allocator> array_t
+        std::add_const_t<ValueT> value_t
+
+    .. function:: \
+        DynamicArrayTraits(array_t &a)
+
+    .. function:: \
+        value_t * buff() const noexcept
+        size_t size() const noexcept
+        std::array<size_t, rank> extents() const noexcept
+        std::array<size_t, rank> strides() const noexcept
+
+    .. member:: array_t &array
+
+.. _api-cntl-concept-general-array:
+
+The GeneralArray Concept 
+---------------------------
+
+GeneralArray Protocol: Given type ``T``, if it is not GeneralArray-compliant, 
+
+- Compile-time attribute ``bool is_array = false``.
+- Member type ``value_t`` is aliased to ``T``.
+
+Otherwise, it is a GeneralArray type, satisfying
+
+- ``GeneralArrayTraits<T>`` can be constructed by passing a reference to the
+  ``T`` instance.
+- Compile-time attribute ``bool is_array = true``.
+- Compile-time attribute ``bool is_const`` tells whether or not the element 
+  is a const-qualified type.
+- Member type ``array_t`` is aliased to a binary-compatible type as ``T``, i.e.,
+  for ``RawArray``, it is the corrpesponding raw array type, and for 
+  ``DynamicArray``, it is ``T`` itself.
+- Member type ``value_t`` is aliased to the type of array element.
+- Method ``buff()`` returns the pointer to the first array element.
+- Method ``rank()``, ``size()``, ``extents()``, and ``strides`` returns the 
+  details of the array - its number of dimensions, number of elements in total,
+  number of elements at each dimension, and the stride to the next element at 
+  each dimension. 
+
+The traits object is copyable and movable and the results refer to the same 
+array.
+
+A special case is ``T = ValueT *`` or ``T = const ValueT *`` for any ``ValueT``,
+in this case the traits refers to a raw buffer.
+
+Predefined GeneralArray types include any RawArray type and any DynamicArray
+type.
+
+**Examples:**
+    
+Numerical scalars are not considered as GeneralArray::
+
+    // printed: int: is_array = 0
+    int scalar {};
+    pout << "int: is_array = ", 
+        GeneralArrayTraits<decltype(scalar)>::is_array, "\n";
+
+``std::vector`` is DynamicArray, and therefore a General Array.
+Detailed features are accessible from the traits instance::
+    
+    // printed:
+    // vector<int>(4):
+    //   is_array = 1, is_const = 0
+    //   buff = 0x557a068552c0, size = 4
+    //   extents = 4, strides = 1
+    vector<int> a1(4);
+    GeneralArrayTraits tr1{a1};
+    pout << "vector<int>(4):\n",
+        "  is_array = ",  tr1.is_array,   ", is_const = ",    tr1.is_const, "\n",
+        "  buff = ",      tr1.buff(),     ", size = ",        tr1.size(), "\n",
+        "  extents = ",   tr1.extents(),  ", strides = ",    tr1.strides(), "\n";
+
+Raw array and std::array are RawArray types - also GeneralArray::
+
+    // printed: 
+    // array<int,3>: buff = 0x7fffddb798bc, size = 3
+    // float[2]: buff = 0x7fffddb798b4, size = 2
+    array<int, 3> a2 {};
+    float a3[2];
+    GeneralArrayTraits tr2{a2};
+    GeneralArrayTraits tr3{a3};
+    pout << "array<int,3>: buff = ", tr2.buff(), ", size = ", tr2.size(), "\n";
+    pout << "float[2]: buff = ", tr3.buff(), ", size = ", tr3.size(), "\n";
+
+Multi-dimensional arrays are also GeneralArray::
+
+    // printed:
+    // double[2][3]: extents = 2,3, strides = 3,1
+    // const array<array<int,3>,2>: is_const = 1, extents = 2,3
+    double a4[2][3] {};
+    const array<array<int, 3>, 2> a5{};
+    GeneralArrayTraits tr4{a4};
+    GeneralArrayTraits tr5{a5};
+    pout << "double[2][3]: extents = ", tr4.extents(), 
+        ", strides = ", tr4.strides(), "\n";
+    pout << "const array<array<int,3>,2>: is_const = ", tr5.is_const, 
+        ", extents = ", tr5.extents(), "\n";
+
+.. class:: \
+    template<typename T, typename V=void> \
+    GeneralArrayTraits
+    
+    .. member:: static constexpr bool is_array = false
+    
+    .. type:: T value_t
+
+
+    
+.. class:: template<typename ValueT> GeneralArrayTraits< const ValueT * >
+
+    Specializations for pointer and const pointer.
+    
+    .. member::\
+        static constexpr bool is_array = true
+        static constexpr boolis_const = true
+
+    .. type:: \
+        const ValueT *array_t;
+        const ValueT value_t;
+        value_t cvalue_t;
+
+    .. function:: \
+        constexpr GeneralArrayTraits(value_t *p, size_t n) noexcept 
+        constexpr GeneralArrayTraits() noexcept 
+
+    .. function:: \
+        constexpr value_t *buff() noexcept
+        constexpr size_t rank() noexcept
+        constexpr size_t size() noexcept
+        vector<size_t> extents() const
+        vector<size_t> strides() const
+    
+.. class:: template<typename ValueT> GeneralArrayTraits< ValueT * >
+    
+    .. member:: static constexpr bool is_array = true
+            static constexpr bool  is_const = false
+
+    .. type::
+        ValueT *array_t
+        ValueT value_t
+        std::add_const_t<value_t> cvalue_t
+
+    .. function::
+        constexpr GeneralArrayTraits(value_t *p, size_t n) noexcept 
+        constexpr GeneralArrayTraits() noexcept 
+       
+
+    .. function::
+        constexpr value_t *buff() noexcept
+        constexpr size_t rank() noexcept
+        constexpr size_t size() noexcept
+        vector<size_t> extents() const
+        vector<size_t> strides() const
+
+    
+.. class:: template<typename T> GeneralArrayTraits<T, \
+        std::enable_if_t< RawArrayTraits<T>::is_array > > 
+    
+    Specializations for RawArray type.
         
-        :arg fmt_cntl: ``0`` for a inline message, ``1`` for a long and verbose block message.
+    .. type:: RawArrayTraits<T> _traits_t
 
-        ``operator<<`` prints a inline message.
+    .. member:: \
+        static constexpr bool is_array = true;
 
-.. class:: template<typename T, size_t N> RawArrayTraits< std::array<T, N> >
+    .. type:: \
+        typename _traits_t::array_t array_t;
+        typename _traits_t::value_t value_t;
+        std::add_const_t<value_t> cvalue_t;
 
-.. class:: template<typename T, size_t N> RawArrayTraits< const std::array<T, N> > 
+    .. member:: \
+        static constexpr bool is_const = GeneralArrayTraits<value_t *>::is_const
 
-    Specialization for the ``std::array`` and its const version. 
-    It is defined according to the corresponding raw-array type.
+    .. function:: \
+        GeneralArrayTraits(T &x)
+        
+    .. function:: \
+        value_t *buff() const noexcept
+        constexpr size_t rank() noexcept
+        constexpr size_t size() noexcept
+        vector<size_t> extents() const
+        vector<size_t> strides() const
+
+    
+.. class::  template<typename T> GeneralArrayTraits<T, \
+        std::enable_if_t< DynamicArrayTraits<T>::is_array > >
+        
+    Specializations for DynamicArray type.
+    
+    .. type:: \
+        DynamicArrayTraits<T> _traits_t
+        
+    .. member:: \
+        static constexpr bool is_array = true;
+        
+    .. type:: \
+        typename _traits_t::array_t array_t
+        typename _traits_t::value_t value_t
+        std::add_const_t<value_t> cvalue_t
+
+    .. member:: \
+        static constexpr bool is_const = GeneralArrayTraits<value_t *>::is_const
+
+    .. function:: \
+        GeneralArrayTraits(T &x)
+
+    .. function:: \
+        value_t *buff() const noexcept
+        constexpr size_t rank() noexcept
+        size_t size() const
+        vector<size_t> extents() const
+        vector<size_t> strides() const
 
 .. _api-cntl-concept-contiguous-buffer:
 
@@ -178,54 +455,51 @@ The ContiguousBuffer Concept
 ContiguousBufferTraits
 """"""""""""""""""""""""
 
+ContiguousBuffer protocol. 
+
+For any type T that does not satisfying this protocol, member ``is_buffer`` is 
+false and ``buffer_t`` is ``T`` itself.
+
+Otherwise, the following members must be defined for the specialization of
+``ContiguousBufferTraits``:
+
+- ``is_buffer``: ``true``.
+- ``is_const``: whether or not the buffer is constant.
+- ``value_t`` and ``cvalue_t``:  type of the element in the buffer, and its 
+    const counterpart. If ``is_const``, ``cvalue_t`` equals to ``value_t``.
+- ``buffer_t``: the type of the object that hosts the buffer.
+
+Template argument V is not significant but reserved for type matching.
+
+The traits type must be default-constructable, resulting in a ``size == 0`` 
+buffer.
+
+The traits object can be constructed by passing a reference to the 
+buffer-host object.
+
+ContiguousBufferTraits is copy-constructable and copy-assignable, resulting
+in object that refers to the same buffer.
+
+The traits object has methods ``get_buff()``, ``get_cbuff()`` and ``get_size()``
+which returns the buffer pointer, const buffer pointer and size (i.e., number 
+of elements) of the buffer, respectively. Structured binding 
+``cv-ref auto [buff, size]`` is allowed.
+
+``begin()``, ``end()``, ``cbegin()``, ``cend()`` are defined to iterate over
+the referred buffer. They all returns raw pointer typed ``value_t *`` or 
+``cvalue_t``.
+
+A special case is ``T = ValueT *`` or ``T = const ValueT *``, i.e., the 
+buffer-host type is a pointer. In this case, the specialization class is used.
+
+Predefined contiguous-buffer-compliant types include any RawArray-compliant 
+type (i.e., C-style raw array, std::array) and std::vector.
+
 .. class:: template<typename T, typename V=void> ContiguousBufferTraits
 
     .. member:: static constexpr bool is_buffer = false
     
     .. type:: T buffer_t
-
-
-    ContiguousBuffer protocol. 
-
-    For any type T that does not satisfying this protocol, member ``is_buffer`` is 
-    false and ``buffer_t`` is ``T`` itself.
-
-    Otherwise, the following members must be defined for the specialization of
-    ``ContiguousBufferTraits``:
-
-    - ``is_buffer``: ``true``.
-    - ``is_const``: whether or not the buffer is constant.
-    - ``value_t`` and ``cvalue_t``:  type of the element in the buffer, and its 
-      const counterpart. If ``is_const``, ``cvalue_t`` equals to ``value_t``.
-    - ``buffer_t``: the type of the object that hosts the buffer.
-
-    Template argument V is not significant but reserved for type matching.
-
-    The traits type must be default-constructable, resulting in a ``size == 0`` 
-    buffer.
-
-    The traits object can be constructed by passing a reference to the 
-    buffer-host object.
-
-    ContiguousBufferTraits is copy-constructable and copy-assignable, resulting
-    in object that refers to the same buffer.
-
-    The traits object has methods ``get_buff()``, ``get_cbuff()`` and ``get_size()``
-    which returns the buffer pointer, const buffer pointer and size (i.e., number 
-    of elements) of the buffer, respectively. Structured binding 
-    ``cv-ref auto [buff, size]`` is allowed.
-
-    ``begin()``, ``end()``, ``cbegin()``, ``cend()`` are defined to iterate over
-    the referred buffer. They all returns raw pointer typed ``value_t *`` or 
-    ``cvalue_t``.
-
-    A special case is ``T = ValueT *`` or ``T = const ValueT *``, i.e., the 
-    buffer-host type is a pointer. In this case, the specialization class is used.
-
-    Predefined contiguous-buffer-compliant types include any RawArray-compliant 
-    type (i.e., C-style raw array, std::array) and std::vector.
-
-
 
 .. class:: template<typename ValueT> ContiguousBufferTraits< const ValueT * >
     
@@ -360,6 +634,28 @@ ContiguousBufferTraits
     .. function:: \
         constexpr ContiguousBufferTraits( buffer_t &arr ) noexcept
 
+
+.. class:: template<typename DynArrayT> ContiguousBufferTraits< DynArrayT, std::enable_if_t< DynamicArrayTraits<DynArrayT>::is_array > > : ContiguousBufferTraits< typename DynamicArrayTraits<DynArrayT>::value_t * > 
+
+    Specialization for DynamicArray protocol objects (e.g., ``std::vector``). 
+    Any of these object is treated as row-major 1D buffer.
+
+    For example:: 
+
+        const vector<int> a1{1,2,3};
+        vector<int> a2{1,2,3};
+
+        ContiguousBufferTraits<vector<int> > cbt1 {a1}; 
+                                                // explicit set the template argument
+        ContiguousBufferTraits cbt2 {a2};       // auto deduced
+
+    .. type:: \
+        DynamicArrayTraits<DynArrayT> _traits_t
+        ContiguousBufferTraits< typename _traits_t::value_t * > _parent_t
+        DynArrayT buffer_t
+        typename _parent_t::value_t value_t
+
+    .. function:: ContiguousBufferTraits( buffer_t &arr )
 
 
 .. class:: template<typename ValueT, typename Allocator> ContiguousBufferTraits< const vector<ValueT, Allocator> > : ContiguousBufferTraits< const ValueT * >

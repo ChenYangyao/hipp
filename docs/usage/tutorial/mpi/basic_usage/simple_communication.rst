@@ -157,8 +157,8 @@ pointer type passed::
 
 Note that the last one is preferred since you will have no chance of mistake.
 
-Any valid argument to :func:`~HIPP::MPI::Datatype::from_name` can be passed 
-as the name string, and any valid type to :func:`~HIPP::MPI::Datatype::from_type`
+Any valid argument to :expr:`Datatype::from_name` can be passed 
+as the name string, and any valid type to :expr:`Datatype::from_type`
 can be auto-deduced here.
 
 **The HIPP style:** HIPP provides specialized interfaces for the most useful 

@@ -102,6 +102,21 @@ RawArrayTraits
 RawArrayTraits gives features for a raw-array-like type.
 User may add specializations to this generic class.
 
+Given type ``T``, if ``T`` is not RawArray, then the member
+
+- ``constexpr bool is_array = false``.
+- type ``value_t`` is aliased to ``T``.
+
+Otherwise ``T`` is RawArray, satisfying
+
+- ``constexpr bool is_array = true``.
+- ``array_t`` is aliased to the corresponding raw array type with the same 
+  layout as ``T``, and ``value_t`` is aliased to the type of the array element.
+- ``constexpr size_t rank, size`` give the rank (no. of dimensions) and total
+  number of elements, respectively.
+- ``constexpr std::array<size_t, rank> extents, strides`` give extent of any
+  dimension and the stride to the next element along this dimension.
+
 For example::
 
     RawArrayTraits<int [3][4]>::extents;                                    // => std::array{3,4}.

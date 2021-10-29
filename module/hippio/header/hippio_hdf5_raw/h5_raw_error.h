@@ -25,7 +25,7 @@ public:
 
     The environment is restored at the destruction of this instance.
     */
-    explicit _H5EStackTempOff(id_t estack = vDFLT, flag_t flag=0) noexcept;
+    explicit _H5EStackTempOff(hid_t estack = vDFLT, flag_t flag=0) noexcept;
     virtual ~_H5EStackTempOff() noexcept override;
 private:
     H5E_auto_t _old_efunc = NULL;
@@ -33,7 +33,7 @@ private:
     flag_t _old_flag = 0;
 };
 
-inline _H5EStackTempOff::_H5EStackTempOff(id_t estack, flag_t flag) noexcept 
+inline _H5EStackTempOff::_H5EStackTempOff(hid_t estack, flag_t flag) noexcept 
 : _Obj(estack, stFREE), _old_flag(ErrH5::err_cntl_flag())
 {
     H5Eget_auto(_obj, &_old_efunc, &_old_edata);

@@ -27,6 +27,10 @@ Attr
         _Attr _obj_raw_t
         std::shared_ptr<_obj_raw_t> _obj_ptr_t
 
+    .. type:: _obj_raw_t::info_t info_t
+
+        Structured type that records attribute meta-info.
+
     **Constructors:** Class ``Attr`` "inherits" all constructors from its parent class.
         
     .. function:: \
@@ -35,6 +39,18 @@ Attr
 
         Return copy of the dataspace or datatype of the attribute.
         The datatype is read-only. 
+
+    .. function:: \
+        string get_name() const
+        hsize_t get_storage_size() const
+        void get_info(info_t &link_info) const
+        info_t get_info() const
+
+        Attribute information getter: retrieve the name, storage size allocated, 
+        meta-info.
+
+        The second overload of ``get_info()`` is the same except that the attribute
+        meta-info is returned rather than the argument being filled.
 
     .. function:: \
         void write(const void *buff, const Datatype &memtype)    
@@ -238,6 +254,10 @@ AttrManager
         Attr open(const string &name)
 
         Open an existing attribute named ``name``.
+
+
+
+
 
 Proplist
 --------------

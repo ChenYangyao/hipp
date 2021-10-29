@@ -32,6 +32,9 @@ public:
     typedef _Attr _obj_raw_t;
     typedef std::shared_ptr<_obj_raw_t> _obj_ptr_t;
 
+    /** Structured type that records attribute meta-info. */
+    typedef _obj_raw_t::info_t info_t;
+
     /**
     Class ``Attr`` "inherits" all constructors from its parent class.
     */
@@ -43,6 +46,19 @@ public:
     */
     Dataspace dataspace() const;
     Datatype datatype() const;
+
+    /**
+    Attribute information getter: retrieve the name, storage size allocated, 
+    meta-info.
+
+    The second overload of ``get_info()`` is the same except that the attribute
+    meta-info is returned rather than the argument being filled.
+    */
+    string get_name() const;
+    hsize_t get_storage_size() const;
+    
+    void get_info(info_t &link_info) const;
+    info_t get_info() const;
 
     /**
     Write data into the attribute.

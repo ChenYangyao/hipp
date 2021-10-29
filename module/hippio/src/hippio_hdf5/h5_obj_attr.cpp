@@ -2,6 +2,24 @@
 
 namespace HIPP::IO::H5 {
 
+string Attr::get_name() const {
+    return obj_raw().get_name();
+}
+
+hsize_t Attr::get_storage_size() const {
+    return obj_raw().get_storage_size();
+}
+
+void Attr::get_info(info_t &link_info) const {
+    obj_raw().get_info(link_info);
+}
+
+Attr::info_t Attr::get_info() const {
+    info_t info;
+    get_info(info);
+    return info;
+}
+
 void Attr::write(const void *buff, const Datatype &memtype) {
     obj_raw().write(memtype.raw(), buff);
 }

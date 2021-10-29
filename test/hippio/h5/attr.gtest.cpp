@@ -193,5 +193,60 @@ TEST_F(AttrTest, WriteStr) {
     }
 }
 
+TEST_F(AttrTest, MetaInfoGetter) {
+    vector<int> a { 1,2,3,4 };
+    double b {};
+
+    {
+        auto da = _g0.create_attr_for("a", a),
+            db = _g0.create_attr_for("b", b);
+
+        da.write(a);
+        db.write(b);
+    }
+
+    
+    EXPECT_TRUE(_g0.attr_exists("a"));
+    EXPECT_TRUE(_g0.attr_exists("b"));
+    
+
+    auto da = _g0.open_attr("a"), 
+        db = _g0.open_attr("b");
+    EXPECT_GT(da.get_storage_size(), 0);
+    EXPECT_GT(db.get_storage_size(), 0);
+    pout << " - get_storage_size", endl;
+
+    EXPECT_EQ(da.get_name(), "a");
+    EXPECT_EQ(db.get_name(), "b");
+    pout << " - get_name", endl;
+
+    {
+        auto info_a = da.get_info(),    
+            info_b = db.get_info();
+
+        EXPECT_GT(info_a.data_size, 0);
+        EXPECT_GT(info_b.data_size, 0);
+    }
+    pout << " - get_info", endl;
+
+    {
+        auto info_a = _g0.get_attr_info(".", "a"),
+            info_b = _g0.get_attr_info(".", "b");
+
+        EXPECT_GT(info_a.data_size, 0);
+        EXPECT_GT(info_b.data_size, 0);
+    }
+    pout << " - get_attr_info", endl;
+
+    {
+        vector<string> names;
+        names.emplace_back( _g0.get_attr_name(".", 0) );
+        names.emplace_back(_g0.get_attr_name(".", 1));
+        EXPECT_THAT(names, gt::UnorderedElementsAre("a", "b"));
+        
+    }
+    pout << " - get_attr_name", endl;
+}
+
 } // namespace
 } // namespace HIPP::IO::H5

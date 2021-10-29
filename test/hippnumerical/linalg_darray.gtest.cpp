@@ -9,6 +9,7 @@ protected:
     typedef DArray<int, 3> a3_t;
     typedef DArray<int, 2> a2_t;
     typedef DArray<int, 1> a1_t;
+    typedef const DArray<int, 3> c_a3_t;
     typedef typename a3_t::shape_t shape3_t;
     typedef typename a2_t::shape_t shape2_t;
     typedef typename a1_t::shape_t shape1_t;
@@ -18,6 +19,166 @@ protected:
     void SetUp() override {}
     void TearDown() override {}
 };
+
+TEST_F(DArrayIntTest, DynamicArrayProtocol){
+    typedef DynamicArrayTraits<a3_t> tr_t;
+    
+    bool same_value_t = std::is_same_v<tr_t::value_t, int>;
+    EXPECT_TRUE(same_value_t);
+    EXPECT_EQ(tr_t::rank, a3_t::RANK);
+
+    a3_t arr1 {{2,3,4}};
+    tr_t tr1 {arr1};
+    auto ext = tr1.extents(), sd = tr1.strides();
+    size_t sz = tr1.size();
+    int *buff = tr1.buff();
+
+    ASSERT_EQ(buff, arr1.data());
+    ASSERT_EQ(sz, arr1.size());
+    
+    ASSERT_EQ(ext.size(), a3_t::RANK);
+    EXPECT_EQ(ext[0], 2);
+    EXPECT_EQ(ext[1], 3);
+    EXPECT_EQ(ext[2], 4);
+    
+    ASSERT_EQ(sd.size(), a3_t::RANK);
+    EXPECT_EQ(sd[0], 12);
+    EXPECT_EQ(sd[1], 4);
+    EXPECT_EQ(sd[2], 1);
+
+    DynamicArrayTraits tr2 {arr1};
+    ext = tr2.extents(); 
+    sd = tr2.strides();
+    sz = tr2.size();
+    buff = tr2.buff();
+
+    ASSERT_EQ(buff, arr1.data());
+    ASSERT_EQ(sz, arr1.size());
+    
+    ASSERT_EQ(ext.size(), a3_t::RANK);
+    EXPECT_EQ(ext[0], 2);
+    EXPECT_EQ(ext[1], 3);
+    EXPECT_EQ(ext[2], 4);
+    
+    ASSERT_EQ(sd.size(), a3_t::RANK);
+    EXPECT_EQ(sd[0], 12);
+    EXPECT_EQ(sd[1], 4);
+    EXPECT_EQ(sd[2], 1);
+}
+
+TEST_F(DArrayIntTest, DynamicArrayProtocolConst){
+    typedef DynamicArrayTraits<c_a3_t> tr_t;
+    
+    bool same_value_t = std::is_same_v<tr_t::value_t, const int>;
+    EXPECT_TRUE(same_value_t);
+    EXPECT_EQ(tr_t::rank, c_a3_t::RANK);
+
+    c_a3_t arr1 {{2,3,4}};
+    tr_t tr1 {arr1};
+    auto ext = tr1.extents(), sd = tr1.strides();
+    size_t sz = tr1.size();
+    const int *buff = tr1.buff();
+
+    ASSERT_EQ(buff, arr1.data());
+    ASSERT_EQ(sz, arr1.size());
+    
+    ASSERT_EQ(ext.size(), c_a3_t::RANK);
+    EXPECT_EQ(ext[0], 2);
+    EXPECT_EQ(ext[1], 3);
+    EXPECT_EQ(ext[2], 4);
+    
+    ASSERT_EQ(sd.size(), c_a3_t::RANK);
+    EXPECT_EQ(sd[0], 12);
+    EXPECT_EQ(sd[1], 4);
+    EXPECT_EQ(sd[2], 1);
+
+    DynamicArrayTraits tr2 {arr1};
+    ext = tr2.extents(); 
+    sd = tr2.strides();
+    sz = tr2.size();
+    buff = tr2.buff();
+
+    ASSERT_EQ(buff, arr1.data());
+    ASSERT_EQ(sz, arr1.size());
+    
+    ASSERT_EQ(ext.size(), c_a3_t::RANK);
+    EXPECT_EQ(ext[0], 2);
+    EXPECT_EQ(ext[1], 3);
+    EXPECT_EQ(ext[2], 4);
+    
+    ASSERT_EQ(sd.size(), c_a3_t::RANK);
+    EXPECT_EQ(sd[0], 12);
+    EXPECT_EQ(sd[1], 4);
+    EXPECT_EQ(sd[2], 1);
+}
+
+TEST_F(DArrayIntTest, ContiguousBuffer) {
+    typedef ContiguousBufferTraits<a3_t> tr_t;
+
+    a3_t arr1 {{2,3,4}};
+    tr_t tr1 {arr1};
+    auto [p1, n1] = tr1;
+    EXPECT_EQ(p1, arr1.data());
+    EXPECT_EQ(n1, arr1.size());
+
+    bool same_value_t = std::is_same_v<tr_t::value_t, int>;
+    EXPECT_TRUE(same_value_t);
+
+    ContiguousBufferTraits tr2 {arr1};
+    auto [p2, n2] = tr2;
+    EXPECT_EQ(p2, arr1.data());
+    EXPECT_EQ(n2, arr1.size());
+
+    bool same_type = std::is_same_v<decltype(tr1), decltype(tr2)>;
+    EXPECT_TRUE(same_type);
+
+    ContiguousBuffer<int> tr3 {arr1};
+    auto [p3, n3] = tr3;
+    EXPECT_EQ(p3, arr1.data());
+    EXPECT_EQ(n3, arr1.size());
+
+    ContiguousBuffer tr4 {arr1};
+    auto [p4, n4] = tr4;
+    EXPECT_EQ(p4, arr1.data());
+    EXPECT_EQ(n4, arr1.size());
+
+    same_type = std::is_same_v<decltype(tr3), decltype(tr4)>;
+    EXPECT_TRUE(same_type);
+}
+
+TEST_F(DArrayIntTest, ContiguousBufferConst) {
+    typedef ContiguousBufferTraits<c_a3_t> tr_t;
+
+    c_a3_t arr1 {{2,3,4}};
+    tr_t tr1 {arr1};
+    auto [p1, n1] = tr1;
+    EXPECT_EQ(p1, arr1.data());
+    EXPECT_EQ(n1, arr1.size());
+
+    bool same_value_t = std::is_same_v<tr_t::value_t, const int>;
+    EXPECT_TRUE(same_value_t);
+
+    ContiguousBufferTraits tr2 {arr1};
+    auto [p2, n2] = tr2;
+    EXPECT_EQ(p2, arr1.data());
+    EXPECT_EQ(n2, arr1.size());
+
+    bool same_type = std::is_same_v<decltype(tr1), decltype(tr2)>;
+    EXPECT_TRUE(same_type);
+
+    ContiguousBuffer<const int> tr3 {arr1};
+    auto [p3, n3] = tr3;
+    EXPECT_EQ(p3, arr1.data());
+    EXPECT_EQ(n3, arr1.size());
+
+    ContiguousBuffer tr4 {arr1};
+    auto [p4, n4] = tr4;
+    EXPECT_EQ(p4, arr1.data());
+    EXPECT_EQ(n4, arr1.size());
+
+    same_type = std::is_same_v<decltype(tr3), decltype(tr4)>;
+    EXPECT_TRUE(same_type);
+}
 
 TEST_F(DArrayIntTest, ShapeInitialize){
     a3_t a1 {{2, 2, 3}};

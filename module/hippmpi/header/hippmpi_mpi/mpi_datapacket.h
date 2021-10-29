@@ -78,7 +78,8 @@ public:
     (4). Equivalent to (2) with arguments ``{s.data(), s.size(), CHAR}``.
 
     (5). The same as (2), but the datatype is inferred from the pointed type 
-    ``T``. The actual used datatype is like that return by Datatype::from_type.
+    ``T``. The actual used datatype is like that return by 
+    :expr:`Datatype::from_type`.
     Ordinary types are suppoeted, like char, int, unsigned short, float, bool, 
     etc. Any types that are DatatypeTraits-conformable are also supported.
     

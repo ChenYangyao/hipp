@@ -2,47 +2,61 @@
 IO Module
 *************************************
 
+.. include:: /global.rst
+
 .. _api-io-usage:
 
 IO Module Overview
 ====================
 
-All the definitions in the IO module can be accessed by including the header file **<hippio.h>**.
-Classes, functions and variables are all defined within the ``HIPP::IO`` namespace. 
-Code that uses the IO module would be like ::
+The IO module of HIPP provides 
 
-    /* src.cpp */
+- High-level, pure-OOP wrappers for the HDF5 library.
+- Extentions to simplify common I/O tasks.
 
-    #include <hippio.h>                         // include all definitions in HIPP IO 
+All the HDF5 wrappers and extensions are defined in the namespace ``HIPP::IO::H5``. 
+To use them, 
 
-    int main(int argc, char const *argv[]){
-        HIPP::IO::H5File file("list.h5", "w");  // create a new file of HDF5 format
+- include the header ``<hippio.h>``;
+- link the library ``libhippio.so``, ``libhippcntl.so``
+- link ``libhdf5.so``, if the HDF5 library is built as dynamic.
 
-        // perform IO on the file instance
-    }
+The following namespace declarations are adopted for clarity in all example
+codes in this API-ref::
 
-To generate the executable binary, the links to **"libhippio.so"** and **"libhippcntl.so"** are necessary.
-Depending on your installation of the HDF5 library, the link to **libhdf5.so** would also be required.
-The compiling command in an Unix-like system would be like
+  namespace H5 = HIPP::IO::H5;
+  using namespace HIPP;
+  using namespace std; 
 
-.. code-block:: bash 
+List of Module Components 
+==========================
 
-    $ g++ -std=c++17 src.cpp -lhippio -lhippcntl -lhdf5
+.. namespace:: HIPP::IO::H5
 
-.. _api-io-convention:
+.. table::
+    :class: tight-table
 
-To avoid confusion, we list the convetions used in this API reference:
-
-* The term **Standard** means the HDF5 standard C APIs (types, functions, variables, macros, etc.)
-  defined by the `HDF5 Group <https://www.hdfgroup.org/solutions/hdf5/>`_. E.g., the **Standard**
-  ``hid_t`` means the generic object type defined by HDF5 C API.
-* The HIPP IO library has three components: the **High-level API**, the **Extended API**, and the 
-  **Intermediate-level API** (see below for the detail API references of each component).
-* The documentation text of one definition would probably refer to other definitions. If they are in the 
-  same namespace (``HIPP::IO`` here), we drop the namespace specifiers for clarity 
-  (e.g., class :class:`H5File <HIPP::IO::H5File>` means class :class:`HIPP::IO::H5File`). 
-* The example code that uses C++ standard library may ignore the ``std::`` namespace specifier (namely, assume 
-  a global ``using namespace std`` is used). This is not good in practice, but makes the example code more compact. 
+    ==================================================================== ====================================================== ====================================================
+    Class                                                                Corresponding HDF5 Standard C API                      Details
+    ==================================================================== ====================================================== ====================================================
+    :class:`File`                                                        H5F                                                    File manipulation.
+    :class:`Group`                                                       H5G, H5L                                               Data group operations.
+    :class:`Dataset`                                                     H5D                                                    Dataset operations.
+    :class:`Datatype`                                                    H5T                                                    Type system.
+    :class:`Dataspace`                                                   H5S                                                    Dataspace operations.
+    :class:`Proplist`                                                    H5P                                                    Property list.
+    :class:`Attr`                                                        H5A                                                    Attributes.
+    :class:`Obj`
+    :class:`NamedObj`                                                    H5O                                                    Base class of all HDF5 objects.
+    :class:`XTable`                                                                                                             Base class of all named HDF5 objects.
+    :class:`Dimensions`         
+    :class:`Points`
+    :class:`Chunk`
+    :class:`Hyperslab`
+    :class:`Datapacket`, :class:`ConstDatapacket`                                                                               Convert C++ object to H5 datatype and dataspace.
+    :class:`DatapacketScalar`, :class:`ConstDatapacketScalar`                                                                   Scalar versions of ``Datapacket``.
+    :class:`DatapacketStr`, :class:`ConstDatapacketStr`                                                                         String versions of ``Datapacket``.
+    ==================================================================== ====================================================== ====================================================
 
 
 API References
@@ -55,10 +69,12 @@ High-level API
     :maxdepth: 2
 
     high-level/global-def
-    high-level/error
+    high-level/obj
     high-level/file 
     high-level/dataset 
     high-level/attr
+    high-level/error
+    high-level/util
 
 Extended API 
 --------------
@@ -75,5 +91,6 @@ Intermediate-level API
 .. toctree::
     :maxdepth: 2
 
-    intermediate-level/index 
+    intermediate-level/datatype
+
 

@@ -161,6 +161,148 @@ TEST_F(ConceptRawArrayTest, TraitsConst) {
 }
 
 
+class ConceptDynamicArrayTest : public ::testing::Test {
+protected:
+    template<typename C1, typename C2>
+    void chk_iterable_eq(const C1 &c1, const C2 &c2) {
+        ASSERT_EQ(c1.size(), c2.size());
+        bool same = std::is_same_v<typename C1::value_type, 
+            typename C2::value_type>;
+        EXPECT_TRUE(same);
+        for(size_t i=0; i<c1.size(); ++i){
+            EXPECT_EQ(c1[i], c2[i]);
+        }
+    }
+    template<typename T1, typename T2>
+    void chk_type_eq() {
+        bool same = std::is_same_v<T1, T2>;
+        EXPECT_TRUE(same);
+    }
+};
+
+TEST_F(ConceptDynamicArrayTest, Traits) {
+    typedef DynamicArrayTraits<vector<int> > tr_t;
+    typedef vector<int> v_t; 
+    
+    v_t v(12);
+    
+    DynamicArrayTraits tr_v1(v);
+    tr_t tr_v2(v);
+    DynamicArrayTraits<int> tr_s;
+
+    EXPECT_TRUE(tr_v1.is_array);
+    EXPECT_TRUE(tr_v2.is_array);
+    EXPECT_FALSE(tr_s.is_array);
+    
+    chk_type_eq<decltype(tr_v1), tr_t>();
+    chk_type_eq<tr_t::array_t, v_t>();
+    chk_type_eq<tr_t::value_t, int>();
+
+    EXPECT_EQ(tr_v1.buff(), v.data());
+    EXPECT_EQ(tr_v1.size(), v.size());
+    EXPECT_EQ(tr_v1.rank, 1);
+    chk_iterable_eq(tr_v1.extents(), std::array<size_t, 1>{v.size()});
+    chk_iterable_eq(tr_v1.strides(), std::array<size_t, 1>{1});
+}
+
+TEST_F(ConceptDynamicArrayTest, TraitsConst) {
+    typedef DynamicArrayTraits<const vector<int> > tr_t;
+    typedef const vector<int> v_t; 
+    
+    v_t v(12);
+    
+    DynamicArrayTraits tr_v1(v);
+    tr_t tr_v2(v);
+
+    EXPECT_TRUE(tr_v1.is_array);
+    EXPECT_TRUE(tr_v2.is_array);
+    
+    chk_type_eq<decltype(tr_v1), tr_t>();
+    chk_type_eq<tr_t::array_t, v_t>();
+    chk_type_eq<tr_t::value_t, const int>();
+
+    EXPECT_EQ(tr_v1.buff(), v.data());
+    EXPECT_EQ(tr_v1.size(), v.size());
+    EXPECT_EQ(tr_v1.rank, 1);
+    chk_iterable_eq(tr_v1.extents(), std::array<size_t, 1>{v.size()});
+    chk_iterable_eq(tr_v1.strides(), std::array<size_t, 1>{1});
+}
+
+
+class ConceptGeneralArrayTest : public ::testing::Test {
+protected:
+    template<typename C1, typename C2>
+    void chk_iterable_eq(const C1 &c1, const C2 &c2) {
+        ASSERT_EQ(c1.size(), c2.size());
+        bool same = std::is_same_v<typename C1::value_type, 
+            typename C2::value_type>;
+        EXPECT_TRUE(same);
+        for(size_t i=0; i<c1.size(); ++i){
+            EXPECT_EQ(c1[i], c2[i]);
+        }
+    }
+    template<typename T1, typename T2>
+    void chk_type_eq() {
+        bool same = std::is_same_v<T1, T2>;
+        EXPECT_TRUE(same);
+    }
+};
+
+TEST_F(ConceptGeneralArrayTest, RawArray){
+    typedef int arr1_t[2][3];
+    typedef const int arr1c_t[2][3];
+    typedef GeneralArrayTraits<arr1_t> tr1_t;
+    typedef GeneralArrayTraits<arr1c_t> tr1c_t;
+
+    EXPECT_TRUE(tr1_t::is_array);
+    EXPECT_TRUE(tr1c_t::is_array);
+    EXPECT_FALSE(tr1_t::is_const);
+    EXPECT_TRUE(tr1c_t::is_const);
+    
+    arr1_t arr1;
+
+    tr1_t tr1 {arr1};
+    GeneralArrayTraits tr2 (arr1);
+
+    chk_type_eq<decltype(tr2), tr1_t>();
+    chk_type_eq<tr1_t::array_t, arr1_t>();
+    chk_type_eq<tr1_t::value_t, int>();
+    EXPECT_EQ(tr1.buff(), arr1[0]);
+    EXPECT_EQ(tr1.rank(), 2);
+    EXPECT_EQ(tr1.size(), 6);
+    chk_iterable_eq(tr1.extents(), std::vector<size_t>{2,3});
+    chk_iterable_eq(tr1.strides(), std::vector<size_t>{3,1});
+
+
+}
+
+TEST_F(ConceptGeneralArrayTest, StdVector){
+    typedef vector<int> v1_t;
+    typedef const vector<int> v1c_t;
+    typedef GeneralArrayTraits<v1_t> tr1_t;
+    typedef GeneralArrayTraits<v1c_t> tr1c_t;
+
+    EXPECT_TRUE(tr1_t::is_array);
+    EXPECT_TRUE(tr1c_t::is_array);
+    EXPECT_FALSE(tr1_t::is_const);
+    EXPECT_TRUE(tr1c_t::is_const);
+    
+    v1_t v1(6);
+
+    tr1_t tr1 {v1};
+    GeneralArrayTraits tr2 (v1);
+
+    chk_type_eq<decltype(tr2), tr1_t>();
+    chk_type_eq<tr1_t::array_t, v1_t>();
+    chk_type_eq<tr1_t::value_t, int>();
+    EXPECT_EQ(tr1.buff(), v1.data());
+    EXPECT_EQ(tr1.rank(), 1);
+    EXPECT_EQ(tr1.size(), v1.size());
+    chk_iterable_eq(tr1.extents(), std::vector<size_t>{6});
+    chk_iterable_eq(tr1.strides(), std::vector<size_t>{1});
+}
+
+
 class ConceptContiguousBufferTest : public ::testing::Test {
 protected:
     template<typename T>
@@ -293,6 +435,7 @@ TEST_F(ConceptContiguousBufferTest, TraitsObjectConstruction){
     chk_range_eq(o_b3, b3);
     chk_range_eq(o_b3c1, b3c1);
 }
+
 
 class ContiguousBufferTest : public ::testing::Test {
 protected:

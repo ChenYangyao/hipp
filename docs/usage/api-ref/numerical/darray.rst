@@ -421,23 +421,47 @@ For details, see, e.g., the description of the corresponding method :func:`DArra
     template<typename ValueT, size_t Rank, typename Alloc, typename AllocB = std::allocator<bool> > DArray<bool, Rank, AllocB> operator==( const DArray<ValueT, Rank, Alloc> &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
     template<typename ValueT, size_t Rank, typename Alloc, typename AllocB = std::allocator<bool> > DArray<bool, Rank, AllocB> operator!=( const DArray<ValueT, Rank, Alloc> &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
 
-ContiguousBuffer Protocol
-""""""""""""""""""""""""""
+DynamicArray Specialization
+""""""""""""""""""""""""""""
+.. class:: template<typename ValueT, size_t Rank, typename Alloc> \
+    HIPP::DynamicArrayTraits< DArray<ValueT, Rank, Alloc> >
+
+    .. member:: constexpr bool is_array = true
+        constexpr size_t rank = Rank
+
+    .. type:: \
+        NUMERICAL::_HIPP_TEMPCLS array_t
+        ValueT value_t
+
+    .. function:: \
+        DynamicArrayTraits(array_t &a)
+
+    .. function:: \
+        value_t * buff() const noexcept
+        size_t size() const noexcept
+        std::array<size_t, rank> extents() const noexcept 
+        std::array<size_t, rank> strides() const noexcept
+
+    .. member:: \
+        array_t &array
+
 
 .. class:: template<typename ValueT, size_t Rank, typename Alloc> \
-    HIPP::ContiguousBufferTraits<const DArray<ValueT, Rank, Alloc> > \
-    : ContiguousBufferTraits< std::add_const_t<typename DArray<ValueT, Rank, Alloc>::value_t > * >
+    DynamicArrayTraits< const DArray<ValueT, Rank, Alloc> >
+public:
+    .. member:: constexpr bool is_array = true
+    .. member:: constexpr size_t rank = Rank
 
-    .. type:: ContiguousBufferTraits<std::add_const_t<typename DArray<ValueT, Rank, Alloc>::value_t > * > _parent_t
-        const DArray<ValueT, Rank, Alloc> buffer_t
+    .. type:: const NUMERICAL::_HIPP_TEMPCLS array_t;
+        std::add_const_t<ValueT> value_t;
 
-    .. function:: constexpr ContiguousBufferTraits(buffer_t &a) noexcept 
+    .. function:: \
+        DynamicArrayTraits(array_t &a)
 
-.. class:: template<typename ValueT, size_t Rank, typename Alloc> \
-    HIPP::ContiguousBufferTraits<DArray<ValueT, Rank, Alloc> >  \
-    : ContiguousBufferTraits< typename DArray<ValueT, Rank, Alloc>::value_t * >
-
-    .. type:: ContiguousBufferTraits< typename DArray<ValueT, Rank, Alloc>::value_t * > _parent_t
-        DArray<ValueT, Rank, Alloc> buffer_t;
-
-    .. function:: constexpr ContiguousBufferTraits(buffer_t &a) noexcept 
+    .. function:: \
+        value_t * buff() const noexcept
+        size_t size() const noexcept
+        std::array<size_t, rank> extents() const noexcept
+        std::array<size_t, rank> strides() const noexcept
+    
+        array_t &array

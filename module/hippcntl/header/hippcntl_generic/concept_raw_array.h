@@ -178,6 +178,19 @@ private:
 RawArrayTraits - gives features for a raw-array-like type.
 User may add specializations to this generic class.
 
+Given type ``T``, if ``T`` is not RawArray, then the member
+- ``constexpr bool is_array = false``.
+- type ``value_t`` is aliased to ``T``.
+
+Otherwise ``T`` is RawArray, satisfying
+- ``constexpr bool is_array = true``.
+- ``array_t`` is aliased to the corresponding raw array type with the same 
+  layout as ``T``, and ``value_t`` is aliased to the type of the array element.
+- ``constexpr size_t rank, size`` give the rank (no. of dimensions) and total
+  number of elements, respectively.
+- ``constexpr std::array<size_t, rank> extents, strides`` give extent of any
+  dimension and the stride to the next element along this dimension.
+
 e.g.,
 RawArrayTraits<int [3][4]>::extents 
     // => std::array{3,4}.
@@ -231,20 +244,21 @@ public:
     */
     ostream & info(ostream &os=cout, int fmt_cntl=1) const {
         PStream ps(os);
-        ps << HIPPCNTL_CLASS_INFO_INLINE(HIPP::RawArrayTraits);
-        _prt(ps);
-        if(fmt_cntl >= 1) ps << '\n'; 
+        if( fmt_cntl == 0 ) {
+            ps << "RawArrayTraits{"; _prt(ps); ps << "}";
+        }else{
+            ps << HIPPCNTL_CLASS_INFO(RawArrayTraits), "  ";
+            _prt(ps); ps << '\n';
+        }
         return os;
     }
     friend ostream & operator<< (ostream &os, const RawArrayTraits &t) {
-        PStream ps(os);
-        ps << "HIPP::RawArrayTraits "; t._prt(ps);
-        return os;
+        return t.info(os, 0);
     }
 private:
     void _prt(PStream &ps) const {
-        ps << "(sizeof value_t=", sizeof(value_t),  
-            ", rank=", rank, ", size=", size, ", extents={", extents, "})";
+        ps << "sizeof value_t=", sizeof(value_t),  
+            ", rank=", rank, ", size=", size, ", extents={", extents, "}";
     }
 };
 

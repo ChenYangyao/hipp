@@ -29,8 +29,16 @@ public:
     static const copy_attr_fn_t NULL_COPY_FN, DUP_FN;
     static const del_attr_fn_t NULL_DEL_FN;
 
-    ostream &info( ostream &os = cout, int fmt_cntl = 1 ) const;
-    friend ostream & operator<<( ostream &os, const Comm &comm );
+    /**
+    ``info()`` prints a short (``fmt_cntl=1``) or verbose (``fmt_cntl=1``)
+    description about the instance to the stream ``os``.
+
+    Operator ``<<`` is equivalent to ``info()`` with ``fmt_cntl=0``.
+
+    The stream ``os`` itself is returned.
+    */
+    ostream &info( ostream &os = cout, int fmt_cntl = 1) const;
+    friend ostream & operator<< (ostream &os, const Comm &comm);
 
     /** 
     Free the communicator and set the instance to the null value 
@@ -567,10 +575,11 @@ protected:
         void *attr_val, void *extra_state );
 };
 
-inline ostream & operator<<( ostream &os, const Comm &comm )
-    { return comm.info(os); }
+inline ostream & operator<< (ostream &os, const Comm &comm) { 
+    return comm.info(os, 0); 
+}
 
-inline Comm Comm::_from_raw(mpi_t obj, int state) noexcept{
+inline Comm Comm::_from_raw(mpi_t obj, int state) noexcept {
     return Comm( std::make_shared<_obj_raw_t>(obj, state) );
 }
 

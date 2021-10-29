@@ -7,7 +7,7 @@ The following classes are all defined within namespace ``HIPP::MPI``.
 
 .. namespace:: HIPP::MPI
 
-Class Datatype
+Datatype
 ------------------------------------------
 
 .. class:: Datatype 
@@ -205,7 +205,7 @@ Class Datatype
 
     .. function:: \
         template<typename NativeT> \
-        static const Datatype & from_type() noexcept
+        static const Datatype & from_type()
 
         Get the Datatype instance from its C++ type. 
 
@@ -453,14 +453,14 @@ Their const qualified types are also supported, referring to the same Datatype o
     is mapped to the MPI contiguous datatype sized ``size`` with element type 
     ``value_t``.
 
-DatatypeConverter
-""""""""""""""""""
+The Datatype Converter
+""""""""""""""""""""""""
 
 The followings are the interfaces of the type mapping. 
 Do not add specialization to this class template.
 Instead, define specialization to ``DatatypeTraits``.
 
-.. class:: template<typename NativeT, typename V> TypeCvt
+.. class:: template<typename NativeT, typename V=void> TypeCvt
     
     .. member:: static constexpr bool has_mpi_datatype = false
 
@@ -550,7 +550,7 @@ difference.
         (4). Equivalent to (2) with arguments ``{s.data(), s.size(), CHAR}``.
 
         (5). The same as (2), but the datatype is inferred from the pointed type 
-        ``T``. The actual used datatype is like that return by :func:`Datatype::from_type`.
+        ``T``. The actual used datatype is like that return by :expr:`Datatype::from_type`.
         Ordinary types are suppoeted, like ``char``, ``int``, ``unsigned short``, ``float``, ``bool``, 
         etc. Any types that are DatatypeTraits-conformable are also supported (see class :class:`DatatypeTraits` for the protocol definition).
         

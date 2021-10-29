@@ -9,13 +9,17 @@ int main(int argc, char const *argv[]) {
     Comm comm = env.world();
 
     string name = env.processor_name();
-    int rank = comm.rank(), n_procs = comm.size();
+    int rank = comm.rank();
+    int n_procs = comm.size();
 
-    pout << "Host name ", name, '\n',
-        "Rank ", rank, ", no. of processes ", n_procs, endl;
-
-    comm.barrier();
-    if(rank == 0) pout << comm;
+    if( rank == 0 ) {
+        pout << 
+            "Host name ", name, '\n',
+            "Rank ", rank, '\n',
+            "No. of processes ", n_procs, '\n';
+        pout << comm, endl;
+        comm.info(cout);
+    }   
 
     return 0;
 }

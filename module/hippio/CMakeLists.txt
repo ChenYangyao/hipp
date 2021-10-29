@@ -30,6 +30,8 @@ install(TARGETS ${_libname}
 )
 install(DIRECTORY 
         "${_headerdir}/${_libname}_hdf5"
+        "${_headerdir}/${_libname}_hdf5_raw"
+        "${_headerdir}/${_libname}_hdf5_impl"
     DESTINATION include
 )
 install(FILES

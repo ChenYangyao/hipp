@@ -40,10 +40,15 @@ of the environment object. The number of processes and the rank of the current
 process can be obtained from the communicator::
 
     string name = env.processor_name();
-    int rank = comm.rank(), n_procs = comm.size();
+    int rank = comm.rank();
+    int n_procs = comm.size();
 
-    pout << "Host name ", name, '\n',
-        "Rank ", rank, ", no. of processes ", n_procs, endl;
+    if( rank == 0 ) {
+        pout << 
+            "Host name ", name, '\n',
+            "Rank ", rank, '\n',
+            "No. of processes ", n_procs, '\n';
+    }   
 
 To compile the program, link with the HIPP MPI library and CNTL library. The MPI 
 program can be run by ``mpirun`` or ``mpiexec``, depending on the implementation you used:
@@ -58,30 +63,36 @@ Output:
 .. code-block:: text
 
     Host name local-HP
-    Rank 2, no. of processes 4
-    Host name local-HP
-    Rank 0, no. of processes 4
-    Host name local-HP
-    Rank 3, no. of processes 4
-    Host name local-HP
-    Rank 1, no. of processes 4
+    Rank 0
+    No. of processes 4
 
 More details can be found in the :ref:`API-Ref <api-mpi-usage>`.
 
 HIPP's objects are printable so that we can quickly get some knownledge 
 about them, particularly useful for loggin and debug. For example::
 
-    if(rank == 0) pout << comm;
+    if( rank == 0 ) pout << comm, endl;
 
 Output:
 
 .. code-block:: text
 
-  HIPP::MPI::Comm instance [loc=0x7ffce560d790, size=16, align=8]
-  ----------
-    Process group
-      rank/size:        0/4
-    Topology: undefined
+    Comm{size=4, rank=0, topology=undefined}
+
+The :func:`~HIPP::MPI::Comm::info` method prints more verbosely, allowing 
+detailed inspection for the status of the object::
+
+    if( rank == 0 ) comm.info(cout);
+
+Output:
+
+.. code-block:: text
+
+    HIPP::MPI::Comm instance [loc=0x7ffc65b1cfb0, size=16, align=8]
+    ----------
+    Process group{size=4, rank=0}
+    Topology{undefined}
+
 
 .. _tutor-mpi-p2p:
 
@@ -111,7 +122,7 @@ a pair of processes. The output from process 1 is
     Got {0,0,0,0,0}
 
 Note that the receiver's buffer must be sufficiently large to hold the message.
-To find the actual number of items received, use :func:`HIPP::MPI::Status::count`
+To find the actual number of items received, use :func:`~HIPP::MPI::Status::count`
 on the returned status object from ``recv``::
 
     auto status = comm.recv(0, tag, inbuf);
@@ -122,27 +133,40 @@ on the returned status object from ``recv``::
 The Communication Buffer
 """"""""""""""""""""""""""
 
-The design strategy of HIPP is to provide both the most general interface 
+**The standard buffer specialization:** The design strategy of HIPP is to provide 
+both the most general interface 
 and the interfaces specific to special tasks. 
-In terms of the communication calls,
-you may use the Standard MPI style to specify the buffer, i.e., use the 
+In terms of the communication calls, it is always valid to used the 
+Standard MPI style to specify the buffer, i.e., use the 
 ``{address, count, datatype}`` triplet::
 
     double outbuf[5] = {};
     comm.send(1, tag, outbuf, 5, DOUBLE);
 
-Or, equivalently, use the name string for any numerical type::
+Here, we send 5 double values starting from the address ``outbuf``. The datatype 
+:var:`~HIPP::MPI::DOUBLE` is a predefined datatype object.
+
+Equivalently, it is valid to use the name string for any numerical type::
 
     comm.send(1, tag, outbuf, 5, "double");
 
-Or, omit the datatype and let the library infer it from the pointer type passed::
+Or, more convenient, omit the datatype and let the library deduce it from the 
+pointer type passed::
 
     comm.send(1, tag, outbuf, 5);
 
 Note that the last one is preferred since you will have no chance of mistake.
 
-For a single numerical variable, raw-array, ``std::string`` and ``std::vector``, 
-and ``std::array``, you may even drop the count since they are self-contained::
+Any valid argument to :expr:`Datatype::from_name` can be passed 
+as the name string, and any valid type to :expr:`Datatype::from_type`
+can be auto-deduced here.
+
+**The HIPP style:** HIPP provides specialized interfaces for the most useful 
+C++ types, e.g., single numerical variable, raw-array, ``std::string``, ``std::vector``, 
+and ``std::array``.
+
+Hence, you may pass the following objects directly to the send/recv calls, without 
+explicitly specifying their lengths and datatypes::
     
     double x {}; 
     short a[5] {};
@@ -156,19 +180,32 @@ and ``std::array``, you may even drop the count since they are self-contained::
     comm.send(1, tag, v);
     comm.send(1, tag, arr);
 
-Note that HIPP does not resize the containers, so the count is inferred from 
-their ``size()``.
+Even the combination of them is allowed::
+
+    array<array<long, 3>, 4> arr_of_arr {};
+    vector<array<long, 3> > vec_of_arr(4);
+
+    comm.send(1, tag, vec_of_arr);
+    comm.send(1, tag, arr_of_arr);
+
+The limitation is that the buffer in the passed object must have contiguous
+memory layout. Hence, ``vector<int> [5]`` is wrong and fails with compiling 
+error. To send/recv a message with non-contiguous memory layout, see 
+the :doc:`./datatype`.
+
+For ``recv()``, the extra limitation is that 
+the object or buffer passed must be writable and sufficiently large, e.g., 
+passing ``const int [5]`` or ``const vector<int>`` to the receiving calls 
+fails with compiling error.
+
+Note that HIPP never resizes the containers (e.g., for ``std::vector``). 
+It is user's responsibility to make sure that the passed object has 
+correct size.
 
 The full list of supported buffer specification is documented in the API-Ref 
 of :class:`~HIPP::MPI::Datapacket`. The actual implementation is to first 
-construct a unified datapacket object from any of these calls, and then pass it
-to the underlying MPI calls. 
-
-For ``recv()``, the only limitation is that 
-the object or buffer passed must be writable (hence, ``std::string`` 
-cannot be used) and sufficiently large.
-Note that HIPP never resizes the buffer (e.g., calls ``resize()`` on a ``std::vector`` argument).
-It is users' responsibility to ensure the buffer size is correct.
+construct a unified datapacket object from any of these calls, 
+and then pass it to the underlying MPI calls. 
 
 .. _tutor-mpi-collective:
 

@@ -95,7 +95,7 @@ template<typename ReturnType, typename ...Args>
 void ErrH5::throw_( ReturnType r, Args &&... args ) {
     if( _err_cntl_flag )
         prt( cerr, std::forward<Args>(args)... );
-    throw ErrH5();
+    throw ErrH5( r );
 }
 
 inline ErrH5::flag_t ErrH5::err_cntl_flag() noexcept { 

@@ -47,7 +47,7 @@ public:
         index_t idx_type, iter_order_t order, hsize_t n, 
         hid_t laprop = _Proplist::vDFLT);
 
-    static void close(id_t obj);
+    static void close(hid_t obj);
 
     htri_t exists_by_name(const char *name, 
         hid_t laprop = _Proplist::vDFLT) const;
@@ -59,9 +59,9 @@ public:
         hsize_t n, info_t &info, info_field_t fields = infoALL, 
         hid_t laprop = _Proplist::vDFLT) const;
 
-    void visit(index_t idx_type, iter_order_t order, iterate_t op, 
+    herr_t visit(index_t idx_type, iter_order_t order, iterate_t op, 
         void *op_data, info_field_t fields = infoALL) const;
-    void visit_by_name(const char *name, index_t idx_type, iter_order_t order, 
+    herr_t visit_by_name(const char *name, index_t idx_type, iter_order_t order, 
         iterate_t op, void *op_data, info_field_t fields = infoALL, 
         hid_t laprop = _Proplist::vDFLT) const;
 };
@@ -89,7 +89,7 @@ inline hid_t _NamedObj::open_by_idx(hid_t loc, const char *group_name,
     return ret;
 }
 
-inline void _NamedObj::close(id_t obj) {
+inline void _NamedObj::close(hid_t obj) {
     ErrH5::check(H5Oclose(obj), emFLPFB);
 }
 
@@ -120,20 +120,24 @@ inline void _NamedObj::get_info_by_idx(const char *name, index_t idx_type,
         "  ... get info failed (name=", name, ", idx=", n, ")\n");
 }
 
-inline void _NamedObj::visit(index_t idx_type, iter_order_t order, iterate_t op, 
+inline herr_t _NamedObj::visit(index_t idx_type, iter_order_t order, iterate_t op, 
     void *op_data, info_field_t fields) const 
 {
-    ErrH5::check(H5Ovisit(raw(), idx_type, order, op, 
-        op_data, fields), emFLPFB, "  ... visit failed\n");
+    auto ret = H5Ovisit(raw(), idx_type, order, op, 
+        op_data, fields);
+    ErrH5::check(ret, emFLPFB, "  ... visit failed\n");
+    return ret;
 }
 
-inline void _NamedObj::visit_by_name(const char *name, index_t idx_type, 
+inline herr_t _NamedObj::visit_by_name(const char *name, index_t idx_type, 
     iter_order_t order, iterate_t op, void *op_data, info_field_t fields,
     hid_t laprop) const 
 {
-    ErrH5::check(H5Ovisit_by_name(raw(), name, idx_type, order, op, op_data, 
-        fields, laprop), emFLPFB, 
+    auto ret = H5Ovisit_by_name(raw(), name, idx_type, order, op, op_data, 
+        fields, laprop);
+    ErrH5::check(ret, emFLPFB, 
         "  ... get info failed (name=", name, ")\n");
+    return ret;
 }
 
 } // namespace HIPP::IO::H5

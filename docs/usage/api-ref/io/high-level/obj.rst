@@ -133,11 +133,17 @@ NamedObj
 
         Object types.
 
+    .. type:: \
+            _Attr::info_t attr_info_t
+            _named_obj_attr_helper::iter_arg_t attr_iter_arg_t
+            _named_obj_attr_helper::iter_op_t attr_iter_op_t
 
-        **Constructors:** Class ``NamedObj`` "inherits" all constructors from its parent class.
+
+
+    **Constructors:** Class ``NamedObj`` "inherits" all constructors from its parent class.
 
     .. function:: \
-        void get_info(info_t &info, info_field_t  fields = infoALL) const;
+        void get_info(info_t &obj_info, info_field_t  fields = infoALL) const;
 
         Retrive the object meta info of the current object.
 
@@ -147,16 +153,96 @@ NamedObj
         argument.
 
     .. function:: \
-        AttrManager attrs() noexcept
+        void get_attr_info(const string &obj_name, const string &attr_name,  \
+            attr_info_t &info, const Proplist &laprop = Proplist::vDFLT) const
+        void get_attr_info(const string &obj_name, hsize_t idx, attr_info_t &info, \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE,  \
+            const Proplist &laprop = Proplist::vDFLT) const
+        attr_info_t get_attr_info(const string &obj_name, const string &attr_name, \
+            const Proplist &laprop = Proplist::vDFLT) const
+        attr_info_t get_attr_info(const string &obj_name, hsize_t idx,         \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE,       \
+            const Proplist &laprop = Proplist::vDFLT) const
 
-        Returns an attribute manager of this named object.
-        Tha manager provides frequently-used shortcuts for attribute creation and 
-        access.
+        Get meta-info of an attribute named ``attr_name`` under object named 
+        ``obj_name``, or indexed ``idx`` under that object.
+
+        ``idx_type``, ``order``: which type of index is used and in which order the object 
+        is visited in the index list.
+
+        The two overloads that return ``attr_info_t`` are the same except that the
+        attribute information is returned rather than the argument being filled.
+
+
+    .. function:: \
+        string get_attr_name(const string &obj_name, hsize_t idx, \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE,  \
+            const Proplist &laprop = Proplist::vDFLT) const
+        
+        Get the name of the attribute indexed ``idx`` under the object named 
+        ``obj_name``.
+
+        ``idx_type``, ``order``: which type of index is used and in which order the object 
+        is visited in the index list.
+
 
     .. function:: \
         bool attr_exists(const string &name) const
 
         Find whether or not the attribute of given ``name`` exists.
+
+
+    .. function:: \
+        void rename_attr(const string &old_name, const string &new_name)
+        void delete_attr(const string &name)
+        void delete_attr(const string &obj_name, const string &attr_name,  \
+            const Proplist &laprop = Proplist::vDFLT)
+        void delete_attr(const string &obj_name, hsize_t idx,         \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE, \
+            const Proplist &laprop = Proplist::vDFLT)
+        
+        Attribute modification methods.
+
+        ``rename_attr()``: change the name of an attribute.
+        
+        ``delete_attr()``: delete the attribute named ``name`` under the current object,
+        or under the object named ``obj_name``, or indexed ``idx`` under the object
+        named ``obj_name``.
+
+        ``idx_type``, ``order``: which type of index is used and in which order the object 
+        is visited in the index list.
+
+    .. function:: \
+        herr_t attr_iterate(hsize_t &idx, attr_iter_op_t op, void *op_data=nullptr, \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE) const \
+        herr_t attr_iterate(const string &obj_name, hsize_t &idx,  \
+            attr_iter_op_t op, void *op_data=nullptr, \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE, \
+            const Proplist &laprop = Proplist::vDFLT) const
+
+        Iteration methods: iterate over the attributs in the current object, 
+        or in a sub object named ``obj_name``, starting at index ``idx``.
+        On exit, ``idx`` indicates the next position to iterate. 
+
+        The user-provided callback ``op`` may return
+
+        - 0: then the iteration continues, until success. 
+        - positive: shortcut success, causing the method returns immediately with
+          that returned value.
+        - negative: short failure, causing the iteration stops and throws an 
+          :class:`ErrH5` with that returned value as error number.
+        
+        ``op_data``: passed to ``op``.
+        ``idx_type``, ``order``: which type of index is used and in which order the object 
+        is visited in the index list.
+
+
+    .. function:: \
+        AttrManager attrs() noexcept
+
+        Returns an attribute manager of this named object.
+        Tha manager provides frequently-used shortcuts for attribute creation and 
+        access.
 
     .. function:: \
         Attr create_attr(const string &name,  \
@@ -261,3 +347,17 @@ NamedObj
         const _obj_raw_t & obj_raw() const noexcept
 
         Return a reference to the intermediate-level HDF5 object.
+
+.. class:: _named_obj_attr_helper::iter_arg_t
+
+    .. function:: \
+        NamedObj & object() noexcept
+        const string & name() const noexcept
+        const info_t & info() const noexcept
+        void * op_data() const noexcept
+        
+        Retrieve the root object, current attribute name, current attribute info and 
+        user-provided data in the iteration.
+
+
+.. type:: std::function< herr_t(_named_obj_attr_helper::iter_arg_t &) > _named_obj_attr_helper::iter_op_t

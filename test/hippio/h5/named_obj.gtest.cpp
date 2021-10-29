@@ -294,6 +294,64 @@ TEST_F(NamedObjTest, AttrCreationForStr) {
     }
 }
 
+TEST_F(NamedObjTest, AttrModification) {
+    _g0.create_attr_scalar<double>("a").write(1.0);
+    _g0.create_attr<int>("b", {3, 2}).write(vector<int>{1,2,3,4,5,6});
+    _g0.create_attr_str("c", 4, 6).write_str(vector<string>{"he", "llo", 
+        "wor", "ld"});
+
+    _g0.rename_attr("c", "c1");
+    _g0.delete_attr("b");
+
+    EXPECT_EQ(_g0.get_object_info().num_attrs, 2);
+    EXPECT_TRUE(_g0.attr_exists("a"));
+    EXPECT_FALSE(_g0.attr_exists("b"));
+    EXPECT_TRUE(_g0.attr_exists("c1"));
+
+    _g0.delete_attr(".", "a");
+    EXPECT_EQ(_g0.get_object_info().num_attrs, 1);
+    EXPECT_FALSE(_g0.attr_exists("a"));
+    EXPECT_TRUE(_g0.attr_exists("c1"));
+
+    _g0.delete_attr(".", 0);
+    EXPECT_EQ(_g0.get_object_info().num_attrs, 0);
+    EXPECT_FALSE(_g0.attr_exists("c1"));
+}
+
+TEST_F(NamedObjTest, AttrIteration) {
+    _g0.create_attr_scalar<double>("a").write(1.0);
+    _g0.create_attr<int>("b", {3, 2}).write(vector<int>{1,2,3,4,5,6});
+    _g0.create_attr_str("c", 4, 6).write_str(vector<string>{"he", "llo", 
+        "wor", "ld"});
+    _g0.rename_attr("c", "c1");
+
+    vector<string> names;
+    auto callback = [&](NamedObj::attr_iter_arg_t &arg) -> herr_t {
+        names.push_back(arg.name()); return 0;
+    };
+
+    hsize_t idx = 0;
+    _g0.attr_iterate(idx, callback);
+    EXPECT_THAT(names, gt::UnorderedElementsAre("a", "b", "c1"));
+
+    names.clear(); idx = 0;
+    _g0.attr_iterate(".", idx, callback);
+    EXPECT_THAT(names, gt::UnorderedElementsAre("a", "b", "c1"));
+
+    auto callback2 = [](NamedObj::attr_iter_arg_t &arg) -> herr_t {
+        auto & names = *reinterpret_cast<vector<string> *>(arg.op_data());
+        names.push_back(arg.name()); 
+        return 0;
+    };
+    names.clear(); idx = 0;
+    _g0.attr_iterate(idx, callback2, &names);
+    EXPECT_THAT(names, gt::UnorderedElementsAre("a", "b", "c1"));
+
+    names.clear(); idx = 0;
+    _g0.attr_iterate(".", idx, callback2, &names);
+    EXPECT_THAT(names, gt::UnorderedElementsAre("a", "b", "c1"));
+}
+
 
 } // namespace
 } // namespace HIPP::IO::H5

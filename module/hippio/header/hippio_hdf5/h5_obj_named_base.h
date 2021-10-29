@@ -12,6 +12,13 @@ class Attr;
 class Datatype;
 class AttrManager;
 
+namespace _named_obj_attr_helper {
+
+class iter_arg_t;
+typedef std::function< herr_t(iter_arg_t &) > iter_op_t;
+
+} // namespace _named_obj_attr_helper
+
 /**
 NameObj - the base class of all named HDF5 object (``Dataset``, ``Datatype``, 
 ``Group`` and ``File``).
@@ -55,6 +62,10 @@ public:
         tNAMED_DATATYPE = _obj_raw_t::tNAMED_DATATYPE,
         tMAP            = _obj_raw_t::tMAP,
         tNTYPES         = _obj_raw_t::tNTYPES;
+    
+    typedef _Attr::info_t attr_info_t;
+    typedef _named_obj_attr_helper::iter_arg_t attr_iter_arg_t;
+    typedef _named_obj_attr_helper::iter_op_t attr_iter_op_t;
 
     /** 
     Class ``NamedObj`` "inherits" all constructors from its parent class.
@@ -69,8 +80,87 @@ public:
     The second overload returns the info structure instead of fills the 
     argument.
     */
-    void get_info(info_t &info, info_field_t  fields = infoALL) const;
+    void get_info(info_t &obj_info, info_field_t  fields = infoALL) const;
     info_t get_info(info_field_t fields = infoALL) const;
+
+    /**
+    Get meta-info of an attribute named ``attr_name`` under object named 
+    ``obj_name``, or indexed ``idx`` under that object.
+
+    @idx_type, order: which type of index is used and in which order the object 
+        is visited in the index list.
+
+    The two overloads that return ``attr_info_t`` are the same except that the
+    attribute information is returned rather than the argument being filled.
+    */
+    void get_attr_info(const string &obj_name, const string &attr_name, 
+        attr_info_t &info, const Proplist &laprop = Proplist::vDFLT) const;
+    void get_attr_info(const string &obj_name, hsize_t idx, attr_info_t &info,
+        index_t idx_type = idxNAME, iter_order_t order = iterNATIVE, 
+        const Proplist &laprop = Proplist::vDFLT) const;
+
+    attr_info_t get_attr_info(const string &obj_name, const string &attr_name, 
+        const Proplist &laprop = Proplist::vDFLT) const;
+    attr_info_t get_attr_info(const string &obj_name, hsize_t idx,         
+        index_t idx_type = idxNAME, iter_order_t order = iterNATIVE, 
+        const Proplist &laprop = Proplist::vDFLT) const;
+
+    /**
+    Get the name of the attribute indexed ``idx`` under the object named 
+    ``obj_name``.
+
+    @idx_type, order: which type of index is used and in which order the object 
+        is visited in the index list.
+    */
+    string get_attr_name(const string &obj_name, hsize_t idx,
+        index_t idx_type = idxNAME, iter_order_t order = iterNATIVE, 
+        const Proplist &laprop = Proplist::vDFLT) const;
+
+    /** Find whether or not the attribute of given ``name`` exists. */
+    bool attr_exists(const string &name) const;
+
+    /**
+    Attribute modification methods.
+
+    rename_attr(): change the name of an attribute.
+    
+    delete_attr(): delete the attribute named ``name`` under the current object,
+    or under the object named ``obj_name``, or indexed ``idx`` under the object
+    named ``obj_name``.
+
+    @idx_type, order: which type of index is used and in which order the object 
+        is visited in the index list.
+    */
+    void rename_attr(const string &old_name, const string &new_name);
+    void delete_attr(const string &name);
+    void delete_attr(const string &obj_name, const string &attr_name, 
+        const Proplist &laprop = Proplist::vDFLT);
+    void delete_attr(const string &obj_name, hsize_t idx,         
+        index_t idx_type = idxNAME, iter_order_t order = iterNATIVE,
+        const Proplist &laprop = Proplist::vDFLT);
+
+    /**
+    Iteration methods: iterate over the attributs in the current object, 
+    or in a sub object named ``obj_name``, starting at index ``idx``.
+    On exit, ``idx`` indicates the next position to iterate. 
+
+    The user-provided callback ``op`` may return
+    - 0: then the iteration continues, until success. 
+    - positive: shortcut success, causing the method returns immediately with
+      that returned value.
+    - negative: short failure, causing the iteration stops and throws an 
+      :class:`ErrH5` with that returned value as error number.
+    
+    @op_data: passed to ``op``.
+    @idx_type, order: which type of index is used and in which order the object 
+        is visited in the index list.
+    */
+    herr_t attr_iterate(hsize_t &idx, attr_iter_op_t op, void *op_data=nullptr,
+        index_t idx_type = idxNAME, iter_order_t order = iterNATIVE) const;
+    herr_t attr_iterate(const string &obj_name, hsize_t &idx, 
+        attr_iter_op_t op, void *op_data=nullptr,
+        index_t idx_type = idxNAME, iter_order_t order = iterNATIVE,
+        const Proplist &laprop = Proplist::vDFLT) const;
 
     /**
     Returns an attribute manager of this named object.
@@ -78,9 +168,6 @@ public:
     access.
     */
     AttrManager attrs() noexcept;
-
-    /** Find whether or not the attribute of given ``name`` exists. */
-    bool attr_exists(const string &name) const;
 
     /**
     Create an attributed named ``name`` under the current object.
@@ -299,6 +386,48 @@ public:
 protected:
     refobj_t _obj;
 };
+
+
+namespace _named_obj_attr_helper {
+
+typedef NamedObj::attr_info_t info_t;
+class iter_data_t;
+
+herr_t raw_op(hid_t obj, const char *name, const info_t *info, void *op_data);
+
+class iter_arg_t {
+public:
+    /**
+    Retrieve the root object, current attribute name, current attribute info and 
+    user-provided data in the iteration.
+    */
+    NamedObj & object() noexcept;
+    const string & name() const noexcept;
+    const info_t & info() const noexcept;
+    void * op_data() const noexcept;
+private:
+    iter_arg_t(void *op_data) noexcept;
+    void _set_data(hid_t obj, const char *name, const info_t *info) noexcept;
+    
+    NamedObj _obj;
+    string _name;
+    const info_t *_info;
+    void * const _op_data;
+
+    friend herr_t raw_op(hid_t obj, const char *name, const info_t *info, 
+        void *op_data);
+    friend class iter_data_t;
+};
+
+struct iter_data_t {
+    iter_data_t(iter_op_t op, void *op_data);
+    iter_op_t _op;
+    iter_arg_t _arg;
+};
+
+
+} // namespace _named_obj_attr_helper
+
 
 } // namespace HIPP::IO::H5
 

@@ -422,7 +422,7 @@ For details, see, e.g., the description of the corresponding method :func:`DArra
     template<typename ValueT, size_t Rank, typename Alloc, typename AllocB = std::allocator<bool> > DArray<bool, Rank, AllocB> operator!=( const DArray<ValueT, Rank, Alloc> &lhs, const DArray<ValueT, Rank, Alloc> &rhs) noexcept
 
 DynamicArray Specialization
-""""""""""""""""""""""""""
+""""""""""""""""""""""""""""
 .. class:: template<typename ValueT, size_t Rank, typename Alloc> \
     HIPP::DynamicArrayTraits< DArray<ValueT, Rank, Alloc> >
 

@@ -1,277 +1,450 @@
 Tabular-Data IO
 ========================
 
-The following classes are all defined within namespace ``HIPP::IO``.
+.. include:: /global.rst
 
-.. namespace:: HIPP::IO 
+The following classes are all defined within namespace ``HIPP::IO::H5``.
+
+.. namespace:: HIPP::IO::H5
 
 
-Class H5XTable
+XTable
 ------------------------
 
+    
+.. class:: template<typename RecordT> XTable
 
-.. class:: template<typename record_t> H5XTable
+    ``XTable`` manipulates the IO of a tabular data, i.e., array of structured type.
+    The structured type (defined as ``record_t``) may be any C++ simple struct/class.
+    For example::
 
-    ``H5XTable`` manipulates the IO of a table, i.e., array of ``record_t``, where 
-    ``record_t`` is any C++ (simple) struct/class. Examples of 
-    allowed ``record_t`` include ::
-
-        // for bookkeeping the information of a person
-        struct Person {
-            int age; 
-            int gender;
-            char name[32];
+        struct S {
+            int a;
+            double b[3];
+            float c[2][3];
+            array<array<long, 3>, 4> d;
         };
 
-        // for storing the properties of a dark matter halo
-        class DarkMatterHalo {
-        public:
-            long long id;
-            double position[3];
-            float tidal_tensor[3][3];
-            double radius;
-        };
+    Those simple structured types exist almost everywhere in C++ programming. The 
+    instances of such a data type are usually organized as arrays 
+    (e.g., ``std::vector``, raw array, or heap buffer).
+    ``XTable`` defines clever interface which enables easy I/O of those data
+    structures. The dataset can be either separately for each field, or as a
+    single one with compound datatype for the whole ``record_t``. 
+    The limitation is that the structured type must be "simple" type, with no
+    virtual methods or virtual base class. It may have private attributes, 
+    but those attributes cannot be directly touched by ``XTable`` outside 
+    the class scope.
 
-    Such structural data types exist almost everywhere in C++ programming. The 
-    instances of such a data type are usually organized as a STL ``vector`` or 
-    in raw buffer allocated by ``std::malloc()`` or ``new`` operator.
-    In such cases, ``H5XTable`` provides easy-use methods to I/O them, either
-    as separate HDF5 datasets for each field or as a single dataset with compound
-    datatype.  
+    Selectors are also defined for filtering the dataset. User may choose to 
+    input/output a subset of all fields, or a subset of all rows.
 
-    ``record_t`` cannot have a virtual method. It may have private attributes 
-    (can be touched by ``H5XTable`` only if defined within the class namespace).
 
-    ``H5XTable`` cannot be copied or copy-constructed, but it can be moved 
-    or move constructed. The destructor and move operations are noexcept.
+    .. type:: RecordT record_t
+            vector<record_t> table_t
 
-    .. type:: vector<record_t> table_t
-
-    .. function:: template<typename ...Args> H5XTable( Args &&...args )
+        ``record_t`` : the type of the structured data element to be input/output. 
+        Aliased from the class template argument ``RecordT``.
         
-        Initialize the table manipulator. For each attibute of ``record_t``,
-        you simply pass as arguments a string for its name and a pointer to that 
-        attribute.
+        ``table_t``: a vector of records each typed ``record_t``.
 
-        In the I/O process using method :func:`read`/:func:`write`, 
-        each attribute is loaded from/stored into a HDF5 dataset. 
-        The name of the dataset is specified by string you pass.
+    .. function:: \
+        XTable()
+        template<typename M, typename ...Args> \
+        XTable(const string &name, M record_t::* mem_ptr, Args &&...args)
+        template<typename R, typename ...Args> \
+        XTable(const string &name, const std::pair<size_t, XTable<R> > &field, \
+            Args &&...args)
 
-        In the I/O process using method :func:`read_records`/:func:`write_records`,
-        the array of ``record_t`` is loaded/stored into a single HDF5 dataset
-        with corresponding compound datatype.
-        The name of each field in compound datatype is specified by the string 
-        you pass.
+        Constructors.
 
-        The pointer to attribute provides type and size information that is 
-        used internally by the library.
+        (1): default constructor. No field is added. 
 
-        After construction, you may add/remove attributes by 
-        :func:`add_field`/:func:`remove_field`.
+        (2,3): initialize by a list of field definitions.
+        
+        ``args``: ``names`` and ``details``, must be paired, 
+        where each name ``std::string`` or string-compatible types for the field 
+        name/dataset name in the file. 
+        Detail is either
 
-        Examples of table manipulators of ``Person`` and ``DarkMatterHalo`` 
-        defined above are ::
+        - a member pointer of ``M R::*`` where the offset, size, and datatype
+          are inferred from it. sizeof(R) must be equal to sizeof(record_t)
+          and R must be binary compatible with record_t in the specified fields.
+        - a std::pair<size_t, XTable> instance denoting the offset 
+            and details of this field in memory, i.e., the field itself is 
+            another structured type.
 
-            H5XTable<Person> person_manip(
-                "age", &Person::age,
-                "gender", &Person::gender,
-                "name", &Person::name);
+        Fields can be added later by method :func:`add_field()` or removed by 
+        :func:`remove_field()`. 
+        
+        The order of the field specifications is not significant. 
+        
+        It is not necessary to specify all the field in the C++ types. Fields 
+        that are not added to ``XTable`` are not touch in file and in memory.
 
-            H5XTable<DarkMatterHalo> halo_manip (
-                "position", &DarkMatterHalo::position,
-                "Index", &DarkMatterHalo::id, 
-                "tidal_tensor", &DarkMatterHalo::tidal_tensor);
+    .. function:: \
+        XTable(const XTable &) =delete
+        XTable & operator=(const XTable &) =delete
+        XTable(XTable &&) =default
+        XTable & operator=(XTable &&) =default
+        ~XTable() =default
 
-        The order of attributes passed may be different from that defined in the 
-        struct/class (such as the ``DarkMatterHalo::id`` and ``DarkMatterHalo::position``). 
-        It is not necessary to pass all attributes (the ignored 
-        attributes are not I/O in the call of read/write, such as the 
-        ``DarkMatterHalo::radius``).
+        XTable is not copyable, but it is movable. After move, the move-from object 
+        is set to a undefined but valid state.
+        
+    .. function:: \
+        template<typename R, typename M> \
+            XTable & add_field(const string &name, M R::*mem_ptr)
+        template<typename R> \
+        XTable & add_field(const string &name,  \
+            const std::pair<size_t, XTable<R> > &field)
+        bool remove_field(const string &name) 
+        bool has_field(const string &name) const noexcept
+        size_t n_fields() const noexcept
+        bool empty() const noexcept
+
+        Fields manipulator, acts like a unordered_map.
+
+        ``add_field()`` adds another fields into the table. 
+        
+        (1): use a member pointer. The member offset, size, and datatype are inferred 
+        from that pointer.
+        
+        - ``R``: the record type, may be different from record_t, but must be binary 
+            compatible with it.
+        - ``M``: the member type.
+        
+        (2): add the field that is specified by another ``XTable`` instance, i.e., 
+        the field itself is another structured type. The final field name is 
+        "."-joined from ``name`` and the field names in ``field``.
+
+        ``remove_field()`` tries to remove a field. Return false on failure.
+        
+        ``has_field()`` tests whether a field of given name exists.
+        
+        ``n_field()`` returns the number of fields that have been added.
+        
+        ``empty()`` is equivalent to ``n_fields() == 0``.
+
+    .. function:: \
+        XTable & select_rows(hsize_t start, hsize_t count, hsize_t stride = 1, \
+            hsize_t block = 1) noexcept
+        XTable & select_all() noexcept
+        XTable & select_fields(const vector<string> &names)
+        XTable & select_all_fields() noexcept
+
+        Column (field) and row selectors.
+        
+        ``select_rows()``: select rows by an 1-D regular hyperslab with start, count
+        stride and block specified by arguments.
+        
+        ``select_all()``: select all rows.
+
+        ``select_fields()``: select a list of fields of given names.
+        
+        ``select_all_fields()``: select all fields.
+
+    .. function:: \
+        bool raw_array_as_atomic() const noexcept
+        void raw_array_as_atomic(bool as_atomic = false) noexcept
+        string dataset_create_flag() const noexcept
+        void dataset_create_flag(const string &flag = "ac") noexcept
+        bool dataset_create_pack() const noexcept
+        void dataset_create_pack(bool pack = false) noexcept
+
+        Specify or retrieve the detail of dataset creation and I/O.
+        
+        ``raw_array_as_atomic``: whether to treat raw array field (e.g., int [3],
+        std::array<double, 4>) as ATOMIC ARRAY datatype.
+        
+        ``dataset_create_flag``: use which flag to create the dataset in write
+        operations (see :expr:`Group::create_dataset`).
+        
+        ``dataset_create_pack``: whether to pack the datatype when creating a 
+        dataset with COMPOUND datatype.
+
+    .. function:: \
+        table_t read(Group dgrp)
+        table_t read(const string &file_name)
+        template<typename Buff> void read(Buff &buff, Group dgrp)
+        void read(void *buff, size_t &n, Group dgrp)
+
+        Read the table data. Fields are loaded from separate datasets.
+        
+        (1): load from a :class:`Group` and return the table. 
+        
+        (2): load from the root group of a file named ``file_name``.
+        
+        (3): losd into a buffer ``buff``. If ``buff`` is ``std::vector``, it is 
+        automatically resized. If resize happens, then either
+        
+        - ``buff`` is enlarged, old data are copied to the new space, new elements
+          are default-constructed at the tail. 
+        - ``buff`` is truncated, the tail of old data is missing but the 
+          remaining is not changed.
+        
+        Then the actual read operation fills the specified fields. 
+        
+        Otherwise if ``buff`` is not a vector type, it must be consistent with the 
+        file content. 
+        
+        The value_type of the buffer must be binary compatible with ``record_t``.
+
+        (4) Read into a raw buffer. On entry, ``n`` is the size (number of entries) 
+        of the buffer. On exit, n is the actual number of entries read.
+        If ``n`` is less than required, raise a ErrLogic exception.
+        With any exception, ``n`` or ``buff`` may be modified.
+        
+        In all cases, the space with no specified field is un-modified. 
+
+        If 0 field is selected, return an empty table in (1), (2); 
+        ``tbl`` is resized to 0 in (3); ``buff`` is untouched while ``n`` is set to
+        0 in (4).
+
+        File with 0 rows, or select 0 rows to read, is valid.
+
+    .. function:: \
+        template<typename Buff> void write(const Buff &buff, Group dgrp)
+        template<typename Buff> \
+        void write(const Buff &buff, const string &file_name,  \
+            const string flag="w")
+        void write(const void *buff, size_t n, Group dgrp)
+
+        Write the table data as separate datasets.
+        
+        (1): write to a group. ``buff`` is a Contiguous buffer (e.g., raw array, 
+        ``std::vector`` of a type that is binary compatible with ``record_t``).
+        
+        (2): write into the root group of a file named ``file_name``. The file 
+        access mode is ``flag`` (see the file constructor :expr:`File::File`).
+        
+        (3): write ``n`` records at the raw buffer starting at the address ``buff``
+        into the group ``dgrp``.
+
+        If any dataset already exists in the file, it is opened and modified. In
+        this case the file dataset must have consistent length.
+
+    .. function:: \
+        table_t read_records(Group dgrp, const string &dset_name)
+        table_t read_records(const string &file_name, const string &dset_name)
+        template<typename Buff> \
+            void read_records(Buff &buff, Group dgrp, const string &dset_name)
+        void read_records(void *buff, size_t &n,  \
+            Group dgrp, const string &dset_name)
+
+        Read a single dataset with COMPOUND datatype.
+        
+        (1): read from a dataset named ``dset_name`` under group ``dgrp`` and 
+        return the table.
+        
+        (2): read from a dataset named ``dset_name`` under the root group of a
+        file named ``file_name`` and return the table.
+        
+        (3): the same as (1), but the data is read into ``buff`` whose element type 
+        is binary compatible with ``record_t``. If ``buff`` is 
+        std::vector, it is auto-resized to exactly fit the desired size of data,
+        and then the read is performed.
+
+        Otherwise ``buff`` is non-vector, its size must be compatible with the size
+        of the selected part in the dataset.
+
+        (4): the same as (1), but read into a raw buffer. 
+        On entry, ``n`` is the size (number of entries) 
+        of the buffer. On exit, n is the actual number of entries read.
+        If ``n`` is less than required, raise a ErrLogic exception.
+        With any exception, ``n`` or ``buff`` may be modified. 
+
+        In all cases, the space with no specified field is un-modified. 
+
+        If 0 field is selected, return an empty table in (1), (2); 
+        ``tbl`` is resized to 0 in (3); ``buff`` is untouched while ``n`` is set to
+        0 in (4).
+
+        File with 0 rows, or select 0 rows to read, is valid.
+
+    .. function:: \
+        template<typename Buff> \
+            void write_records(const Buff &buff, Group dgrp, const string &dset_name);
+        template<typename Buff> \
+            void write_records(const Buff &buff, const string &file_name,  \
+            const string &dset_name, const string flag="w");
+        void write_records(const void *buff, size_t n, \
+            Group dgrp, const string &dset_name);
+
+        Write the records into a single dataset with COMPOUND datatype.
+        
+        (1): write to dataset named ``dset_name`` under group ``dgrp``. 
+        ``buff`` is a Contiguous buffer (e.g., raw array, 
+        ``std::vector`` of a type that is binary compatible with ``record_t``).
+        
+        (2): write to the dataset named ``dset_name`` under the root group of a 
+        file named ``file_name``. The file access mode is ``flag`` 
+        (see the file constructor :expr:`File::File`).
+        
+        (3): write ``n`` records at the raw buffer starting at the address ``buff``
+        into the dataset named ``dset_name`` under the group ``dgrp``.
+
+        If the dataset already exists in the file, it is opened and modified. In
+        this case the file dataset must have consistent length.
+
+
+Macros for XTable 
+""""""""""""""""""""
+
+.. c:macro:: HIPPIO_H5_XTABLE(R, ...) 
+
+.. c:macro:: HIPPIO_H5_XTABLE_DEF(identifier, R, ...)
+
+    These two macros provides quick declaration of a :class:`XTable`.
+
+**Explanation of the macros:**
+
+``HIPPIO_H5_XTABLE(R, ...)``: produces an un-named pr-value definition with 
+record type ``R`` and any number of members (may be 0). For example:: 
+
+    auto xtbl = HIPPIO_H5_XTABLE(S, a, b, c);
+
+is expanded as::
+
+    auto xtbl = ::HIPP::IO::H5::XTable<R> { "a", &S::a,
+        "b", &S::b,
+        "c", &S::c };
+
+``HIPPIO_H5_XTABLE(identifier, R, ...)``: produces a named definition with 
+identifier name ``identifier`` and record type ``R``. For example::
+
+    static inline HIPPIO_H5_XTABLE(xtbl, S, a, b, c);
+
+is expanded as::
+
+    static inline ::HIPP::IO::H5::XTable<R> xtbl { "a", &S::a,
+        "b", &S::b,
+        "c", &S::c };
+
+
+**Example:** I/O of tabular data with :class:`XTable`.
+
+A structured type may have multiple fields each of which is either scalar of 
+RawArray::
+
+    struct S {
+        int a;
+        double b[3];
+        float c[2][3];
+        array<array<long, 3>, 4> d;
+    };
+
+To read/write array of ``S``, define a :class:`XTable` by passing name and 
+member pointer of each desired field into the constructor::
+
+    H5::XTable xtbl {
+        "a",    &S::a,
+        "b",    &S::b,
+        "c",    &S::c,
+        "d",    &S::d};
+
+You may reorder the fields, or specify only subset of all fields. When performing
+I/O, the un-specified gaps are not touched.
+
+:class:`XTable` is able to write any ContiguousBuffer or the structured type, 
+for example, RawArray or ``std::vector``::
+    
+    S data[10];
+    vector<S> vec_data(10);
+
+The following call of :expr:`XTable::write` write the records into the root 
+group of a file of given name, where each field is write as a single dataset::
+
+    xtbl.write(data, "xtbl.h5");
+    xtbl.write(vec_data, "xtbl.h5");                                    // (1)
+
+Or, write to a group::
+
+    H5::File fout("xtbl.h5");
+    xtbl.write(data, fout.create_group("S-datasets"));
+
+The call of :expr:`XTable::write_records` writes the records into a single 
+dataset with COMPOUND datatype. For example, write to a dataset named ``S-records``
+under the root group of the file ``fout``::
+
+    xtbl.write_records(data, fout, "S-records");                        // (2)
+
+To read the databack, call :expr:`XTable::read` for separate datasets for fields, 
+or :expr:`XTable::read_records` for COMPOUND datatype. For example::
+
+    vector<S> data_in = xtbl.read(fout.open_group("S-datasets"));       // (3)
+
+Using the preprocessor macros, the above definition of ``xtbl`` can be simplified further, 
+e.g.::
+
+    auto xtbl2 = HIPPIO_H5_XTABLE(S, a, b, c, d);
+    HIPPIO_H5_XTABLE_DEF(xtbl3, S, a, b, c, d);
+
+The file content shown by ``h5dump`` is:
+
+- four datasets under the root group written by statement ``(1)``;
+- four datasets under "S-datasets" written by statement ``(2)``;
+- a dataset with COMPOUND datatype written by statement ``(3)``.
+
+.. code-block:: text 
+
+    HDF5 "xtbl.h5" {
+    GROUP "/" {
+    GROUP "S-datasets" {            # <- written by (2)
+        DATASET "a" {
+            DATATYPE  H5T_STD_I32LE
+            DATASPACE  SIMPLE { ( 10 ) / ( 10 ) }
+            DATA { ... }
+        }
+        DATASET "b" {
+            DATATYPE  H5T_IEEE_F64LE
+            DATASPACE  SIMPLE { ( 10, 3 ) / ( 10, 3 ) }
+            DATA { ... }
+        }
+        DATASET "c" {
+            DATATYPE  H5T_IEEE_F32LE
+            DATASPACE  SIMPLE { ( 10, 2, 3 ) / ( 10, 2, 3 ) }
+            DATA { ... }
+        }
+        DATASET "d" {
+            DATATYPE  H5T_STD_I64LE
+            DATASPACE  SIMPLE { ( 10, 4, 3 ) / ( 10, 4, 3 ) }
+            DATA { ... }
+        }
+    }
+    DATASET "S-records" {           # <- written by (3)
+        DATATYPE  H5T_COMPOUND {
+            H5T_STD_I32LE "a";
+            H5T_ARRAY { [3] H5T_IEEE_F64LE } "b";
+            H5T_ARRAY { [2][3] H5T_IEEE_F32LE } "c";
+            H5T_ARRAY { [4][3] H5T_STD_I64LE } "d";
+        }
+        DATASPACE  SIMPLE { ( 10 ) / ( 10 ) }
+        DATA { ... }
+    }
+    DATASET "a" {                   # <- written by (1)
+        DATATYPE  H5T_STD_I32LE
+        DATASPACE  SIMPLE { ( 10 ) / ( 10 ) }
+        DATA { ... }
+    }
+    DATASET "b" {
+        DATATYPE  H5T_IEEE_F64LE
+        DATASPACE  SIMPLE { ( 10, 3 ) / ( 10, 3 ) }
+        DATA { ... }
+    }
+    DATASET "c" {
+        DATATYPE  H5T_IEEE_F32LE
+        DATASPACE  SIMPLE { ( 10, 2, 3 ) / ( 10, 2, 3 ) }
+        DATA { ... }
+    }
+    DATASET "d" {
+        DATATYPE  H5T_STD_I64LE
+        DATASPACE  SIMPLE { ( 10, 4, 3 ) / ( 10, 4, 3 ) }
+        DATA { ... }
+    }
+    }
+    }
+
 
     
-    .. function::   template<typename field_t> H5XTable & add_field(const string &name, field_t record_t::*p)
-                    bool remove_field(const string &name) 
-                    bool has_field(const string &name)
-                    size_t n_fields() const noexcept
-                    bool empty() const noexcept
 
-            ``add_field(name, p)`` adds an attribute, pointed by ``p``, named ``name``, to the table manipulator.
-            
-            ``remove_field(name)`` removes an attribute named ``name``.
-            
-            ``has_field(name)`` test whether an attribute of name ``name`` has been in the table manipulator.
-            
-            ``n_fields()`` returns the total number of attributes.
-            
-            ``empty()`` checks whether there is no attribute in the manipulator.
-
-    .. function::   void write(const table_t &tbl, H5Group dgrp)
-                    void write(const table_t &tbl, H5File file)
-                    void write(const table_t &tbl, const string &file_name, const string flag="w")
-                    void write(const record_t *buff, size_t n, H5Group dgrp)
-
-        Write a table (array of ``record_t``) into the target group ``dgrp`` as separate 
-        datasets. Four overloads are:
-        
-        (1) Specify the table ``tbl`` and target group ``dgrp`` (in file).
-        (2) Is similar but accepts a :class:`H5File` - the table is written into 
-            its root group. 
-        (3) Is similar but opens/creates a HDF5 file named ``file_name`` with flag ``flag``, 
-            and write table into its root group.
-        (4) Is similar but writes data from raw buffer starting at ``buff`` and 
-            consisting of ``n`` values typed ``record_t``.
-        
-        For example, if you have a ``vector`` of ``DarkMatterHalo`` and output it 
-        with ``halo_manip``, say::
-
-            vector<DarkMatterHalo> halos(8);
-            halo_manip.write(halos, "halos.h5");
-
-        A file named "halos.h5" in the current working directory is created 
-        (and truncated if existing). Three datasets are created under that file: 
-        float64 (named "position", shaped 8x3), int64 (named "Index", shaped 8),
-        float32 (named "tidal_tensor", shaped 8x3x3).
-
-        If you write into an existing group and the HDF5 dataset with the corresponding
-        name already exists, it should have the proper shape. The data in the dataset are 
-        overrided after writing. 
-
-    .. function::   table_t read(H5Group dgrp)
-                    table_t read(H5File file)
-                    table_t read(const string &file_name)
-                    void read(table_t &tbl, H5Group dgrp)
-                    void read(record_t *buff, size_t n, H5Group dgrp)
-
-        Load a table from a group in the file. Five overloads are:
-        
-        (1) Read a table from the group ``dgrp``. The table is returned.
-        (2) Is similar but loads from the root group of the file instance ``file``.
-        (3) Is similar but loads from the root group of an existing file named "file_name".
-        (4) Loads into table ``tbl`` instead of returning it. ``tbl`` is resized automatically.
-        (5) Loads into raw buffer starting at ``buff`` lengthed ``n`` (items of ``record_t``).
-            ``n`` must be exactly the length of datasets in dgrp.
-         
-        Some fields may be ignored, depending on the construction of :class:`H5XTable`.
-        If resize operation is used for a vector, the value of an ignored field depends
-        on the default constructor of ``record_t``. Otherwise such a field is not changed.
-
-        For example, the following code loads a table of ``DarkMatterHalo``::
-
-            vector<DarkMatterHalo> halos = halo_manip.read("halos.h5");
-
-        Or you may load into an existing table by::
-
-            vector<DarkMatterHalo> halos;
-            halo_manip.read(halos, HIPP::IO::H5File("halos.h5", "r").open_group("/"));  
-
-    .. function::   void write_records(const table_t &tbl, H5Group dgrp, const string &dset)
-                    void write_records(const table_t &tbl, H5File file, const string &dset)
-                    void write_records(const table_t &tbl, const string &file_name, \
-                        const string &dset, const string flag="w")
-                    void write_records(const record_t *buff, size_t n,\
-                         H5Group dgrp, const string &dset)
-                         
-        These methods are similar to :func:`write`, but they store data into a single dataset named ``dset``
-        in the group or file.
-        The datatype of the dataset is a compound type, in which the names of fields are determined
-        by the names in the construction of the current instance 
-        (and through :func:`add_field` and :func:`remove_field`).
-
-    .. function::   table_t read_records(H5Group dgrp, const string &dset)
-                    table_t read_records(H5File file, const string &dset)
-                    table_t read_records(const string &file_name, const string &dset)
-                    void read_records(table_t &tbl, H5Group dgrp, const string &dset)
-                    void read_records(record_t *buff, size_t n, H5Group dgrp, const string &dset)
-
-        These methods are similar to :func:`read`, but they load data from a single dataset named ``dset``
-        in the group or file.
-        The dataset must be an array of compound datatype compatible with the current instance.
-
-
-    **Examples:**
-
-    The following piece of code declares a C++ struct ``halo_t``, defines an I/O manipulator
-    ``tbl_manip`` for it, writes and reads a vector of ``halo_t`` into/from HDF5 file.
-
-    .. code:: 
-
-        /**
-         * Declare a struct for holding a dark matter halo.
-         * Define a size-10 vector of it (attribute-setting codes are ignored).
-         */
-        struct halo_t {
-            float pos[3], vel[3];
-            double halo_mass;
-            int id;
-            float tidal_tensor[3][3];
-        };
-        vector<halo_t> halos(10);
-
-        /**
-         * Defined a halo table manipulator, which helps to load/store the 
-         * attributes in that vector from/into four datasets. 
-         */
-        HIPP::IO::H5XTable<halo_t> tbl_manip(
-            "Position", &halo_t::pos, 
-            "Velocity", &halo_t::vel,
-            "Halo Mass", &halo_t::halo_mass,
-            "Tidal Tensor", &halo_t::tidal_tensor );
-
-        /* Write the 10 halos into the root group of the file "halos.h5". */
-        tbl_manip.write(halos, "halos.h5");
-        
-        /* Or, write them into a given group */
-        tbl_manip.write(halos, 
-            HIPP::IO::H5File("halos.h5", "a").create_group("Halos") );
-
-        /* Load back the halos. */
-        vector<halo_t> halos_loaded = tbl_manip.read("halos.h5");
-        
-        /* Or load into existing vector. */
-        vector<halo_t> halos_loaded2;
-        tbl_manip.read(halos_loaded2, 
-            HIPP::IO::H5File("halos.h5", "r").open_group("Halos"));
-
-    If you prefer to I/O the table as a single dataset with compound datatype,
-    using :func:`read_records`/:func:`write_records` instead. For example::
-
-        /* Output to dataset "HaloRecords" in file "halos.h5". */
-        tbl_manip.write_records(halos, "halos.h5", "HaloRecords", "a");
-
-        /* Loads it back. */
-        halos_loaded = tbl_manip.read_records("halos.h5", "HaloRecords");
-
-    Using ``h5dump halos.h5`` in the command line prompt, you have 
-
-    .. code-block:: text 
-
-        HDF5 "halos.h5" {
-        GROUP "/" {
-            DATASET "Halo Mass" {
-                DATATYPE  H5T_IEEE_F64LE
-                DATASPACE  SIMPLE { ( 10 ) / ( 10 ) }
-                DATA { (0): 0, 100, 200, 300, 400, 500, 600, 700, 800, 900 }
-            }
-            ....
-            GROUP "Halos" {
-                DATASET "Halo Mass" {....}
-                DATASET "Position" {....}
-                ....
-            }
-            DATASET "HaloRecords" {
-                DATATYPE  H5T_COMPOUND {
-                    H5T_ARRAY { [3] H5T_IEEE_F32LE } "Position";
-                    H5T_ARRAY { [3][3] H5T_IEEE_F32LE } "Tidal Tensor";
-                    H5T_IEEE_F64LE "Halo Mass";
-                    H5T_ARRAY { [3] H5T_IEEE_F32LE } "Velocity";
-                }
-                DATASPACE  SIMPLE { ( 10 ) / ( 10 ) }
-                DATA {
-                    (0): {
-                        [ 0, 0, 0 ], [ 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-                        0, [ 0, 0, 0 ] 
-                    }, ....
-                }
-            }
-        }
-        }

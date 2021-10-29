@@ -1,168 +1,177 @@
 /**
- * creat: Yangyao CHEN, 2020/01/11
- *      [write   ] 
- *      @H5Attr: HDF5 attribute high-level object.
- */ 
+ create: Yangyao CHEN, 2020/01/11
+    [write   ] Attr: HDF5 attribute high-level object.
+*/ 
 
 #ifndef _HIPPIO_H5_OBJ_ATTR_H_
 #define _HIPPIO_H5_OBJ_ATTR_H_
+
 #include "h5_obj_base.h"
-#include "h5_obj_dataspace.h"
-#include "h5_obj_datatype.h"
-namespace HIPP{
-namespace IO{
 
-class H5File;
-class H5Group;
-class H5Dataset;
-class H5Attr: public H5Obj<_H5Attr>{
+namespace HIPP::IO::H5 {
+
+class Dataspace;
+class Datatype;
+class NamedObj;
+
+/**
+Attributes are "small datasets" attached on HDF5 named objects.
+
+Class ``Attr`` encapsulates the methods available on attributes. 
+
+The attribute class is copyable and movable (both in construction and 
+assignment). The copy, move and destruction are ``noexcept``. The copy operation 
+is shallow - the resulting object always refers to the same HDF5 resource
+as the source object. The move operation sets the move-from object an empty
+state.
+*/
+class Attr: public Obj {
 public:
-    typedef H5Obj<_H5Attr> _obj_base_t;
-    using _obj_base_t::_obj_base_t;
+    typedef Obj parent_t;
 
-    H5Dataspace dataspace();
-    const H5Dataspace dataspace() const;
-    H5Datatype datatype();
-    const H5Datatype datatype() const;
+    typedef _Attr _obj_raw_t;
+    typedef std::shared_ptr<_obj_raw_t> _obj_ptr_t;
 
-    template<typename T, typename A>
-    void write( const vector<T, A> &buff );
+    /** Structured type that records attribute meta-info. */
+    typedef _obj_raw_t::info_t info_t;
+
+    /**
+    Class ``Attr`` "inherits" all constructors from its parent class.
+    */
+    using parent_t::parent_t;
+
+    /**
+    Return copy of the dataspace or datatype of the attribute.
+    The datatype is read-only. 
+    */
+    Dataspace dataspace() const;
+    Datatype datatype() const;
+
+    /**
+    Attribute information getter: retrieve the name, storage size allocated, 
+    meta-info.
+
+    The second overload of ``get_info()`` is the same except that the attribute
+    meta-info is returned rather than the argument being filled.
+    */
+    string get_name() const;
+    hsize_t get_storage_size() const;
+    
+    void get_info(info_t &link_info) const;
+    info_t get_info() const;
+
+    /**
+    Write data into the attribute.
+    
+    (1): The most general method that is the direct HDF5 C API counterpart. 
+    Write a buffer starting at ``buff`` to the attribute with ``memtype``
+    specifying is datatype.
+
+    (2): Write an object. The ``buff`` argument can be
+    - A raw pointer. The memory datatype is inferred from is point-to type 
+      by :expr:`Datatype::from_type`.
+    - any object that is resolvable by :class:`ConstDatapacket`, including 
+      numerical scalars (e.g., ``int``, ``float``), 
+      general arrays or numerical types (e.g., ``std::array<int, 4>``, 
+      ``std::vector<int>``), or general arrays of raw arrays 
+      (e.g., ``std::vector< std::array<int, 4> >``).
+
+    Other methods are defined for special cases.
+
+    (3): Write a scalar. The datatype is inferred from T as if calling 
+    :expr:`Datatype::from_type<T>()`.
+
+    (4-11): write a string or a list of strings as fix-length ATOMIC string
+    datatype. In the list-of-strings case, the size of the string is taken from 
+    the maximum of the strings. 
+    
+    In all cases, the attribute must be created with consistent dataspace and
+    datatype.
+    */
+    void write(const void *buff, const Datatype &memtype);
+    
     template<typename T>
-    void write( const T*buff );
-    void write( const string &buff );
-    template<typename T, typename A>
-    void write( const vector<T, A> &buff, const H5Datatype &memtype );
-    template<typename T>
-    void write( const T *buff, const H5Datatype &memtype );
-
-    template<typename T, typename A>
-    void read( vector<T, A> &buff ) const;
-    template<typename T>
-    void read( T *buff ) const;
-    void read( string &buff ) const;
-    template<typename T, typename A>
-    void read( vector<T, A> &buff, const H5Datatype &memtype ) const;
-    template<typename T>
-    void read( T *buff, const H5Datatype &memtype ) const;
-protected:
-    friend class H5File;
-    friend class H5Group;
-    friend class H5Dataset;
+    void write(const T &buff);
 
     template<typename T>
-    static H5Attr create( id_t loc, const string &name, 
-        const vector<hsize_t> &dims, 
-        const string &flag);
+    void write_scalar(const T &x);
+
+    void write_str(const string &s);
+    void write_str(const char *s);
+
+    void write_str(const vector<string> &ss);
+    void write_str(const string ss[], size_t n_str);
+    template<size_t N_STR>
+    void write_str(const string (&ss)[N_STR]);
+
+    void write_str(const char * const *ss, size_t n_str);
+
+    template<size_t N>
+    void write_str(const char ss[][N], size_t n_str);
+    
+    template<size_t N_STR, size_t N>
+    void write_str(const char (&ss)[N_STR][N]);
+
+    /**
+    Read data from the attribute.
+    
+    (1): The most general method that is the direct HDF5 C API counterpart. 
+    Read into buffer starting at ``buff`` from the attribute with ``memtype``
+    specifying its datatype.
+
+    (2): Read into an object. The ``buff`` argument can be
+    - A raw pointer. The memory datatype is inferred from is point-to type 
+      by :expr:`Datatype::from_type`.
+    - ``std::vector<T, Alloc>``. ``T`` must be valid argument to 
+      :expr:`Datatype::from_type` (e.g., numerical scalar or raw-array).
+      The vector is always resized to exactly hold all the elements. 
+      If the resize operation cannot exactly fits the need, an ``ErrLogic``
+      is thrown.
+    - any object that is resolvable by :class:`ConstDatapacket`, including 
+      numerical scalars (e.g., ``int``, ``float``), 
+      general arrays or numerical types (e.g., ``std::array<int, 4>``).
+
+    Other methods are defined for special cases.
+
+    (3): Read a scalar. The datatype is inferred from T as if calling 
+    :expr:`Datatype::from_type<T>()`.
+
+    (4-8): Read a string or a list of strings as fix-length ATOMIC string
+    datatype. In the list-of-strings case, the size of the string is taken from 
+    the maximum of the strings. 
+    The ``std::string`` or ``std::vector`` is auto-resized to fit the data. 
+    Otherwise (e.g., ``char *``), the buffer must be large enough to hold
+    the string that is read.
+    
+    In all cases, the attribute must has consistent dataspace and datatype.
+    */
+    void read(void *buff, const Datatype &memtype);
+    
+    template<typename T>
+    void read(T &&buff);
 
     template<typename T>
-    static H5Attr create_scalar( id_t loc, const string &name,  
-        const string &flag);
+    void read_scalar(T &x);
 
-    static H5Attr create_str( id_t loc, const string &name, size_t len,
-        const string &flag);
+    void read_str(string &s);
+    void read_str(char *s);
+    
+    void read_str(vector<string> &ss);
+    void read_str(string ss[]);
+    template<size_t N>
+    void read_str(char ss[][N]);
 
-    static H5Attr create( id_t loc, const string &name, 
-        const _H5Datatype &dtype, const _H5Dataspace &dspace, 
-        const string &flag);
-
-    static H5Attr open( id_t loc, const string &name );
+    /** Return a reference to the intermediate-level HDF5 object. */
+    _obj_raw_t & obj_raw() noexcept;
+    const _obj_raw_t & obj_raw() const noexcept;
+private: 
+    friend class NamedObj;
+    template<typename ...Args>
+    static _obj_ptr_t _ptr_from_raw(Args &&...args);
+    template<typename ...Args>
+    static Attr _from_raw(Args &&...args);
 };
 
-template<typename T, typename A>
-void H5Attr::write( const vector<T, A> &buff ){
-    auto dims = dataspace().dims();
-    auto size = std::accumulate( dims.begin(), dims.end(), hsize_t(1),
-        std::multiplies<hsize_t>() );
-    if( size != buff.size() )
-        ErrLogic::throw_( ErrLogic::eLENGTH, emFLPFB,
-            "  ... buff length ", buff.size(), 
-            " does not match attribute size ", size, "\n");
-    write<T>( buff.data() );
-}
-template<>
-inline void H5Attr::write( const vector<string> &buff ){
-    auto size = dataspace().size();
-    auto len = datatype().size();
-    size_t realsize=buff.size(), reallen = H5TypeStr::shape(buff)[1];
-    if( size != realsize )
-        ErrLogic::throw_( ErrLogic::eLENGTH, emFLPFB,
-            "  ... buff length ", realsize,
-            " does not match the dataset size ", size, '\n' );
-    if( len != reallen )
-        ErrLogic::throw_( ErrLogic::eLENGTH, emFLPFB,
-            "  ... buff string length ", reallen, 
-            " does not match the dataset string length ", len, '\n' );
-    auto data = H5TypeStr::serialize( buff );
-    _obj_ptr->write( datatype().raw(), data.data() );
-}
-template<typename T>
-void H5Attr::write( const T*buff ){
-    id_t memtype = H5TypeNative<T>::h5_id;
-    _obj_ptr->write( memtype, buff );
-}
-template<typename T, typename A>
-void H5Attr::write( const vector<T, A> &buff, const H5Datatype &memtype ) {
-    _obj_ptr->write( memtype.raw(), buff.data() );
-}
-template<typename T>
-void H5Attr::write( const T *buff, const H5Datatype &memtype ) {
-    _obj_ptr->write( memtype.raw(), buff );
-}
-template<typename T, typename A>
-void H5Attr::read( vector<T, A> &buff ) const{
-    auto dims = dataspace().dims();
-    auto size = std::accumulate( dims.begin(), dims.end(), hsize_t(1), 
-        std::multiplies<hsize_t>() );
-    buff.resize( size );
-    read<T>( buff.data() );
-}
-template<>
-inline void H5Attr::read( vector<string> &buff ) const{
-    auto size = dataspace().size();
-    auto len = datatype().size();
-    vector<char> _buff( size*len, '\0' );
-    _obj_ptr->read( datatype().raw(), _buff.data());
-    buff = H5TypeStr::deserialize( _buff, size );
-}
-template<typename T>
-void H5Attr::read( T *buff ) const {
-    id_t memtype = H5TypeNative<T>::h5_id;
-    _obj_ptr->read( memtype, buff );
-}
-template<typename T, typename A>
-void H5Attr::read( vector<T, A> &buff, const H5Datatype &memtype ) const {
-    _obj_ptr->read(memtype.raw(), buff.data());
-}
-template<typename T>
-void H5Attr::read( T *buff, const H5Datatype &memtype ) const {
-    _obj_ptr->read(memtype.raw(), buff);
-}
-template<typename T>
-H5Attr H5Attr::create( id_t loc, const string &name, const vector<hsize_t> &dims, 
-    const string &flag){
-    int rank = dims.size();
-    _H5Dataspace dspace( rank, dims.data() );
-    _H5Datatype dtype( H5TypeNative<T>::h5_id, 0 );
-    return create(loc, name, dtype, dspace, flag );
-}
-template<>
-inline H5Attr H5Attr::create<string>( 
-    id_t loc, const string &name, const vector<hsize_t> &dims, 
-    const string &flag){
-    typedef H5TypeStr str_t;
-    _H5Datatype dtype( _H5Datatype::copy( str_t::h5_id ) );
-    dtype.set_size( dims[1] );
-    _H5Dataspace dspace( 1, &dims[0] );
-    return create(loc, name, dtype, dspace, flag);
-}
+} // namespace HIPP::IO::H5
 
-template<typename T>
-H5Attr H5Attr::create_scalar( id_t loc, const string &name,  
-    const string &flag){
-    _H5Datatype dtype( H5TypeNative<T>::h5_id, 0 );
-    return create(loc, name, dtype, H5Dataspace::scalarval.obj_raw(), flag );
-}
-
-} // namespace IO
-} // namespace HIPP
 #endif	//_HIPPIO_H5_OBJ_ATTR_H_

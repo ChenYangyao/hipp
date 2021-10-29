@@ -78,7 +78,7 @@ struct group_t {
     ostream & info(ostream &os=cout, int fmt_cntl=1) const;
     friend ostream & operator<<(ostream &os, const group_t &g);
 
-    static IO::H5XTable<group_t> _tbl_manip;  
+    static IO::H5::XTable<group_t> _tbl_manip;  
 };
 
 /**
@@ -125,7 +125,7 @@ struct state_t {
     bool is_p2p() const noexcept  { return (type & 0xf0) == P2P; }
     bool is_collective() const noexcept { return (type & 0xf0) == COLLECTIVE; }
 
-    static IO::H5XTable<state_t> _tbl_manip;
+    static IO::H5::XTable<state_t> _tbl_manip;
 };
 
 struct event_t {
@@ -146,7 +146,7 @@ struct event_t {
     ostream & info(ostream &os=cout, int fmt_cntl=1) const;
     friend ostream & operator<<(ostream &os, const event_t &e);
 
-    static IO::H5XTable<event_t> _tbl_manip;
+    static IO::H5::XTable<event_t> _tbl_manip;
 };
 
 // if the event is already stored, use stored_event_t for the duration end.
@@ -160,7 +160,7 @@ struct stored_event_t {
     ostream & info(ostream &os=cout, int fmt_cntl=1) const;
     friend ostream & operator<<(ostream &os, const stored_event_t &e);
 
-    static IO::H5XTable<stored_event_t> _tbl_manip;
+    static IO::H5::XTable<stored_event_t> _tbl_manip;
 };  
 
 class guard_t {
@@ -231,7 +231,7 @@ public:
     Mutex & global_mtx() { return _global_mtx; }
 
     /** Store the groups and states into a HDF5 group. */
-    void store(IO::H5Group g) const;
+    void store(IO::H5::Group g) const;
 private:
     Comm _global_comm;
     Group _global_group;
@@ -241,7 +241,7 @@ private:
     vector<state_t> _states;
 
     template<typename T>
-    static void _store_msgs(const vector<T> &objs, IO::H5Group &g);
+    static void _store_msgs(const vector<T> &objs, IO::H5::Group &g);
 };
 
 } // namespace _mpprof_logger_helper    
@@ -443,11 +443,11 @@ inline ostream & operator<<(ostream &os, const guard_t &gd) {
     return gd.info(os); 
 }
 template<typename T>
-inline void state_manager_t::_store_msgs(const vector<T> &objs, IO::H5Group &g) {
+inline void state_manager_t::_store_msgs(const vector<T> &objs, IO::H5::Group &g) {
     vector<string> msgs;
     for(const auto &obj: objs) msgs.emplace_back(obj.msg);
-    g.create_dataset<string>("msg", 
-        IO::H5TypeStr::shape(msgs), "excl").write(msgs);
+    
+    g.create_dataset_for_str("msg", msgs, "x").write_str(msgs);
 }
 inline ostream & operator<<(ostream &os, const state_manager_t &sm) { 
     return sm.info(os); 

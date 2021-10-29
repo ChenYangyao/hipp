@@ -1,135 +1,107 @@
-#include <h5_obj_dataset.h>
-namespace HIPP {
-namespace IO {
+#include <hippio.h>
 
-H5Dataspace H5Dataset::dataspace(){
-    auto ptr = std::make_shared<H5Dataspace::_obj_raw_t>( 
-        _obj_ptr->get_space() );
-    return H5Dataspace( ptr );        
-}
-const H5Dataspace H5Dataset::dataspace() const
-    { return const_cast<H5Dataset *>(this)->dataspace(); }
+namespace HIPP::IO::H5 {
 
-H5Datatype H5Dataset::datatype(){
-    auto ptr = std::make_shared<H5Datatype::_obj_raw_t>( 
-        _obj_ptr->get_type() );
-    return H5Datatype( ptr );
-}
-const H5Datatype H5Dataset::datatype() const
-    { return const_cast<H5Dataset *>(this)->datatype(); }
-H5Attr H5Dataset::create_attr(
-    const string &name, const H5Datatype &dtype, 
-    const vector<hsize_t> &dims, const string &flag){
-    _H5Dataspace dspace(dims.size(), dims.data());
-    return H5Attr::create(raw(), name, dtype.obj_raw(), dspace, flag);
-}
-H5Attr H5Dataset::create_attr_str(
-    const string &name, size_t len, const string &flag){
-    return H5Attr::create_str( raw(), name, len, flag );
-}
-H5Attr H5Dataset::open_attr(const string &name){
-    return H5Attr::open( raw(), name );
-}
-bool H5Dataset::attr_exists(const string &name) const{
-    return bool(_obj_ptr->exist_attr(name.c_str()));
-}
-void H5Dataset::write( const string &buff, 
-    const H5Proplist &xprop ){
-    typedef H5TypeStr str_t;
-    _H5Datatype dtype( _H5Datatype::copy( str_t::h5_id ) );
-    dtype.set_size( buff.size()+1 );    
-    _obj_ptr->write( dtype.raw(), H5S_ALL, H5S_ALL, xprop.raw(), buff.c_str() );
-}
-void H5Dataset::read( string &buff, 
-    const H5Proplist &xprop ) const{
-    auto filetype = datatype();
-    auto len = filetype.size();
-    vector<char> _cbuf(len);
-    _obj_ptr->read( filetype.raw(), H5S_ALL, H5S_ALL, xprop.raw(), 
-        _cbuf.data() );
-    buff.assign( (const char *)_cbuf.data() );
-}
-H5Dataset H5Dataset::create_str( 
-    id_t loc, const string &name, size_t len, const string &flag,
-    const H5Proplist &lcprop,
-    const H5Proplist &cprop,
-    const H5Proplist &aprop ){
-    typedef H5TypeStr str_t;
-    _H5Datatype dtype( _H5Datatype::copy( str_t::h5_id ) );
-    dtype.set_size( len );    
-    return create( loc, name, dtype, H5Dataspace::scalarval.obj_raw(), 
-        flag, lcprop, cprop, aprop );
-}
-
-H5Dataset H5Dataset::create( 
-    id_t loc, const string &name, 
-    const _H5Datatype &dtype, const _H5Dataspace &dspace, 
-    const string &flag,
-    const H5Proplist &lcprop,
-    const H5Proplist &cprop,
-    const H5Proplist &aprop )
-{
-    H5Dataset dset(NULL);
-    try{
-        _H5EStackTempOff estk(H5E_DEFAULT);
-        dset = H5Dataset(
-            std::make_shared<_obj_raw_t>( loc, name.c_str(), 
-                dtype.raw(), dspace.raw(), lcprop.raw(), 
-                cprop.raw(), aprop.raw() ));
-    }catch( const ErrH5 &e ){
-        if( flag == "trunc" ){
-            dset = open( loc, name, aprop );
-        }else if( flag == "excl" ){
-            ErrH5::throw_( -1, emFLPFB, "  ... dataset ", name, " exists\n" );
-        }else{
-            ErrLogic::throw_(ErrLogic::eINVALIDARG, emFLPFB, 
-                "  ... invalid flag ", flag, '\n');
-        }
-    }
-    return dset;   
-}
-H5Dataset H5Dataset::open( id_t loc, const string &name,
-    const H5Proplist &aprop )
-{
-    auto ptr = std::make_shared<_obj_raw_t>( 
-        _obj_raw_t::open( loc, name.c_str(), aprop.raw() ) );
-    return H5Dataset( ptr );
-}
-bool H5Dataset::exists( id_t loc, const string &name ){
-    bool exists = true;
-    try{
-        _H5EStackTempOff estk(H5E_DEFAULT);
-        open( loc, name );
-    }catch( const ErrH5 & ){
-        exists = false;
-    }
-    return exists;    
-}
-H5Proplist H5Dataset::create_proplist( const string &cls ){
-    id_t _cls = H5P_DATASET_CREATE;
+Proplist Dataset::create_proplist(const string &cls) {
+    typedef Proplist pl_t;
+    hid_t cls_val;
     if( cls == "c" || cls == "create" )
-        _cls = H5P_DATASET_CREATE;
+        cls_val = pl_t::dCREATE;
     else if( cls == "a" || cls == "access" )
-        _cls = H5P_DATASET_ACCESS;
+        cls_val = pl_t::dACCESS;
     else if( cls == "x" || cls == "xfer" || cls == "transfer" )
-        _cls = H5P_DATASET_XFER;
+        cls_val = pl_t::dXFER;
     else
         ErrLogic::throw_( ErrLogic::eDOMAIN, emFLPFB, 
-            "   ... dataset property list class ", cls, " invalid "  );
-    return H5Proplist::_from_raw( H5Proplist::_obj_raw_t::create( _cls ) );
+            "   ... dataset property list class ", cls, " invalid\n" );
+    return Proplist::create(cls_val);
 }
 
-H5Proplist H5Dataset::proplist(const string &cls) const{
-    id_t plist;
+Proplist Dataset::proplist(const string &cls) const{
+    hid_t plist;
     if( cls == "c" || cls == "create" )
-        plist = H5Dget_create_plist( raw() );
+        plist = obj_raw().get_create_plist();
     else if( cls == "a" || cls == "access" )
-        plist = H5Dget_access_plist( raw() );
+        plist = obj_raw().get_access_plist();
     else 
         ErrLogic::throw_( ErrLogic::eDOMAIN, emFLPFB, 
-            "   ... dataset property list class ", cls, " invalid "  );
-    ErrH5::check( plist, emFLPFB );
-    return H5Proplist::_from_raw( plist );
+            "   ... dataset property list class ", cls, " invalid\n");
+    ErrH5::check(plist, emFLPFB);
+    return Proplist::_from_raw(plist);
 }
-} // namespace IO
-} // namespace HIPP
+
+void Dataset::write(const void *buff, 
+    const Datatype &memtype, const Dataspace &memspace,
+    const Dataspace &filespace,
+    const Proplist &xprop)
+{
+    obj_raw().write(memtype.raw(), memspace.raw(), 
+        filespace.raw(), xprop.raw(), buff);
+}
+
+void Dataset::write_str(const string &s) {
+    ConstDatapacketStr dp {s};
+    write(dp.buff, dp.dtype);
+}
+
+void Dataset::write_str(const char *s) {
+    ConstDatapacketStr dp {s};
+    write(dp.buff, dp.dtype);
+}
+
+void Dataset::write_str(const vector<string> &ss) {
+    write_str(ss.data(), ss.size());
+}
+
+void Dataset::write_str(const string ss[], size_t n_str) {
+    ConstDatapacketStr dp {ss, n_str};
+    vector<char> b;
+    dp.buff_to(ss, n_str, b);
+    write(b.data(), dp.dtype);
+}
+
+void Dataset::write_str(const char * const *ss, size_t n_str) {
+    ConstDatapacketStr dp {ss, n_str};
+    vector<char> b;
+    dp.buff_to(ss, n_str, b);
+    write(b.data(), dp.dtype);
+}
+
+void Dataset::read(void *buff, const Datatype &memtype,
+    const Dataspace &memspace, const Dataspace &filespace,
+    const Proplist &xprop) const
+{
+    obj_raw().read(memtype.raw(), memspace.raw(), filespace.raw(), 
+        xprop.raw(), buff);
+}
+
+void Dataset::read_str(string &s) {
+    auto dt = datatype();
+    size_t len = dt.size();
+    vector<char> buff(len);
+    read(buff.data(), dt);
+    s.assign(buff.data());
+}
+
+void Dataset::read_str(char *s) {
+    auto dt = datatype();
+    read(s, dt);
+}
+
+void Dataset::read_str(vector<string> &ss) {
+    size_t n_str = dataspace().size();
+    ss.resize(n_str);
+    read_str(ss.data());
+}
+
+void Dataset::read_str(string ss[]) {
+    auto dt = datatype();
+    auto dsp = dataspace();
+    size_t n_str = dsp.size(), len = dt.size(), tot_len = n_str * len;
+    vector<char> buff(tot_len);
+    read(buff.data(), dt);
+    for(size_t i=0; i<n_str; ++i)
+        ss[i].assign(buff.data() + i * len);
+}
+
+} // namespace HIPP::IO::H5

@@ -37,13 +37,19 @@ void more_on_buffer(Comm comm) {
         short a[5] {};
         string s = "hello"; 
         vector<int> v(5);
-        std::array<long, 4> arr {};
+        array<long, 4> arr {};
 
         comm.send(1, tag, x);
         comm.send(1, tag, a);
         comm.send(1, tag, s);
         comm.send(1, tag, v);
         comm.send(1, tag, arr);
+
+        array<array<long, 3>, 4> arr_of_arr {};
+        vector<array<long, 3> > vec_of_arr(4);
+        comm.send(1, tag, vec_of_arr);
+        comm.send(1, tag, arr_of_arr);
+
     }else if(rank == 1) {
         comm.recv(0, tag, inbuf, 5, DOUBLE);
         pout << "Got {", pout(inbuf, inbuf+5), "}", endl;
@@ -65,6 +71,13 @@ void more_on_buffer(Comm comm) {
         comm.recv(0, tag, arr);
         pout << "Got x=", x, ", a=", pout(a,a+5), ", s=", s.data(), 
             ", v=", v, ", arr=", arr, endl;
+
+        array<array<long, 3>, 4> arr_of_arr;
+        vector<array<long, 3> > vec_of_arr(4);
+        comm.recv(0, tag, vec_of_arr);
+        comm.recv(0, tag, arr_of_arr);
+        pout << "Get arr_of_arr=", arr_of_arr, 
+            ", vec_of_arr=", vec_of_arr, endl;
     }
 }
 

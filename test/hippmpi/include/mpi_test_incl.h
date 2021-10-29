@@ -1,3 +1,6 @@
+#ifndef _HIPPMPI_MPI_TEST_INCL_H_
+#define _HIPPMPI_MPI_TEST_INCL_H_
+
 #include <hippmpi.h>
 
 namespace HIPP::MPI {
@@ -401,3 +404,6 @@ void MPITestFixture::assert_eq_type(Args &&...args) {
 
     
 } // namespace HIPP::MPI
+
+
+#endif	//_HIPPMPI_MPI_TEST_INCL_H_

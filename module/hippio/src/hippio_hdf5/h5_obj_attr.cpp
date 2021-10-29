@@ -1,80 +1,106 @@
-#include <h5_obj_attr.h>
-namespace HIPP {
-namespace IO {
+#include <hippio.h>
 
-H5Dataspace H5Attr::dataspace(){
-    auto ptr = std::make_shared<H5Dataspace::_obj_raw_t>( 
-        _obj_ptr->get_space() );
-    return H5Dataspace( ptr );
+namespace HIPP::IO::H5 {
+
+string Attr::get_name() const {
+    return obj_raw().get_name();
 }
 
-const H5Dataspace H5Attr::dataspace() const { 
-    return const_cast<H5Attr*>(this)->dataspace(); 
+hsize_t Attr::get_storage_size() const {
+    return obj_raw().get_storage_size();
 }
 
-H5Datatype H5Attr::datatype(){
-    auto ptr = std::make_shared<H5Datatype::_obj_raw_t>( 
-        _obj_ptr->get_type() );
-    return H5Datatype( ptr );
+void Attr::get_info(info_t &link_info) const {
+    obj_raw().get_info(link_info);
 }
 
-const H5Datatype H5Attr::datatype() const { 
-    return const_cast<H5Attr*>(this)->datatype(); 
+Attr::info_t Attr::get_info() const {
+    info_t info;
+    get_info(info);
+    return info;
 }
 
-void H5Attr::write( const string &buff ){
-    typedef H5TypeStr str_t;
-    _H5Datatype dtype( _H5Datatype::copy(str_t::h5_id) );
-    dtype.set_size( buff.size()+1 );
-    _obj_ptr->write( dtype.raw(), buff.c_str() );
+void Attr::write(const void *buff, const Datatype &memtype) {
+    obj_raw().write(memtype.raw(), buff);
 }
 
-void H5Attr::read( string &buff ) const{
-    auto filetype = datatype();
-    auto len = filetype.size();
-    vector<char> _cbuf( len );
-    _obj_ptr->read( filetype.raw(), _cbuf.data() );
-    buff.assign( (const char *)_cbuf.data() );
+void Attr::write_str(const string &s) {
+    ConstDatapacketStr dp {s};
+    write(dp.buff, dp.dtype);
 }
 
-H5Attr H5Attr::create_str( id_t loc, const string &name, size_t len,
-    const string &flag)
+void Attr::write_str(const char *s) {
+    ConstDatapacketStr dp {s};
+    write(dp.buff, dp.dtype);
+}
+
+void Attr::write_str(const vector<string> &ss) {
+    write_str(ss.data(), ss.size());
+}
+
+void Attr::write_str(const char * const *ss, size_t n_str) {
+    ConstDatapacketStr dp {ss, n_str};
+    vector<char> b;
+    dp.buff_to(ss, n_str, b);
+    write(b.data(), dp.dtype);
+}
+
+void Attr::write_str(const string ss[], size_t n_str) {
+    ConstDatapacketStr dp {ss, n_str};
+    vector<char> b;
+    dp.buff_to(ss, n_str, b);
+    write(b.data(), dp.dtype);
+}
+
+void Attr::read(void *buff, const Datatype &memtype) {
+    obj_raw().read(memtype.raw(), buff);
+}
+
+void Attr::read_str(string &s) {
+    auto dt = datatype();
+    size_t len = dt.size();
+    vector<char> buff(len);
+    read(buff.data(), dt);
+    s.assign(buff.data());
+}
+
+void Attr::read_str(char *s) {
+    auto dt = datatype();
+    read(s, dt);
+}
+
+void Attr::read_str(vector<string> &ss) {
+    size_t n_str = dataspace().size();
+    ss.resize(n_str);
+    read_str(ss.data());
+}
+
+void Attr::read_str(string ss[]) {
+    auto dt = datatype();
+    auto dsp = dataspace();
+    size_t n_str = dsp.size(), len = dt.size(), tot_len = n_str * len;
+    vector<char> buff(tot_len);
+    read(buff.data(), dt);
+    for(size_t i=0; i<n_str; ++i)
+        ss[i].assign(buff.data() + i * len);
+}
+
+
+Attr NamedObj::_attr_create_detect_exists(const string &name, 
+    const string &flag, const Proplist &aprop)
 {
-    typedef H5TypeStr str_t;
-    _H5Datatype dtype( _H5Datatype::copy( str_t::h5_id ) );
-    dtype.set_size( len );
-    return create(loc, name, dtype, H5Dataspace::scalarval.obj_raw(), flag);
-}
-
-H5Attr H5Attr::create( id_t loc, const string &name, 
-    const _H5Datatype &dtype, const _H5Dataspace &dspace, 
-    const string &flag)
-{
-    H5Attr attr(NULL);
-    try{
-        _H5EStackTempOff estk(H5E_DEFAULT);
-        auto ptr = std::make_shared<_obj_raw_t>( 
-            loc, name.c_str(), dtype.raw(), dspace.raw() );
-        attr = H5Attr( ptr );
-    }catch( const ErrH5 &e ){
-        if( flag == "trunc" ){
-            attr = open(loc, name);
-        }else if( flag == "excl" ){
-            ErrH5::throw_(-1, emFLPFB, "  ... attribute ", name, " exists\n");
-        }else{
-            ErrLogic::throw_(ErrLogic::eINVALIDARG, 
-                emFLPFB,
-                "  ... invalid flag ", flag, '\n');
-        }
+    if( attr_exists(name) ) {
+        if( flag == "x" || flag == "excl" ) 
+            ErrH5::throw_(-1, emFLPFB, "  ... attribute ", name, " exits\n");
+        else if( flag == "ac" || flag == "ca" 
+            || flag == "w" || flag == "trunc" ) 
+        {
+            return open_attr(name, aprop);
+        }else 
+            ErrLogic::throw_(ErrLogic::eDOMAIN, emFLPFB, 
+                "  ... invalid attribute creation flag ", flag, '\n');
     }
-    return attr;
+    return Attr {nullptr};
 }
 
-H5Attr H5Attr::open( id_t loc, const string &name ) {
-    auto ptr = std::make_shared<_obj_raw_t>( 
-        _obj_raw_t::open( loc, name.c_str() ));
-    return H5Attr( ptr );
-}
-
-} // namespace IO
-} // namespace HIPP
+} // namespace HIPP::IO::H5

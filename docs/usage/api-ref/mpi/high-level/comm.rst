@@ -1022,20 +1022,15 @@ Class Group: the Process Collection
         ``free()`` can be called at any time, and even multiple times, and even 
         when the instance is a null value or a predefined value.
     
-    
-    
     .. function::   ostream &info( ostream &os = cout, int fmt_cntl = 1 ) const
                 friend ostream & operator<<( ostream &os, const Group &group )
 
-        ``info()`` prints the information of the current instance to the stream 
-        ``os``.
-    
-        :arg fmt_cntl:   control the amount of information to be printed, 0 for a 
-                 short and inline priting, 1 for a verbose, multi-line version.
-        :return: The argument ``os`` is returned.
-    
-        The overloaded ``<<`` operator is equivalent to ``info()`` with 
-        default ``fmt_cntl``.
+        ``info()`` prints a short (``fmt_cntl=1``) or verbose (``fmt_cntl=1``)
+        description about the instance to the stream ``os``.
+
+        Operator ``<<`` is equivalent to ``info()`` with ``fmt_cntl=0``.
+
+        The stream ``os`` itself is returned.
     
     .. function::   int size() const
                 int rank() const

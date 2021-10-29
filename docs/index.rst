@@ -50,20 +50,35 @@ Main Features
    comm.isend(dest, tag, b).wait();
    comm.bcast(c, root);
 
-**Flexible IO Library**: for example, a structure array can be stored to a HDF5 file by::
+**Flexible IO Library**: For example, scalar or array-like data can be written 
+into HDF5 format by a single call of ``put``::
 
-   struct Particle {
-      long id;
-      double pos[3]; 
-      float tidal[3][3]; 
-      std::array<int, 3> links;
-   };
-   vector<Particle> particles;
+   short s;
+   vector<double> d10(10);
+   int i5[5];
+   long l34[3][4];
+   array<float, 3> f3;
+   vector<array<int, 3> > i83(8);
 
-   H5XTable<Particle>( 
-      "id", &Particle::id,        "pos", &Particle::pos, 
-      "tidal", &Particle::tidal,  "links", &Particle::links
-   ).write(particles, "file.h5");
+   H5::DatasetManager dsets = H5::File("file.h5", "w").datasets();
+   
+   dsets.put("s",      s);
+   dsets.put("d10",    d10);
+   dsets.put("i5",     i5);
+   dsets.put("l34",    l34);
+   dsets.put("f3",     f3);
+   dsets.put("i83",    i83);
+
+Array of more complex structured type can also be written by a single call::
+
+   struct S {
+        int a;
+        double b[3];
+        float c[2][3];
+        array<array<long, 3>, 4> d;
+    } data[10];
+    
+    HIPPIO_H5_XTABLE(S, a, b, c, d).write(data, "file.h5");
 
 **Optimized Algorithm Library**: a KD-Tree can be constructed by::
 

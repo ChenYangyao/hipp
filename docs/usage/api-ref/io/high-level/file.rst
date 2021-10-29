@@ -1,223 +1,545 @@
 File and Group
-====================================
+===============
+
+.. include:: /global.rst
+
+The following classes are all defined within namespace ``HIPP::IO::H5``.
+
+.. namespace:: HIPP::IO::H5
+
+File
+------
+
+.. class:: File : public Group
+
+    ``File`` provides interfaces to manipulate (create, open, or retrieve metainfo from) HDF5 files.
+
+    **Memory management:** 
+    The file class is copyable and movable (both in construction and 
+    assignment). The copy, move and destruction are ``noexcept``. The copy operation 
+    is shallow - the resulting object always refers to the same HDF5 resource
+    as the source object. The move operation sets the move-from objects an empty
+    state.
+
+    .. type:: Group parent_t
+        _File _obj_raw_t
+        std::shared_ptr<_obj_raw_t> _obj_ptr_t
+
+    **Constructors:**
+    Class ``File`` "inherits" all constructors from its parent class.
 
 
-The following classes are all defined within namespace ``HIPP::IO``.
+    .. function:: File(const string &name, const string &flag = "ac", \
+                    const Proplist &cporp = Proplist::vDFLT, \
+                    const Proplist &aprop = Proplist::vDFLT)
 
-.. namespace:: HIPP::IO
+        Create a new file or open an existing file.
 
+        ``name``:  file name
 
-Class H5File
------------------
+        ``flag``:  file access, must be one of the following
 
-.. class:: H5File
+        .. table:: 
+            :class: tight-table
 
-
-    The API for HDF5 file.
-
-    ``H5File`` instance can be copy-constructed, copy-assigned, move-constructed and move-assigned.
-    The copy, move operations and destructor are all noexcept. The copy operations are shallow-copy, i.e., 
-    instances of source and target refer to the same underlying file object (like a ``shared_ptr``).
-
-
-    .. function::   H5File( const string &name, const string &flag, \
-                        const H5Proplist &cporp = H5Proplist::defaultval, \ 
-                        const H5Proplist &aprop = H5Proplist::defaultval)
-
-        Constructor - create a new file or open an existing file named ``name``.
+            =================== ================================================================
+            ``flag``            Description
+            =================== ================================================================
+            ``"w"``             create and truncate, then open as R/W mode.
+            ``"x"``             exclusively create (failed if existing), then open as R/W mode.
+            ``"ac"`` | ``"ca"`` open existing file as R/W mode. Create it if not existing.
+            ``"r"``             open existing file as R mode.
+            ``"a"``             open existing file as R/W mode.
+            =================== ================================================================
         
-        ``flag`` controls the the open/creation and Read/Write mode. It can be one of the following values
+        ``cprop, aprop``: creation and access property lists. If to open existing one, cprop
+        is ignored.    
 
-        ==================  ==============================================================
-        "w"                 create a new file (truncate if existing) as R/W mode. 
-        "r"                 open an existing file as R mode. 
-        "a"                 open an existing file as R/W mode. 
-        "ac" or "ca"        open an existing file (create if not existing) as R/W mode.
-        ==================  ==============================================================
+    .. function::static File open(const string &name, const string &flag = "a", \
+            const Proplist &aprop = Proplist::vDFLT)
 
-        ``cprop`` and ``aprop`` specify the creation and access properties, respectively.
-
-    .. function::   template<typename T>\
-                    H5Dataset create_dataset( const string &name, const vector<hsize_t> &dims, \
-                        const string &flag="trunc", \
-                        const H5Proplist &lcprop = H5Proplist::defaultval,\
-                        const H5Proplist &cprop = H5Proplist::defaultval,\
-                        const H5Proplist &aprop = H5Proplist::defaultval )
-                    H5Dataset create_dataset(const string &name, const H5Datatype &dtype, \
-                        const vector<hsize_t> &dims, const string &flag="trunc", \
-                        const H5Proplist &lcprop = H5Proplist::defaultval,\
-                        const H5Proplist &cprop = H5Proplist::defaultval,\
-                        const H5Proplist &aprop = H5Proplist::defaultval)
-                    template<typename T>\
-                    H5Dataset create_dataset_scalar( const string &name,\
-                        const string &flag="trunc", \
-                        const H5Proplist &lcprop = H5Proplist::defaultval,\
-                        const H5Proplist &cprop = H5Proplist::defaultval,\
-                        const H5Proplist &aprop = H5Proplist::defaultval )
-                    H5Dataset create_dataset_str( const string &name, size_t len,\
-                        const string &flag="trunc", \
-                        const H5Proplist &lcprop = H5Proplist::defaultval,\
-                        const H5Proplist &cprop = H5Proplist::defaultval,\
-                        const H5Proplist &aprop = H5Proplist::defaultval )
+        Open an existing file named ``name`` in file system.
         
-        Create a new dataset (or open an existing dataset) under the root group of the file instance.
+        ``flag`` specifies the access mode, must be "r" (Read-only) | "a" (W/R).
 
-        ``name`` specifies the name of the dataset to open/create. If the dataset 
-        does not exist, it is created. Otherwise, if ``flag=="trunc"``, the dataset is opened, or if ``flag=="excl"``,
-        an exception :class:`ErrH5` is thrown.
+    .. function:: static File create(const string &name, const string &flag = "w", \
+        const Proplist &cprop = Proplist::vDFLT, \
+        const Proplist &aprop = Proplist::vDFLT)
+
+        Create a file.
         
-        ``lcprop`` specifies the link-creation properties, ``cprop`` specifies the dataset creation properties, and ``aprop``
-        specifies the dataset access properties.
+        ``flag`` specifies the access mode, must be "w" (truncate if existing) | "x" (fail if existing).
 
-        Four methods are:
+    .. function:: static Proplist create_proplist(const string &cls = "c")
 
-        (1) ``create_dataset<T>()`` creates an array-like dataset with element type ``T``, array shape ``dims``. Type ``T``
-            can be either numeric :ref:`Predefined Datatypes <api-io-dtype-predefined>` (e.g., int, float), 
-            or ``std::string``. For the numeric types, ``dims`` is the array shape. For ``std::string``, ``dims`` must be 
-            ``{ num_of_str, max_str_size}``, where ``max_str_size`` must contain the space of the terminate null character,
-            i.e., this dataset allows storage for an 1-d array of C strings. 
-            It is best to calculate dims use :func:`H5TypeStr::shape`
-        (2) ``create_dataset()`` creates and array-like dataset with element type ``dtype``, array shape ``dims``.
-        (3) ``create_dataset_scalar()`` creates a scalar dataset. 
-        (4) ``create_dataset_str()`` creates a dataset for a single string.
-
-    .. function::   H5Dataset open_dataset( const string &name,\
-                        const H5Proplist &aprop = H5Proplist::defaultval )
-                    bool dataset_exists( const string &name ) const
-
-        ``open_dataset(name)`` opens an existing dataset named ``name``. If not existing, throw an exception :class:`ErrH5`.
+        Create a property list for file operation.
         
-        To check whether a dataset exists, use ``dataset_exists(name)``.
+        ``cls``: The property class, must be be one from
 
-    .. function::   template<typename T>\
-                    H5Attr create_attr(\
-                        const string &name, const vector<hsize_t> &dims, \
-                        const string &flag="trunc")
-                    H5Attr create_attr(\
-                        const string &name, const H5Datatype &dtype, \
-                        const vector<hsize_t> &dims, const string &flag="trunc")
-                    template<typename T>\
-                    H5Attr create_attr_scalar(\
-                        const string &name, const string &flag="trunc")
-                    H5Attr create_attr_str(\
-                        const string &name, size_t len, const string &flag="trunc")
-
-        Create a new attribute (or open an existing attribute) under the root group of this file instance.
-
-        The template parameter and argument list is the same with :func:`create_dataset()` and its variants. The difference
-        is that you cannot specify any property list.
+        .. table:: 
+            :class: tight-table
         
-    .. function::   H5Attr open_attr(const string &name)
-                    bool attr_exists(const string &name) const
+            ========================= ===================================================
+            ``cls``                   Description
+            ========================= ===================================================
+            ``"c"`` | ``"create"``    file creation property list.
+            ``"a"`` | ``"access"``    file access property list.
+            ``"m"`` | ``"mount"``     file mount property list.
+            ========================= ===================================================
 
-        ``open_attr(name)`` opens an existing attribute named ``name``. If not existing, throw an exception :class:`ErrH5`.
+    .. function:: _obj_raw_t & obj_raw() noexcept
+        const _obj_raw_t & obj_raw() const noexcept
 
-        To check whether an attribute exists, use ``attr_exists(name)``.
-
-    .. function::       H5Group create_group( const string &name )
-                        H5Group try_create_group( const string &name )
-                        H5Group open_group( const string &name ) 
-                        bool group_exists( const string &name ) const
-
-        Data group manipulation methods.
-
-        ``create_group(name)`` creates a group named ``name``. If it has already existed, throw an exception :class:`ErrH5`.
-
-        ``try_create_group(name)`` is similar, but open the group if it has already existed.
-
-        ``open_group(name)`` opens an existing group. If it is not existed, throw an exception :class:`ErrH5`.
-
-        ``group_exists(name)`` check whether a group exists.
-
-    .. function::   static H5Proplist create_proplist(const string &cls = "c")
-
-        Create a file-related property list of given class ``cls``. Possible values are:
-
-        ===================== ====================================
-        "c" or "create"         properties for file creation
-        "a" or "access"         properties for file access
-        "m" or "mount"          properties for file mounting
-        ===================== ====================================
+        Return a reference to the intermediate-level HDF5 object.
+    
 
 
-Class H5Group 
+Group 
 -------------------
 
-.. class::  H5Group
 
-    .. function::   template<typename T>\
-                    H5Dataset create_dataset( const string &name, const vector<hsize_t> &dims, \
-                        const string &flag="trunc",\
-                        const H5Proplist &lcprop = H5Proplist::defaultval,\
-                        const H5Proplist &cprop = H5Proplist::defaultval,\
-                        const H5Proplist &aprop = H5Proplist::defaultval )
-                    H5Dataset create_dataset(const string &name, const H5Datatype &dtype, \
-                        const vector<hsize_t> &dims, const string &flag="trunc", \
-                        const H5Proplist &lcprop = H5Proplist::defaultval,\
-                        const H5Proplist &cprop = H5Proplist::defaultval,\
-                        const H5Proplist &aprop = H5Proplist::defaultval)
-                    template<typename T>\
-                    H5Dataset create_dataset_scalar( const string &name,\
-                        const string &flag="trunc", \
-                        const H5Proplist &lcprop = H5Proplist::defaultval,\
-                        const H5Proplist &cprop = H5Proplist::defaultval,\
-                        const H5Proplist &aprop = H5Proplist::defaultval )
-                    H5Dataset create_dataset_str( const string &name, size_t len,\
-                        const string &flag="trunc", \
-                        const H5Proplist &lcprop = H5Proplist::defaultval,\
-                        const H5Proplist &cprop = H5Proplist::defaultval,\
-                        const H5Proplist &aprop = H5Proplist::defaultval )
+.. class:: Group: public NamedObj
+
+    Groups are named objects used to organized other objects in a HDF5 file.
+    Class ``Group`` encapsulates the methods available on groups. 
+
+    **Memory management:** 
+    The group class is copyable and movable (both in construction and 
+    assignment). The copy, move and destruction are ``noexcept``. The copy operation 
+    is shallow - the resulting object always refers to the same HDF5 resource
+    as the source object. The move operation sets the move-from objects an empty
+    state.
+
+    .. type:: NamedObj parent_t
+        _Group _obj_raw_t
+        std::shared_ptr<_obj_raw_t> _obj_ptr_t
+
         
-        Create a new dataset (or open an existing dataset) under the current group instance.
-
-        These methods have the same template parameter and argument list as :func:`H5File::create_dataset` and its variants. 
-        See there for the details. 
-
-    .. function::   H5Dataset open_dataset( const string &name,\
-                        const H5Proplist &aprop = H5Proplist::defaultval )
-                    bool dataset_exists( const string &name )const
-
-        ``open_dataset(name)`` opens an existing dataset named ``name``. If not existing, throw an exception :class:`ErrH5`.
+    .. type:: _obj_raw_t::info_t          info_t
         
-        To check whether a dataset exists, use ``dataset_exists(name)``.
+        Structured type that records group meta-info.
 
-    .. function::   template<typename T>\
-                    H5Attr create_attr(\
-                        const string &name, const vector<hsize_t> &dims, \
-                        const string &flag="trunc")
-                    H5Attr create_attr(\
-                        const string &name, const H5Datatype &dtype, \
-                        const vector<hsize_t> &dims, const string &flag="trunc")
-                    template<typename T>\
-                    H5Attr create_attr_scalar(\
-                        const string &name, const string &flag="trunc")
-                    H5Attr create_attr_str(\
-                        const string &name, size_t len, const string &flag="trunc")
+    .. type:: _obj_raw_t::storage_type_t  storage_type_t
 
-        Create a new attribute (or open an existing attribute) under the current group.
+    .. member:: \
+            static constexpr storage_type_t storeCOMPACT_T          = _obj_raw_t::storeCOMPACT_T
+            static constexpr storage_type_t storeDENSE_T            = _obj_raw_t::storeDENSE_T
+            static constexpr storage_type_t storeSYMBOL_TABLE_T     = _obj_raw_t::storeSYMBOL_TABLE_T
 
-        The template parameter and argument list are the same with :func:`H5File::create_dataset` and its variants. 
-        The difference is that you cannot specify any property list.
+        Storage types of group.
 
-    .. function::   H5Attr open_attr(const string &name)
-                    bool attr_exists(const string &name) const
+    .. type:: _Link::info_t link_info_t
 
-        Opens an existing attribute of name ``name``. If not existing, throw an error :class:`ErrH5`.
+        Structured type that records link meta-info.
+        
+    .. type:: _Link::type_t link_type_t;
 
-        ``attr_exists()`` checks whether an attribute has been existed.
+    .. member:: 
+            static constexpr link_type_t tERROR     = _Link::tERROR
+            static constexpr link_type_t tHARD      = _Link::tHARD
+            static constexpr link_type_t tSOFT      = _Link::tSOFT
+            static constexpr link_type_t tEXTERNAL  = _Link::tEXTERNAL
+            static constexpr link_type_t tMAX       = _Link::tMAX;
 
-    .. function::   H5Group create_group( const string &name )
-                    H5Group try_create_group( const string &name )
-                    H5Group open_group( const string &name )
-                    bool group_exists( const string &name ) const
+        Type of links.
+
+    .. type:: \
+        _group_link_helper::iter_arg_t link_iter_arg_t
+        _group_link_helper::iter_op_t link_iter_op_t
+        
+    .. type::   NamedObj::info_t        obj_info_t
+
+        Structured type that records object meta-info.
+
+    .. type::   NamedObj::info_field_t  obj_info_field_t
+                NamedObj::type_t        obj_type_t
+
+    .. type::   _group_obj_helper::iter_arg_t obj_iter_arg_t
+                _group_obj_helper::iter_op_t obj_iter_op_t
+
+    **Constructors:** Class ``Group`` "inherits" all constructors from its parent class.
+
+    .. function:: \
+        void get_info(info_t &group_info) const
+        void get_info(const string &name, info_t &group_info,  \
+            const Proplist &laprop = Proplist::vDFLT) const
+        void get_info(const string &group_name, hsize_t idx, info_t &group_info,  \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE, \
+            const Proplist &laprop = Proplist::vDFLT) const
+        info_t get_info() const
+        info_t get_info(const string &name,  \
+            const Proplist &laprop = Proplist::vDFLT) const
+        info_t get_info(const string &group_name, hsize_t idx, \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE,  \
+            const Proplist &laprop = Proplist::vDFLT) const
+
+        Retrieve group meta info of the current object, of a sub object by ``name``,
+        or of the sub sub object indexed ``idx`` in a sub group ``group_name`` (
+        can be "." to denote the group itself).
+
+        ``group_info``: object into which the meta info is put.
+
+        ``idx_type, order``: which type of index is used and in which order the object 
+        is visited in the index list.
+
+        The three overloads that return ``info_t`` are the same except the the group
+        information is returned rather than filled into the argument.
+        
+    .. function:: \        
+        void get_object_info(obj_info_t &info, \
+            info_field_t fields = NamedObj::infoALL) const
+        void get_object_info(const string &name, obj_info_t &info,  \
+            info_field_t fields = NamedObj::infoALL, \
+            const Proplist &laprop = Proplist::vDFLT) const
+        void get_object_info(const string &group_name,  \ 
+            hsize_t idx, obj_info_t &info, \
+            info_field_t fields = NamedObj::infoALL, \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE, \
+            const Proplist &laprop = Proplist::vDFLT) const
+        obj_info_t get_object_info( \
+            info_field_t fields = NamedObj::infoALL) const
+        obj_info_t get_object_info(const string &name,  \
+            info_field_t fields = NamedObj::infoALL, \
+            const Proplist &laprop = Proplist::vDFLT) const
+        obj_info_t get_object_info(const string &group_name, hsize_t idx,  \
+            info_field_t fields = NamedObj::infoALL, \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE,  \
+            const Proplist &laprop = Proplist::vDFLT) const
+
+        Retrive the object meta info of the current object, of a sub object by 
+        ``name``, or of a sub sub object indexed ``idx`` in the sub group 
+        ``group_name`` (can be "." to denote the group itself). 
+
+        ``info``: object into which the meta info is put.
+
+        ``idx_type, order``: which type of index is used and in which order the object 
+        is visited in the index list.
+
+        The three overloads that return ``obj_info_t`` are the same except the the 
+        object information is returned rather than filled into the argument.
+
+    .. function:: \
+        void get_link_info(const string &name, link_info_t &info, \
+            const Proplist &laprop = Proplist::vDFLT) const
+        void get_link_info(const string &group_name, hsize_t idx, link_info_t &info,    \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE,    \
+            const Proplist &laprop = Proplist::vDFLT) const
+        link_info_t get_link_info(const string &name, \
+            const Proplist &laprop = Proplist::vDFLT) const
+        link_info_t get_link_info(const string &group_name, hsize_t idx,    \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE, \
+            const Proplist &laprop = Proplist::vDFLT) const
+        void get_link_val(const string &name, vector<char> &buff,  \
+            const Proplist &laprop = Proplist::vDFLT) const
+        void get_link_val(const string &group_name, hsize_t idx, vector<char> &buff, \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE, \
+            const Proplist &laprop = Proplist::vDFLT) const
+        string get_link_name(const string &group_name, hsize_t idx,  \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE, \
+            const Proplist &laprop = Proplist::vDFLT) const
+
+        Retrive the link meta info of a sub object by ``name``, or of a sub sub 
+        object indexed ``idx`` in the sub group ``group_name`` 
+        (can be "." to denote the group itself). 
+
+        ``info``: object into which the meta info is put.
+
+        ``idx_type, order``: which type of index is used and in which order the object 
+        is visited in the index list.
+
+        The two overloads that return ``link_info_t`` are the same except the the 
+        link information is returned rather than filled into the argument.
+
+        ``get_link_val()`` and ``get_link_name()`` return the link value and name,
+        respectively. 
+
+        ``buff``: on return, link value is filled into it and its size is adjusted
+        to fit.
 
 
-        Data group manipulation methods.
+    .. function:: \
+        bool link_exists(const string &name, \
+            const Proplist &laprop = Proplist::vDFLT) const
+        bool object_exists(const string &name,  \
+            const Proplist &laprop = Proplist::vDFLT) const
+        bool object_exists_by_type(const string &name,  \
+            obj_type_t obj_type, const Proplist &laprop = Proplist::vDFLT) const
+        bool group_exists(const string &name) const
+        bool dataset_exists(const string &name) const
 
-        ``create_group(name)`` creates a group named ``name``. If it has already existed, throw an exception :class:`ErrH5`.
+        Find whether or not certain item exists in the current group. If any of the
+        intermediate steps in the name does not exists, or does not resolve to
+        an object, or the final target link does not exits, return false.
+        
+        (1): for link of any type. 
 
-        ``try_create_group(name)`` is similar, but open the group if it has already existed.
+        (2): the same as (1) but also check that the target link resolves to an 
+        object of any type.
+        
+        (3): the same as (2), but further require that the target match the object
+        type given by ``obj_type``.
+        
+        (4,5): special cases of (3), and with default link access property list.
 
-        ``open_group(name)`` opens an existing group. If it is not existed, throw an exception :class:`ErrH5`.
+    .. function:: \
+        void create_hard_link(const string &name,  \
+            const Group &src, const string &src_name, \
+            const Proplist &lcprop = Proplist::vDFLT, \
+            const Proplist &laprop = Proplist::vDFLT)
+        void create_soft_link(const string &name,  \
+            const string &src_name, \
+            const Proplist &lcprop = Proplist::vDFLT, \
+            const Proplist &laprop = Proplist::vDFLT)
+        void create_external_link(const string &name,  \
+            const string &src_file_name, const string &src_obj_name, \
+            const Proplist &lcprop = Proplist::vDFLT, \
+            const Proplist &laprop = Proplist::vDFLT)
+        
+        Create a new link named ``name`` under the current group.
+    
+        ``src``, ``src_name``: the linked location and name.
+    
+        ``src_file_name``, ``src_obj_name``: the external file and linked object name. 
 
-        ``group_exists(name)`` check whether a group exists.
+    
+    .. function:: \
+        void move_link(const string &name, Group &dst, const string &dst_name, \
+            const Proplist &lcprop = Proplist::vDFLT, \
+            const Proplist &laprop = Proplist::vDFLT)
+        void copy_link(const string &name, Group &dst, const string &dst_name, \
+            const Proplist &lcprop = Proplist::vDFLT, \
+            const Proplist &laprop = Proplist::vDFLT)
+        void delete_link(const string &name,  \
+            const Proplist &laprop = Proplist::vDFLT)
+        void delete_link(const string &group_name, hsize_t idx,  \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE, \
+            const Proplist &laprop = Proplist::vDFLT)
+
+        Link modification.
+
+        (1): move a linked named ``name`` under the current group to that named 
+        ``dst_name`` under another group ``dst``.
+        
+        (2): the same as (1), but do not remove the current link, i.e., the link 
+        gets copied.
+        
+        (3,4): delete a link from the current group by ``name``, or by index 
+        ``idx`` in the sub group named ``group_name``.
+
+    .. function:: \
+        herr_t link_iterate(hsize_t &idx, link_iter_op_t op, void *op_data=nullptr, \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE) const
+        herr_t link_iterate(const string &group_name, hsize_t &idx,  \
+            link_iter_op_t op, void *op_data=nullptr, \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE, \
+            const Proplist &laprop = Proplist::vDFLT) const
+        herr_t link_visit(link_iter_op_t op, void *op_data=nullptr, \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE) const
+        herr_t link_visit(const string &group_name,  \
+            link_iter_op_t op, void *op_data=nullptr, \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE, \
+            const Proplist &laprop = Proplist::vDFLT) const
+        herr_t object_visit(obj_iter_op_t op, void *op_data=nullptr, \
+            info_field_t fields = NamedObj::infoALL, \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE) const
+        herr_t object_visit(const string &group_name, \
+            obj_iter_op_t op, void *op_data=nullptr, \
+            info_field_t fields = NamedObj::infoALL, \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE, \
+            const Proplist &laprop = Proplist::vDFLT) const
+
+        Iteration methods.
+
+        ``link_iterate()``: iterate over the links in the current group, or the 
+        links in a sub group named ``group_name``, starting at index ``idx``. 
+        On exit, ``idx`` indicates the next position to iterate. 
+        The iterate is non-recursive.
+
+        ``link_visit()``, ``object_visit()``: similar but recursively visit all links and
+        all objects, respectively.
+        
+        The user-provided callback ``op`` may return
+
+        - 0: then the iteration continues, until success. 
+        - positive: shortcut success, causing the method returns immediately with
+          that returned value.
+        - negative: short failure, causing the iteration stops and throws an 
+          :class:`ErrH5` with that returned value as error number.
+        
+        ``op_data``: passed to ``op``.
+        
+        ``idx_type, order``: which type of index is used and in which order the object 
+        is visited in the index list.
+
+    
+    .. function:: \
+        Group create_group(const string &name, const string &flag="ac", \
+            const Proplist &lcprop = Proplist::vDFLT, \
+            const Proplist &gcprop = Proplist::vDFLT, \
+            const Proplist &gaprop  = Proplist::vDFLT)
+
+        Create a group with link name ``name`` under the current group.
+        
+        ``flag``: determine what to do if the group named ``name`` already exists. Can be
+
+        .. table::
+            :class: tight-table
+        
+            =========================== =====================================================================
+            ``flag``                    Description
+            =========================== =====================================================================
+            ``"x"``                     failed and throw an ``ErrH5`` exception.
+            ``"ac"`` | ``"ca"``         open it anyway. In this case ``lcprop`` and ``gcprop`` are ignored.
+            ``"trunc"`` | ``"w"``       (deprecated) the same as "ac".
+            ``"excl"``                  (deprecated) the same as "x".
+            =========================== =====================================================================
+
+    .. function:: \
+        Group open_group(const string &name, \
+            const Proplist &aprop = Proplist::vDFLT) const
+
+        Open an existing group with path name ``name``.
+
+    .. function:: DatasetManager datasets() noexcept
+
+        Returns a dataset manager of this group.
+        Tha manager provides commonly used shortcuts for dataset creation and 
+        access.
+
+    .. function:: \
+        Dataset create_dataset(const string &name, \
+            const Datatype &dtype, const Dataspace &dspace, \
+            const string &flag = "ac",\
+            const Proplist &lcprop = Proplist::vDFLT, \
+            const Proplist &dcprop  = Proplist::vDFLT, \
+            const Proplist &daprop  = Proplist::vDFLT)
+        template<typename T> \
+        Dataset create_dataset(const string &name, const Dataspace &dspace, \
+            const string &flag = "ac", \
+            const Proplist &lcprop = Proplist::vDFLT,  \
+            const Proplist &dcprop  = Proplist::vDFLT,  \
+            const Proplist &daprop  = Proplist::vDFLT)
+        template<typename T> \
+        Dataset create_dataset_scalar(const string &name,  \
+            const string &flag = "ac")
+        Dataset create_dataset_str(const string &name, size_t n, \
+            const string &flag = "ac")
+        Dataset create_dataset_str(const string &name, size_t n_str, size_t n, \
+            const string &flag = "ac")
+
+        Create a dataset named ``name`` under the current group.
+        
+        (1): The most general method that is the direct HDF5 C API counterpart.
+        
+        (2): The datatype is inferred from ``T`` as if calling 
+        :expr:`Datatype::from_type<T>()`.
+
+        Other methods are defined for special cases. All of them use the default 
+        property list :expr:`Proplist::vDFLT`.
+
+        (3): Create a scalar dataset whose datatype is inferred from T as if calling 
+        :expr:`Datatype::from_type<T>()`.
+        
+        (4-5): Create a dataset for fix-length ATOMIC STRING sized ``n``, or a list 
+        of ``n_str`` such strings. ``n`` must include the space for the null-term.
+
+        ``flag``: determine what to do if the dataset already exists. Can be
+
+        .. table::
+            :class: tight-table
+        
+            =========================== =====================================================================
+            ``flag``                    Description
+            =========================== =====================================================================
+            ``"x"``                     failed and throw an ``ErrH5`` exception.
+            ``"ac"`` | ``"ca"``         open it anyway. In this case ``lcprop`` and ``dcprop`` are ignored.
+            ``"trunc"`` | ``"w"``       (deprecated) the same as "ac".
+            ``"excl"``                  (deprecated) the same as "x".
+            =========================== =====================================================================
+
+    .. function:: \
+        template<typename T> \
+        Dataset create_dataset_for(const string &name, const T &buff, \
+            const string &flag = "ac")
+        template<typename T> \
+        Dataset create_dataset_for_scalar(const string &name,  \
+            const T &x, const string &flag = "ac")
+        Dataset create_dataset_for_str(const string &name,  \
+            const string &s, const string &flag = "ac")
+        Dataset create_dataset_for_str(const string &name,  \
+            const char *s, const string &flag = "ac")
+        Dataset create_dataset_for_str(const string &name,  \
+            const vector<string> &ss, const string &flag = "ac")
+        template<size_t N_STR> \
+        Dataset create_dataset_for_str(const string &name,  \
+            const string (&ss)[N_STR], const string &flag = "ac")
+        template<size_t N_STR, size_t N> \
+        Dataset create_dataset_for_str(const string &name, \
+            const char (&ss)[N_STR][N], const string &flag = "ac")
+
+        ``create_dataset_for()``: create a dataset from the object to be written. The 
+        library infers the datatype and dataspace from the object.
+        
+        (1): any non-string object, which can be any single object that is 
+        resolvable by :class:`ConstDatapacket`. The returned dataset can be
+        called with ``write(buff)`` to write the object into it. Examples of 
+        ``buff`` include
+
+        - single scalar value, e.g., ``int x``;
+        - array-like object, e.g., ``std::array<int, 3> x``, ``int x[3][4]``;
+        - vector of scalar values, e.g., ``std::vector<double> x``;
+        - vector of array-like objects, e.g., 
+          ``std::vector< std::array<int, 3> > x``.
+        
+        (2): any object that can be resolved as a ATOMIC type, i.e., any valid
+        type to :func:`Datatype::from_cvt`. 
+        The difference from (1) is that, array-like objects are treated as 
+        ATOMIC ARRAY datatype here. The returned dataset can be applied with
+        ``write_scalar(x)``.
+
+        (3-7): string of list of strings. The returned attribute can therefore
+        be written by ``write_str(s)`` or ``write_str(ss)``. The created dataset
+        has fix-length ATOMIC STRING datatype.
+
+    .. function:: \
+        Dataset open_dataset(const string &name, \
+            const Proplist &aprop = Proplist::vDFLT) const
+
+        Open an existing dataset of given path name ``name``.
+
+    .. function:: \
+        _obj_raw_t & obj_raw() noexcept
+        const _obj_raw_t & obj_raw() const noexcept
+
+        Return a reference to the intermediate-level HDF5 object.
+
+
+
+.. class:: _group_link_helper::iter_arg_t
+
+    .. function:: \
+        Group & group() noexcept
+        const string & name() const noexcept
+        const Group::link_info_t & info() const noexcept
+        void * op_data() const noexcept
+
+        Retrieve the root group, current link path, current link info and 
+        user-provided data in the iteration.
+
+.. type:: std::function< herr_t(_group_link_helper::iter_arg_t &) > _group_link_helper::iter_op_t
+
+
+.. class:: _group_obj_helper::iter_arg_t
+
+    .. function:: \
+        Group & group() noexcept
+        const string & name() const noexcept
+        const info_t & info() const noexcept
+        void * op_data() const noexcept
+
+        Retrieve the root group, current object path, current object info and 
+        user-provided data in the iteration.
+
+.. type:: std::function< herr_t(_group_obj_helper::iter_arg_t &) > _group_obj_helper::iter_op_t
+
+

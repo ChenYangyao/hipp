@@ -84,6 +84,10 @@ using std::swap;  // always use swap(...);
 
 // Memory and exceptions
 using std::bad_alloc;
+
+typedef std::size_t size_t;
+typedef std::ptrdiff_t ptrdiff_t;
+
 } // namespace HIPP
 
 #endif	//_HIPPCNTL_INCL_H_

@@ -42,41 +42,74 @@ struct DArrayBase {
 
 namespace HIPP {
 
-/** The contiguous buffer API. */
+/** The DynamicArray protocol */
 _HIPP_TEMPHD
-struct ContiguousBufferTraits<const HIPP::NUMERICAL::_HIPP_TEMPCLS > 
-: ContiguousBufferTraits<
-    std::add_const_t<typename HIPP::NUMERICAL::_HIPP_TEMPCLS::value_t > * >
-{
-    typedef ContiguousBufferTraits<std::add_const_t<
-        typename HIPP::NUMERICAL::_HIPP_TEMPCLS::value_t > * > 
-        _parent_t;
-    typedef const HIPP::NUMERICAL::_HIPP_TEMPCLS buffer_t;
+class DynamicArrayTraits< NUMERICAL::_HIPP_TEMPCLS > {
+public:
+    inline static constexpr bool is_array = true;
+    inline static constexpr size_t rank = Rank;
 
-    constexpr ContiguousBufferTraits(buffer_t &a) noexcept 
-        : _parent_t(a.data(), a.size()) {}
+    typedef NUMERICAL::_HIPP_TEMPCLS array_t;
+    typedef ValueT value_t;
+
+    DynamicArrayTraits(array_t &a) : array(a) {}
+
+    value_t * buff() const noexcept { return array.data(); }
+    size_t size() const noexcept { return array.size(); }
+    std::array<size_t, rank> extents() const noexcept { 
+        std::array<size_t, rank> out;
+        std::copy_n(array.shape().data(), rank, out.data());
+        return out;
+    }
+    std::array<size_t, rank> strides() const noexcept {
+        auto ext = extents();
+        std::array<size_t, rank> out;
+        out[rank-1] = 1;
+        for(size_t i=rank-1; i>0; --i)
+            out[i-1] = out[i] * ext[i];
+        return out;
+    }
+
+    array_t &array;
 };
 
 _HIPP_TEMPHD
-struct ContiguousBufferTraits<HIPP::NUMERICAL::_HIPP_TEMPCLS > 
-: ContiguousBufferTraits<
-    typename HIPP::NUMERICAL::_HIPP_TEMPCLS::value_t * >
-{
-    typedef ContiguousBufferTraits<
-        typename HIPP::NUMERICAL::_HIPP_TEMPCLS::value_t * > _parent_t;
-    typedef HIPP::NUMERICAL::_HIPP_TEMPCLS buffer_t;
+class DynamicArrayTraits< const NUMERICAL::_HIPP_TEMPCLS > {
+public:
+    inline static constexpr bool is_array = true;
+    inline static constexpr size_t rank = Rank;
 
-    constexpr ContiguousBufferTraits(buffer_t &a) noexcept 
-        : _parent_t(a.data(), a.size()) {}
+    typedef const NUMERICAL::_HIPP_TEMPCLS array_t;
+    typedef std::add_const_t<ValueT> value_t;
+
+    DynamicArrayTraits(array_t &a) : array(a) {}
+
+    value_t * buff() const noexcept { return array.data(); }
+    size_t size() const noexcept { return array.size(); }
+    std::array<size_t, rank> extents() const noexcept { 
+        std::array<size_t, rank> out;
+        std::copy_n(array.shape().data(), rank, out.data());
+        return out;
+    }
+    std::array<size_t, rank> strides() const noexcept {
+        auto ext = extents();
+        std::array<size_t, rank> out;
+        out[rank-1] = 1;
+        for(size_t i=rank-1; i>0; --i)
+            out[i-1] = out[i] * ext[i];
+        return out;
+    }
+    
+    array_t &array;
 };
 
 _HIPP_TEMPHD
-ContiguousBufferTraits(const HIPP::NUMERICAL::_HIPP_TEMPCLS &)
--> ContiguousBufferTraits<const HIPP::NUMERICAL::_HIPP_TEMPCLS >;
+DynamicArrayTraits( NUMERICAL::_HIPP_TEMPCLS & ) 
+-> DynamicArrayTraits< NUMERICAL::_HIPP_TEMPCLS >;
 
 _HIPP_TEMPHD
-ContiguousBufferTraits(HIPP::NUMERICAL::_HIPP_TEMPCLS &)
--> ContiguousBufferTraits<HIPP::NUMERICAL::_HIPP_TEMPCLS >;
+DynamicArrayTraits( const NUMERICAL::_HIPP_TEMPCLS & ) 
+-> DynamicArrayTraits< const NUMERICAL::_HIPP_TEMPCLS >;
 
 } // namespace HIPP
 

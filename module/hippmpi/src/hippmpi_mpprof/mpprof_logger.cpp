@@ -39,7 +39,7 @@ ostream & group_t::info(ostream &os, int fmt_cntl) const {
     return os;
 }
 
-IO::H5XTable<group_t> group_t::_tbl_manip {
+IO::H5::XTable<group_t> group_t::_tbl_manip {
     "id", &group_t::id,
     "local_rank", &group_t::local_rank,
     "global_rank", &group_t::global_rank };
@@ -77,7 +77,7 @@ ostream & state_t::info(ostream &os, int fmt_cntl) const {
     if( fmt_cntl ) p << '\n';
     return os;
 }
-IO::H5XTable<state_t> state_t::_tbl_manip {
+IO::H5::XTable<state_t> state_t::_tbl_manip {
     "id", &state_t::id,
     "type", &state_t::type,
     "group_id", &state_t::group_id,
@@ -93,7 +93,7 @@ ostream & event_t::info(ostream &os, int fmt_cntl) const {
     if( fmt_cntl ) p << '\n';
     return os;
 }
-IO::H5XTable<event_t> event_t::_tbl_manip {
+IO::H5::XTable<event_t> event_t::_tbl_manip {
     "id", &event_t::id,
     "msg_bpos", &event_t::msg_bpos,
     "state_id", &event_t::state_id,
@@ -109,7 +109,7 @@ ostream & stored_event_t::info(ostream &os, int fmt_cntl) const {
     if( fmt_cntl ) p << '\n';
     return os;
 }
-IO::H5XTable<stored_event_t> stored_event_t::_tbl_manip {
+IO::H5::XTable<stored_event_t> stored_event_t::_tbl_manip {
     "stored_id", &stored_event_t::stored_id,
     "stored_epoch_end", &stored_event_t::stored_epoch_end
 };
@@ -180,7 +180,7 @@ int state_manager_t::add_collective_state(const msg_t &msg, int type,
     return add_state(msg, type | state_t::COLLECTIVE, 
         group_id, state_t::NO_P2P_PORT, state_t::NO_P2P_MATCH_ID);
 }
-void state_manager_t::store(IO::H5Group g) const {
+void state_manager_t::store(IO::H5::Group g) const {
     auto g_grp = g.create_group("groups");
     group_t::_tbl_manip.write(_groups, g_grp);
     _store_msgs(_groups, g_grp);
@@ -210,7 +210,7 @@ Logger::Logger(std::shared_ptr<state_manager_t> sm, const string &logfilename)
 
     // create the log file
     if(rank == 0){
-        IO::H5File(_logfilename, "w");
+        IO::H5::File(_logfilename, "w");
     }
 
     // synchronize the starting epoch
@@ -219,7 +219,7 @@ Logger::Logger(std::shared_ptr<state_manager_t> sm, const string &logfilename)
 
     // dump the group and state data
     {   auto lk_g = mtx.lock_g();
-        IO::H5File fout(_logfilename, "a");
+        IO::H5::File fout(_logfilename, "a");
         auto g = fout.create_group(str("rank.", rank));
         auto g_st = g.create_group("state_manager");
         _sm->store(g_st.create_group("begin"));
@@ -239,7 +239,7 @@ Logger::~Logger() {
 
     // dump the group and state data
     {   auto lk_g = mtx.lock_g(); 
-        IO::H5File fout(_logfilename, "a");
+        IO::H5::File fout(_logfilename, "a");
         auto g_st = fout.open_group(str("rank.", rank, "/state_manager"));
         _sm->store(g_st.create_group("end"));
     }
@@ -274,12 +274,12 @@ void Logger::store(bool shrink_buff) {
 
     {   auto lk_g = mtx.lock_g(); 
 
-        IO::H5File fout(_logfilename, "a");
-        auto g = fout.try_create_group(str("rank.", rank));
+        IO::H5::File fout(_logfilename, "a");
+        auto g = fout.create_group(str("rank.", rank), "ac");
         auto gstore = g.create_group(str("store.", id_store));
     
         gstore.create_dataset_str("event_msgs", _event_msgs.size()+1)
-            .write(_event_msgs);
+            .write_str(_event_msgs);
         event_t::_tbl_manip.write(_events, gstore);
         stored_event_t::_tbl_manip.write(_stored_events, gstore);
     }

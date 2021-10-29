@@ -1,5 +1,5 @@
 CXX = c++
-CXXFLAGS = -std=c++17 -O3 -Wall
+CXXFLAGS = -std=c++17 -O3 -Wall -I../../include
 LDFLAGS = 
 LDLIBS = -lhippio -lhippcntl -lhdf5
 

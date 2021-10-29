@@ -1,74 +1,108 @@
-#include <h5_obj_proplist.h>
-namespace HIPP{
-namespace IO{
+#include <hippio.h>
 
-const H5Proplist H5Proplist::defaultval 
-    { std::make_shared<H5Proplist::_obj_raw_t>(H5P_DEFAULT, 0) };
-H5Proplist & H5Proplist::set_layout( const string &layout ){
-    _obj_raw_t::layout_t _layout = H5D_CONTIGUOUS;
+namespace HIPP::IO::H5 {
+
+const Proplist Proplist::vDFLT = _from_raw(_Proplist::vDFLT, 0);
+
+Proplist Proplist::create(hid_t cls) {
+    auto ret = _obj_raw_t::create(cls);
+    return _from_raw(ret);
+}
+
+Proplist & Proplist::set_layout(d_layout_t layout) {
+    obj_raw().set_layout(layout);
+    return *this;
+}
+
+Proplist & Proplist::set_layout(const string &layout){
+    d_layout_t lo {};
     if( layout == "contiguous" )
-        _layout = H5D_CONTIGUOUS;
+        lo = laCONTIGUOUS;
     else if( layout == "chunked" )
-        _layout = H5D_CHUNKED;
+        lo = laCHUNKED;
     else if( layout == "compact" )
-        _layout = H5D_COMPACT;
+        lo = laCOMPACT;
     else if( layout == "virtual" )
-        _layout = H5D_VIRTUAL;
+        lo = laVIRTUAL;
     else 
         ErrLogic::throw_( ErrLogic::eDOMAIN, emFLPFB, 
-            "  ... layout specification ", layout, " not allowed" );
-    _obj_ptr->set_layout( _layout );
-    return *this;
+            "  ... layout specification ", layout, " invalid\n" );
+    return set_layout(lo);
 }
-string H5Proplist::layout() const{
-    _obj_raw_t::layout_t _layout = _obj_ptr->get_layout();
-    string ans;
-    switch (_layout){
-    case H5D_CONTIGUOUS:
-        ans = "contiguous"; break;
-    case H5D_CHUNKED:
-        ans = "chunked"; break;
-    case H5D_COMPACT:
-        ans = "compact"; break;
-    case H5D_VIRTUAL:
-        ans = "virtual"; break;
-    default:
-        ErrRuntime::throw_( ErrRuntime::eDEFAULT, emFLPFB, 
-            "  ... unknown error" );
+
+auto Proplist::layout() const -> d_layout_t {
+    return obj_raw().get_layout();
+}
+
+void Proplist::layout(string &lo) const {
+    d_layout_t lo_value = layout();
+    switch (lo_value){
+        case laCONTIGUOUS:
+            lo = "contiguous"; break;
+        case laCHUNKED:
+            lo = "chunked"; break;
+        case laCOMPACT:
+            lo = "compact"; break;
+        case laVIRTUAL:
+            lo = "virtual"; break;
+        default:
+            ErrRuntime::throw_( ErrRuntime::eDEFAULT, emFLPFB, 
+                "  ... unknown layout value\n");
     }
-    return ans;
 }
 
-H5Proplist & H5Proplist::set_chunk( vector<hsize_t> dims ){
-    _obj_ptr->set_chunk( dims.size(), dims.data() );
+Proplist & Proplist::set_chunk( const Dimensions &dims ){
+    obj_raw().set_chunk( dims.ndims(), dims.data() );
     return *this;
 }
-int H5Proplist::chunk_ndims()const{
-    return _obj_ptr->get_chunk_ndims();
+int Proplist::chunk_ndims()const{
+    return obj_raw().get_chunk_ndims();
 }
-vector<hsize_t> H5Proplist::chunk() const{
-    return _obj_ptr->get_chunk();
+Dimensions Proplist::chunk() const {
+    return Dimensions(obj_raw().get_chunk());
 }
 
-H5Proplist & H5Proplist::set_chunk_cache( 
+Proplist & Proplist::set_chunk_cache( 
     size_t nslot, size_t nbytes, double w0 ){
-    _obj_ptr->set_chunk_cache( nslot, nbytes, w0 );
+    obj_raw().set_chunk_cache( nslot, nbytes, w0 );
     return *this;
 }
-void H5Proplist::chunk_cache( size_t &nslot, 
+void Proplist::chunk_cache( size_t &nslot, 
     size_t &nbytes, double &w0 ) const{
-    _obj_ptr->get_chunk_cache( &nslot, &nbytes, &w0 );
+    obj_raw().get_chunk_cache( &nslot, &nbytes, &w0 );
 }
 
-H5Proplist & H5Proplist::set_cache( size_t nslot, 
+std::tuple<size_t, size_t, double> Proplist::chunk_cache() const {
+    size_t nslot, nbytes;
+    double w0;
+    chunk_cache(nslot, nbytes, w0);
+    return {nslot, nbytes, w0};
+}
+
+Proplist & Proplist::set_cache( size_t nslot, 
     size_t nbytes, double w0 ){
-    _obj_ptr->set_cache( 0, nslot, nbytes, w0 );
+    obj_raw().set_cache( 0, nslot, nbytes, w0 );
     return *this;
 }
-void H5Proplist::cache( size_t &nslot, 
-    size_t &nbytes, double &w0 ) const{
-    _obj_ptr->get_cache( NULL, &nslot, &nbytes, &w0 );
+
+void Proplist::cache( size_t &nslot, size_t &nbytes, double &w0 ) const{
+    obj_raw().get_cache( NULL, &nslot, &nbytes, &w0 );
 }
 
+std::tuple<size_t, size_t, double> Proplist::cache() const {
+    size_t nslot, nbytes;
+    double w0;
+    cache(nslot, nbytes, w0);
+    return {nslot, nbytes, w0};
 }
+
+Proplist & Proplist::preserve(hbool_t status) {
+    obj_raw().set_preserve(status);
+    return *this;
 }
+
+hbool_t Proplist::preserve() const {
+    return (bool) obj_raw().get_preserve();
+}
+
+} // namespace HIPP::IO::H5

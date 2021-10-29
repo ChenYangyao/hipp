@@ -7,6 +7,88 @@
 
 namespace HIPP::IO::H5 {
     
+namespace _group_link_helper {
+
+inline Group & iter_arg_t::group() noexcept {
+    return _group;
+}
+
+inline const string & iter_arg_t::name() const noexcept {
+    return _name;
+}
+
+inline const info_t & iter_arg_t::info() const noexcept {
+    return *_info;
+}
+
+inline void * iter_arg_t::op_data() const noexcept {
+    return _op_data;
+}
+
+inline iter_arg_t::iter_arg_t(void *op_data) noexcept
+:_group( std::make_shared<Group::_obj_raw_t>(-1, 0) ),
+_info(nullptr), _op_data(op_data){}   
+
+inline void iter_arg_t::_set_data(hid_t group, const char *name, 
+    const info_t *info) noexcept 
+{
+    _group.obj_raw().raw(group);
+    _name = name;
+    _info = info;
+}
+
+inline iter_data_t::iter_data_t(iter_op_t op, void *op_data)
+: _op( std::move(op) ), _arg(op_data) {}
+
+inline herr_t raw_op(hid_t group, const char *name, const info_t *info, 
+    void *op_data)
+{
+    auto &data = *reinterpret_cast<iter_data_t *>(op_data);
+    data._arg._set_data(group, name, info);
+    return data._op(data._arg);
+}
+
+} // namespace _group_link_helper
+
+namespace _group_obj_helper {
+
+inline Group & iter_arg_t::group() noexcept {
+    return _group;
+}
+inline const string & iter_arg_t::name() const noexcept {
+    return _name;
+}
+inline const info_t & iter_arg_t::info() const noexcept {
+    return *_info;
+}
+inline void * iter_arg_t::op_data() const noexcept {
+    return _op_data;
+}
+inline iter_arg_t::iter_arg_t(void *op_data) noexcept 
+: _group( std::make_shared<Group::_obj_raw_t>(-1, 0) ), _info(nullptr), 
+_op_data(op_data) {}
+
+inline void iter_arg_t::_set_data(hid_t group, const char *name, 
+    const info_t *info) noexcept
+{
+    _group.obj_raw().raw(group);
+    _name = name;
+    _info = info;
+}
+
+inline iter_data_t::iter_data_t(iter_op_t op, void *op_data) 
+: _op( std::move(op) ), _arg(op_data) {}
+
+inline herr_t raw_op(hid_t group, const char *name, const info_t *info, 
+    void *op_data)
+{
+    auto &data = *reinterpret_cast<iter_data_t*>(op_data);
+    data._arg._set_data(group, name, info);
+    return data._op(data._arg);
+}
+
+} // namespace _group_obj_helper
+
 template<typename T>
 Dataset Group::create_dataset(const string &name, 
     const Dataspace &dspace, const string &flag, const Proplist &lcprop, 

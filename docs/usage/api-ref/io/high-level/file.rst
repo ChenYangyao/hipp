@@ -92,6 +92,8 @@ File
 
         Return a reference to the intermediate-level HDF5 object.
     
+
+
 Group 
 -------------------
 
@@ -140,14 +142,20 @@ Group
             static constexpr link_type_t tMAX       = _Link::tMAX;
 
         Type of links.
-        
 
+    .. type:: \
+        _group_link_helper::iter_arg_t link_iter_arg_t
+        _group_link_helper::iter_op_t link_iter_op_t
+        
     .. type::   NamedObj::info_t        obj_info_t
 
         Structured type that records object meta-info.
 
     .. type::   NamedObj::info_field_t  obj_info_field_t
                 NamedObj::type_t        obj_type_t
+
+    .. type::   _group_obj_helper::iter_arg_t obj_iter_arg_t
+                _group_obj_helper::iter_op_t obj_iter_op_t
 
     **Constructors:** Class ``Group`` "inherits" all constructors from its parent class.
 
@@ -248,12 +256,6 @@ Group
         ``buff``: on return, link value is filled into it and its size is adjusted
         to fit.
 
-    .. function:: DatasetManager datasets() noexcept
-
-        Returns a dataset manager of this group.
-        Tha manager provides commonly used shortcuts for dataset creation and 
-        access.
-
 
     .. function:: \
         bool link_exists(const string &name, \
@@ -278,6 +280,96 @@ Group
         type given by ``obj_type``.
         
         (4,5): special cases of (3), and with default link access property list.
+
+    .. function:: \
+        void create_hard_link(const string &name,  \
+            const Group &src, const string &src_name, \
+            const Proplist &lcprop = Proplist::vDFLT, \
+            const Proplist &laprop = Proplist::vDFLT)
+        void create_soft_link(const string &name,  \
+            const string &src_name, \
+            const Proplist &lcprop = Proplist::vDFLT, \
+            const Proplist &laprop = Proplist::vDFLT)
+        void create_external_link(const string &name,  \
+            const string &src_file_name, const string &src_obj_name, \
+            const Proplist &lcprop = Proplist::vDFLT, \
+            const Proplist &laprop = Proplist::vDFLT)
+        
+        Create a new link named ``name`` under the current group.
+    
+        ``src``, ``src_name``: the linked location and name.
+    
+        ``src_file_name``, ``src_obj_name``: the external file and linked object name. 
+
+    
+    .. function:: \
+        void move_link(const string &name, Group &dst, const string &dst_name, \
+            const Proplist &lcprop = Proplist::vDFLT, \
+            const Proplist &laprop = Proplist::vDFLT)
+        void copy_link(const string &name, Group &dst, const string &dst_name, \
+            const Proplist &lcprop = Proplist::vDFLT, \
+            const Proplist &laprop = Proplist::vDFLT)
+        void delete_link(const string &name,  \
+            const Proplist &laprop = Proplist::vDFLT)
+        void delete_link(const string &group_name, hsize_t idx,  \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE, \
+            const Proplist &laprop = Proplist::vDFLT)
+
+        Link modification.
+
+        (1): move a linked named ``name`` under the current group to that named 
+        ``dst_name`` under another group ``dst``.
+        
+        (2): the same as (1), but do not remove the current link, i.e., the link 
+        gets copied.
+        
+        (3,4): delete a link from the current group by ``name``, or by index 
+        ``idx`` in the sub group named ``group_name``.
+
+    .. function:: \
+        herr_t link_iterate(hsize_t &idx, link_iter_op_t op, void *op_data=nullptr, \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE) const
+        herr_t link_iterate(const string &group_name, hsize_t &idx,  \
+            link_iter_op_t op, void *op_data=nullptr, \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE, \
+            const Proplist &laprop = Proplist::vDFLT) const
+        herr_t link_visit(link_iter_op_t op, void *op_data=nullptr, \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE) const
+        herr_t link_visit(const string &group_name,  \
+            link_iter_op_t op, void *op_data=nullptr, \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE, \
+            const Proplist &laprop = Proplist::vDFLT) const
+        herr_t object_visit(obj_iter_op_t op, void *op_data=nullptr, \
+            info_field_t fields = NamedObj::infoALL, \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE) const
+        herr_t object_visit(const string &group_name, \
+            obj_iter_op_t op, void *op_data=nullptr, \
+            info_field_t fields = NamedObj::infoALL, \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE, \
+            const Proplist &laprop = Proplist::vDFLT) const
+
+        Iteration methods.
+
+        ``link_iterate()``: iterate over the links in the current group, or the 
+        links in a sub group named ``group_name``, starting at index ``idx``. 
+        On exit, ``idx`` indicates the next position to iterate. 
+        The iterate is non-recursive.
+
+        ``link_visit()``, ``object_visit()``: similar but recursively visit all links and
+        all objects, respectively.
+        
+        The user-provided callback ``op`` may return
+
+        - 0: then the iteration continues, until success. 
+        - positive: shortcut success, causing the method returns immediately with
+          that returned value.
+        - negative: short failure, causing the iteration stops and throws an 
+          :class:`ErrH5` with that returned value as error number.
+        
+        ``op_data``: passed to ``op``.
+        
+        ``idx_type, order``: which type of index is used and in which order the object 
+        is visited in the index list.
 
     
     .. function:: \
@@ -307,6 +399,12 @@ Group
             const Proplist &aprop = Proplist::vDFLT) const
 
         Open an existing group with path name ``name``.
+
+    .. function:: DatasetManager datasets() noexcept
+
+        Returns a dataset manager of this group.
+        Tha manager provides commonly used shortcuts for dataset creation and 
+        access.
 
     .. function:: \
         Dataset create_dataset(const string &name, \
@@ -414,4 +512,34 @@ Group
         const _obj_raw_t & obj_raw() const noexcept
 
         Return a reference to the intermediate-level HDF5 object.
+
+
+
+.. class:: _group_link_helper::iter_arg_t
+
+    .. function:: \
+        Group & group() noexcept
+        const string & name() const noexcept
+        const Group::link_info_t & info() const noexcept
+        void * op_data() const noexcept
+
+        Retrieve the root group, current link path, current link info and 
+        user-provided data in the iteration.
+
+.. type:: std::function< herr_t(_group_link_helper::iter_arg_t &) > _group_link_helper::iter_op_t
+
+
+.. class:: _group_obj_helper::iter_arg_t
+
+    .. function:: \
+        Group & group() noexcept
+        const string & name() const noexcept
+        const info_t & info() const noexcept
+        void * op_data() const noexcept
+
+        Retrieve the root group, current object path, current object info and 
+        user-provided data in the iteration.
+
+.. type:: std::function< herr_t(_group_obj_helper::iter_arg_t &) > _group_obj_helper::iter_op_t
+
 

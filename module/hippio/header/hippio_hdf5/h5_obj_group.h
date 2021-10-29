@@ -13,6 +13,20 @@ namespace HIPP::IO::H5 {
 class Dataset;
 class DatasetManager;
 
+namespace _group_link_helper {
+
+class iter_arg_t;
+typedef std::function< herr_t(iter_arg_t &) > iter_op_t;
+
+};
+
+namespace _group_obj_helper {
+
+class iter_arg_t;
+typedef std::function< herr_t(iter_arg_t &) > iter_op_t;
+
+}
+
 /**
 Groups are named objects used to organized other objects in a HDF5 file.
 Class ``Group`` encapsulates the methods available on groups. 
@@ -46,11 +60,14 @@ public:
     /** Type of links. */
     typedef _Link::type_t link_type_t;
     inline static constexpr link_type_t 
-        tERROR              = _Link::tERROR,
-        tHARD               = _Link::tHARD,
-        tSOFT               = _Link::tSOFT,
-        tEXTERNAL           = _Link::tEXTERNAL,
-        tMAX                = _Link::tMAX;
+        tERROR    = _Link::tERROR,
+        tHARD     = _Link::tHARD,
+        tSOFT     = _Link::tSOFT,
+        tEXTERNAL = _Link::tEXTERNAL,
+        tMAX      = _Link::tMAX;
+    
+    typedef _group_link_helper::iter_arg_t link_iter_arg_t;
+    typedef _group_link_helper::iter_op_t link_iter_op_t;
 
     /**
     Structured type that records object meta-info.
@@ -58,6 +75,9 @@ public:
     typedef NamedObj::info_t        obj_info_t;
     typedef NamedObj::info_field_t  obj_info_field_t;
     typedef NamedObj::type_t        obj_type_t;
+
+    typedef _group_obj_helper::iter_arg_t obj_iter_arg_t;
+    typedef _group_obj_helper::iter_op_t obj_iter_op_t;
 
     /** 
     Class ``Group`` "inherits" all constructors from its parent class.
@@ -163,13 +183,6 @@ public:
         const Proplist &laprop = Proplist::vDFLT) const;
 
     /**
-    Returns a dataset manager of this group.
-    Tha manager provides commonly used shortcuts for dataset creation and 
-    access.
-    */
-    DatasetManager datasets() noexcept;
-
-    /**
     Find whether or not certain item exists in the current group. If any of the
     intermediate steps in the name does not exists, or does not resolve to
     an object, or the final target link does not exits, return false.
@@ -186,10 +199,93 @@ public:
     bool object_exists(const string &name, 
         const Proplist &laprop = Proplist::vDFLT) const;
     bool object_exists_by_type(const string &name, 
-        obj_type_t obj_type, const Proplist &laprop = Proplist::vDFLT) const;
-    
+        obj_type_t obj_type, const Proplist &laprop = Proplist::vDFLT) const;    
     bool group_exists(const string &name) const;
     bool dataset_exists(const string &name) const;
+
+    /**
+    Create a new link named ``name`` under the current group.
+    @src, src_name: the linked location and name.
+    @src_file_name, src_obj_name: the external file and linked object name. 
+    */
+    void create_hard_link(const string &name, 
+        const Group &src, const string &src_name, 
+        const Proplist &lcprop = Proplist::vDFLT,
+        const Proplist &laprop = Proplist::vDFLT);
+    void create_soft_link(const string &name, 
+        const string &src_name,
+        const Proplist &lcprop = Proplist::vDFLT,
+        const Proplist &laprop = Proplist::vDFLT);
+    void create_external_link(const string &name, 
+        const string &src_file_name, const string &src_obj_name,
+        const Proplist &lcprop = Proplist::vDFLT,
+        const Proplist &laprop = Proplist::vDFLT);
+
+    /**
+    Link modification.
+    (1): move a linked named ``name`` under the current group to that named 
+    ``dst_name`` under another group ``dst``.
+    (2): the same as (1), but do not remove the current link, i.e., the link 
+    gets copied.
+    (3,4): delete a link from the current group by ``name``, or by index 
+    ``idx`` in the sub group named ``group_name``.
+    */
+    void move_link(const string &name, Group &dst, const string &dst_name,
+        const Proplist &lcprop = Proplist::vDFLT,
+        const Proplist &laprop = Proplist::vDFLT);
+    void copy_link(const string &name, Group &dst, const string &dst_name,
+        const Proplist &lcprop = Proplist::vDFLT,
+        const Proplist &laprop = Proplist::vDFLT);
+    void delete_link(const string &name, 
+        const Proplist &laprop = Proplist::vDFLT);
+    void delete_link(const string &group_name, hsize_t idx, 
+        index_t idx_type = idxNAME, iter_order_t order = iterNATIVE,
+        const Proplist &laprop = Proplist::vDFLT);
+
+    /**
+    Iteration methods.
+
+    link_iterate(): iterate over the links in the current group, or the 
+    links in a sub group named ``group_name``, starting at index ``idx``. 
+    On exit, ``idx`` indicates the next position to iterate. 
+    The iterate is non-recursive.
+
+    link_visit(), object_visit(): similar but recursively visit all links and
+    all objects, respectively.
+    
+    The user-provided callback ``op`` may return
+    - 0: then the iteration continues, until success. 
+    - positive: shortcut success, causing the method returns immediately with
+      that returned value.
+    - negative: short failure, causing the iteration stops and throws an 
+      :class:`ErrH5` with that returned value as error number.
+    
+    @op_data: passed to ``op``.
+    @idx_type, order: which type of index is used and in which order the object 
+        is visited in the index list.
+    */
+    herr_t link_iterate(hsize_t &idx, link_iter_op_t op, void *op_data=nullptr,
+        index_t idx_type = idxNAME, iter_order_t order = iterNATIVE) const;
+    herr_t link_iterate(const string &group_name, hsize_t &idx, 
+        link_iter_op_t op, void *op_data=nullptr,
+        index_t idx_type = idxNAME, iter_order_t order = iterNATIVE,
+        const Proplist &laprop = Proplist::vDFLT) const;
+
+    herr_t link_visit(link_iter_op_t op, void *op_data=nullptr,
+        index_t idx_type = idxNAME, iter_order_t order = iterNATIVE) const;
+    herr_t link_visit(const string &group_name, 
+        link_iter_op_t op, void *op_data=nullptr,
+        index_t idx_type = idxNAME, iter_order_t order = iterNATIVE,
+        const Proplist &laprop = Proplist::vDFLT) const;
+
+    herr_t object_visit(obj_iter_op_t op, void *op_data=nullptr,
+        info_field_t fields = NamedObj::infoALL,
+        index_t idx_type = idxNAME, iter_order_t order = iterNATIVE) const;
+    herr_t object_visit(const string &group_name,
+        obj_iter_op_t op, void *op_data=nullptr,
+        info_field_t fields = NamedObj::infoALL,
+        index_t idx_type = idxNAME, iter_order_t order = iterNATIVE,
+        const Proplist &laprop = Proplist::vDFLT) const;
 
     /**
     Create a group with link name ``name`` under the current group.
@@ -212,6 +308,13 @@ public:
     */
     Group open_group(const string &name, 
         const Proplist &aprop = Proplist::vDFLT) const;
+
+    /**
+    Returns a dataset manager of this group.
+    Tha manager provides commonly used shortcuts for dataset creation and 
+    access.
+    */
+    DatasetManager datasets() noexcept;
 
     /**
     Create a dataset named ``name`` under the current group.
@@ -464,6 +567,85 @@ private:
     refobj_t _obj;
 };
 
+
+namespace _group_link_helper {
+
+typedef Group::link_info_t info_t;
+
+class iter_data_t;
+herr_t raw_op(hid_t group, const char *name, const info_t *info, void *op_data);
+
+class iter_arg_t {
+public:
+    /**
+    Retrieve the root group, current link path, current link info and 
+    user-provided data in the iteration.
+    */
+    Group & group() noexcept;
+    const string & name() const noexcept;
+    const info_t & info() const noexcept;
+    void * op_data() const noexcept;
+private: 
+    iter_arg_t(void *op_data) noexcept;
+    void _set_data(hid_t group, const char *name, const info_t *info) noexcept;
+    
+    Group _group;
+    string _name;
+    const info_t *_info;
+    void * const _op_data;
+
+    friend herr_t raw_op(hid_t group, const char *name, const info_t *info, 
+        void *op_data);
+    friend class iter_data_t;
+};
+
+struct iter_data_t {
+    iter_data_t(iter_op_t op, void *op_data);
+    iter_op_t _op;
+    iter_arg_t _arg;
+};
+
+} // namespace _group_link_helper
+
+namespace _group_obj_helper {
+
+typedef Group::obj_info_t info_t;
+
+class iter_data_t;
+herr_t raw_op(hid_t group, const char *name, const info_t *info, void *op_data);
+
+class iter_arg_t {
+public:
+    /**
+    Retrieve the root group, current object path, current object info and 
+    user-provided data in the iteration.
+    */
+    Group & group() noexcept;
+    const string & name() const noexcept;
+    const info_t & info() const noexcept;
+    void * op_data() const noexcept;
+private: 
+    iter_arg_t(void *op_data) noexcept;
+    void _set_data(hid_t group, const char *name, const info_t *info) noexcept;
+    
+    Group _group;
+    string _name;
+    const info_t *_info;
+    void * const _op_data;
+
+    friend herr_t raw_op(hid_t group, const char *name, const info_t *info, 
+        void *op_data);
+    friend class iter_data_t;
+};
+
+struct iter_data_t {
+    iter_data_t(iter_op_t op, void *op_data);
+    iter_op_t _op;
+    iter_arg_t _arg;
+};
+
+
+}
 
 } // namespace HIPP::IO::H5
 

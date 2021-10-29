@@ -162,10 +162,6 @@ string Group::get_link_name(const string &group_name, hsize_t idx,
         idx, laprop.raw());
 }
 
-DatasetManager Group::datasets() noexcept {
-    return DatasetManager {*this};
-}
-
 bool Group::link_exists(const string &name, const Proplist &laprop) const {
     SubpathIterator subp {name};
     auto obj_id = raw();
@@ -209,6 +205,111 @@ bool Group::dataset_exists(const string &name)const {
     return object_exists_by_type(name, tDATASET);
 }
 
+void Group::create_hard_link(const string &name, 
+    const Group &src, const string &src_name, 
+    const Proplist &lcprop, const Proplist &laprop)
+{
+    _Link::create_hard(src.raw(), src_name.c_str(), 
+        raw(), name.c_str(), lcprop.raw(), laprop.raw());
+}
+
+void Group::create_soft_link(const string &name, 
+    const string &src_name,
+    const Proplist &lcprop, const Proplist &laprop)
+{
+    _Link::create_soft(src_name.c_str(), raw(), name.c_str(), 
+        lcprop.raw(), laprop.raw());
+}
+
+void Group::create_external_link(const string &name, 
+    const string &src_file_name, const string &src_obj_name,
+    const Proplist &lcprop, const Proplist &laprop)
+{
+    _Link::create_external(src_file_name.c_str(), src_obj_name.c_str(), 
+        raw(), name.c_str(), lcprop.raw(), laprop.raw());
+}
+
+void Group::move_link(const string &name, Group &dst, const string &dst_name,
+    const Proplist &lcprop, const Proplist &laprop)
+{
+    _Link::move(raw(), name.c_str(), dst.raw(), dst_name.c_str(), lcprop.raw(),
+        laprop.raw());
+}
+
+void Group::copy_link(const string &name, Group &dst, const string &dst_name,
+    const Proplist &lcprop, const Proplist &laprop)
+{
+    _Link::copy(raw(), name.c_str(), dst.raw(), dst_name.c_str(), lcprop.raw(),
+        laprop.raw());
+}
+
+void Group::delete_link(const string &name, const Proplist &laprop) {
+    _Link::delete_(raw(), name.c_str(), laprop.raw());
+}
+
+void Group::delete_link(const string &group_name, hsize_t idx, 
+    index_t idx_type, iter_order_t order,
+    const Proplist &laprop)
+{
+    _Link::delete_by_idx(raw(), group_name.c_str(), idx_type, 
+        order, idx, laprop.raw());
+}
+
+herr_t Group::link_iterate(hsize_t &idx, link_iter_op_t op, void *op_data,
+    index_t idx_type, iter_order_t order) const 
+{
+    using namespace _group_link_helper;
+    iter_data_t data { std::move(op), op_data };
+    return _Link::iterate(raw(), idx_type, order, idx, raw_op, &data);
+}
+
+herr_t Group::link_iterate(const string &group_name,
+    hsize_t &idx, link_iter_op_t op, void *op_data,
+    index_t idx_type, iter_order_t order, const Proplist &laprop) const
+{
+    using namespace _group_link_helper;
+    iter_data_t data {std::move(op), op_data};
+    return _Link::iterate_by_name(raw(), group_name.c_str(), 
+        idx_type, order, idx, raw_op, &data, laprop.raw());
+}
+
+herr_t Group::link_visit(link_iter_op_t op, void *op_data,
+    index_t idx_type, iter_order_t order) const
+{
+    using namespace _group_link_helper;
+    iter_data_t data {std::move(op), op_data};
+    return _Link::visit(raw(), idx_type, order, raw_op, &data);
+}
+
+herr_t Group::link_visit(const string &group_name, link_iter_op_t op, 
+    void *op_data, index_t idx_type, iter_order_t order,
+    const Proplist &laprop) const
+{
+    using namespace _group_link_helper;
+    iter_data_t data {std::move(op), op_data};
+    return _Link::visit_by_name(raw(), group_name.c_str(), idx_type, order, 
+        raw_op, &data, laprop.raw());
+}
+
+herr_t Group::object_visit(obj_iter_op_t op, void *op_data,
+    info_field_t fields, index_t idx_type, iter_order_t order) const
+{
+    using namespace _group_obj_helper;
+    iter_data_t data {std::move(op), op_data};
+    return obj_raw()._NamedObj::visit(idx_type, order, raw_op, 
+        &data, fields);
+}
+
+herr_t Group::object_visit(const string &group_name,
+    obj_iter_op_t op, void *op_data, info_field_t fields,
+    index_t idx_type, iter_order_t order,const Proplist &laprop) const
+{
+    using namespace _group_obj_helper;
+    iter_data_t data {std::move(op), op_data};
+    return obj_raw()._NamedObj::visit_by_name(group_name.c_str(), 
+        idx_type, order, raw_op, &data, fields, laprop.raw());
+}
+
 Group Group::create_group(const string &name, const string &flag,
     const Proplist &lcprop, const Proplist &gcprop,
     const Proplist &gaprop)
@@ -241,6 +342,10 @@ Group Group::open_group(const string &name,
 {
     auto ret = _obj_raw_t::open(raw(), name.c_str(), aprop.raw());
     return _from_raw(ret);
+}
+
+DatasetManager Group::datasets() noexcept {
+    return DatasetManager {*this};
 }
 
 Dataset Group::create_dataset(const string &name, const Datatype &dtype, 

@@ -446,6 +446,114 @@ TEST_F(GroupTest, ObjectRaw) {
 
 }
 
+TEST_F(GroupTest, HardLinkCreation) {
+    auto g0 = _file0.create_group("g0");
+    auto g1 = _file0.create_group("g1");
+    auto d00 = g0.create_dataset<double>("d00", {3, 2});
+    
+    g1.create_hard_link("g0", _file0, "g0");
+    g1.create_hard_link("d00", g0, "d00");
+
+    ASSERT_EQ(g1.get_info().nlinks, 2);
+    EXPECT_TRUE(g1.group_exists("g0"));
+    EXPECT_TRUE(g1.dataset_exists("d00"));
+}
+
+TEST_F(GroupTest, SoftLinkCreation) {
+    auto g0 = _file0.create_group("g0");
+    auto g1 = _file0.create_group("g1");
+    auto d00 = g0.create_dataset<double>("d00", {3, 2});
+    
+    g1.create_soft_link("g0", "/g0");
+    g1.create_soft_link("d00", "/g0/d00");
+
+    ASSERT_EQ(g1.get_info().nlinks, 2);
+    EXPECT_TRUE(g1.group_exists("g0"));
+    EXPECT_TRUE(g1.dataset_exists("d00"));
+}
+
+TEST_F(GroupTest, ExternalLinkCreation) {
+    auto g0 = _file0.create_group("g0");
+    auto g1 = _file0.create_group("g1");
+    auto d00 = g0.create_dataset<double>("d00", {3, 2});
+
+    string ext_f1name = "ExternalLinkCreation_f1",
+        file0_name = get_full_filename("file0");
+    auto f1 = create_file(ext_f1name, "w");
+    
+    f1.create_external_link("g0", file0_name, "/g0");
+    f1.create_external_link("d00", file0_name, "/g0/d00");
+
+    ASSERT_EQ(f1.get_info().nlinks, 2);
+    EXPECT_TRUE(f1.group_exists("g0"));
+    EXPECT_TRUE(f1.dataset_exists("d00"));
+}
+
+TEST_F(GroupTest, LinkModification) {
+    auto g0 = _file0.create_group("g0");
+    auto g1 = _file0.create_group("g1");
+    auto d00 = g0.create_dataset<double>("d00", {3, 2});
+
+    g0.delete_link("d00");
+    EXPECT_EQ(g0.get_info().nlinks, 0);
+
+    _file0.delete_link("/", 1);
+    _file0.delete_link("/", 0);
+    EXPECT_EQ(_file0.get_info().nlinks, 0);
+
+    auto g2 = _file0.create_group("g2"),
+        g3 = _file0.create_group("g3"),
+        g30 = g3.create_group("g30");
+    g3.copy_link("g30", g2, "g30-1");
+    g3.move_link("g30", g2, "g30-2");
+    EXPECT_EQ(g3.get_info().nlinks, 0);
+    EXPECT_EQ(g2.get_info().nlinks, 2);
+    EXPECT_TRUE(g2.group_exists("g30-1"));
+    EXPECT_TRUE(g2.group_exists("g30-2"));
+}
+
+TEST_F(GroupTest, Iteration) {
+    auto g0 = _file0.create_group("g0");
+    auto g1 = _file0.create_group("g1");
+    auto d00 = g0.create_dataset<double>("d00", {3,2});
+
+    vector<string> l_names;
+    auto l_visitor = [&l_names](Group::link_iter_arg_t &arg) -> herr_t {
+        l_names.push_back(arg.name());
+        EXPECT_TRUE(arg.info().type == Group::tHARD);
+        return 0;
+    };
+
+    hsize_t idx = 0;
+    _file0.link_iterate(idx, l_visitor);
+    EXPECT_THAT(l_names, gt::UnorderedElementsAre("g0", "g1"));
+
+    l_names.clear(); idx = 0;
+    _file0.link_iterate("/", idx, l_visitor);
+    EXPECT_THAT(l_names, gt::UnorderedElementsAre("g0", "g1"));
+
+    l_names.clear();
+    _file0.link_visit(l_visitor);
+    EXPECT_THAT(l_names, gt::UnorderedElementsAre("g0", "g1", "g0/d00"));
+
+    vector<string> o_names;
+    auto o_visitor = [&o_names](Group::obj_iter_arg_t &arg) -> herr_t {
+        o_names.push_back(arg.name());
+        auto tp = arg.info().type;
+        EXPECT_TRUE(tp == NamedObj::tGROUP || tp == NamedObj::tDATASET);
+        return 0;
+    };
+
+    _file0.object_visit(o_visitor);
+    EXPECT_THAT(o_names, gt::UnorderedElementsAre(".", "g0", "g1", 
+        "g0/d00"));
+    
+    o_names.clear();
+    _file0.object_visit("/", o_visitor);
+    EXPECT_THAT(o_names, gt::UnorderedElementsAre(".", "g0", "g1", 
+        "g0/d00"));
+}
+
 class GroupLinkTest: public ::testing::Test {
 protected:
     GroupLinkTest():f(nullptr), ga(nullptr), 

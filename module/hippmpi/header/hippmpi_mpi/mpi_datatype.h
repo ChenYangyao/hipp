@@ -464,7 +464,7 @@ private:
 Interface of the type mapping. Do not add specialization to this class template.
 Instead, define specialization to DatatypeTraits.
 */
-template<typename NativeT, typename V=void>
+template<typename NativeT, typename V>
 struct TypeCvt {
     inline static constexpr bool has_mpi_datatype = false;
 };

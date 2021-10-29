@@ -15,11 +15,11 @@ public:
     typedef H5L_info_t info_t;
     typedef H5L_type_t type_t;
     inline static constexpr type_t 
-        tERROR = H5L_TYPE_ERROR,
-        tHARD = H5L_TYPE_HARD,
-        tSOFT = H5L_TYPE_SOFT,
+        tERROR    = H5L_TYPE_ERROR,
+        tHARD     = H5L_TYPE_HARD,
+        tSOFT     = H5L_TYPE_SOFT,
         tEXTERNAL = H5L_TYPE_EXTERNAL,
-        tMAX = H5L_TYPE_MAX;
+        tMAX      = H5L_TYPE_MAX;
 
     typedef H5L_iterate_t iterate_t;
 
@@ -56,16 +56,16 @@ public:
         index_t idx_type, iter_order_t order, hsize_t n, void *buff,
         size_t size, hid_t laprop = _Proplist::vDFLT);
     
-    static void iterate(hid_t group, index_t idx_type, iter_order_t order, 
+    static herr_t iterate(hid_t group, index_t idx_type, iter_order_t order, 
         hsize_t &idx, iterate_t op, void *op_data);
-    static void iterate_by_name(hid_t loc, const char *group_name, 
+    static herr_t iterate_by_name(hid_t loc, const char *group_name, 
         index_t idx_type, iter_order_t order, 
         hsize_t &idx, iterate_t op, void *op_data, 
         hid_t laprop = _Proplist::vDFLT);
 
-    static void visit(hid_t group, index_t idx_type, iter_order_t order, 
+    static herr_t visit(hid_t group, index_t idx_type, iter_order_t order, 
         iterate_t op, void *op_data);
-    static void visit_by_name(hid_t loc, const char *group_name, 
+    static herr_t visit_by_name(hid_t loc, const char *group_name, 
         index_t idx_type, iter_order_t order, iterate_t op, void *op_data, 
         hid_t laprop = _Proplist::vDFLT);
 
@@ -170,36 +170,43 @@ inline void _Link::get_val_by_idx(hid_t loc, const char *group_name,
         "(group_name=", group_name, ", idx=", n, ")\n");
 }
 
-inline void _Link::iterate(hid_t group, index_t idx_type, iter_order_t order, 
+inline herr_t _Link::iterate(hid_t group, index_t idx_type, iter_order_t order, 
     hsize_t &idx, iterate_t op, void *op_data)
 {
-    ErrH5::check(H5Literate(group, idx_type, order, &idx, op, op_data), 
-        emFLPFB, "  ... iteration failed\n");
+    auto ret = H5Literate(group, idx_type, order, &idx, op, op_data);
+    ErrH5::check(ret, emFLPFB, "  ... iteration failed\n");
+    return ret;
 }
 
-inline void _Link::iterate_by_name(hid_t loc, const char *group_name, 
+inline herr_t _Link::iterate_by_name(hid_t loc, const char *group_name, 
     index_t idx_type, iter_order_t order, 
     hsize_t &idx, iterate_t op, void *op_data, hid_t laprop)
 {
-    ErrH5::check(H5Literate_by_name(loc, group_name, idx_type, order, &idx, op, 
-        op_data, laprop), emFLPFB, "  ... iteration failed (group_name=", 
+    auto ret = H5Literate_by_name(loc, group_name, idx_type, order, &idx, op, 
+        op_data, laprop);
+    ErrH5::check(ret, emFLPFB, "  ... iteration failed (group_name=", 
         group_name, ")\n");
+    return ret;
 }
 
-inline void _Link::visit(hid_t group, index_t idx_type, iter_order_t order, 
+inline herr_t _Link::visit(hid_t group, index_t idx_type, iter_order_t order, 
     iterate_t op, void *op_data)
 {
-    ErrH5::check(H5Lvisit(group, idx_type, order, op, 
-        op_data), emFLPFB, "  ... visit failed\n");
+    auto ret = H5Lvisit(group, idx_type, order, op, 
+        op_data);
+    ErrH5::check(ret, emFLPFB, "  ... visit failed\n");
+    return ret;
 }
 
-inline void _Link::visit_by_name(hid_t loc, const char *group_name, 
+inline herr_t _Link::visit_by_name(hid_t loc, const char *group_name, 
     index_t idx_type, iter_order_t order, iterate_t op, void *op_data, 
     hid_t laprop)
 {
-    ErrH5::check(H5Lvisit_by_name(loc, group_name, idx_type, order, op, 
-        op_data, laprop), emFLPFB, "  ... visit failed (group_name=", 
+    auto ret = H5Lvisit_by_name(loc, group_name, idx_type, order, op, 
+        op_data, laprop);
+    ErrH5::check(ret, emFLPFB, "  ... visit failed (group_name=", 
         group_name, ")\n");
+    return ret;
 }
 
 inline void _Link::move(hid_t src_loc, const char *src_name, 

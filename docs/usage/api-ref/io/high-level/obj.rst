@@ -214,7 +214,7 @@ NamedObj
 
     .. function:: \
         herr_t attr_iterate(hsize_t &idx, attr_iter_op_t op, void *op_data=nullptr, \
-            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE) const \
+            index_t idx_type = idxNAME, iter_order_t order = iterNATIVE) const
         herr_t attr_iterate(const string &obj_name, hsize_t &idx,  \
             attr_iter_op_t op, void *op_data=nullptr, \
             index_t idx_type = idxNAME, iter_order_t order = iterNATIVE, \

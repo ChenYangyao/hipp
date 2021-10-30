@@ -318,6 +318,11 @@ After finishing those subsettings, you may restore the selection::
 Advanced Topics
 =================
 
+.. toctree::
+    :maxdepth: 2
+
+    advanced/file
+
 .. toctree:: 
     :maxdepth: 2
     :caption: Basic usage

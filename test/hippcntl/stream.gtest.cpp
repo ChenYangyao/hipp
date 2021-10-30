@@ -263,10 +263,16 @@ TEST(CntlStreamTest, Str){
     auto s = str(a, " is ", "not ", 2);
     ASSERT_EQ(s, "1 is not 2");
 }
+
 TEST(CntlStreamTest, StrF){
     auto s = str_f("%d%s%s%5.1f", 1, " is ", "not ", 2.1);
     ASSERT_EQ(s, "1 is not   2.1");
+
+    string fmt = "%d%s%s%5.1f";
+    s = str_f(fmt, 1, " is ", "not ", 2.1);
+    ASSERT_EQ(s, "1 is not   2.1");
 }
+
 TEST(CntlStreamTest, StrA){
     vector<double> a = {1,2,3,4,5};
     auto s = str_a(a); 

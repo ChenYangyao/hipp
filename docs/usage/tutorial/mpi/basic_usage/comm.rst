@@ -1,6 +1,10 @@
 Communicators and Parallel Libraries
 =======================================
 
+.. include:: /global.rst
+
+.. namespace:: HIPP::MPI
+
 MPI provides an unusual feature - communicator, which is missing in many other 
 parallel libraries. In many parallel libraries and applications, using the 
 global "world" communicator (``MPI_COMM_WORLD`` in **Standard** MPI, or :func:`HIPP::MPI::Env::world` in HIPP)
@@ -606,3 +610,42 @@ The output is (run with 6 processes)
 
 Because Sequential Operations are frequently used, HIPP provides an interface :class:`HIPP::MPI::SeqBlock` 
 for that.
+
+
+Examples
+-----------
+
+In this section, we present examples of using communicators.
+
+.. _tutor-example-comm-subset-communication:
+
+Communication in a Subset of Processes 
+""""""""""""""""""""""""""""""""""""""""""
+
+Source code : :download:`comm-subset-communication.cpp </../example/tutorial/mpi/comm-subset-communication.cpp>`.
+
+To create a new communicator that consists of only a subset of all processes,
+call :expr:`Comm::split()` to select desired processes and get the sub communicator::
+
+    int color = (rank == n_procs - 1) ? UNDEFINED : 0,
+        key = 0;
+    auto sub_comm = comm.split(color, key);
+
+Then, simply use this new commnicator like the global one, except that only 
+the subset of processes are involved in the communication. For example, 
+use the :expr:`Comm::bcast` within the context of the new communicator::
+
+    if( rank != n_procs - 1 ) {
+        int data[5] {0,1,2,3,4}, root = 0;
+        sub_comm.bcast(data, root);
+        pout << "At rank ", rank, ", data = {", 
+            pout(data, data+5), "}", endl;
+    }
+
+The output when ``n_procs = 4`` is like:
+
+.. code-block:: text 
+
+    At rank 0, data = {0,1,2,3,4}
+    At rank 1, data = {0,1,2,3,4}
+    At rank 2, data = {0,1,2,3,4}

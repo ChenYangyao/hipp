@@ -40,5 +40,6 @@ Example Codes Gallery
                                                                                                                                                                                                           task decomposition and result reduction.
     :ref:`tutor-app-pi-computation`                                             :download:`app-pi-computation.cpp </../example/tutorial/mpi/app-pi-computation.cpp>`                                      Example: approximate :math:`\pi` with numerical integration.
     :ref:`tutor-app-matrix-vec-dot`                                             :download:`app-matrix-vec-dot.cpp </../example/tutorial/mpi/app-matrix-vec-dot.cpp>`                                      Example: matrix-vector multiplication :math:`c=A\times b` with self-scheduling.
+    :ref:`tutor-example-comm-subset-communication`                              :download:`comm-subset-communication.cpp </../example/tutorial/mpi/comm-subset-communication.cpp>`                        Example: group communication within a subset of processes
     =========================================================================== ========================================================================================================================= ==============================================================================================
 

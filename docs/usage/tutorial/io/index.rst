@@ -322,6 +322,7 @@ Advanced Topics
     :maxdepth: 2
 
     advanced/file
+    advanced/dataset
 
 .. toctree:: 
     :maxdepth: 2

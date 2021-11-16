@@ -62,10 +62,12 @@ public:
 
     /**
     Predefined dataspace values.
-    ``allval`` represents "all" data in a dataset or a memory buffer whose exact meaning depends on the context. 
-    ``nullval`` represents an empty dataspace.
-    ``scalarval`` represents the dataspace for a single element, although its datatype 
-        may be composite such as ARRAY or COMPOUND.
+
+    - ``allval`` represents "all" data in a dataset or a memory buffer whose 
+      exact meaning depends on the context. 
+    - ``nullval`` represents an empty dataspace.
+    - ``scalarval`` represents the dataspace for a single element, although its 
+      datatype may be composite such as ARRAY or COMPOUND.
     */
     static const Dataspace vALL, vNULL, vSCALAR;
 

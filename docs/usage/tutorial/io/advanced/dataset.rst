@@ -5,6 +5,7 @@ Working with Datasets
 
 .. namespace:: HIPP::IO::H5
 
+.. _tutor-io-h5-using-dataset-manager:
 
 Using the Dataset Manager
 --------------------------
@@ -106,7 +107,7 @@ by ``std::string``.
 
 For the sake of simplicity, the dataset manager supports the following types of string data:
 
-- Single string, such as ``std::string``
+- Single string, such as ``std::string``,
   ``(const) char [N]``, ``(const) char *`` (null-terminated).
   The single string is represented by ATOMIC STRING datatype in the file.
 - Strings: either a ``std::vector<std::string> >`` instance or ``(const) char[N_STR][STR_LEN]``.
@@ -365,7 +366,8 @@ with desired byte ``size`` to get an empty datatype, and then, call
 :expr:`Datatype::insert(name, offset, dtype)` to insert a new
 field whose name, byte offset and datatype are specified by the three arguments, 
 respectively. If the type of the field has a predefined HDF5 native datatype 
-counterpart (i.e., numerical scalar, see :ref:`Native Datatypes <tutor-io-h5-datatype-predefined-native>`), 
+counterpart (i.e., numerical scalar, see 
+:ref:`Native Datatypes <tutor-io-h5-datatype-predefined-native>`), 
 or the field is a raw array of such a numerical scalar, you may just 
 pass a pointer to that class member, from which the offset and datatype are 
 inferred automatically::
@@ -464,6 +466,8 @@ To aid the description of dataspaces, HIPP defines the following **geometry type
 
 Each of them is described by a single section in the following.
 
+.. _tutor-io-h5-geometry-types-dimension:
+
 Dimensions
 """"""""""""""
 
@@ -526,6 +530,7 @@ products of all dimensions::
     assert( dims2 == dims3 );           // equality check.
     assert( dims2.n_elems() == 3*4 );   // total no. of elements.
 
+.. _tutor-io-h5-geometry-types-points:
 
 Points 
 """"""""""""
@@ -551,6 +556,8 @@ the space, call the corresponding methods::
     pts1.coords();              // => a pointer to the coords array.
     pts1.n_points();            // => no. of points.
     pts1.n_dims();              // => the rank of the space.
+
+.. _tutor-io-h5-geometry-types-hyperslab:
 
 Hyperslab
 """"""""""""""
@@ -582,6 +589,7 @@ To retrieve the parameters of a hyperslab, use the corresponding methods::
         &stride = slab1.stride(),
         &block  = slab1.block();
 
+.. _tutor-io-h5-dataspace:
 
 Dataspace 
 ---------------
@@ -591,6 +599,8 @@ The current version of the HDF5 library supports only SIMPLE dataspace
 (i.e., regular array) and several special dataspaces 
 (all-space, null-space, and scalar-space). 
 More flexible types of dataspaces may be supported in the future.
+
+.. _tutor-io-h5-dataspace-creation-and-access:
 
 Dataspace Creation and Access
 """"""""""""""""""""""""""""""
@@ -652,6 +662,8 @@ respectively, of the dataspace::
     auto dims = dsp1.dims();                        // => {2,3}
     hsize_t size = dsp1.size();                     // => 6
     
+.. _tutor-io-h5-subsetting:
+
 Sub-setting a Dataspace
 """"""""""""""""""""""""""
 
@@ -727,3 +739,197 @@ Note that setting a new selection clears the old selection, and then applies
 the new selection, i.e., the old and new selections are not combined.
 The tutorial section :ref:`tutor-io-h5-geometry-types` describes how to create 
 geometry types such as the :class:`Hyperslab` and :class:`Points`. 
+
+.. _tutor-io-h5-dataset:
+
+Dataset Operations 
+-------------------
+
+.. _tutor-io-h5-dataset-creation-and-opening:
+
+Dataset Creation and Opening
+""""""""""""""""""""""""""""""""
+Whatever API to use for dataset creation, required information are: 
+dataset name, datatype and dataspace. 
+HIPP provides three levels of methods for dataset creation, from simple-but-constrained
+to complex-but-general:
+
+- Datatype and dataspace are auto-deduced from the data object. The methods 
+  :expr:`Group::create_dataset_for(name, object)` and :expr:`Group::create_dataset_for_str(name, str_object)`
+  are used for this purpose.
+- Datatype is auto-deduced from the C++ type, dataspace is explicitly specified. 
+  The methods :expr:`Group::create_dataset<T>(name, dataspace)` and 
+  :expr:`Group::create_dataset_str(name, shape...)` are used in this cases.
+- Datatype and dataspace are both explicitly specified. This is the most general case - call 
+  :expr:`Group::create_dataset(name, datatype, dataspace)` with all the details passed.
+
+The level-1 calls are the most convenient. 
+For example, assume the following data objects are the targets to dump into a file ``f1``::
+
+    short s;
+    vector<double> d10(10);
+    int i5[5];
+    long l34[3][4];
+    array<float, 3> f3;
+    vector<array<int, 3> > i83(8);
+
+The allowed types of data objects are the same as those in :ref:`tutor-io-h5-using-dataset-manager`.
+
+To create a dataset for any of them, call :expr:`Group::create_dataset_for()` by passing the dataset 
+name and the data object. The library auto-deduces all required information to create 
+that dataset, but no data is actually written. On success, the newly created dataset is returned.
+If the dataset of that name already exists, it is opened and returned::
+
+    f1.create_dataset_for("s",   s);
+    f1.create_dataset_for("d10", d10);
+    f1.create_dataset_for("i5",  i5);
+    f1.create_dataset_for("l34", l34);
+    f1.create_dataset_for("f3",  f3);
+    f1.create_dataset_for("i83", i83);
+
+For string-like objects (see :ref:`tutor-io-h5-using-dataset-manager` for available types), such as::
+
+    string str = "foo";
+    vector<string> str4 = {"top", "bottom", "left", "right"};
+    char raw_str[16] = "foo";
+    char raw_str4[4][16] = {"top", "bottom", "left", "right"};
+
+Call :expr:`Group::create_dataset_for_str()` to create datasets for them::
+
+    f1.create_dataset_for_str("str",      str);
+    f1.create_dataset_for_str("str4",     str4);
+    f1.create_dataset_for_str("raw_str",  raw_str);
+    f1.create_dataset_for_str("raw_str4", raw_str4);
+
+The file contents shown by ``h5ls -r`` is:
+
+.. code-block:: text
+
+    /                        Group
+    /d10                     Dataset {10}
+    /f3                      Dataset {3}
+    /i5                      Dataset {5}
+    /i83                     Dataset {8, 3}
+    /l34                     Dataset {3, 4}
+    /raw_str                 Dataset {SCALAR}
+    /raw_str4                Dataset {4}
+    /s                       Dataset {SCALAR}
+    /str                     Dataset {SCALAR}
+    /str4                    Dataset {4}
+
+The level-2 calls auto-deduce the datatype from C++ type, but the dataspace is 
+manually passed. For example, for the above data object ``s``, ``i83``, and 
+string-like objects, the equivalent level-2 calls are::
+
+    f1.create_dataset<short>("s", H5::Dataspace::vSCALAR);
+    f1.create_dataset<int>("i83", {8,3});
+
+    f1.create_dataset_str("str", str.size()+1);
+    f1.create_dataset_str("raw_str4", 4, 16);
+
+The level-3 call allows user to pass both datatype and dataspace. The level-3 
+equivalents to the above dataset creation procedures are::
+
+    f1.create_dataset("s",   H5::NATIVE_SHORT_T, H5::Dataspace::vSCALAR);
+    f1.create_dataset("i83", H5::NATIVE_INT_T,  {8,3});
+
+    f1.create_dataset("str",      H5::C_S1_T.resized(str.size()+1), H5::Dataspace::vSCALAR);
+    f1.create_dataset("raw_str4", H5::C_S1_T.resized(16),           {4});
+
+
+To open an existing dataset, use :expr:`Group::open_dataset(name)` with given 
+dataset ``name``. For example, to open the dataset "s" created above, write::
+
+    auto s_dset = f1.open_dataset("s");
+
+.. _tutor-io-h5-dataset-read-write:
+
+Read/Write Data 
+""""""""""""""""
+
+Once a dataset is created or opened, read/write operations can be performed on 
+the :class:`Dataset` instance.
+
+For example, the following codes write a raw array and a ``std::vector`` object 
+into two newly created datasets, respectively::
+
+    long l34[3][4];
+    vector<double> d10(10);
+
+    auto dset_l34 = f1.create_dataset_for("l34", l34),
+         dset_d10 = f1.create_dataset_for("d10", d10);
+
+    dset_l34.write(l34);
+    dset_d10.write(d10);
+
+The acceptable data object argument to :expr:`Dataset::write()` are the same as 
+that to :expr:`Group::create_dataset_for()`.
+
+The memory data elements to be read/written may have different datatype from the 
+file data elements, but the implicit conversion must be available. 
+The memory dataspace may also be different, but the total 
+number of elements must match that in file. For example, write 10 single-precision 
+floating-point values to the above dataset, ``d10``, is valid::
+    
+    float f10[10];
+    dset_d10.write(f10);
+
+Data elements in raw memory buffer cannot have auto-deduced datatype. User must 
+specify its datatype::
+
+    void *ptr_f10 = new float[10];
+    dset_d10.write(ptr_f10, H5::NATIVE_FLOAT_T);
+
+String-like objects are written by :expr:`Dataset::write_str()` method. Allowed 
+string-like types are the same as those for :expr:`Group::create_dataset_for_str()`.
+For example, the following codes write a single string and a `std::vector` of 
+strings into two newly-created datasets, respectively::
+
+    string str = "foo";
+    vector<string> str4 = {"top", "bottom", "left", "right"};
+
+    auto dset_str = f1.create_dataset_for_str("str", str),
+         dset_str4 = f1.create_dataset_for_str("str4", str4);
+    
+    dset_str.write_str(str);
+    dset_str4.write_str(str);
+
+The method :expr:`Dataset::read()` reads the data elements from a dataset to 
+a data object. The object must have consistent (i.e., convertible) datatype 
+and the same number of elements. For example, the above dataset ``dset_l43`` is 
+read by::
+
+    dset_l34.read(l34);
+
+Or::
+
+    long l12[12];               // Readable if the size matches.
+    dset_l34.read(l12);
+
+If the argument is a ``std::vector``, it is auto-resized to match the file 
+dataspace::
+
+    vector<long> v1;            // vector is auto-resized.
+    dset_l34.read(v1);
+    assert(v1.size() == 12);
+
+The ``value_type`` of the ``std::vector`` may be a :class:`~HIPP::RawArrayTraits` compliant 
+type, as long as its size is a divisor of the size of the file dataspace::
+
+    vector<array<long, 4> > v2;
+    dset_l34.read(v2);
+    assert(v2.size() == 3);
+
+If the resize is not feasible, a :class:``~HIPP::ErrorLogic`` exception is thrown::
+
+    vector<array<long, 5> > v3;
+    dset_l34.read(v3);          // Fail and throw an ErrLogic.
+
+String-like data object is similar but read through :expr:`Dataset::read_str()`
+If the argument is a ``std::string`` or ``std::vector<std::string>``, it is auto-adjusted
+to fit the file contents::
+
+    string s1;
+    vector<string> v4;
+    dset_str.read_str(s1);
+    dset_str4.read_str(v4);

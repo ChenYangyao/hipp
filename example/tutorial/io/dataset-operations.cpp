@@ -239,13 +239,166 @@ void dataspace_operations() {
     assert( dsp5.select_valid() );
 }
 
+void dataset_creation_and_opening() {
+    /* Creation and opening. */
+    short s;
+    vector<double> d10(10);
+    int i5[5];
+    long l34[3][4];
+    array<float, 3> f3;
+    vector<array<int, 3> > i83(8);
+
+    string str = "foo";
+    vector<string> str4 = {"top", "bottom", "left", "right"};
+    char raw_str[16] = "foo";
+    char raw_str4[4][16] = {"top", "bottom", "left", "right"};
+
+    {
+        H5::File f1("f1.h5", "w");
+        f1.create_dataset_for("s",   s);
+        f1.create_dataset_for("d10", d10);
+        f1.create_dataset_for("i5",  i5);
+        f1.create_dataset_for("l34", l34);
+        f1.create_dataset_for("f3",  f3);
+        f1.create_dataset_for("i83", i83);
+
+        f1.create_dataset_for_str("str",      str);
+        f1.create_dataset_for_str("str4",     str4);
+        f1.create_dataset_for_str("raw_str",  raw_str);
+        f1.create_dataset_for_str("raw_str4", raw_str4);
+    }
+
+    {
+        H5::File f1("f1.h5", "a");
+        f1.create_dataset<short>("s", H5::Dataspace::vSCALAR);
+        f1.create_dataset<int>("i83", {8,3});
+
+        f1.create_dataset_str("str", str.size()+1);
+        f1.create_dataset_str("raw_str4", 4, 16);
+    }
+
+    {
+        H5::File f1("f1.h5", "a");
+        f1.create_dataset("s",   H5::NATIVE_SHORT_T, H5::Dataspace::vSCALAR);
+        f1.create_dataset("i83", H5::NATIVE_INT_T,  {8,3});
+
+        f1.create_dataset("str",      H5::C_S1_T.resized(str.size()+1), H5::Dataspace::vSCALAR);
+        f1.create_dataset("raw_str4", H5::C_S1_T.resized(16),           {4});
+
+        auto s_dset = f1.open_dataset("s");
+    }
+}
+
+void read_write_data() {
+
+    H5::File f1("f1.h5", "w");
+
+    /* Auto-deduce the memory buffer info. */
+    long l34[3][4];
+    vector<double> d10(10);
+    auto dset_l34 = f1.create_dataset_for("l34", l34),
+         dset_d10 = f1.create_dataset_for("d10", d10);
+    dset_l34.write(l34);
+    dset_d10.write(d10);
+
+    float f10[10];
+    dset_d10.write(f10);        // Memory datatype may be different but must be convertible.
+
+    /* For raw memory, must manually specify the datatype. */
+    void *ptr_f10 = new float[10];
+    dset_d10.write(ptr_f10, H5::NATIVE_FLOAT_T);
+
+    delete [] ptr_f10;
+
+    /* The same applies for string-like objects. */
+    string str = "foo";
+    vector<string> str4 = {"top", "bottom", "left", "right"};
+    auto dset_str = f1.create_dataset_for_str("str", str),
+         dset_str4 = f1.create_dataset_for_str("str4", str4);
+    dset_str.write_str(str);
+    dset_str4.write_str(str);
+
+    /* Read back the data. */
+    dset_l34.read(l34);
+
+    long l12[12];               // Readable if the size matches.
+    dset_l34.read(l12);
+    
+    vector<long> v1;            // vector is auto-resized.
+    dset_l34.read(v1);
+    assert(v1.size() == 12);
+
+    vector<array<long, 4> > v2; // ... as long as resized is possible.
+    dset_l34.read(v2);
+    assert(v2.size() == 3);
+    
+    vector<array<long, 5> > v3;
+    //dset_l34.read(v3);          // Fail and throw an ErrLogic.
+
+    string s1;
+    vector<string> v4;
+    dset_str.read_str(s1);
+    dset_str4.read_str(v4);
+}
+
+void subsetting_the_data() {
+    H5::File f1("f1.h5", "w");
+
+    int i34[3][4] {};
+
+    auto dset = f1.create_dataset_for("i34", i34);
+    dset.write(i34);
+
+    int i = 100;
+    dset.write_element(i, {0,1});
+    /**
+    The dataset becomes
+    0   100 0   0
+    0   0   0   0
+    0   0   0   0
+    */
+
+    int i2[2] = {8, 16};
+    hsize_t coords[] = {
+        0,2,  
+        0,3};
+    dset.write_elements(i2, {2, coords});
+    /**
+    The dataset becomes
+    0   100 8   16
+    0   0   0   0
+    0   0   0   0
+    */
+    
+    int i23[2][3] = {0,1,2,3,4,5};
+    dset.write_hyperslab(i23, {{1,1},{2,3}});
+    /**
+    The dataset becomes
+    0   100 8   16
+    0   0   1   2
+    0   3   4   5
+    */
+
+    vector<int> v;
+    dset.read(v);
+    pout << "v = {", PrtArray(v).ncol(4), "}\n";
+
+    dset.read_element(i, {0,1});
+    dset.read_elements(v, {2, coords});
+    dset.read_hyperslab(v, {{1,1},{2,3}});
+}
+
 int main(int argc, char const *argv[])
 {
     /*
     using_the_dataset_manager();
     datatype_operations();
     dimensions_class();
-    */
     dataspace_operations();
+    dataset_creation_and_opening();
+    */
+    read_write_data();
+    subsetting_the_data();
+
     return 0;
 }

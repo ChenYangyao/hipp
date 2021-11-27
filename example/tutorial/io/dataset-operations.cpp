@@ -351,7 +351,7 @@ void subsetting_the_data() {
 
     int i = 100;
     dset.write_element(i, {0,1});
-    /**
+    /*
     The dataset becomes
     0   100 0   0
     0   0   0   0
@@ -363,7 +363,7 @@ void subsetting_the_data() {
         0,2,  
         0,3};
     dset.write_elements(i2, {2, coords});
-    /**
+    /*
     The dataset becomes
     0   100 8   16
     0   0   0   0
@@ -372,7 +372,7 @@ void subsetting_the_data() {
     
     int i23[2][3] = {0,1,2,3,4,5};
     dset.write_hyperslab(i23, {{1,1},{2,3}});
-    /**
+    /*
     The dataset becomes
     0   100 8   16
     0   0   1   2
@@ -390,13 +390,12 @@ void subsetting_the_data() {
 
 int main(int argc, char const *argv[])
 {
-    /*
+
     using_the_dataset_manager();
     datatype_operations();
     dimensions_class();
     dataspace_operations();
     dataset_creation_and_opening();
-    */
     read_write_data();
     subsetting_the_data();
 

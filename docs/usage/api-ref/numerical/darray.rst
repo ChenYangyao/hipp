@@ -448,7 +448,7 @@ DynamicArray Specialization
 
 .. class:: template<typename ValueT, size_t Rank, typename Alloc> \
     DynamicArrayTraits< const DArray<ValueT, Rank, Alloc> >
-public:
+
     .. member:: constexpr bool is_array = true
     .. member:: constexpr size_t rank = Rank
 

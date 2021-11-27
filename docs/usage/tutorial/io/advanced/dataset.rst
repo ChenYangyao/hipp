@@ -5,13 +5,32 @@ Working with Datasets
 
 .. namespace:: HIPP::IO::H5
 
+HDF5 datasets are the objects that actually save user data in storage. The meta-info, 
+the :class:`Datatype` and :class:`Dataspace` of a dataset, describe the element type 
+and the layout of those elements. 
+
+For both clarity and flexibility, HIPP defines two sets of API for dataset operations
+
+- :class:`DatasetManager`: a manager for all datasets in a group. 
+  The manager provides high-level API which are sufficient for most 
+  commonly I/O patterns. Datatype and dataspace are not directly manipulated 
+  by users but they are implicitly deduced by the data object.
+- :class:`Group` and :class:`Dataset`: more detailed controls over datasets.
+  Dataset creation, opening, writing/reading processes are separately handled with 
+  detailed datatype and dataspace controls.
+
+In the following sections, we begin with the high-level :class:`DatasetManager` API
+and then move to the detailed API for datasets.
+
+
 .. _tutor-io-h5-using-dataset-manager:
 
 Using the Dataset Manager
 --------------------------
 
-The method :expr:`Group::datasets()` returns a dataset manage for 
-the caller group. For example, we create a new file and get a group manager 
+The method :expr:`Group::datasets()` returns a dataset manage typed 
+:class:`DatasetManager`
+for the caller group. For example, we create a new file and get a group manager 
 for it (i.e., its root group)::
 
     H5::File f1("f1.h5", "w");
@@ -572,7 +591,20 @@ To fully describe a hyperslab, four parameters are needed:
 - ``stride``: the stride between blocks along each dimension.
 - ``block``: the extent of a block.
 
-The four parameters are all described by :class:`Dimensions` objects.  
+The following figure demonstrates a typical hyperslab in a dataspace. The dataspace
+is a simple array with extents ``{8,12}``. The hyperslab starts at coordinates ``{0,1}``.
+Blocks in the hyperslab have stride ``{4,3}``. The whole hyperslab has ``{2,4}`` blocks
+and each block has dimensions ``{3,2}``.
+
+.. _fig-tutor-io-hyperslab-select.png:
+.. figure:: ../img/hyperslab-select.png
+    :figwidth: 70%
+    :align: center
+
+    **A hyperslab (blue-shaded areas) in a SIMPLE dataspace.**
+
+
+The four parameters are all handled by :class:`Dimensions` objects.  
 ``stride`` and ``block`` are optional - if not specified, it is 
 assumed to be ``1`` along each dimension.
 
@@ -933,3 +965,80 @@ to fit the file contents::
     vector<string> v4;
     dset_str.read_str(s1);
     dset_str4.read_str(v4);
+
+.. _tutor-io-h5-dataset-subsetting:
+
+Sub-setting the Data 
+""""""""""""""""""""""
+
+The **sub-setting** I/O operations are designed for the cases where only a subset 
+of the whole dataset is the target. We have three sub-setting
+operations for both reading and writting:
+
+- :expr:`Dataset::read_element()` and :expr:`Dataset::write_element()`: read/write a single 
+  scalar element at a given coordinate in the dataspace.
+- :expr:`Dataset::read_elements()` and :expr:`Dataset::write_elements`: read/write elements
+  at a set of given coordinates.
+- :expr:`Dataset::read_hyperslab()` and :expr:`Dataset::write_hyperslab()`: read/write elements 
+  at a hyperslab in the dataset.
+
+As an example, we create a new dataset shaped :math:`{3,4}` with integer elements::
+
+    H5::File f1("f1.h5", "w");
+
+    int i34[3][4] {};
+
+    auto dset = f1.create_dataset_for("i34", i34);
+    dset.write(i34);
+
+We write a single element ``i`` at the coordinate ``{0, 1}`` by :expr:`Dataset::write_element()`::
+
+    int i = 100;
+    dset.write_element(i, {0,1});
+    /*
+    The dataset becomes
+    0   100 0   0
+    0   0   0   0
+    0   0   0   0
+    */
+
+We write two elements of ``i2`` at the coordinates ``{0,2}`` and ``{0,3}``, respectively, 
+by one call of :expr:`Dataset::write_elements()`::
+    
+    int i2[2] = {8, 16};
+    hsize_t coords[] = {
+        0,2,  
+        0,3};
+    dset.write_elements(i2, {2, coords});
+    /*
+    The dataset becomes
+    0   100 8   16
+    0   0   0   0
+    0   0   0   0
+    */
+
+We write 6 elements of ``i23`` into a hyperslab starting at the coordinate ``{1,1}`` 
+and extending ``{2,3}`` in the two axes, by :expr:`Dataset::write_hyperslab()`::
+
+    int i23[2][3] = {0,1,2,3,4,5};
+    dset.write_hyperslab(i23, {{1,1},{2,3}});
+    /*
+    The dataset becomes
+    0   100 8   16
+    0   0   1   2
+    0   3   4   5
+    */
+
+The read calls are similar::
+
+    int i;
+    vector<int> v;
+    
+    dset.read_element(i, {0,1});
+    dset.read_elements(v, {2, coords});
+    dset.read_hyperslab(v, {{1,1},{2,3}});
+
+:expr:`Dataset::read_element()` accepts a reference to a scalar as its first 
+argument, while :expr:`Dataset::read_elements()` and :expr:`Dataset::read_hyperslab`
+accepts a ``std::vector``. The vector is auto-resized to fit the number of loaded 
+elements.

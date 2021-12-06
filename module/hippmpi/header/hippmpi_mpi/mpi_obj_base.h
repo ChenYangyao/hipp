@@ -7,8 +7,7 @@ create: Yangyao CHEN, 2021/09/27
 #define _HIPPMPI_MPI_OBJ_BASE_H_
 #include "mpi_base.h"
 #include "mpi_error.h"
-namespace HIPP{
-namespace MPI{
+namespace HIPP::MPI {
 
 /**
 The base class of HIPP's high-level MPI classes.
@@ -31,8 +30,8 @@ public:
         pointer type to it.
     mpi_t: underlying standard MPI type.
     */
-    typedef MPIObjRaw _obj_raw_t;
-    typedef typename _obj_raw_t::mpi_t mpi_t;
+    typedef MPIObjRaw                   _obj_raw_t;
+    typedef typename _obj_raw_t::mpi_t  mpi_t;
     typedef std::shared_ptr<_obj_raw_t> _obj_ptr_t;
 
     /**
@@ -63,6 +62,8 @@ public:
     ``MPI_Comm`` value.
     */
     mpi_t raw() const noexcept { return _obj_ptr->raw(); }
+    _obj_raw_t & obj_raw() noexcept { return *_obj_ptr; }
+    const _obj_raw_t & obj_raw() const noexcept { return *_obj_ptr; }
 
     /**
     Find whether or not the high-level object refers to a intermediate object.
@@ -72,8 +73,7 @@ public:
 protected:
     _obj_ptr_t _obj_ptr;
 };
-    
-} // namespace MPI
-} // namespace HIPP
+
+} // namespace HIPP::MPI
 
 #endif	//_HIPPMPI_MPI_OBJ_BASE_H_

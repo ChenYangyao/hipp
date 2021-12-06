@@ -281,43 +281,35 @@ Class Comm: the Communication Context
 
     .. _api-mpi-comm-virtual-topology:
 
-    .. function::   Comm cart_create( const vector<int> &dims, \
-                        const vector<int> &periods, int reorder = 1 )const
-                    static void dims_create( int nnodes, int ndims, vector<int> &dims )
-                    int cartdim_get()const
-                    void cart_get( vector<int> &dims, vector<int> &periods, \
-                        vector<int> &coords )const
-                    int cart_rank( const vector<int> &coords )const
-                    vector<int> cart_coords( int rank )const
-                    void cart_shift( int direction, int disp, \
-                        int &rank_src, int &rank_dest )const
-                    Comm cart_sub( const vector<int> &remain_dims )
-                    int topo_test()const
+    .. function:: int topo_test() const
 
-        Virtual topology management.
-        
-        ``cart_create()`` create a new communicator with number of processes at each dimension 
-        specified by ``dims``,
-        whether periodic at each dimension specified by ``periods``. 
-        If ``reorder`` is not zero then 
-        implementation is allowed to reorder the ranks of the processes and then put then on 
-        cartesian grids (otherwise processes are put by row-major order according to their ranks).
-        If size of the origin communicator is larger than needed, processes that is not put 
-        on the grids get null communicater as returned by :func:`Comm::nullval()`.
+        Return the topology type of the communicator. Possible values are 
+        :var:`GRAPH`, :var:`CART`, :var:`DIST_GRAPH`, or :var:`UNDEFINED` 
+        (for no topology).
 
-        ``dims_create()`` is a helpful function to determine the number of processes at each dimension
-        from the number of process available in total, ``nnodes``, 
-        and disired number of dimensions, ``ndims``. ``dims`` serves are both input and output arg, 
-        on entry, positive ``dims[i]`` will not changed on exit, zero ``dims[i]`` will be changed to a 
-        suitable value. Changed dims will be in an non-increasing order, 
-        and they are as close as possible. If on entry, nnodes is not multiple of 
-        prod(dims[i]) (for all dims[i] != 0), an error will occur. 
+    .. _api-mpi-comm-virtual-topology-cart:
 
+    .. function:: \
+        static void dims_create(int nnodes, int ndims, vector<int> &dims)
+        Comm cart_create(const vector<int> &dims, \
+            const vector<int> &periods, int reorder = 1) const
+        Comm cart_sub(const vector<int> &remain_dims) const
+
+        Cartesian topology creation method.
+    
+        ``dims_create()`` is a helpful function to determine the number of processes 
+        at each dimension from the number of process available in total, ``nnodes``, 
+        and disired number of dimensions, ``ndims``. 
+        ``dims`` is an in-and-out argument. Positive ``dims[i]`` will not 
+        changed on exit; zero ``dims[i]`` will be changed to a suitable value. 
+        Changed elements in ``dims`` will be in an non-increasing order, and they 
+        are as close as possible. It is erroneous that ``nnodes`` is not multiple of 
+        prod(dims[i]) (for all dims[i] != 0).
         It is valid to pass a `dims` with length not equal to ``ndims``. ``dims`` is 
-        resized to ``ndims`` (padding with 0 if necessary).
+        resized to ``ndims``, padded with 0 if necessary.
 
-        Example: a call of ``Comm::cart_create(nnodes, ndims, dims)`` gives results as 
-
+        **Example:** calls of ``Comm::cart_create(nnodes, ndims, dims)`` give the 
+        following results.
 
         .. table::
             :class: tight-table
@@ -331,29 +323,410 @@ Class Comm: the Communication Context
             7, 3              (0,3,0) -> erroneous call 
             ================= ==========================
 
-        For an communicator with cartesian topology, the following calls inquiry its information. 
+        ``cart_create()`` creates a new communicator with number of processes at 
+        each dimension specified by ``dims``, whether periodic at each dimension 
+        specified by ``periods``. If ``reorder`` is not zero then the implementation 
+        is allowed to reorder the ranks of the processes and then put then on 
+        cartesian grids. Processes are put by row-major order according to their 
+        ranks. If size of the origin communicator is larger than needed, processes 
+        that is not put on the grids get null communicater as returned by 
+        :expr:`Comm::nullval()`.
+
+        ``cart_sub()`` decomposes the original cartesian topology into several 
+        sub-cartesian communicators.
+        The remaining dimensions are passed as ``remain_dims``. Decomposition is 
+        performed at all non-remaining direction.
+
+    .. function:: \
+        int cartdim_get() const
+        void cart_get(vector<int> &dims, vector<int> &periods, \
+            vector<int> &coords) const
+        void cart_get(ContiguousBuffer<int> dims, ContiguousBuffer<int> periods, \
+            ContiguousBuffer<int> coords) const
+        int cart_rank(const vector<int> &coords) const
+        int cart_rank(ContiguousBuffer<const int> coords) const
+        vector<int> cart_coords(int rank) const
+        void cart_coords(int rank, ContiguousBuffer<int> coords) const
+        void cart_shift(int direction, int disp, int &rank_src, \
+            int &rank_dest) const
+        std::pair<int, int> cart_shift(int direction, int disp = 1) const
+
+        Cartesian topology meta-info inquiry methods. 
         
-        ``cartdim_get()`` returns the number of dimensions. ``cart_get()`` returns number of processes 
-        in each dimension, whether each dimension is periodic, and the coordinates of the calling 
-        process, into args ``dims``, ``periods`` and ``coords``, respectively.
+        The meta-info of a communicator with Cartesian topology may be inquired with
+        the following methods.
 
-        ``cart_rank()`` accepts coordinates ``coords`` in the topology and return its ``rank`` 
-        in the communicator. For periodic dimension, ``coords[i]`` is shifted to valid range, otherwise an out-of-range 
-        ``coords[i]`` is erroneous. For zero-dimensional topology, ``coords`` is not significant and the call retunrs 0.
+        ``cartdim_get()`` returns the number of dimensions. 
+        
+        ``cart_get()`` returns number of processes at each dimension, whether each 
+        dimension is periodic, and the coordinates of the calling 
+        process, into args ``dims``, ``periods`` and ``coords``, respectively. The 
+        arguments are auto-resized to ``cartdim_get()``.
+        The second overload fills the results into contiguous buffers.
 
-        ``cart_coords()`` convert the ``rank`` in the communicator into the coordinates.
+        ``cart_rank()`` accepts coordinates ``coords`` in the topology and return 
+        its ``rank`` in the communicator. For periodic dimension, ``coords[i]`` is 
+        shifted to valid range, otherwise an out-of-range ``coords[i]`` is 
+        erroneous. For zero-dimensional topology, ``coords`` is not significant and 
+        the call returns 0.
+        The second overload take a contiguous buffer as input.
 
-        ``cart_shift()`` find the neighbor ranks of the calling process at dimension specified by 
-        ``direction`` and displacement (positive) specified by ``disp``. Return the ranks of the 
-        processes offset by ``-disp`` and ``disp`` at this dimension into ``rank_src``, ``rank_dest``, 
-        respectively.
+        ``cart_coords()`` converts the ``rank`` in the communicator into the 
+        coordinates on the process grid.
+        The second overload fills the result into the contiguous buffer.
 
-        ``cart_sub()`` decompose the original cartesian topology into several sub-cartesian communicators.
-        The remaining dimensions are passed as ``remain_dims``, and decomposition happens at the non-remaining 
+        ``cart_shift()`` find the neighbor ranks of the calling process at dimension 
+        specified by ``direction`` and displacement specified by ``disp``. 
+        Return the ranks of the processes offset by ``-disp`` and ``disp`` at this 
+        dimension into ``rank_src``, ``rank_dest``, respectively.
+        The second overload returns the ranks as ``std::pair``.
+
+    .. _api-mpi-comm-virtual-topology-graph:
+    
+    .. function:: \
+        Comm graph_create(int nnodes, const int index[], const int edges[],  \
+            int reorder = 1) const
+        Comm graph_create(ContiguousBuffer<const int> index, \
+            ContiguousBuffer<const int> edges, int reorder = 1) const
+
+        Graph topology creation function.
+
+        ``graph_create()``: create a graph topology and return the new communicator with
+        topology information attached.
+        All processes in the current communicator must call this method with the 
+        same arguments.
+        The node number is in the range ``[0, nnodes)``. Node may linked to itself. 
+        Multiple links between a pair of processes are allowed. Adjacent matrix 
+        is not required to be symmetry. The link indicates no communication 
         direction.
+        
+        ``nnodes``: number of nodes in the graph. If smaller than the communicator 
+        size, null communicator is returned in some processes.
 
-        ``topo_test()`` return the topology type of the communicator. Possible values are 
-        :var:`UNDEFINED`, :var:`GRAPH`, :var:`CART`, :var:`DIST_GRAPH` in the ``HIPP::MPI`` namespace.
+        ``index``: specify the node degrees. index[i] is the total degrees of all nodes
+        with node number <= i.
+        
+        ``edges``: flatten-joined edges (i.e., node numbers of neighbors) linked by 
+        all nodes.
+        
+        ``reorder``: Boolean. If true, allow reordering the processes and then making 
+        topology assignment.
+
+        The second overload assumes that ``nnodes`` is taken from ``index``.
+        
+
+    .. function:: \
+        std::pair<int, int> graphdims_get() const
+        void graph_get(int maxindex, int maxedges, int index[], int edges[]) const
+        void graph_get(ContiguousBuffer<int> index, \
+            ContiguousBuffer<int> edges) const
+        std::pair<vector<int>, vector<int> > graph_get() const
+        int graph_neighbors_count(int rank) const
+        void graph_neighbors(int rank, int maxneighbors, int neighbors[]) const
+        void graph_neighbors(int rank, ContiguousBuffer<int> neighbors) const
+        vector<int> graph_neighbors(int rank) const
+
+        Graph topology meta-info inquiry methods.
+        
+        ``graphdims_get()``: return the number of nodes and edges which are correct 
+        input to graph_get().
+
+        ``graph_get()``: returns index and edges. Overloads are:
+        
+        (1): ``maxindex`` and ``maxedges`` are maximal capabilities of the two 
+        arrays.
+
+        (2): the same as (1) but ``maxindex`` and ``maxedges`` are taken from the 
+        buffers themselves.
+        
+        (3): return the index and edges.
+
+        ``graph_neighbors_count()``: return the number of neighbors near the process
+        with given ``rank``.
+
+        ``graph_neighbors()``: returns the ranks of neighbors near the process with 
+        given ``rank``. Overloads are:
+        
+        (1): ``maxneighbors`` indicates the maximal capability of array 
+        ``neighbors``.
+        
+        (2): the same as (1) but ``maxneighbors`` is taken from the buffer itself.
+        
+        (3): return the ranks of neighbors.
+
+    .. _api-mpi-comm-virtual-topology-dist-graph:
+
+    .. function:: \
+        Comm dist_graph_create_adjacent(int indegree, const int sources[],  \
+            const int sourceweights[], int outdegree, const int destinations[],  \
+            const int destweights[], const Info &info = Info::nullval(), \
+            int reorder = 1) const
+        Comm dist_graph_create_adjacent( \
+            ContiguousBuffer<const int> sources,  \
+            ContiguousBuffer<const int> sourceweights, \
+            ContiguousBuffer<const int> destinations, \
+            ContiguousBuffer<const int> destweights, \
+            const Info &info = Info::nullval(),  \
+            int reorder = 1) const
+        Comm dist_graph_create_adjacent( \
+            ContiguousBuffer<const int> sources,  \
+            ContiguousBuffer<const int> destinations, \
+            const Info &info = Info::nullval(),  \
+            int reorder = 1) const
+        Comm dist_graph_create(int n, const int sources[], const int degrees[],  \
+            const int destinations[], const int weights[],  \
+            const Info &info=Info::nullval(), int reorder = 1) const
+        Comm dist_graph_create( \
+            ContiguousBuffer<const int> sources,  \
+            ContiguousBuffer<const int> degrees, \
+            ContiguousBuffer<const int> destinations, \
+            ContiguousBuffer<const int> weights, \
+            const Info &info=Info::nullval(), int reorder = 1) const
+        Comm dist_graph_create( \
+            ContiguousBuffer<const int> sources,  \
+            ContiguousBuffer<const int> degrees,  \
+            ContiguousBuffer<const int> destinations, \
+            const Info &info=Info::nullval(), int reorder = 1) const
+        
+        Distributed graph topology creation function.
+        
+        Each process specifies only a subset of all edges. All processes must have 
+        the same ``reorder`` and ``info`` arguments. The new communicator has the 
+        same size with the old.
+
+        ``info`` may (or may not) be used by the implementation to optimize the 
+        process mapping (e.g., interpretation of weights, reordering quality, and 
+        time limit on the graph management). Info::nullval() is always a valid 
+        argument.
+        
+        The weights of edges do not have standard semantics, but should be 
+        non-negative and usually indicate the communication intensity. 
+        Edge multiplicity may also hint the communication intensity. 
+
+        Isolated process is allowed. A edge may has multiplicity > 1 with arbitrary
+        order of weights.
+
+        ``UNWEIGHTED`` may be used in all processes at the same time, indicating 
+        no weighting. If a degree is 0, the weights array is not modified (may use 
+        ``WEIGHTS_EMPTY``, but should not use NULL because UNWEIGHTED may be 
+        ``NULL``).
+        
+        If ``reorder = true``, allow reordering the processes and then making 
+        topology assignment.
+
+        ``dist_graph_create_adjacent()``: each process specifies all its incoming and
+        outgoing edges. The overhead of this call is smaller than 
+        dist_graph_create(). sources and destinations must be consistent in any 
+        linked pair, with the same weights. Overloads are:
+
+        (1): the standard call.
+        
+        (2): degrees are taken from ``sources`` and ``destinations``, respectively.
+        
+        (3): the same as (2) but take weights to be ``WEIGHTS_EMPTY``.
+
+        ``dist_graph_create()``: each process indicates possible directed edges between 
+        process pairs in the desired graph. This call is more flexible but usually
+        has more overhead. 
+        ``n`` is the number of source nodes. ``sources`` are the ranks of source 
+        processes and ``degrees`` are their numbers of destinations. 
+        ``destinations`` are flatten-joined destination ranks of all source 
+        processes.
+        ``sources`` and ``destinations`` in any process may have repeated items. The
+        ordering does not matter. Overloads are:
+        
+        (1): the standard call.
+        
+        (2): the same as (1) but ``n`` is taken from ``sources``.
+        
+        (3): the same as (2) but assume weights to be ``WEIGHTS_EMPTY``.
+
+
+    .. function:: \
+        std::tuple<int, int, int> dist_graph_neighbors_count() const
+        void dist_graph_neighbors(int maxindegree, int sources[], \
+            int sourceweights[], int maxoutdegree, int destinations[],  \
+            int destweights[]) const
+        void dist_graph_neighbors(ContiguousBuffer<int> sources, \
+            ContiguousBuffer<int> sourceweights,  \
+            ContiguousBuffer<int> destinations, \
+            ContiguousBuffer<int> destweights) const
+        void dist_graph_neighbors(ContiguousBuffer<int> sources, \
+            ContiguousBuffer<int> destinations) const
+        std::pair<vector<int>, vector<int> > dist_graph_neighbors() const
+
+        Distributed graph topology meta-info inquiry methods.
+
+        ``dist_graph_neighbors_count()``: get the in and out degrees, and whether the
+        graph is weighted, of the caller process. 
+        The degrees take into account the edge specifications in all 
+        processes.
+        If ``UNWEIGHTED`` is used during the creation, the graph is unweighted.
+
+        ``dist_graph_neighbors()``: get neighbors. An edge with multiplicity > 1 
+        results multiple items to the arguments with defining ordering.
+
+        If the distributed graph is created with ``dist_graph_create_adjacent()``
+        the returned arrays follow the same order passed to the creation. 
+        Otherwise the only guarantee is that multiple calls of this method on 
+        the same communicator return the same results.
+
+        Each of the weight arguments may be ``UNWEIGHTED``. If 
+        ``UNWEIGHTED`` is used during topology creation, the weight arguments 
+        are not modified.
+        ``maxindegree`` or ``maxoutdegree`` may be less than the actual degree. Then
+        only a part of the neighbors are returned into the arguments.
+
+        Overloads are: 
+
+        (1): standard calls.
+        
+        (2): the same as (1) but the degrees are taken from ``sources`` and 
+        ``destinations``, respectively.
+        
+        (3): the same as (2) but weights are not returned.
+        
+        (4): the same as (3) but sources and destinations are returned as a pair.
+
+    .. _api-mpi-comm-virtual-topology-low-level:
+
+    .. function:: \
+        int cart_map(int ndims, const int dims[], const int periods[]) const
+        int cart_map(ContiguousBuffer<int> dims,  \
+            ContiguousBuffer<int> periods) const
+        int graph_map(int nnodes, const int index[], const int edges[]) const
+        int graph_map(ContiguousBuffer<int> index,  \
+            ContiguousBuffer<int> edges) const
+
+        Low-level topology methods. With communicator manipulation methods they 
+        can be used to create any desired topology.
+
+        These two methods reorder the ranks of processes in the current communicator 
+        and return the new rank of the caller process, for CART and GRAPH 
+        topologies, respectively. The contiguous buffer overloads take ``ndims``
+        and ``nnodes`` from ``dims`` and ``index``, respectively.
+
+        The methods ``cart_create()`` and ``graph_create()`` may be implemented by first 
+        calling ``cart_map()`` and ``graph_map()``, respectively, and then using ``split()``
+        to separate not-in-topology processes from in-topology processes.
+
+    .. _api-mpi-comm-virtual-topology-ngb-collective:
+
+    .. function:: \
+        void neighbor_allgather(const void* sendbuf, int sendcount, \
+            const Datatype &sendtype, void* recvbuf, int recvcount, \
+            const Datatype &recvtype) const
+        void neighbor_allgather(const void *sendbuf, void *recvbuf, \
+            int count, const Datatype &dtype) const
+        void neighbor_allgather(const ConstDatapacket &send_dpacket,\
+            void *recvbuf) const
+        void neighbor_allgather(const ConstDatapacket &send_dpacket,\
+            const Datapacket &recv_dpacket) const
+        void neighbor_allgatherv(\
+            const void* sendbuf, int sendcount, const Datatype &sendtype, \
+            void* recvbuf, const int recvcounts[], const int displs[], \
+            const Datatype &recvtype) const
+        void neighbor_allgatherv(\
+            const ConstDatapacket &send_dpacket, void *recvbuf, \
+            ContiguousBuffer<const int> recvcounts, \
+            ContiguousBuffer<const int> displs,\
+            const Datatype &recvtype) const
+        void neighbor_allgatherv(\
+            const ConstDatapacket &send_dpacket, const Datapacket &recv_dpacket,\
+            ContiguousBuffer<const int> recvcounts, \
+            ContiguousBuffer<const int> displs) const
+        void neighbor_alltoall(\
+            const void* sendbuf, int sendcount, const Datatype &sendtype, \
+            void* recvbuf, int recvcount, const Datatype &recvtype) const
+        void neighbor_alltoall(\
+            const void *sendbuf, void *recvbuf, int count, \
+            const Datatype &dtype) const
+        void neighbor_alltoallv(const void* sendbuf, const int sendcounts[], \
+            const int sdispls[], const Datatype &sendtype, void* recvbuf, \
+            const int recvcounts[], const int rdispls[], \
+            const Datatype &recvtype) const
+        void neighbor_alltoallw(\
+            const void* sendbuf, const int sendcounts[], const aint_t sdispls[], \
+            const Datatype::mpi_t sendtypes[], \
+            void* recvbuf, const int recvcounts[], const aint_t rdispls[], \
+            const Datatype::mpi_t recvtypes[]) const
+        Requests ineighbor_allgather(const void* sendbuf, int sendcount, \
+            const Datatype &sendtype, void* recvbuf, \
+            int recvcount, const Datatype &recvtype) const
+        Requests ineighbor_allgather(const void *sendbuf, void *recvbuf, int count, \
+            const Datatype &dtype) const
+        Requests ineighbor_allgather(const ConstDatapacket &send_dpacket, \
+            void *recvbuf) const
+        Requests ineighbor_allgather(const ConstDatapacket &send_dpacket, \
+            const Datapacket &recv_dpacket) const
+        Requests ineighbor_allgatherv(const void* sendbuf, int sendcount, \
+            const Datatype &sendtype, void* recvbuf, const int recvcounts[], \
+            const int displs[], const Datatype &recvtype) const
+        Requests ineighbor_allgatherv(\
+            const ConstDatapacket &send_dpacket,\
+            void *recvbuf, ContiguousBuffer<const int> recvcounts, \
+            ContiguousBuffer<const int> displs,\
+            const Datatype &recvtype ) const
+        Requests ineighbor_allgatherv(\
+            const ConstDatapacket &send_dpacket, const Datapacket &recv_dpacket, \
+            ContiguousBuffer<const int> recvcounts, \
+            ContiguousBuffer<const int> displs) const
+        Requests ineighbor_alltoall(const void* sendbuf, int sendcount,\
+            const Datatype &sendtype, void* recvbuf, int recvcount,\
+            const Datatype &recvtype) const
+        Requests ineighbor_alltoall(const void *sendbuf, void *recvbuf, int count, \
+            const Datatype &dtype) const
+        Requests ineighbor_alltoallv(const void* sendbuf, const int sendcounts[], \
+            const int sdispls[], const Datatype &sendtype, void* recvbuf, \
+            const int recvcounts[], const int rdispls[], \
+            const Datatype &recvtype) const
+        Requests ineighbor_alltoallw(const void* sendbuf, const int sendcounts[],\
+            const aint_t sdispls[], const Datatype::mpi_t sendtypes[],\
+            void* recvbuf, const int recvcounts[],\
+            const aint_t rdispls[], const Datatype::mpi_t recvtypes[]) const
+
+        Neighbor collective communications on virtual topologies. These calls are 
+        collective over the entire communicator. 
+        
+        Each process communicates with and only with the nearest neighbors 
+        (i.e., direct neighbors) on the topology. For Cartesian topology, they 
+        are the disp = -1 and +1 processes, for every dimension. If non-periodic,
+        some neighbors may be PROC_NULL and then the data buffers must exist but are 
+        not touched. For graph topology, the adjacent matrix must be symmetric. 
+        The order of neighbors is consistent with ``graph_neighbors()``. 
+        For distributed graph, the order of neighbors is consistent with 
+        ``dist_graph_neighbors()``.
+
+        The communication pattern is sparse. If the topology graph is densely
+        connected, these calls are equivalent to ordinary collective calls.
+
+        ``neighbor_allgather()``: each process i sends to all its neighbors j the same 
+        data in ``sendbuf``, where (i,j) is an edge in the adjacent matrix. 
+        Each process i receives from all its neighbors j and contiguously store the 
+        data into ``recvbuf``, where (j, i) is an edge in the adjacent matrix.
+        For distributed graph, it is as if each process sends to its outgoing 
+        neighbors and receives from its incoming neighbors. The sending type 
+        signature at each process must be consistent with receiving type 
+        signatures at all other processes.
+
+        ``neighbor_allgatherv()``: extends ``neighbor_allgather()`` by allowing each
+        process receiving different number of data items from its neighbors.
+
+        ``neighbor_alltoall()``: extends ``neighbor_allgather()`` by allowing each 
+        process sending different data content to its neighbors.
+
+        ``neighbor_alltoallv()``: extents ``neighbor_allgatherv()`` by allowing each 
+        process sending different number of data items from its neighbors.
+
+        ``neighbor_alltoallw()``: extents ``neighbor_alltoallv()`` by allowing the 
+        datatypes are different among neighbors.
+
+        The methods prefixed with ``i`` are nonblocking variants of the 
+        corresponding blocking calls.
+
+        The variants are consistent with ``allgather()``, ``allgatherv()``, 
+        ``alltoall()``, ``alltoallv()``, ``alltoallw()``, and their nonblocking 
+        versions.
 
     .. _api-mpi-comm-rma-window-creation:
 

@@ -290,10 +290,16 @@ Class Comm: the Communication Context
     .. _api-mpi-comm-virtual-topology-cart:
 
     .. function:: \
+        static void dims_create(int nnodes, int ndims, int dims[])
         static void dims_create(int nnodes, int ndims, vector<int> &dims)
-        Comm cart_create(const vector<int> &dims, \
-            const vector<int> &periods, int reorder = 1) const
-        Comm cart_sub(const vector<int> &remain_dims) const
+        static void dims_create(int nnodes, ContiguousBuffer<int> dims)
+        static vector<int> dims_create(int nnodes, int ndims)
+        Comm cart_create(int ndims, const int dims[], const int periods[], \
+            int reorder = 1) const
+        Comm cart_create(ContiguousBuffer<const int> dims, \
+            ContiguousBuffer<const int> periods, int reorder = 1) const
+        Comm cart_sub(const int remain_dims[]) const
+        Comm cart_sub(ContiguousBuffer<const int> remain_dims) const
 
         Cartesian topology creation method.
     
@@ -304,9 +310,17 @@ Class Comm: the Communication Context
         changed on exit; zero ``dims[i]`` will be changed to a suitable value. 
         Changed elements in ``dims`` will be in an non-increasing order, and they 
         are as close as possible. It is erroneous that ``nnodes`` is not multiple of 
-        prod(dims[i]) (for all dims[i] != 0).
-        It is valid to pass a `dims` with length not equal to ``ndims``. ``dims`` is 
-        resized to ``ndims``, padded with 0 if necessary.
+        prod(dims[i]) (for all dims[i] != 0). Overloads are:
+
+        (1): standard API.
+        
+        (2): take a std::vector as ``dims``. If ``dims.size() != ndims``, ``dims``
+        is auto-resized to ``ndims``, padded with 0 if necessary.
+        
+        (3): take a contiguous buffer as ``dims``. ``ndims`` is inferred from its 
+        size.
+        
+        (4): the ``dims`` is returned (assume all-zero on entry).
 
         **Example:** calls of ``Comm::cart_create(nnodes, ndims, dims)`` give the 
         following results.
@@ -330,12 +344,14 @@ Class Comm: the Communication Context
         cartesian grids. Processes are put by row-major order according to their 
         ranks. If size of the origin communicator is larger than needed, processes 
         that is not put on the grids get null communicater as returned by 
-        :expr:`Comm::nullval()`.
+        :expr:`Comm::nullval()`. The second overload takes contiguous buffers as 
+        arguments.
 
         ``cart_sub()`` decomposes the original cartesian topology into several 
         sub-cartesian communicators.
         The remaining dimensions are passed as ``remain_dims``. Decomposition is 
-        performed at all non-remaining direction.
+        performed at all non-remaining direction. The second overload takes a 
+        contiguous buffer as argument.
 
     .. function:: \
         int cartdim_get() const

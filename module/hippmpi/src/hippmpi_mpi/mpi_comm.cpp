@@ -167,23 +167,57 @@ int Comm::topo_test()const{
     return _obj_ptr->topo_test();
 }
 
-void Comm::dims_create( int nnodes, int ndims, vector<int> &dims ){
+void Comm::dims_create(int nnodes, int ndims, int dims[]) {
+    _obj_raw_t::dims_create(nnodes, ndims, dims);
+}
+
+void Comm::dims_create(int nnodes, int ndims, vector<int> &dims){
     if( nnodes <= 0 || ndims <= 0 )
         ErrLogic::throw_(ErrLogic::eDOMAIN, emFLPFB, 
             "  ... nnodes ", nnodes, " and ndims ", ndims, 
             " are invalid (must be positive)\n");
     dims.resize(ndims, 0);
-    _obj_raw_t::dims_create(nnodes, ndims, dims.data());
+    dims_create(nnodes, ndims, dims.data());
 }
 
-Comm Comm::cart_create( const vector<int> &dims, 
-    const vector<int> &periods, int reorder )const{
-    return _from_raw( _obj_ptr->cart_create( dims.size(), 
-        dims.data(), periods.data(), reorder ), 1 );
+void Comm::dims_create(int nnodes, ContiguousBuffer<int> dims) {
+    auto [p, n] = dims;
+    int ndims = static_cast<int>( static_cast<int>(n) );
+    dims_create(nnodes, ndims, p);
 }
 
-Comm Comm::cart_sub( const vector<int> &remain_dims ) const {
-    return _from_raw( _obj_ptr->cart_sub( remain_dims.data() ), 1 );
+vector<int> Comm::dims_create(int nnodes, int ndims) {
+    vector<int> dims(ndims);
+    dims_create(nnodes, dims);
+    return dims;
+}
+
+Comm Comm::cart_create(int ndims, const int dims[], const int periods[], 
+    int reorder) const
+{
+    auto new_comm = obj_raw().cart_create(ndims, dims, periods, reorder);
+    return _from_raw(new_comm, 1);
+}
+
+Comm Comm::cart_create(ContiguousBuffer<const int> dims, 
+    ContiguousBuffer<const int> periods, int reorder) const
+{
+    auto [p_dims, n_dims] = dims;
+    auto [p_periods, n_periods] = periods;
+    if(n_dims != n_periods)
+        ErrLogic::throw_(ErrLogic::eLENGTH, emFLPFB, 
+            "  ... dims.size() (", n_dims, 
+            ") != periods.size() (", n_periods, ")\n");
+    return cart_create(static_cast<int>(n_dims), p_dims, p_periods, reorder);
+}
+
+Comm Comm::cart_sub(const int remain_dims[]) const {
+    auto new_comm = obj_raw().cart_sub(remain_dims);
+    return _from_raw(new_comm, 1);
+}
+
+Comm Comm::cart_sub(ContiguousBuffer<const int> remain_dims) const {
+    return cart_sub(remain_dims.get_buff());
 }
 
 int Comm::cartdim_get()const{

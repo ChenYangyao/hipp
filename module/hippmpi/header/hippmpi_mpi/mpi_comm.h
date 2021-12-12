@@ -196,7 +196,7 @@ public:
     coordinates on the process grid.
     The second overload fills the result into the contiguous buffer.
 
-    ``cart_shift()`` find the neighbor ranks of the calling process at dimension 
+    ``cart_shift()`` finds the neighbor ranks of the calling process at dimension 
     specified by ``direction`` and displacement specified by ``disp``. 
     Return the ranks of the processes offset by ``-disp`` and ``disp`` at this 
     dimension into ``rank_src``, ``rank_dest``, respectively.

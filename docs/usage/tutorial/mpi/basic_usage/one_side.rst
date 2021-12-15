@@ -31,7 +31,7 @@ window is created from an existing communicator. As usual, we may get the global
     auto comm = env.world();
     int rank = comm.rank(), n_procs = comm.size();
 
-If not all of the procecess would participate RMA, just create a sub communicator 
+If not all of the processes would participate RMA, just create a sub communicator 
 from the global one.
 
 To create a RMA window, each process in the communicator needs to attach a memory buffer 

@@ -24,7 +24,7 @@ Class Comm: the Communication Context
 
     The ``Comm`` object can be **copy-constructed**, **copy-assigned**, **move-constructed**
     and **move-assigned**. The copy operation gives a object that refers to the same 
-    commnicator (internally the same ``MPI_Comm``). 
+    communicator (internally the same ``MPI_Comm``). 
     The copy operations, move operations and destructor are ``noexcept``.
 
     .. type::   std::function<bool(Comm &oldcomm, int keyval, void *extra_state, \
@@ -276,7 +276,7 @@ Class Comm: the Communication Context
                     Group remote_group()
 
             ``group()`` returns the (local) group of processes in the communicator. If this is an 
-            inter-communicator, ``remote_group()`` returns the remote group of procecess.
+            inter-communicator, ``remote_group()`` returns the remote group of processes.
 
 
     .. _api-mpi-comm-virtual-topology:
@@ -391,7 +391,7 @@ Class Comm: the Communication Context
         coordinates on the process grid.
         The second overload fills the result into the contiguous buffer.
 
-        ``cart_shift()`` find the neighbor ranks of the calling process at dimension 
+        ``cart_shift()`` finds the neighbor ranks of the calling process at dimension 
         specified by ``direction`` and displacement specified by ``disp``. 
         Return the ranks of the processes offset by ``-disp`` and ``disp`` at this 
         dimension into ``rank_src``, ``rank_dest``, respectively.

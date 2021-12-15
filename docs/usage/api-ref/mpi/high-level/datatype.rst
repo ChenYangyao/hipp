@@ -834,7 +834,7 @@ Class Pack
         its base address, size, and byte offset of the position pointer (points to 
         next available location that has not been used), respectively.
 
-        ``get_comm()`` returns the commnicator. The commnicator is that passed 
+        ``get_comm()`` returns the communicator. The communicator is that passed 
         in the constructor or method :func:`set_comm`.
 
     .. function:: \
@@ -866,7 +866,7 @@ Class Pack
         The functions mapped to the standard MPI calls.
 
         ``pack()`` packs data described by ``in_dpacket`` to the output buffer ``outbuf`` sized ``outsize`` at 
-        the position ``position``. The buffer will be used in the communication in the commnicator ``comm``.
+        the position ``position``. The buffer will be used in the communication in the communicator ``comm``.
         ``position`` is updated to the next location that can be used for the next packing operation.
 
         ``upack()`` upacks data in the buffer ``inbuf`` into the user buffer described by ``out_dpacket``.
@@ -881,8 +881,8 @@ Class ExternalPack
     ``ExternalPack`` is the same with :class:`Pack`, except that it uses "canonical packing/unpacking" 
     which gives buffer with no header and following predefined standard format.
 
-    ``ExternalPack`` does not accept any commnicator because the buffer format is universal and does not
-    depend on the commnicator. Instead, it accepts a ``datarep`` argument in the constructor indicating
+    ``ExternalPack`` does not accept any communicator because the buffer format is universal and does not
+    depend on the communicator. Instead, it accepts a ``datarep`` argument in the constructor indicating
     which standard data format is used. The only avaiable ``datarep`` is ``"external32"``.
 
     .. function:: \

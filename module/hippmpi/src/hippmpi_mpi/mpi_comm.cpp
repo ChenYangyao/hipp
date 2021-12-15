@@ -163,23 +163,61 @@ Group Comm::remote_group(){
     return Group( std::make_shared<Group::_obj_raw_t>(obj, 1) );
 }
 
-Comm Comm::cart_create( const vector<int> &dims, 
-    const vector<int> &periods, int reorder )const{
-    return _from_raw( _obj_ptr->cart_create( dims.size(), 
-        dims.data(), periods.data(), reorder ), 1 );
+int Comm::topo_test()const{
+    return _obj_ptr->topo_test();
 }
 
-void Comm::dims_create( int nnodes, int ndims, vector<int> &dims ){
+void Comm::dims_create(int nnodes, int ndims, int dims[]) {
+    _obj_raw_t::dims_create(nnodes, ndims, dims);
+}
+
+void Comm::dims_create(int nnodes, int ndims, vector<int> &dims){
     if( nnodes <= 0 || ndims <= 0 )
         ErrLogic::throw_(ErrLogic::eDOMAIN, emFLPFB, 
             "  ... nnodes ", nnodes, " and ndims ", ndims, 
             " are invalid (must be positive)\n");
     dims.resize(ndims, 0);
-    _obj_raw_t::dims_create(nnodes, ndims, dims.data());
+    dims_create(nnodes, ndims, dims.data());
 }
 
-int Comm::topo_test()const{
-    return _obj_ptr->topo_test();
+void Comm::dims_create(int nnodes, ContiguousBuffer<int> dims) {
+    auto [p, n] = dims;
+    int ndims = static_cast<int>( static_cast<int>(n) );
+    dims_create(nnodes, ndims, p);
+}
+
+vector<int> Comm::dims_create(int nnodes, int ndims) {
+    vector<int> dims(ndims);
+    dims_create(nnodes, dims);
+    return dims;
+}
+
+Comm Comm::cart_create(int ndims, const int dims[], const int periods[], 
+    int reorder) const
+{
+    auto new_comm = obj_raw().cart_create(ndims, dims, periods, reorder);
+    return _from_raw(new_comm, 1);
+}
+
+Comm Comm::cart_create(ContiguousBuffer<const int> dims, 
+    ContiguousBuffer<const int> periods, int reorder) const
+{
+    auto [p_dims, n_dims] = dims;
+    auto [p_periods, n_periods] = periods;
+    if(n_dims != n_periods)
+        ErrLogic::throw_(ErrLogic::eLENGTH, emFLPFB, 
+            "  ... dims.size() (", n_dims, 
+            ") != periods.size() (", n_periods, ")\n");
+    return cart_create(static_cast<int>(n_dims), p_dims, p_periods, reorder);
+}
+
+Comm Comm::cart_sub(const int remain_dims[]) const {
+    auto new_comm = obj_raw().cart_sub(remain_dims);
+    return _from_raw(new_comm, 1);
+}
+
+Comm Comm::cart_sub(ContiguousBuffer<const int> remain_dims) const {
+    return cart_sub(remain_dims.get_buff());
 }
 
 int Comm::cartdim_get()const{
@@ -192,8 +230,26 @@ void Comm::cart_get( vector<int> &dims, vector<int> &periods,
     dims.resize( ndims ); periods.resize( ndims ); coords.resize( ndims );
     _obj_ptr->cart_get( ndims, dims.data(), periods.data(), coords.data() );
 }
-int Comm::cart_rank( const vector<int> &coords )const{
+
+void Comm::cart_get(ContiguousBuffer<int> dims, ContiguousBuffer<int> periods, 
+    ContiguousBuffer<int> coords) const
+{
+    auto [p_dims, n_dims] = dims;
+    auto [p_periods, n_periods] = periods;
+    auto [p_coords, n_coords] = coords;
+    if( n_dims != n_periods || n_dims != n_coords )
+        ErrLogic::throw_(ErrLogic::eLENGTH, emFLPFB, 
+            "  ... sizes of buffers do not match (dims->", n_dims, 
+            ", periods->", n_periods, ", coords->", n_coords, ")\n");
+    obj_raw().cart_get(static_cast<int>(n_dims), p_dims, p_periods, p_coords);
+}
+
+int Comm::cart_rank( const vector<int> &coords )const {
     return _obj_ptr->cart_rank( coords.data() );
+}
+
+int Comm::cart_rank(ContiguousBuffer<const int> coords) const {
+    return obj_raw().cart_rank( coords.get_buff() );
 }
 
 vector<int> Comm::cart_coords( int rank )const{
@@ -203,14 +259,421 @@ vector<int> Comm::cart_coords( int rank )const{
     return coords;
 }
 
+void Comm::cart_coords(int rank, ContiguousBuffer<int> coords) const {
+    auto [p_coords, n_coords] = coords;
+    obj_raw().cart_coords(rank, static_cast<int>(n_coords), p_coords);
+}
+
 void Comm::cart_shift( int direction, int disp, 
     int &rank_src, int &rank_dest )const{
     _obj_ptr->cart_shift( direction, disp, &rank_src, &rank_dest );
 }
 
-Comm Comm::cart_sub( const vector<int> &remain_dims ){
-    return _from_raw( _obj_ptr->cart_sub( remain_dims.data() ), 1 );
+std::pair<int, int> Comm::cart_shift(int direction, int disp) const {
+    int src, dest;
+    cart_shift(direction, disp, src, dest);
+    return {src, dest};
 }
+
+Comm Comm::graph_create(int nnodes, const int index[], const int edges[], 
+    int reorder) const
+{
+    auto new_comm = obj_raw().graph_create(nnodes, index, edges, reorder);
+    return _from_raw(new_comm, 1);
+}
+
+Comm Comm::graph_create(ContiguousBuffer<const int> index, 
+    ContiguousBuffer<const int> edges, int reorder) const
+{
+    auto [p_index, n_index] = index;
+    auto [p_edges, n_edges] = edges;
+    return graph_create(static_cast<int>(n_index), p_index, p_edges, reorder);
+}
+
+std::pair<int, int> Comm::graphdims_get() const {
+    int nnodes, nedges;
+    obj_raw().graphdims_get(&nnodes, &nedges);
+    return {nnodes, nedges};
+}
+
+void Comm::graph_get(int maxindex, int maxedges, int index[], 
+    int edges[]) const
+{
+    obj_raw().graph_get(maxindex, maxedges, index, edges);
+}
+
+void Comm::graph_get(ContiguousBuffer<int> index, 
+    ContiguousBuffer<int> edges) const
+{
+    auto [p_index, n_index] = index;
+    auto [p_edges, n_edges] = edges;
+    graph_get(static_cast<int>(n_index), static_cast<int>(n_edges), 
+        p_index, p_edges);
+}
+
+std::pair<vector<int>, vector<int> > Comm::graph_get() const {
+    auto [nnodes, nedges] = graphdims_get();
+    vector<int> index(nnodes), edges(nedges);
+    graph_get(index, edges);
+    return { std::move(index), std::move(edges) };
+}
+
+int Comm::graph_neighbors_count(int rank) const {
+    return obj_raw().graph_neighbors_count(rank);
+}
+
+void Comm::graph_neighbors(int rank, int maxneighbors, int neighbors[]) const {
+    obj_raw().graph_neighbors(rank, maxneighbors, neighbors);
+}
+
+void Comm::graph_neighbors(int rank, ContiguousBuffer<int> neighbors) const {
+    auto [p, n] = neighbors;
+    graph_neighbors(rank, static_cast<int>(n), p);
+}
+
+vector<int> Comm::graph_neighbors(int rank) const {
+    int n = graph_neighbors_count(rank);
+    vector<int> neighbors(n);
+    graph_neighbors(rank, neighbors);
+    return neighbors;
+}
+
+Comm Comm::dist_graph_create_adjacent(int indegree, const int sources[], 
+    const int sourceweights[], int outdegree, const int destinations[], 
+    const int destweights[], const Info &info, int reorder) const
+{
+    auto new_comm = obj_raw().dist_graph_create_adjacent(indegree, sources, 
+        sourceweights, outdegree, destinations, destweights, info.raw(), 
+        reorder);
+    return _from_raw(new_comm, 1);
+}
+
+Comm Comm::dist_graph_create_adjacent(
+    ContiguousBuffer<const int> sources, 
+    ContiguousBuffer<const int> sourceweights,
+    ContiguousBuffer<const int> destinations,
+    ContiguousBuffer<const int> destweights,
+    const Info &info, int reorder) const
+{
+    auto [p_src, n_src] = sources;
+    auto [p_dst, n_dst] = destinations;
+    return dist_graph_create_adjacent(
+        static_cast<int>(n_src), p_src, sourceweights.get_buff(), 
+        static_cast<int>(n_dst), p_dst, destweights.get_buff(), info, reorder);
+}
+
+Comm Comm::dist_graph_create_adjacent(
+    ContiguousBuffer<const int> sources, 
+    ContiguousBuffer<const int> destinations,
+    const Info &info, int reorder) const
+{
+    auto [p_src, n_src] = sources;
+    auto [p_dst, n_dst] = destinations;
+    return dist_graph_create_adjacent(
+        static_cast<int>(n_src), p_src, UNWEIGHTED, 
+        static_cast<int>(n_dst), p_dst, UNWEIGHTED, info, reorder);
+}
+
+Comm Comm::dist_graph_create(int n, const int sources[], const int degrees[], 
+    const int destinations[], const int weights[], 
+    const Info &info, int reorder) const
+{
+    auto new_comm = obj_raw().dist_graph_create(n, sources, degrees, 
+        destinations, weights, info.raw(), reorder);
+    return _from_raw(new_comm, 1);
+}
+
+Comm Comm::dist_graph_create(
+    ContiguousBuffer<const int> sources, 
+    ContiguousBuffer<const int> degrees,
+    ContiguousBuffer<const int> destinations,
+    ContiguousBuffer<const int> weights,
+    const Info &info, int reorder) const
+{
+    auto [p_src, n_src] = sources;
+    return dist_graph_create(static_cast<int>(n_src), p_src, 
+        degrees.get_buff(), destinations.get_buff(), weights.get_buff(), 
+        info, reorder);
+}
+
+Comm Comm::dist_graph_create(
+    ContiguousBuffer<const int> sources, 
+    ContiguousBuffer<const int> degrees,
+    ContiguousBuffer<const int> destinations,
+    const Info &info, int reorder) const
+{
+    auto [p_src, n_src] = sources;
+    return dist_graph_create(static_cast<int>(n_src), p_src, 
+        degrees.get_buff(), destinations.get_buff(), UNWEIGHTED, 
+        info, reorder);
+}
+
+std::tuple<int, int, int> Comm::dist_graph_neighbors_count() const {
+    int indeg, outdeg, weighted;
+    obj_raw().dist_graph_neighbors_count(&indeg, &outdeg, &weighted);
+    return {indeg, outdeg, weighted};
+}
+
+void Comm::dist_graph_neighbors(int maxindegree, int sources[],
+    int sourceweights[], int maxoutdegree, int destinations[], 
+    int destweights[]) const
+{
+    obj_raw().dist_graph_neighbors(maxindegree, sources, sourceweights,
+        maxoutdegree, destinations, destweights);
+}
+
+void Comm::dist_graph_neighbors(ContiguousBuffer<int> sources,
+    ContiguousBuffer<int> sourceweights, 
+    ContiguousBuffer<int> destinations,
+    ContiguousBuffer<int> destweights) const
+{
+    auto [p_src, n_src] = sources;
+    auto [p_dst, n_dst] = destinations;
+    dist_graph_neighbors(static_cast<int>(n_src), p_src, 
+        sourceweights.get_buff(), static_cast<int>(n_dst), p_dst, 
+        destweights.get_buff());
+}
+
+void Comm::dist_graph_neighbors(ContiguousBuffer<int> sources,
+    ContiguousBuffer<int> destinations) const
+{
+    auto [p_src, n_src] = sources;
+    auto [p_dst, n_dst] = destinations;
+    dist_graph_neighbors(static_cast<int>(n_src), p_src, UNWEIGHTED, 
+        static_cast<int>(n_dst), p_dst, UNWEIGHTED);
+}
+
+std::pair<vector<int>, vector<int> > Comm::dist_graph_neighbors() const {
+    auto [indeg, outdeg, weighted] = dist_graph_neighbors_count();
+    vector<int> srcs(indeg), dsts(outdeg);
+    dist_graph_neighbors(srcs, dsts);
+    return {std::move(srcs), std::move(dsts)};
+}
+
+int Comm::cart_map(int ndims, const int dims[], const int periods[]) const {
+    int newrank;
+    obj_raw().cart_map(ndims, dims, periods, &newrank);
+    return newrank;
+}
+
+int Comm::cart_map(ContiguousBuffer<int> dims, 
+    ContiguousBuffer<int> periods) const 
+{
+    auto [p_dims, n_dims] = dims;
+    return cart_map(static_cast<int>(n_dims), p_dims, periods.get_buff());
+}
+
+int Comm::graph_map(int nnodes, const int index[], const int edges[]) const {
+    int newrank;
+    obj_raw().graph_map(nnodes, index, edges, &newrank);
+    return newrank;
+}
+
+int Comm::graph_map(ContiguousBuffer<int> index, 
+    ContiguousBuffer<int> edges) const
+{
+    auto [p_index, nnodes] = index;
+    return graph_map(nnodes, p_index, edges.get_buff());
+}
+
+void Comm::neighbor_allgather(const void* sendbuf, int sendcount, 
+    const Datatype &sendtype, void* recvbuf, int recvcount, 
+    const Datatype &recvtype) const
+{
+    obj_raw().neighbor_allgather(sendbuf, sendcount, sendtype.raw(), recvbuf, 
+        recvcount, recvtype.raw());
+}
+
+void Comm::neighbor_allgather(const void *sendbuf, void *recvbuf, 
+    int count, const Datatype &dtype) const
+{
+    neighbor_allgather(sendbuf, count, dtype, recvbuf, count, dtype);
+}
+
+void Comm::neighbor_allgather(const ConstDatapacket &send_dpacket,
+    void *recvbuf) const
+{
+    const auto &[p,n,dt] = send_dpacket;
+    neighbor_allgather(p, recvbuf, n, dt);
+}
+
+void Comm::neighbor_allgather(const ConstDatapacket &send_dpacket,
+    const Datapacket &recv_dpacket) const
+{
+    neighbor_allgather(send_dpacket, recv_dpacket.get_buff());
+}
+
+void Comm::neighbor_allgatherv(
+    const void* sendbuf, int sendcount, const Datatype &sendtype, 
+    void* recvbuf, const int recvcounts[], const int displs[], 
+    const Datatype &recvtype) const
+{
+    obj_raw().neighbor_allgatherv(sendbuf, sendcount, sendtype.raw(),
+        recvbuf, recvcounts, displs, recvtype.raw());
+}
+
+void Comm::neighbor_allgatherv(
+    const ConstDatapacket &send_dpacket, void *recvbuf, 
+    ContiguousBuffer<const int> recvcounts, 
+    ContiguousBuffer<const int> displs,
+    const Datatype &recvtype) const
+{
+    auto [_recvcounts, n_cs] = recvcounts;
+    auto [_displs, n_ds] = displs;
+    if( n_cs != n_ds )
+        ErrLogic::throw_(ErrLogic::eLENGTH, emFLPFB, 
+            "  ... recvcounts", recvcounts, 
+            " does not match displs ", displs, '\n');
+    const auto &[p,n,dt] = send_dpacket;
+    neighbor_allgatherv(p, n, dt, recvbuf, _recvcounts, _displs, recvtype);
+}
+
+void Comm::neighbor_allgatherv(
+    const ConstDatapacket &send_dpacket, const Datapacket &recv_dpacket,
+    ContiguousBuffer<const int> recvcounts, 
+    ContiguousBuffer<const int> displs) const
+{
+    const auto &[p,n,dt] = recv_dpacket;
+    neighbor_allgatherv(send_dpacket, p, recvcounts, displs, dt);
+}
+
+void Comm::neighbor_alltoall(
+    const void* sendbuf, int sendcount, const Datatype &sendtype, 
+    void* recvbuf, int recvcount, const Datatype &recvtype) const
+{
+    obj_raw().neighbor_alltoall(sendbuf, sendcount, sendtype.raw(), 
+        recvbuf, recvcount, recvtype.raw());
+}
+
+void Comm::neighbor_alltoall(
+    const void *sendbuf, void *recvbuf, int count, 
+    const Datatype &dtype) const
+{
+    neighbor_alltoall(sendbuf, count, dtype, recvbuf, count, dtype);
+}
+
+
+void Comm::neighbor_alltoallv(const void* sendbuf, const int sendcounts[], 
+    const int sdispls[], const Datatype &sendtype, void* recvbuf, 
+    const int recvcounts[], const int rdispls[], 
+    const Datatype &recvtype) const
+{
+    obj_raw().neighbor_alltoallv(sendbuf, sendcounts, sdispls, sendtype.raw(),
+        recvbuf, recvcounts, rdispls, recvtype.raw());
+}
+
+void Comm::neighbor_alltoallw(
+    const void* sendbuf, const int sendcounts[], const aint_t sdispls[], 
+    const Datatype::mpi_t sendtypes[], 
+    void* recvbuf, const int recvcounts[], const aint_t rdispls[], 
+    const Datatype::mpi_t recvtypes[]) const
+{
+    obj_raw().neighbor_alltoallw(sendbuf, sendcounts, sdispls, sendtypes, 
+        recvbuf, recvcounts, rdispls, recvtypes);
+}
+
+Requests Comm::ineighbor_allgather(const void* sendbuf, int sendcount, 
+    const Datatype &sendtype, void* recvbuf, 
+    int recvcount, const Datatype &recvtype) const
+{
+    auto req = obj_raw().ineighbor_allgather(
+        sendbuf, sendcount, sendtype.raw(), recvbuf, 
+        recvcount, recvtype.raw());
+    return Requests::_from_raw(req, 0);
+}
+
+Requests Comm::ineighbor_allgather(
+    const void *sendbuf, void *recvbuf, int count, const Datatype &dtype) const
+{
+    return ineighbor_allgather(sendbuf, count, dtype, recvbuf, count, dtype);
+}
+
+Requests Comm::ineighbor_allgather(const ConstDatapacket &send_dpacket, 
+    void *recvbuf) const
+{
+    const auto &[p,n,dt] = send_dpacket;
+    return ineighbor_allgather(p, recvbuf, n, dt);
+}
+
+Requests Comm::ineighbor_allgather(const ConstDatapacket &send_dpacket, 
+    const Datapacket &recv_dpacket) const
+{
+    return ineighbor_allgather(send_dpacket, recv_dpacket.get_buff());
+}
+
+Requests Comm::ineighbor_allgatherv(const void* sendbuf, int sendcount, 
+    const Datatype &sendtype, void* recvbuf, const int recvcounts[], 
+    const int displs[], const Datatype &recvtype) const
+{
+    auto req = obj_raw().ineighbor_allgatherv(sendbuf, sendcount, 
+        sendtype.raw(), recvbuf, recvcounts, displs, recvtype.raw());
+    return Requests::_from_raw(req, 0);
+}
+
+Requests Comm::ineighbor_allgatherv(
+    const ConstDatapacket &send_dpacket,
+    void *recvbuf, ContiguousBuffer<const int> recvcounts, 
+    ContiguousBuffer<const int> displs,
+    const Datatype &recvtype ) const
+{
+    auto [_recvcounts, n_cs] = recvcounts;
+    auto [_displs, n_ds] = displs;
+    if( n_cs != n_ds )
+        ErrLogic::throw_(ErrLogic::eLENGTH, emFLPFB, 
+            "  ... recvcounts", recvcounts, 
+            " does not match displs ", displs, '\n');
+    const auto &[p,n,dt] = send_dpacket;
+    return ineighbor_allgatherv(p, n, dt, recvbuf, _recvcounts, _displs, 
+        recvtype);
+}
+
+Requests Comm::ineighbor_allgatherv(
+    const ConstDatapacket &send_dpacket, const Datapacket &recv_dpacket, 
+    ContiguousBuffer<const int> recvcounts, 
+    ContiguousBuffer<const int> displs) const
+{
+    const auto &[p,n,dt] = recv_dpacket;
+    return ineighbor_allgatherv(send_dpacket, p, recvcounts, displs, dt);
+}
+
+
+Requests Comm::ineighbor_alltoall(const void* sendbuf, int sendcount,
+    const Datatype &sendtype, void* recvbuf, int recvcount,
+    const Datatype &recvtype) const
+{
+    auto req = obj_raw().ineighbor_alltoall(sendbuf, sendcount, sendtype.raw(), 
+        recvbuf, recvcount, recvtype.raw());
+    return Requests::_from_raw(req, 0);
+}
+
+Requests Comm::ineighbor_alltoall(const void *sendbuf, void *recvbuf, int count, 
+    const Datatype &dtype) const
+{
+    return ineighbor_alltoall(sendbuf, count, dtype, recvbuf, count, dtype);
+}
+
+
+Requests Comm::ineighbor_alltoallv(const void* sendbuf, const int sendcounts[], 
+    const int sdispls[], const Datatype &sendtype, void* recvbuf, 
+    const int recvcounts[], const int rdispls[], 
+    const Datatype &recvtype) const
+{
+    auto req = obj_raw().ineighbor_alltoallv(sendbuf, sendcounts, sdispls, 
+        sendtype.raw(),
+        recvbuf, recvcounts, rdispls, recvtype.raw());
+    return Requests::_from_raw(req, 0);
+}
+
+Requests Comm::ineighbor_alltoallw(const void* sendbuf, const int sendcounts[],
+    const aint_t sdispls[], const Datatype::mpi_t sendtypes[],
+    void* recvbuf, const int recvcounts[],
+    const aint_t rdispls[], const Datatype::mpi_t recvtypes[]) const
+{
+    auto req = obj_raw().ineighbor_alltoallw(sendbuf, sendcounts, sdispls, 
+        sendtypes, recvbuf, recvcounts, rdispls, recvtypes);
+    return Requests::_from_raw(req, 0);
+}
+
 
 Win Comm::win_create(void *base, aint_t size, int disp_unit, 
 const Info &info) const {

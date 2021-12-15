@@ -67,6 +67,7 @@ public:
     static mpi_t create_inter( mpi_t local_comm, int local_leader, 
         mpi_t peer_comm, int remote_leader, int tag );
     static mpi_t merge_inter( mpi_t intercomm, int high );
+    
     /**
     Access the group content.
     */
@@ -74,21 +75,246 @@ public:
     MPI_Group remote_group() const;
     
     /**
-    Virtual topology functions.
+    Cartesian topology creation method.
     */
-    mpi_t cart_create( int ndims, const int dims[], const int periods[], 
-        int reorder )const;
-    static void dims_create( int nnodes, int ndims, int dims[] );
+    static void dims_create(int nnodes, int ndims, int dims[]);
+    mpi_t cart_create(int ndims, const int dims[], const int periods[], 
+        int reorder) const;
+    mpi_t cart_sub(const int remain_dims[])const;
 
-    int topo_test()const;
+    /**
+    Cartesian topology meta-info inquiry methods.
+    */
     int cartdim_get()const;
-    void cart_get( int maxdims, int dims[], int periods[], int coords[] )const;
-    int cart_rank( const int coords[] )const;
-    void cart_coords( int rank, int maxdims, int coords[] )const;
-    void cart_shift( int direction, int disp, int *rank_src, 
+    void cart_get(int maxdims, int dims[], int periods[], int coords[])const;
+    int cart_rank(const int coords[])const;
+    void cart_coords(int rank, int maxdims, int coords[])const;
+    void cart_shift(int direction, int disp, int *rank_src, 
         int *rank_dest )const;
-    mpi_t cart_sub( const int remain_dims[] )const;
+
+    /**
+    Graph topology creation function.
+
+    graph_create(): create a graph topology and return the new communicator with
+    topology information attached.
+    All processes in the current communicator must call this method with the 
+    same arguments.
+    The node number is in the range [0, nnodes). Node may linked to itself. 
+    Multiple links between a pair of processes are allowed. Adjacent matrix 
+    is not required to be symmetry. The link indicates no communication 
+    direction.
     
+    @nnodes: number of nodes in the graph. If smaller than the communicator 
+    size, null communicator is returned in some processes.
+    @index: specify the node degrees. index[i] is the total degrees of all nodes
+    with node number <= i.
+    @edges: flatten-joined edges (i.e., node numbers of neighbors) linked by 
+    all nodes.
+    @reorder: Boolean. If true, allow reordering the processes and then making 
+    topology assignment.
+    */
+    mpi_t graph_create(int nnodes, const int index[], const int edges[], 
+        int reorder) const;
+     
+    /**
+    Graph topology meta-info inquiry methods.
+    
+    graphdims_get(): return the number of nodes and edges which are correct 
+    input to graph_get().
+
+    graph_get(): returns index and edges. ``maxindex`` and ``maxedges`` are 
+    maximal capabilities of the two arrays.
+
+    graph_neighbors_count(): return the number of neighbors near the process
+    with given ``rank``.
+
+    graph_neighbors(): returns the ranks of neighbors near the process with 
+    given ``rank``. ``maxneighbors`` indicates the maximal capability of array
+    ``neighbors``.
+    */
+    void graphdims_get(int *nnodes, int *nedges) const;
+    void graph_get(int maxindex, int maxedges, int index[], int edges[]) const;
+    int graph_neighbors_count(int rank) const;
+    void graph_neighbors(int rank, int maxneighbors, int neighbors[]) const;
+
+    /**
+    Distributed graph topology creation function.
+    
+    Each process specifies only a subset of all edges. All processes must have 
+    the same ``reorder`` and ``info`` arguments. The new communicator has the 
+    same size with the old.
+
+    ``info`` may (or may not) be used by the implementation to optimize the 
+    process mapping (e.g., interpretation of weights, reordering quality, and 
+    time limit on the graph management). _Info::nullval() is always a valid 
+    argument.
+    
+    The weights of edges do not have standard semantics, but should be 
+    non-negative and usually indicate the communication intensity. 
+    Edge multiplicity may also hint the communication intensity. 
+
+    Isolated process is allowed. A edge may has multiplicity > 1 with arbitrary
+    order of weights.
+
+    ``MPI_UNWEIGHTED`` may be used in all processes at the same time, indicating 
+    no weighting. If a degree is 0, the weights array is not modified (may use 
+    ``MPI_WEIGHTS_EMPTY``, but should not use NULL because MPI_UNWEIGHTED may be 
+    ``NULL``).
+    
+    If ``reorder = true``, allow reordering the processes and then making 
+    topology assignment.
+
+    dist_graph_create_adjacent(): each process specifies all its incoming and
+    outgoing edges. The overhead of this call is smaller than 
+    dist_graph_create(). sources and destinations must be consistent in any 
+    linked pair, with the same weights. 
+
+    dist_graph_create(): each process indicates possible directed edges between 
+    process pairs in the desired graph. This call is more flexible but usually
+    has more overhead. 
+    ``n`` is the number of source nodes. ``sources`` are the ranks of source 
+    processes and ``degrees`` are their numbers of destinations. 
+    ``destinations`` are flatten-joined destination ranks of all source 
+    processes.
+    ``sources`` and ``destinations`` in any process may have repeated items. The
+    ordering does not matter.
+    */
+    mpi_t dist_graph_create_adjacent(int indegree, const int sources[], 
+        const int sourceweights[], int outdegree, const int destinations[], 
+        const int destweights[], MPI_Info info, int reorder) const;
+
+    mpi_t dist_graph_create(int n, const int sources[], const int degrees[], 
+        const int destinations[], const int weights[], MPI_Info info, 
+        int reorder) const;
+
+    /**
+    Distributed graph topology meta-info inquiry methods.
+
+    dist_graph_neighbors_count(): get the in and out degrees of the caller 
+    process. The degrees take into account the edge specifications in all 
+    processes.
+    If ``MPI_UNWEIGHTED`` is used during the creation, return false in 
+    ``weighted``. Otherwise return true.
+
+    dist_graph_neighbors(): get neighbors. An edge with multiplicity > 1 
+    results multiple items to the arguments with defining ordering.
+
+    If the distributed graph is created with ``dist_graph_create_adjacent()``
+    the returned arrays follow the same order passed to the creation. 
+    Otherwise the only guarantee is that multiple calls of this method on 
+    the same communicator return the same results.
+
+    Each of the weight arguments may be ``MPI_UNWEIGHTED``. If 
+    ``MPI_UNWEIGHTED`` is used during topology creation, the weight arguments 
+    are not modified.
+    ``maxindegree`` or ``maxoutdegree`` may be less than the actual degree. Then
+    only a part of the neighbors are returned into the arguments.
+    */
+    void dist_graph_neighbors_count(int *indegree, int *outdegree, 
+        int *weighted) const;
+	
+    void dist_graph_neighbors(int maxindegree, int sources[],
+	    int sourceweights[], int maxoutdegree, int destinations[], 
+        int destweights[]) const;
+
+    /**
+    Low-level topology methods. With communicator manipulation methods they 
+    can be used to create any desired topology.
+
+    These two methods reorder the ranks of processes in the current communicator 
+    and return the new rank of the caller process, for CART and GRAPH 
+    topologies, respectively.
+
+    The methods cart_create() and graph_create() may be implemented by first 
+    calling cart_map() and graph_map(), respectively, and then using split()
+    to separate not-in-topology processes from in-topology processes.
+    */
+    void cart_map(int ndims, const int dims[], const int periods[], 
+        int *newrank) const;
+    void graph_map(int nnodes, const int index[], const int edges[], 
+        int *newrank) const;
+
+    /**
+    Return the topology type of the communicator. Possible values are 
+    GRAPH, CART, DIST_GRAPH, or UNDEFINED (for no topology).
+    */
+    int topo_test()const;
+
+    /**
+    Neighbor collective communications on virtual topologies. These calls are 
+    collective over the entire communicator. 
+    
+    Each process communicates with and only with the nearest neighbors 
+    (i.e., direct neighbors) on the topology. For Cartesian topology, they 
+    are the disp = -1 and +1 processes, for every dimension. If non-periodic,
+    some neighbors may be PROC_NULL and then the data buffers must exist but are 
+    not touched. For graph topology, the adjacent matrix must be symmetric. 
+    The order of neighbors is consistent with ``graph_neighbors()``. 
+    For distributed graph, the order of neighbors is consistent with 
+    ``dist_graph_neighbors()``.
+
+    The communication pattern is sparse. If the topology graph is densely
+    connected, these calls are equivalent to ordinary collective calls.
+
+    neighbor_allgather(): each process i sends to all its neighbors j the same 
+    data in ``sendbuf``, where (i,j) is an edge in the adjacent matrix. 
+    Each process i receives from all its neighbors j and contiguously store the 
+    data into ``recvbuf``, where (j, i) is an edge in the adjacent matrix.
+    For distributed graph, it is as if each process sends to its outgoing 
+    neighbors and receives from its incoming neighbors. The sending type 
+    signature at each process must be consistent with receiving type 
+    signatures at all other processes.
+
+    neighbor_allgatherv(): extends ``neighbor_allgather()`` by allowing each
+    process receiving different number of data items from its neighbors.
+
+    neighbor_alltoall(): extends ``neighbor_allgather()`` by allowing each 
+    process sending different data content to its neighbors.
+
+    neighbor_alltoallv(): extents ``neighbor_allgatherv()`` by allowing each 
+    process sending different number of data items from its neighbors.
+
+    neighbor_alltoallw(): extents ``neighbor_alltoallv()`` by allowing the 
+    datatypes are different among neighbors.
+
+    The methods prefixed with ``i`` are nonblocking variants of the 
+    corresponding blocking calls.
+    */
+    void neighbor_allgather(const void* sendbuf, int sendcount, 
+	    MPI_Datatype sendtype, void* recvbuf, int recvcount, 
+	    MPI_Datatype recvtype) const;
+    void neighbor_allgatherv(const void* sendbuf, int sendcount, 
+        MPI_Datatype sendtype, void* recvbuf, const int recvcounts[], 
+        const int displs[], MPI_Datatype recvtype) const;
+    void neighbor_alltoall(const void* sendbuf, int sendcount, 
+        MPI_Datatype sendtype, void* recvbuf, int recvcount, 
+        MPI_Datatype recvtype) const;
+    void neighbor_alltoallv(const void* sendbuf, const int sendcounts[], 
+        const int sdispls[], MPI_Datatype sendtype, void* recvbuf, 
+        const int recvcounts[], const int rdispls[], 
+        MPI_Datatype recvtype) const;
+    void neighbor_alltoallw(const void* sendbuf, const int sendcounts[], 
+        const MPI_Aint sdispls[], const MPI_Datatype sendtypes[], void* recvbuf, 
+        const int recvcounts[], const MPI_Aint rdispls[], 
+        const MPI_Datatype recvtypes[]) const;
+    MPI_Request ineighbor_allgather(const void* sendbuf, int sendcount, 
+        MPI_Datatype sendtype, void* recvbuf, 
+        int recvcount, MPI_Datatype recvtype) const;
+    MPI_Request ineighbor_allgatherv(const void* sendbuf, int sendcount, 
+        MPI_Datatype sendtype, void* recvbuf, const int recvcounts[], 
+        const int displs[], MPI_Datatype recvtype) const;
+    MPI_Request ineighbor_alltoall(const void* sendbuf, int sendcount,
+        MPI_Datatype sendtype, void* recvbuf, int recvcount,
+        MPI_Datatype recvtype) const;
+    MPI_Request ineighbor_alltoallv(const void* sendbuf, const int sendcounts[], 
+        const int sdispls[], MPI_Datatype sendtype, void* recvbuf, 
+        const int recvcounts[], const int rdispls[], 
+        MPI_Datatype recvtype) const;
+    MPI_Request ineighbor_alltoallw(const void* sendbuf, const int sendcounts[],
+        const MPI_Aint sdispls[], const MPI_Datatype sendtypes[],
+        void* recvbuf, const int recvcounts[],
+        const MPI_Aint rdispls[], const MPI_Datatype recvtypes[]) const;
+
     /**
     Wrappers of MPI point-to-point communication.
     */
@@ -379,6 +605,13 @@ MPI_Group _Comm::remote_group() const{
 }
 
 inline 
+void _Comm::dims_create( int nnodes, int ndims, int dims[] ){
+    ErrMPI::check(
+        MPI_Dims_create(nnodes, ndims, dims), emFLPFB, 
+            "  ... nnodes=", nnodes, ", ndims=", ndims, '\n');
+}
+
+inline 
 auto _Comm::cart_create( int ndims, const int dims[], const int periods[], 
     int reorder )const -> mpi_t 
 {
@@ -389,17 +622,11 @@ auto _Comm::cart_create( int ndims, const int dims[], const int periods[],
 }
 
 inline 
-void _Comm::dims_create( int nnodes, int ndims, int dims[] ){
+auto _Comm::cart_sub( const int remain_dims[] )const -> mpi_t {
+    mpi_t newcomm;
     ErrMPI::check(
-        MPI_Dims_create(nnodes, ndims, dims), emFLPFB, 
-            "  ... nnodes=", nnodes, ", ndims=", ndims, '\n');
-}
-
-inline 
-int _Comm::topo_test()const{
-    int status;
-    ErrMPI::check( MPI_Topo_test(_val, &status), emFLPFB );
-    return status;
+        MPI_Cart_sub( _val, remain_dims, &newcomm ), emFLPFB);
+    return newcomm;
 }
 
 inline 
@@ -439,11 +666,233 @@ void _Comm::cart_shift( int direction, int disp, int *rank_src,
 }
 
 inline 
-auto _Comm::cart_sub( const int remain_dims[] )const -> mpi_t {
-    mpi_t newcomm;
-    ErrMPI::check(
-        MPI_Cart_sub( _val, remain_dims, &newcomm ), emFLPFB);
-    return newcomm;
+_Comm::mpi_t _Comm::graph_create(int nnodes, const int index[], 
+    const int edges[], int reorder) const 
+{
+    mpi_t new_comm;
+    ErrMPI::check(MPI_Graph_create(raw(), nnodes, index, edges, reorder, 
+        &new_comm), emFLPFB, "  ... creation of graph (nnodes=", nnodes, 
+        ") failed\n");
+    return new_comm;
+}
+
+inline 
+void _Comm::graphdims_get(int *nnodes, int *nedges) const {
+    ErrMPI::check(MPI_Graphdims_get(raw(), nnodes, nedges), 
+        emFLPFB, "  ... get graph dims failed\n");
+}
+
+inline 
+void _Comm::graph_get(int maxindex, int maxedges, int index[], 
+    int edges[]) const 
+{
+    ErrMPI::check(MPI_Graph_get(raw(), maxindex, maxedges, index, edges), 
+        emFLPFB, "  ... get graph index and edges failed\n");
+}
+
+inline 
+int _Comm::graph_neighbors_count(int rank) const {
+    int cnt;
+    ErrMPI::check(MPI_Graph_neighbors_count(raw(), rank, &cnt), 
+        emFLPFB, "  ... get count failed (rank=", rank, ")\n");
+    return cnt;
+}
+
+inline 
+void _Comm::graph_neighbors(int rank, int maxneighbors, int neighbors[]) const {
+    ErrMPI::check(MPI_Graph_neighbors(raw(), rank, maxneighbors, neighbors), 
+        emFLPFB, "  ... get graph neighbors failed (rank=", rank, ")\n");
+}
+
+inline 
+_Comm::mpi_t _Comm::dist_graph_create_adjacent(int indegree, 
+    const int sources[], const int sourceweights[], int outdegree, 
+    const int destinations[], const int destweights[], MPI_Info info, 
+    int reorder) const
+{
+    mpi_t new_comm;
+    ErrMPI::check(MPI_Dist_graph_create_adjacent(raw(), indegree, sources, 
+        sourceweights, outdegree, destinations, destweights,
+        info, reorder, &new_comm), emFLPFB, 
+        "  ... creation failed (indegree=", 
+        indegree, ", outdegree=", outdegree, ")\n");
+    return new_comm;
+}
+
+inline 
+_Comm::mpi_t _Comm::dist_graph_create(int n, const int sources[], 
+    const int degrees[], const int destinations[], const int weights[], 
+    MPI_Info info, int reorder) const
+{
+    mpi_t new_comm;
+    ErrMPI::check(MPI_Dist_graph_create(raw(), n, sources, degrees, 
+        destinations, weights, info, reorder, &new_comm), emFLPFB, 
+        "  ... creation failed (n=", n, ")\n");
+    return new_comm;
+}
+
+inline
+void _Comm::dist_graph_neighbors_count(int *indegree, int *outdegree, 
+    int *weighted) const
+{
+    ErrMPI::check(MPI_Dist_graph_neighbors_count(raw(), indegree, 
+        outdegree, weighted), emFLPFB, "  ... getting neighbors count "
+        "failed\n");
+}
+
+inline
+void _Comm::dist_graph_neighbors(int maxindegree, int sources[],
+    int sourceweights[], int maxoutdegree, int destinations[], 
+    int destweights[]) const
+{
+    ErrMPI::check(MPI_Dist_graph_neighbors(raw(), maxindegree, sources, 
+        sourceweights, maxoutdegree, destinations, destweights), emFLPFB, 
+        "  ... getting neighbors failed (maxindegree=", maxindegree, 
+        ", maxoutdegree=", maxoutdegree, ")\n");
+}
+
+inline 
+void _Comm::cart_map(int ndims, const int dims[], const int periods[], 
+    int *newrank) const
+{
+    ErrMPI::check( MPI_Cart_map(raw(), ndims, dims, periods, newrank), 
+        emFLPFB, "  ... reordering of processes failed (ndims=", ndims, ")\n");
+}
+
+inline 
+void _Comm::graph_map(int nnodes, const int index[], 
+    const int edges[], int *newrank) const
+{
+    ErrMPI::check( MPI_Graph_map(nnodes, nnodes, index, edges, newrank), 
+        emFLPFB, "  ... reordering of processes failed (nnodes=", nnodes, 
+        ")\n" );
+}
+
+inline 
+int _Comm::topo_test()const{
+    int status;
+    ErrMPI::check( MPI_Topo_test(_val, &status), emFLPFB );
+    return status;
+}
+
+inline
+void _Comm::neighbor_allgather(const void* sendbuf, int sendcount, 
+    MPI_Datatype sendtype, void* recvbuf, int recvcount, 
+    MPI_Datatype recvtype) const
+{
+    ErrMPI::check(MPI_Neighbor_allgather(sendbuf, sendcount, sendtype,
+        recvbuf, recvcount, recvtype, raw()), emFLPFB, 
+        "  ... allgather failed (sendcount=", sendcount, 
+        ", recvcount=", recvcount, ")\n");
+}
+
+inline
+void _Comm::neighbor_allgatherv(const void* sendbuf, int sendcount, 
+    MPI_Datatype sendtype, void* recvbuf, const int recvcounts[], 
+    const int displs[], MPI_Datatype recvtype) const
+{
+    ErrMPI::check(MPI_Neighbor_allgatherv(sendbuf, sendcount, sendtype,
+        recvbuf, recvcounts, displs, recvtype, raw()), emFLPFB, 
+        "  ... allgatherv failed (sendcount=", sendcount, ")\n");
+}
+    
+inline
+void _Comm::neighbor_alltoall(const void* sendbuf, int sendcount, 
+    MPI_Datatype sendtype, void* recvbuf, int recvcount, 
+    MPI_Datatype recvtype) const
+{
+    ErrMPI::check(MPI_Neighbor_alltoall(sendbuf, sendcount, sendtype,
+        recvbuf, recvcount, recvtype, raw()), emFLPFB, 
+        "  ... alltoall failed (sendcount=", sendcount, 
+        ", recvcount=", recvcount, ")\n");
+}
+    
+inline
+void _Comm::neighbor_alltoallv(const void* sendbuf, const int sendcounts[], 
+    const int sdispls[], MPI_Datatype sendtype, void* recvbuf, 
+    const int recvcounts[], const int rdispls[], 
+    MPI_Datatype recvtype) const
+{
+    ErrMPI::check(MPI_Neighbor_alltoallv(sendbuf, sendcounts, sdispls, 
+        sendtype, recvbuf, recvcounts, rdispls, recvtype, raw()), 
+        emFLPFB,  "  ... alltoallv failed\n");
+}
+    
+inline
+void _Comm::neighbor_alltoallw(const void* sendbuf, const int sendcounts[], 
+    const MPI_Aint sdispls[], const MPI_Datatype sendtypes[], void* recvbuf, 
+    const int recvcounts[], const MPI_Aint rdispls[], 
+    const MPI_Datatype recvtypes[]) const
+{
+    ErrMPI::check(MPI_Neighbor_alltoallw(sendbuf, sendcounts, sdispls, 
+        sendtypes, recvbuf, recvcounts, rdispls, recvtypes, raw()), emFLPFB, 
+        "  ... alltoallw failed\n");
+}
+    
+inline
+MPI_Request _Comm::ineighbor_allgather(const void* sendbuf, int sendcount, 
+    MPI_Datatype sendtype, void* recvbuf, 
+    int recvcount, MPI_Datatype recvtype) const
+{
+    MPI_Request req;
+    ErrMPI::check(MPI_Ineighbor_allgather(sendbuf, sendcount, sendtype,
+        recvbuf, recvcount, recvtype, raw(), &req), emFLPFB, 
+        "  ... iallgather failed (sendcount=", sendcount, 
+        ", recvcount=", recvcount, ")\n");
+    return req;
+}
+
+inline
+MPI_Request _Comm::ineighbor_allgatherv(const void* sendbuf, int sendcount, 
+    MPI_Datatype sendtype, void* recvbuf, const int recvcounts[], 
+    const int displs[], MPI_Datatype recvtype) const
+{
+    MPI_Request req;
+    ErrMPI::check(MPI_Ineighbor_allgatherv(sendbuf, sendcount, sendtype,
+        recvbuf, recvcounts, displs, recvtype, raw(), &req), emFLPFB, 
+        "  ... iallgatherv failed (sendcount=", sendcount, ")\n");
+    return req;
+}
+
+inline
+MPI_Request _Comm::ineighbor_alltoall(const void* sendbuf, int sendcount,
+    MPI_Datatype sendtype, void* recvbuf, int recvcount,
+    MPI_Datatype recvtype) const
+{
+    MPI_Request req;
+    ErrMPI::check(MPI_Ineighbor_alltoall(sendbuf, sendcount, sendtype,
+        recvbuf, recvcount, recvtype, raw(), &req), emFLPFB, 
+        "  ... ialltoall failed (sendcount=", sendcount, 
+        ", recvcount=", recvcount, ")\n");
+    return req;
+}
+
+inline
+MPI_Request _Comm::ineighbor_alltoallv(const void* sendbuf, 
+    const int sendcounts[], 
+    const int sdispls[], MPI_Datatype sendtype, void* recvbuf, 
+    const int recvcounts[], const int rdispls[], 
+    MPI_Datatype recvtype) const
+{
+    MPI_Request req;
+    ErrMPI::check(MPI_Ineighbor_alltoallv(sendbuf, sendcounts, sdispls, 
+        sendtype, recvbuf, recvcounts, rdispls, recvtype, raw(), &req), 
+        emFLPFB,  "  ... ialltoallv failed\n");
+    return req;
+}
+
+inline
+MPI_Request _Comm::ineighbor_alltoallw(const void* sendbuf, 
+    const int sendcounts[],
+    const MPI_Aint sdispls[], const MPI_Datatype sendtypes[],
+    void* recvbuf, const int recvcounts[],
+    const MPI_Aint rdispls[], const MPI_Datatype recvtypes[]) const
+{
+    MPI_Request req;
+    ErrMPI::check(MPI_Ineighbor_alltoallw(sendbuf, sendcounts, sdispls, 
+        sendtypes, recvbuf, recvcounts, rdispls, recvtypes, raw(), &req), 
+        emFLPFB, "  ... alltoallw failed\n");
+    return req;
 }
 
 inline 

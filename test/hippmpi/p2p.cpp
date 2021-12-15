@@ -18,7 +18,8 @@ void test_comm_info(Comm &comm){
     if( rank == 0 )
         HIPPMPI_TEST_PROGRESS, "size OK", endl;
 
-    auto cart = comm.cart_create({2,2}, {0,1});
+    int dims[2] = {2,2}, periods[2] = {0,1};
+    auto cart = comm.cart_create(dims, periods);
     auto null_comm = comm.nullval();
     // Test printing
     if( rank == 0 ) {

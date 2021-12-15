@@ -316,7 +316,7 @@ To create a Cartesian topology, we have to determine the number of processes at 
 dimension/axis-direction, i.e., ``dims``. This can be found by :func:`dims_create <HIPP::MPI::Comm::dims_create>`  static method,
 which uses the total number of processes available and the number of dimensions (2 in the example) to 
 find a balanced ``dims``. Then, ``dims`` is passed into :func:`cart_create <HIPP::MPI::Comm::cart_create>` method, 
-which returns a new commnicator with Cartesian topology. The second argument of :func:`cart_create <HIPP::MPI::Comm::cart_create>`
+which returns a new communicator with Cartesian topology. The second argument of :func:`cart_create <HIPP::MPI::Comm::cart_create>`
 specifies whether we need a periodic boundary for each direction (``{0, 0}`` for non-periodic). 
 The coordinates of each process in the topology can be found by :func:`cart_coords <HIPP::MPI::Comm::cart_coords>` method, 
 the "previous" and "next" processes at each direction can be found by :func:`cart_shift <HIPP::MPI::Comm::cart_shift>` method.
@@ -381,7 +381,7 @@ each process sends to next process and receives from the previous process::
     }
 
 The convergence test requires each process computes the sum of square difference of 
-the old and new field. All procecess use the :func:`allreduce <HIPP::MPI::Comm::allreduce>` method 
+the old and new field. All processes use the :func:`allreduce <HIPP::MPI::Comm::allreduce>` method 
 to find the total sum of square, and then the root of mean square (RMS) error. If the error 
 is small than the precision limit ``_eps``, the convergence is achieved::
 
@@ -422,7 +422,7 @@ The result field :math:`u` is plotted in the right panel of :numref:`fig-tutor-m
 
 Attribute Caching
 -------------------
-Attribute caching is a mechanism that allows attaching communicator-specific data to the commnicator handler (i.e., ``MPI_Comm``
+Attribute caching is a mechanism that allows attaching communicator-specific data to the communicator handler (i.e., ``MPI_Comm``
 in the Standard MPI or :class:`HIPP::MPI::Comm` object in HIPP).
 Such a mechanism is particularly useful in the development of MPI-based parallel library. Although you can cache 
 data using members of any C++ class, the attribute caching mechanism provides more persistent data life-time
@@ -473,17 +473,17 @@ messages continues to extend until the final process receives the message and ge
 To implement such a chain of messages, we need a communicator. Of course, the user of the library must provide 
 a communicator which specifies the participating processes and the order of them. But our Sequential Operations 
 library may not able to use the input communicator. The reason is that the point-to-point messages of 
-the library may conflict with the messages started by the user and pending on that commnicator. 
+the library may conflict with the messages started by the user and pending on that communicator. 
 One way out is to predefine a set of "tags" that can only be used by the library. However, it puts
 uncomfortable constraints on the user's code. It may also conflict with other libraries that 
-use the same commnicators.
+use the same communicators.
 
-A better way is to create a new commnicator which is a duplication of the user-input commnicator. 
-Because a commnicator provides a isolated communication context, such a design is much safer and 
+A better way is to create a new communicator which is a duplication of the user-input communicator. 
+Because a communicator provides a isolated communication context, such a design is much safer and 
 avoids any potential problem. The only drawback is the overhead in the contruction of the new 
 communicator. To overcome this drawback, we can cache the new communicator and attach it with the 
 user input communicator. Then, if user calls the Sequential Operations multiple times on the 
-same communicator, the library just constructs the new commnicator in the first call. The subsequent 
+same communicator, the library just constructs the new communicator in the first call. The subsequent 
 calls will use the caching. MPI provides attribute caching mechanism for that purpose.
 
 To use the attribute caching mechanism, we first define the data to be cached. MPI allows
@@ -509,16 +509,16 @@ class as the cached object type::
     };
 
 The ``SeqAttr`` object can be constructed using an user-input communicator which specifies the 
-participating procecess and the order of them. The object consists of a duplication of 
+participating processes and the order of them. The object consists of a duplication of 
 the input communicator, and two members ``_prev`` and ``_next`` which give the ranks of previous 
-and next procecess in the communicator.
+and next processes in the communicator.
 
 Two things that must be defined for a cached attribute are: (1) how it gets copied when 
-the host commnicator is duplicated by the user. (2) how it gets deleted when the host 
-commnicator is destroyed by the user. By default, HIPP MPI uses the copy-constructor 
+the host communicator is duplicated by the user. (2) how it gets deleted when the host 
+communicator is destroyed by the user. By default, HIPP MPI uses the copy-constructor 
 for (1) and the destructor for (2). In the above example, we define the copy-constructor 
-which does not copy the internal commnicator, because the user may hardly use the 
-Sequential Operations on a new commnicator. Such an "empty" internal commnicator
+which does not copy the internal communicator, because the user may hardly use the 
+Sequential Operations on a new communicator. Such an "empty" internal communicator
 can be represented by the standard type ``std::optional``. We do not self-define
 the destructor, the library will use the default one synthesized by the compiler. 
 
@@ -556,19 +556,19 @@ The implementation of the constructor is::
 Here, we first check whether the key value for the attribute caching is allocated.
 If it is not, we allocate it using :func:`create_keyval <HIPP::MPI::Comm::create_keyval>`.
 The reason for using the key value is that multiple libraries may cache different 
-attributes on the same commnicator. Hence, each library needs a specific key value 
+attributes on the same communicator. Hence, each library needs a specific key value 
 which identifies the attribute of it. 
 
-Then, using the key value, we get the cached attribute on the input commnicator 
-by calling :func:`get_attr <HIPP::MPI::Comm::get_attr>` method of the commnicator. 
+Then, using the key value, we get the cached attribute on the input communicator 
+by calling :func:`get_attr <HIPP::MPI::Comm::get_attr>` method of the communicator. 
 This method accepts the key value as the first argument and returns the attribute 
 by the second argument. If the attribute is not set yet, it returns false so that 
 we can check for that, create a new attribute by ``new``, and set the caching using 
 :func:`set_attr <HIPP::MPI::Comm::set_attr>`.
 
-Finally, we get the internal commnicator from the attribute. If it is not set yet (i.e., the 
-``std::optional`` is in an empty state), we duplicate the input commnicator and 
-save it in the attribute. Using this internal commnicator, we can wait for the 
+Finally, we get the internal communicator from the attribute. If it is not set yet (i.e., the 
+``std::optional`` is in an empty state), we duplicate the input communicator and 
+save it in the attribute. Using this internal communicator, we can wait for the 
 message from the previous process. Once the constructor returns, the current process 
 can do its work.
 
@@ -631,7 +631,7 @@ call :expr:`Comm::split()` to select desired processes and get the sub communica
         key = 0;
     auto sub_comm = comm.split(color, key);
 
-Then, simply use this new commnicator like the global one, except that only 
+Then, simply use this new communicator like the global one, except that only 
 the subset of processes are involved in the communication. For example, 
 use the :expr:`Comm::bcast` within the context of the new communicator::
 

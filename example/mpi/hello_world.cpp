@@ -21,7 +21,7 @@ int main(int argc, char const *argv[]){
 
     /**
      * The processor name can be retrived from Env vairable, and the the rank
-     * and commnicator size can be retrived from the communicator variable.
+     * and communicator size can be retrived from the communicator variable.
      * 
      * The HIPP::prt() is a printing function accepts a stream object and 
      * arbitrary number of items to be printed into this stream.

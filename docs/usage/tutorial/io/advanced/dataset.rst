@@ -749,6 +749,15 @@ For example, we select three elements whose coordinates are
     dsp5.select_elements({3, coords});
     pout << "  elements -> ", dsp5.get_select_npoints(), '\n';
 
+The selections are demonstrated in the following :numref:`fig-tutor-io-h5-dspace-subsetting`:
+
+.. _fig-tutor-io-h5-dspace-subsetting:
+.. figure:: imgs/dspace-subsetting.svg
+    :width: 400px
+    :align: center
+
+    The selected elements after calls of ``select_hyperslab()`` and ``select_elements()``.
+
 To retrieve which kind of selection is used, call :expr:`Dataspace::get_select_type`.
 For example, the "elements" selection is typed :expr:`Dataspace::selPOINTS_T`.
 The method :expr:`Dataspace::select_valid()` checks whether or not the selection

@@ -8,3 +8,8 @@ LDLIBS = -lhippio -lhippcntl -lhdf5
 
 EXECS := $(patsubst %.cpp,%.out,$(wildcard *.cpp))
 $(EXECS): Makefile
+
+.PHONY: clean
+
+clean:
+	rm *.out *.mp.out *.h5

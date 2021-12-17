@@ -6,6 +6,8 @@ Process-level Parallelism with MPI
 
 .. namespace:: HIPP::MPI
 
+.. _tutor-mpi-using-the-lib:
+
 Using the Library 
 =====================
 
@@ -16,17 +18,17 @@ To use the MPI module of HIPP, include the header file ``<hippmpi.h>``. A minima
 cpp source file is like::
 
     // mpi-minimal-example.cpp
-    #include <hippmpi.h> 
+    #include <hippmpi.h>                                    // [1]
 
     using namespace HIPP;
     using namespace std;
-    namespace mpi = HIPP::MPI;                              // [1]
+    namespace mpi = HIPP::MPI;                              // [2]
 
     int main(int argc, char *argv[]) {
-        mpi::Env env(argc, argv);                           // [2]
+        mpi::Env env(argc, argv);                           // [3]
 
-        auto comm = env.world();                            // [3]
-        int rank = comm.rank(), n_procs = comm.size();      // [4]
+        auto comm = env.world();                            // [4]
+        int rank = comm.rank(), n_procs = comm.size();      // [5]
         
         pout << "Process ", rank, " among ", n_procs, endl;
 
@@ -35,10 +37,11 @@ cpp source file is like::
 
 Debrief:
 
-- ``[1]``: the shortcut of the MPI namespace is defined. We adopt this namespace declaration throughout this tutorial.
-- ``[2]``: the MPI environment is initialized, as if the standard ``MPI_Init()`` is called.
-- ``[3]``: the global communicator is retrieved.
-- ``[4]``: process meta-info are inquired through the communicator.
+- ``[1]``: all the MPI components are declared within the header file ``<hippmpi.h>``.
+- ``[2]``: the shortcut of the MPI namespace is defined. We adopt this namespace declaration throughout this tutorial.
+- ``[3]``: the MPI environment is initialized, as if the standard ``MPI_Init()`` is called.
+- ``[4]``: the global communicator is retrieved.
+- ``[5]``: process meta-info are inquired through the communicator.
 
 To compile and execute, run:
 
@@ -438,16 +441,27 @@ A Cartesian topology logically assigns processes onto a regular grid. The method
 is a helper function that determines the number of processes at each dimension (``dims``)
 given the total number of processes and the number of dimensions (``ndims``). Once the process layout 
 is determined, :expr:`Comm::cart_create()` is used to create the Cartesian topology and returns the new 
-communicator with topology information attached. For example, we have 4 processes in the communicator 
-and we assign them to a :math:`2 \times 2` grid::
+communicator with topology information attached. Processes are row-majorly assigned to the grid points.
+The argument ``periods`` specifies whether or not each dimensions is periodic.
+
+For example, we have 4 processes in the communicator 
+and we assign them to a :math:`2 \times 2` grid. To logical layout is like the following :numref:`fig-tutor-mpi-two-by-two-cart-topo`:
+
+.. _fig-tutor-mpi-two-by-two-cart-topo:
+.. figure:: imgs/two-by-two-cart-topo.svg
+    :width: 125px
+    :align: center
+
+    The Cartesian virtual topology with 4 processes on a :math:`2 \times 2` grid. Each cell 
+    represents a process with rank and Cartesian coordinates indicated.
+
+The code to create such a topology is::
 
     int dims[2] = {2,2}, periods[2] = {1,1};
     auto cart = comm.cart_create(dims, periods);
 
-The argument ``periods`` specifies whether or not each dimensions is periodic. 
-
-We may inquiry the rank, the coordinates, and the ranks of neighbors 
-of a given process::
+From the communicator ``cart``,  we may inquiry the rank, the coordinates, 
+and the ranks of neighbors of a given process::
 
     int rank = cart.rank();
     auto coords = cart.cart_coords(rank);
@@ -476,7 +490,19 @@ To create a Graph topology, call :expr:`Comm::graph_create(nnodes, index, edges)
 and ``index[i]`` is the total number of degrees of all nodes with node number ``<=i``; 
 ``edges`` is a buffer that contiguously stores the neighbor node numbers of each node.
 All processes must pass the same arguments that fully describe the graph.
-For example, to create an 1-D ring topology for 4 processes, write::
+
+For example, we create an 1-D ring topology for 4 processes shown as the following 
+:numref:`fig-tutor-mpi-np4-ring-topo`:
+
+.. _fig-tutor-mpi-np4-ring-topo:
+.. figure:: imgs/np4-ring-topo.svg
+    :width: 300px
+    :align: center
+
+    The 1-D ring topology with 4 processes. In each cell, the number denotes 
+    the process rank (namely, the node number).
+
+The code to create such a topology is::
 
     int nnodes = 4, index[4] = {2, 4, 6, 8}, 
         edges[8] = {3, 1, 0, 2, 1, 3, 2, 0};

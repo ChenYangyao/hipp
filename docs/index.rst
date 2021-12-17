@@ -97,6 +97,31 @@ Array of more complex structured type can also be written by a single call::
 - Rigorly tested - Unit Tests are made for library components.
 - Full stack of abstraction layers - allowing quick-use with high-level API, and controlling library detail with low-level API.
 
+How the Documentation is Organized
+------------------------------------
+
+A high-level overview of how it is organized helps you know where to look for certain things:
+
+- :doc:`Installation <usage/get-start/installation>` details how to get HIPP on your environment.
+- :doc:`Quick Start <usage/get-start/quickstart>` gives you a first glance at how the library is organized and used.
+- The **Tutorial** of each module 
+  :doc:`CNTL <usage/tutorial/cntl/index>`,
+  :doc:`MPI <usage/tutorial/mpi/index>`,
+  :doc:`IO <usage/tutorial/io/index>`,
+  :doc:`NUMERICAL <usage/tutorial/numerical/index>`,
+  :doc:`ALGORITHM <usage/tutorial/algorithm/index>`,
+  :doc:`SIMD <usage/tutorial/simd/index>`
+  takes you by hand through a series of steps to work out specific tasks.
+- The **API-Ref** of each module 
+  :doc:`CNTL <usage/api-ref/cntl/index>`,
+  :doc:`MPI <usage/api-ref/mpi/index>`,
+  :doc:`IO <usage/api-ref/io/index>`,
+  :doc:`NUMERICAL <usage/api-ref/numerical/index>`,
+  :doc:`ALGORITHM <usage/api-ref/algorithm/index>`,
+  :doc:`SIMD <usage/api-ref/simd/index>`
+  lists details of the API, including how to use it and more technical issues.
+
+
 Motivation of HIPP
 -----------------------
 
@@ -130,10 +155,11 @@ Contributors
    :hidden:
 
    usage/tutorial/cntl/index
-   usage/tutorial/numerical/index
    usage/tutorial/mpi/index
-   usage/tutorial/simd/index
    usage/tutorial/io/index
+   usage/tutorial/numerical/index
+   usage/tutorial/algorithm/index
+   usage/tutorial/simd/index
 
 .. toctree::
    :maxdepth: 1
@@ -141,8 +167,8 @@ Contributors
    :hidden:
 
    usage/api-ref/cntl/index
-   usage/api-ref/numerical/index
    usage/api-ref/mpi/index
    usage/api-ref/io/index
-   usage/api-ref/simd/index
+   usage/api-ref/numerical/index
    usage/api-ref/algorithm/index
+   usage/api-ref/simd/index

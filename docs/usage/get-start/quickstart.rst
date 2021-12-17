@@ -3,185 +3,191 @@ Quick Start
 
 .. include:: /global.rst
 
-The Overall Structure and Conventions of HIPP
------------------------------------------------
+.. _quickstart-about-the-lib:
 
-.. _hipp-namespace:
+About the Library
+--------------------
 
-HIPP's functions/objects are defined in a single **namespace** ``HIPP``. Depending on the module to use,
-you may need to include different **header files** and visit sub-namespaces. See :numref:`fig-hipp-namespaces`
-for a summary.
+.. _quickstart-modules:
 
--   The general C++ utilities are defined directly in namespace ``HIPP``. 
-    Users include the header ``<hippcntl.h>`` for access to them,
-    e.g., the :func:`HIPP::prt` function and the :class:`HIPP::ErrLogic` class.
--   For each module X, there is a single sub-namespace ``HIPP::X``. User include the header ``<hippx.h>`` to use them. 
-    For example, to use the communicator class in the MPI module, include ``<htppmpi.h>``
-    and define :class:`HIPP::MPI::Comm` instances.
+Modules
+""""""""""
 
-.. _hipp-naming-convention:
+The HIPP library is organized as several modules:
 
-HIPP uses an ordinary **naming conventions** for definitions:
+- The ``CNTL`` module consists of global definitions and general utilities of HIPP. 
+  Examples include the IO streams :var:`~HIPP::pout`, :var:`~HIPP::perr`, the log stream :var:`~HIPP::plog`, 
+  the exceptions layers, error macros, and timing utilities. 
+  All are in the global ``namespace HIPP``.
+- Other modules, including ``MPI``, ``IO``, ``NUMERICAL``, ``ALGORITHM``, and ``SIMD``, 
+  are designed for specific tasks and defined in the corresponding sub-namespaces.
 
--   Namespaces are capitalized. For example: 
-    
-    - The global namespace ``HIPP``
-    - The sub-namespace ``MPI``, ``IO``, ``SIMD``.
+To use a module, 
 
--   C++ ``class/struct`` uses CamelCase convention, with the first letter capitalized. For example: 
-    
-    - The MPI group class :class:`HIPP::MPI::Group`.
-    - HDF5 file class :class:`HIPP::IO::H5File`.
-    - Logic exception type :class:`HIPP::ErrLogic`.
+- include the corresponding *header file* into your source code;
+- link the corresponding *library file* (except the header-only modules).
 
--   Functions, (class) methods and variables are lower case. For example: 
-    
-    - The printing function :func:`prt`. 
-    - The dataset creation method in a HDF5 file class :func:`HIPP::IO::H5File::create_dataset`.
+Note that the library file of one module may depend on those of other modules or 
+third-party libraries. Refer to the tutorial of each module for the details.
 
--   Constant variables (``const`` or ``constexpr``) are capitalized, except for special cases. For example: 
+The following figure illustrates the layout of the modules:
 
-    - The MPI float datatype :var:`HIPP::MPI::DOUBLE`.
-    - The HDF5 dataspace class for scalar :enumerator:`HIPP::IO::H5Dataspace::SCALAR_C`.
+.. _fig-quickstart-overall-structure:
+.. figure:: imgs/overall-structure.svg
+    :width: 750px
+    :align: center
 
-.. _fig-hipp-namespaces:
-.. figure:: img/hipp-namespaces.png
+    The header files, library files, namespaces and utilities in the modules of HIPP.
 
-    **Header files and namespaces.**
-    All HIPP utilities are defined
-    in the namespace ``HIPP``. Functions/objects in a module are defined in the sub-namespace.
+.. _quickstart-naming-convention:
 
-Using HIPP: A Minimal Example  
------------------------------------------------------------------
-:download:`quick-start/printing.cpp </../example/quick-start/printing.cpp>`
+Naming Convention
+""""""""""""""""""""
 
-.. include:: /../example/quick-start/printing.cpp 
-    :code:  cpp
+We adopt the following naming convention for library components:
 
-To use HIPP general-purpose C++ utilities, include the header ``<hippcntl.h>``. HIPP provides
-several stream manipulation classes and functions. 
+- Namespaces are UpperCased. For example, the global namespace ``HIPP`` and 
+  sub-namespace ``HIPP::MPI``.
+- Classes are CamelCased. For example, the MPI Group class :class:`~HIPP::MPI::Group` 
+  and the logic error exception class :class:`~HIPP::ErrLogic`.
+- Free-functions and class methods are LowerCased. For example, the printing function
+  :func:`~HIPP::prt` and the message sending method of MPI communicator :func:`~HIPP::MPI::send`.
+- Non-constant static variables are LowerCased. 
+  Constant static variables, enumerators, and macros are not named with any 
+  defining convention, due to their diversity of types.
 
--   The "pretty" stream, :var:`pout <HIPP::pout>`, is just like ``std::cout``,
-    but it accepts comma separated arguments, so that the code for printing is more concise.
-    It also accepts STL containers, i.e., ``std::vector``, ``std::map``, ``std::tuple``, etc. 
--   The string constructing functions :func:`str <HIPP::str>` and :func:`str_a <HIPP::str_a>` construct
-    ``std::string`` from a series of arguments and an array of elements, respectively.
-
-To compile, link the library :bash:`hippcntl`. Execution would be the same as an usually executable.
-
-.. code-block:: bash 
-
-    c++ -std=c++17 -O3 -Wall  -o printing.out printing.cpp -lhippcntl
-    ./printing.out 
-
-The output for this simple example is:
-
-.. code-block:: text 
-
-    The sum of 1 and 2 is 3
-    arr is 1,2,3,4,5
-    The sum of 1 and 2 is 3, and arr is 1,2,3,4,5
+In rare cases, we do have names that break the above convention. Refer to the 
+API-Ref for their exact meaning if they are not clear.
 
 
-Using the MPI Module
--------------------------------
-:download:`quick-start/p2p-comm.cpp </../example/quick-start/p2p-comm.cpp>`
+Get Started
+---------------
 
-.. include:: /../example/quick-start/p2p-comm.cpp 
-    :code:  cpp
+Your First MPI Program
+""""""""""""""""""""""""
 
-HIPP's MPI module provides full-OOP interface for the message passing programming. First, include the 
-header ``<hippmpi.h>``
-To initialize the MPI environment, just define a named variable of type :class:`Env <HIPP::MPI::Env>`.
-As opposed to the standard MPI calls ``MPI_Init()`` and ``MPI_Finalize()``, such a OOP way 
-is both simpler and safer, because the finalization call is automatically made on the 
-destruction of the :class:`Env <HIPP::MPI::Env>` object - you have no change to forget it.
+The MPI module of HIPP provides high-level wrapper to the standard C-API of MPI.
+To use, include ``<hippmpi.h>`` and put suitable namespace declarations like 
+the following::
 
-To make point-to-point communication, just get a "world" communicator from the :class:`Env <HIPP::MPI::Env>` object.
-It has a type :class:`Comm <HIPP::MPI::Comm>`, but the easiest way is to use an ``auto`` to let the compiler
-determine its type. Then, calling the :func:`send <HIPP::MPI::Comm::send>` and :func:`recv <HIPP::MPI::Comm::send>`
-methods of it to make communication. In this example we send an array of five elements from Process 0 to Process 1.
+    #include <hippmpi.h>
 
-To compile, link the library :bash:`hippcntl` and :bash:`hippmpi`, and use proper MPI compiler wrapper 
-(e.g. :bash:`mpicxx`). 
-Execution would be the same as other MPI applications - just use :bash:`mpirun` or :bash:`mpiexec`.
+    using namespace HIPP;
+    using namespace std;
+    namespace mpi = HIPP::MPI;
 
-.. code-block:: bash 
+At the beginning of any MPI application, initialize the environment by defining 
+a named variable typed :class:`~HIPP::MPI::Env`. The WORLD communicator is 
+returned from the environment. The process rank and number are returned from the 
+communicator::
 
-    mpicxx -std=c++17 -O3 -Wall -o p2p-comm.mp.out p2p-comm.cpp -lhippmpi -lhippcntl
-    mpirun -n 4 ./p2p-comm.mp.out
+    mpi::Env env(argc, argv);
+    auto comm = env.world();
+    int rank = comm.rank(), n_procs = comm.size();
 
-The output for this example is:
+To make a point-to-point communication, call :func:`~HIPP::MPI::Comm::send` / :func:`~HIPP::MPI::Comm::recv`
+on a communicator by passing the rank of the target process, a communication tag, and the data object.
+For example, we send 10 values from process 0 to 1::
 
-.. code-block:: text 
+    vector<double> buff(10);
 
-    1,2,3,4,5
+    if( rank == 0 ) 
+        comm.send(1, 0, buff);
+    else if( rank == 1 ) 
+        comm.recv(0, 0, buff);
 
-Using the IO Module 
-------------------------------------
-:download:`quick-start/io-arrays.cpp </../example/quick-start/io-arrays.cpp>`
+To make a collective communication, such as a broadcast, call :func:`~HIPP::MPI::Comm::bcast`
+on a communicator by passing the data object and the root rank. For example, we broadcast 
+the above buffer to all processes::
 
-.. include:: /../example/quick-start/io-arrays.cpp 
-    :code:  cpp
+    comm.bcast(buff, 0);
 
-IO as the HDF5 format is extremely easy with HIPP. First, include the header ``<hippio.h>``
-To create a new file of HDF5 format, just 
-define a variable typed :class:`H5File <HIPP::IO::H5File>` with a desired file name and the ``"w"``
-mode (truncate the file if existing).
+The compilation and execution are described in the Tutorial :ref:`tutor-mpi-using-the-lib`.
 
-To write a single array dataset of numeric type, just create a new dataset by method 
-:func:`create_dataset <HIPP::IO::H5File::create_dataset>`. The template parameter
-specifies the element type in file (``double`` here), the two arguments are 
-the name of the dataset and the shape of the array (1-d array of 32 elements here).
-Then, a call of :func:`write <HIPP::IO::H5Dataset::write>` on the dataset instance outputs
-the data in a buffer (a ``std::vector`` or a raw buffer) to the file.
+HDF5 IO 
+""""""""""
 
-To write tabular data (array of use-defined ``struct``, like the ``Person`` here), 
-HIPP provides an easy-to-use 
-extension class :class:`H5XTable <HIPP::IO::H5XTable>`. 
-If all the members in the struct 
-are numeric types (or their fixed-length raw array, like ``char[32]`` and ``int [3][4]``),
-:class:`H5XTable <HIPP::IO::H5XTable>` can deal with it. 
-You just define a 
-:class:`H5XTable <HIPP::IO::H5XTable>` instance, use the arguments to specify 
-the name of each member and the member pointer to it. Then, a single call 
-of :func:`write <HIPP::IO::H5XTable::write>` outputs an array of the struct data 
-to a group in the file, each member as a separate dataset.
-Or, you may use the call :func:`write_records <HIPP::IO::H5XTable::write_records>`
-to output them as a single dataset of compound datatype.
+The IO module of HIPP defines high-level wrapper to the standard HDF5 API. 
+To use, include ``<hippio.h>`` and put suitable namespace declarations like the 
+following::
 
-To compile, link the HIPP libraries :bash:`hippcntl` and :bash:`hippio`. Depending 
-on the platform, link to the underlying HDF5 library :bash:`hdf5` may also be necessary.
+    #include <hippio.h>
 
-.. code-block:: bash 
+    using namespace HIPP;
+    using namespace std;
+    namespace H5 = HIPP::IO::H5;
 
-    c++ -std=c++17 -O3 -Wall -o io-arrays.out io-arrays.cpp -lhippio -lhippcntl -lhdf5
-    ./io-arrays.out
+To create a new file in HDF5 format, define a :class:`~HIPP::IO::H5::File` instance
+by passing a file name and the access mode ``"w"``::
 
-Using :bash:`h5dump arrays.h5`, you can verify the content in the new HDF5 file:
+    H5::File fout("data.h5", "w");
 
-.. code-block:: text 
+Datasets under (the root group of) this file are managed by 
+a :class:`~HIPP::IO::H5::DatasetManager` which can be obtained by::
 
-    HDF5 "arrays.h5" {
-        GROUP "/" {
-        DATASET "floats" {
-            DATATYPE  H5T_IEEE_F64LE
-            DATASPACE  SIMPLE { ( 32 ) / ( 32 ) }
-            DATA { ... }
-        }
-        DATASET "person_records" {
-            DATATYPE  H5T_COMPOUND {
-                H5T_IEEE_F64LE "height";
-                H5T_ARRAY { [32] H5T_STD_I8LE } "name";
-                H5T_STD_I32LE "age";
-            }
-            DATASPACE  SIMPLE { ( 8 ) / ( 8 ) }
-            DATA { ... }
-        GROUP "persons" {
-            DATASET "age" {
-                DATATYPE  H5T_STD_I32LE
-                DATASPACE  SIMPLE { ( 8 ) / ( 8 ) }
-                DATA { ... }
-            }
-            ...
+    auto dsets = fout.datasets();
 
+Suppose you have the following data objects to be saved into the file::
+
+    double d34[3][4] = {};
+    vector<int> i10(10);
+    string s = "Hello HIPP!";
+
+The method :func:`~HIPP::IO::H5::DatasetManager::put` of the manager creates
+new dataset for numerical array and write data object to it. The method 
+:func:`~HIPP::IO::H5::DatasetManager::put_str`, instead, works with string 
+data::
+
+    dsets.put("d34", d34);
+    dsets.put("i10", i10);
+    dsets.put_str("s", s);
+
+To load back the data from file, call :func:`~HIPP::IO::H5::DatasetManager::get`
+and :func:`~HIPP::IO::H5::DatasetManager::get_str`::
+
+    dsets.get("d34", d34);
+    dsets.get("i10", i10);
+    dsets.get_str("s", s);
+
+    pout << "d34 = {", pout(d34[0], d34[0]+12), "}\n",
+            "i10 = {", i10, "}\n",
+            "s = ", s, "\n";
+
+The compilation and execution are described in the Tutorial :ref:`tutor-io-h5-using-the-lib`.
+
+The content of ``"data.h5"`` shown by ``h5dump`` is:
+
+.. code-block:: text
+
+    HDF5 "data.h5" {
+    GROUP "/" {
+       DATASET "d34" {
+          DATATYPE  H5T_IEEE_F64LE
+          DATASPACE  SIMPLE { ( 3, 4 ) / ( 3, 4 ) }
+          DATA {
+          (0,0): 0, 0, 0, 0,
+          (1,0): 0, 0, 0, 0,
+          (2,0): 0, 0, 0, 0
+          }
+       }
+       DATASET "i10" {
+          DATATYPE  H5T_STD_I32LE
+          DATASPACE  SIMPLE { ( 10 ) / ( 10 ) }
+          DATA {
+          (0): 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+          }
+       }
+       DATASET "s" {
+          DATATYPE  H5T_STRING {
+             STRSIZE 12;
+             STRPAD H5T_STR_NULLTERM;
+             CSET H5T_CSET_ASCII;
+             CTYPE H5T_C_S1;
+          }
+          DATASPACE  SCALAR
+          DATA {
+          (0): "Hello HIPP!"
+          }
+       }
+    }
+    }

@@ -4,34 +4,72 @@ IO Module
 
 .. include:: /global.rst
 
-.. _api-io-usage:
+.. namespace:: HIPP::IO::H5
 
-IO Module Overview
-====================
+.. _api-io-usage:
 
 The IO module of HIPP provides 
 
 - High-level, pure-OOP wrappers for the HDF5 library.
 - Extentions to simplify common I/O tasks.
+- Intermediate-level components that are mapped to the actual HDF5 library calls.
 
-All the HDF5 wrappers and extensions are defined in the namespace ``HIPP::IO::H5``. 
-To use them, 
+.. _api-io-h5-objects:
 
-- include the header ``<hippio.h>``;
-- link the library ``libhippio.so``, ``libhippcntl.so``
-- link ``libhdf5.so``, if the HDF5 library is built as dynamic.
+High-level HDF5 Objects 
+--------------------------
 
-The following namespace declarations are adopted for clarity in all example
-codes in this API-ref::
+The basic high-level HDF5 objects are :class:`Dataspace`, :class:`Proplist`, :class:`Attr`,
+:class:`Datatype`, :class:`Dataset`, :class:`Group`, and :class:`File`. 
 
-  namespace H5 = HIPP::IO::H5;
-  using namespace HIPP;
-  using namespace std; 
+Among them, :class:`Datatype`, :class:`Dataset`, :class:`Group`, and :class:`File` 
+are "named objects" that can be stored in files and connected by links.
+Addionally, a :class:`File` object can be used where a  :class:`Group` object 
+is needed (the "root" group is implicitly used by the library).
 
-List of Module Components 
-==========================
+To reflect the logic relations of those objects, HIPP adopts the following inheritance
+graphs of them:
 
-.. namespace:: HIPP::IO::H5
+.. _fig-api-io-h5-inheritance:
+.. figure:: imgs/inheritance.svg
+    :width: 500px
+    :align: center
+
+    The inheritance of HIPP HDF5 objects. :class:`Obj` and :class:`NamedObj` are 
+    two abstract object types that do not have actual related HDF5 resources.
+
+The inheritance has strong impact on how the APIs of those objects are used.
+For example:
+
+- :class:`File` inherits all methods from :class:`Group`. Hence, you can create links, 
+  extract meta-info of them, visit/iterate links and sub objects, create/open datasets, 
+  from a :class:`File` instance. These operations are applied to the 
+  root group of the file instace.
+- :class:`Datatype`, :class:`Dataset`, :class:`Group`, and :class:`File` inherit 
+  all methods from :class:`NamedObj`. Therefore, they can create/open attributes 
+  and iterate over them, by using the API defined in :class:`NamedObj`.
+- All of these types are sub class of :class:`Obj`. Hence, the memory management API
+  defined in :class:`Obj`, such as :expr:`Obj::raw()`, :expr:`Obj::free()`, and
+  :expr:`Obj::has_referenced()` can be used on instance of any HDF5 type.
+
+However, some different methods that have the name do appear (static bind) both 
+in the sub class and the parent class. For example:
+
+- Each class defines its own version of ``obj_raw()`` which returns a referene 
+  to intermediate-level HDF5 object counterpart. Therefore, ``file.obj_raw()``
+  returns :expr:`_File &`, while ``file.NamedObj::obj_raw()`` returns 
+  :expr:`_NamedObj &`.
+- :class:`Group` and :class:`NamedObj` both has its own version of ``get_info()``,
+  which returns the group meta-info and object-meta info, respectively.
+  Hence, ``group.get_info()`` returns the group meta-info of the instance,
+  while ``group.NamedObj::get_info()`` returns its meta-info as a named object.
+  To simplify the usage,
+  we do provide a method :expr:`Group::get_object_info()` which has the same 
+  effect of the later call.
+
+
+List of High-level Components
+------------------------------
 
 .. table::
     :class: tight-table
@@ -58,9 +96,6 @@ List of Module Components
     :class:`DatapacketStr`, :class:`ConstDatapacketStr`                                                                         String versions of ``Datapacket``.
     ==================================================================== ====================================================== ====================================================
 
-
-API References
-================
 
 High-level API 
 ---------------

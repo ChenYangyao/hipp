@@ -607,6 +607,7 @@ Advanced Topics
 .. toctree::
     :maxdepth: 2
 
+    advanced/mpi-env
     advanced/comm_mode
     advanced/inter
 

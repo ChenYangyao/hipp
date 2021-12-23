@@ -3,8 +3,6 @@ Get-started with MPI
 
 .. include:: /global.rst
 
-.. _tutor-mpi-env:
-
 The MPI Environment
 ---------------------
 
@@ -94,118 +92,8 @@ Output:
     Topology{undefined}
 
 
-.. _tutor-mpi-p2p:
-
 Point-to-point Communication
 --------------------------------------------------------------
-
-To send a message from one process to another, call :func:`~HIPP::MPI::Comm::send` and 
-:func:`~HIPP::MPI::Comm::recv` on the communicator in the sender and receiver, respectively.
-
-For example, int the following we send 5 double-precision floating-point values from 
-process 0 to 1::
-
-    double outbuf[5] = {}, inbuf[5];
-    int tag = 0;
-    if( rank == 0 ) {
-        comm.send(1, tag, outbuf);
-    }else if( rank == 1 ) {
-        comm.recv(0, tag, inbuf);
-        pout << "Got {", pout(inbuf, inbuf+5), "}", endl;
-    }
-
-Here the ``tag`` is for message matching if there are multiple communications between 
-a pair of processes. The output from process 1 is 
-
-.. code-block:: text
-
-    Got {0,0,0,0,0}
-
-Note that the receiver's buffer must be sufficiently large to hold the message.
-To find the actual number of items received, use :func:`~HIPP::MPI::Status::count`
-on the returned status object from ``recv``::
-
-    auto status = comm.recv(0, tag, inbuf);
-    pout << "Got ", status.count(DOUBLE), " items", endl;
-
-.. _tutor-mpi-buff-spec:
-
-The Communication Buffer
-""""""""""""""""""""""""""
-
-**The standard buffer specialization:** The design strategy of HIPP is to provide 
-both the most general interface 
-and the interfaces specific to special tasks. 
-In terms of the communication calls, it is always valid to used the 
-Standard MPI style to specify the buffer, i.e., use the 
-``{address, count, datatype}`` triplet::
-
-    double outbuf[5] = {};
-    comm.send(1, tag, outbuf, 5, DOUBLE);
-
-Here, we send 5 double values starting from the address ``outbuf``. The datatype 
-:var:`~HIPP::MPI::DOUBLE` is a predefined datatype object.
-
-Equivalently, it is valid to use the name string for any numerical type::
-
-    comm.send(1, tag, outbuf, 5, "double");
-
-Or, more convenient, omit the datatype and let the library deduce it from the 
-pointer type passed::
-
-    comm.send(1, tag, outbuf, 5);
-
-Note that the last one is preferred since you will have no chance of mistake.
-
-Any valid argument to :expr:`Datatype::from_name` can be passed 
-as the name string, and any valid type to :expr:`Datatype::from_type`
-can be auto-deduced here.
-
-**The HIPP style:** HIPP provides specialized interfaces for the most useful 
-C++ types, e.g., single numerical variable, raw-array, ``std::string``, ``std::vector``, 
-and ``std::array``.
-
-Hence, you may pass the following objects directly to the send/recv calls, without 
-explicitly specifying their lengths and datatypes::
-    
-    double x {}; 
-    short a[5] {};
-    string s = "hello"; 
-    vector<int> v(5);
-    std::array<long, 4> arr {};
-
-    comm.send(1, tag, x);
-    comm.send(1, tag, a);
-    comm.send(1, tag, s);
-    comm.send(1, tag, v);
-    comm.send(1, tag, arr);
-
-Even the combination of them is allowed::
-
-    array<array<long, 3>, 4> arr_of_arr {};
-    vector<array<long, 3> > vec_of_arr(4);
-
-    comm.send(1, tag, vec_of_arr);
-    comm.send(1, tag, arr_of_arr);
-
-The limitation is that the buffer in the passed object must have contiguous
-memory layout. Hence, ``vector<int> [5]`` is wrong and fails with compiling 
-error. To send/recv a message with non-contiguous memory layout, see 
-the :doc:`./datatype`.
-
-For ``recv()``, the extra limitation is that 
-the object or buffer passed must be writable and sufficiently large, e.g., 
-passing ``const int [5]`` or ``const vector<int>`` to the receiving calls 
-fails with compiling error.
-
-Note that HIPP never resizes the containers (e.g., for ``std::vector``). 
-It is user's responsibility to make sure that the passed object has 
-correct size.
-
-The full list of supported buffer specification is documented in the API-Ref 
-of :class:`~HIPP::MPI::Datapacket`. The actual implementation is to first 
-construct a unified datapacket object from any of these calls, 
-and then pass it to the underlying MPI calls. 
 
 .. _tutor-mpi-collective:
 

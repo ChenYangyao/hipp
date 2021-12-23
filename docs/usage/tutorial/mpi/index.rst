@@ -608,7 +608,7 @@ Advanced Topics
     :maxdepth: 2
 
     advanced/mpi-env
-    advanced/comm_mode
+    advanced/point-to-point
     advanced/inter
 
 Example Codes Gallery

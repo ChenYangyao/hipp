@@ -5,6 +5,8 @@ The MPI Environment
 
 .. namespace:: HIPP::MPI
 
+.. _tutor-mpi-env:
+
 The Environment Object
 ---------------------------
 
@@ -46,6 +48,8 @@ communicator through the static method :expr:`Env::world`
 and perform communications on it::
 
     auto comm = mpi::Env::world();
+
+.. _tutor-mpi-library-info:
 
 Inquiry the Library Information
 ---------------------------------

@@ -163,7 +163,7 @@ void DatasetManager::put(const string &name, const T &x) {
 
 template<typename T>
 void DatasetManager::put_str(const string &name, const T &x) {
-    Dataset dset = _obj.create_dataset_for_str(x);
+    Dataset dset = _obj.create_dataset_for_str(name, x);
     dset.write_str(x);
 }
 

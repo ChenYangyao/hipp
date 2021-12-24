@@ -9,6 +9,8 @@ Binary I/O
 I/O with HDF5 Format
 ======================
 
+.. _tutor-io-h5-using-the-lib:
+
 Using the Library
 ------------------
 
@@ -16,27 +18,31 @@ To use HIPP's I/O module, include the header ``<hippio.h>``. A minimal cpp sourc
 file is like::
 
     // h5-minimal-example.cpp
-    #include <hippio.h>
+    #include <hippio.h>                             // [1]
 
     using namespace HIPP;
     using namespace std;
-    namespace H5 = HIPP::IO::H5;
+    namespace H5 = HIPP::IO::H5;                    // [2]
 
     int main(int argc, char const *argv[]) {
         // use the library
         return 0;
     }
 
-Note that we adopt the above namespace declarations for clarity throughout this 
-tutorial.
+Debrief:
 
-To generate executables, just compile and link the libraries. Then run it
+- ``[1]``: all the HDF5 IO components are declared within the header file ``<hippio.h>``.
+- ``[2]``: all the HDF5 objects are defined within the namespace ``HIPP::IO::H5``. We adopt the above namespace 
+  declarations for clarity throughout this tutorial.
+
+To compile and execute, run:
 
 .. code-block:: bash
 
     g++ -std=c++17 h5-minimal-example.cpp -lhippio -lhippcntl -lhdf5
     ./a.out
 
+.. _tutor-io-h5-files-and-groups:
 
 Files and Groups
 ------------------
@@ -74,6 +80,8 @@ The file content can be navigated by HDF5 command line tool, e.g., ``h5ls``:
     /                        Group
     /g1                      Group
     /g1/g2-in-g1             Group    
+
+.. _tutor-io-h5-datasets:
 
 Datasets
 ----------
@@ -181,6 +189,8 @@ The datasets in the file can be navigated in command line by ``h5dump``:
     }
     }
 
+.. _tutor-io-h5-attributes:
+
 Attributes 
 -----------
 
@@ -234,6 +244,8 @@ The output is:
 
     Dataspace: ndims = 2, dims = Dimensions{3,4}
     Datatype: size = 8, class = 0
+
+.. _tutor-io-h5-structured-data:
 
 Structured Data 
 ---------------
@@ -314,6 +326,7 @@ After finishing those subsettings, you may restore the selection::
 
     xtbl.select_all().select_all_fields();          // Clear the selection.
 
+.. _tutor-io-h5-advanced-topics:
 
 Advanced Topics
 =================
@@ -322,11 +335,5 @@ Advanced Topics
     :maxdepth: 2
 
     advanced/file
-
-.. toctree:: 
-    :maxdepth: 2
-    :caption: Basic usage
-
-    basic_usage/read_write_built_in_data.rst
-    basic_usage/user_defined_datatype.rst
-    Cooperate with h5py <basic_usage/cooperate_with_h5py.rst>
+    advanced/dataset
+    advanced/attribute

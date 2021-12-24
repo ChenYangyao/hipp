@@ -29,8 +29,8 @@ The implementation is described in the remaining of this section.
     :figwidth: 50%
     :align: center
 
-    **The inter-communicator of the master and slaves.** Two local commnicators, one has only the master 
-    process and the other has all slave processes, have been joined to an inter-commnicator.
+    **The inter-communicator of the master and slaves.** Two local communicators, one has only the master 
+    process and the other has all slave processes, have been joined to an inter-communicator.
 
 We define the ``Counter`` interface as following::
 
@@ -58,7 +58,7 @@ The communication mode is best described by an inter-communicator. The master
 has its own local communicator and, separately, the slaves also have their
 local communicator. The two local communicators are joined to form an 
 inter-communicator. Within this new inter-communicator, any point-to-point 
-communication targets at the remote group of procecess. Hence, the ``rank``
+communication targets at the remote group of processes. Hence, the ``rank``
 argument in a communication call is the rank of process in the remote group.
 Such a design obviously simplifies the logic of the parallel application. 
 We use the member ``_inter_comm`` to represent the inter-communicator. The member 
@@ -95,12 +95,12 @@ The constructor of ``Counter`` is implemented in the following::
 
 Each process gets its local communicator by calling :func:`split <HIPP::MPI::Comm::split>`
 on the global communicator. One local communicator has only the master process 
-(rank 0 in the global commnicator), 
+(rank 0 in the global communicator), 
 while the other one has all the slaves. Then, the two local communicators 
 are joined to create a new inter-communicator by calling :func:`create_inter <HIPP::MPI::Comm::create_inter>`.
 Each process needs to pass the rank of leader process in the local group. 
 The leader of each local gorup also needs to pass 
-the rank of the leader process in the remote group, and the global commnicator. 
+the rank of the leader process in the remote group, and the global communicator. 
 A comunication ``tag`` is 
 necessary because the creation of the inter-communicator involves several point-to-point 
 communication in the global communicator.
@@ -128,7 +128,7 @@ the reply. If the stop signal is received, it returns ``false``.
 
 As an example of using the ``Counter`` class, in the following, 
 we declare a ``Counter`` instance by passing the 
-global comunicator, the maximal value, and the tag for creation of the inter-comunicator.
+global communicator, the maximal value, and the tag for creation of the inter-communicator.
 The master process just waits in the constructor. The slaves all use ``get_next()``
 to get the counter value. If it is a valid value (not a stop signal), the slave just prints it::
 

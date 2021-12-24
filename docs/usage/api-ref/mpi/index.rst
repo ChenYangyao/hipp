@@ -93,7 +93,7 @@ the MPI type defined by the MPI standard on the top of which HIPP is built.
     :class:`Info`                           ``MPI_Info``                        Hints to the implementation.
     :class:`SpinLock`                                                           Spin locks for synchronization.
     :class:`Mutex`                                                              Mutual exclusion locks for synchronization.
-    :class:`SeqBlock`                                                           Defining operations to be sequentially executed on procecess.
+    :class:`SeqBlock`                                                           Defining operations to be sequentially executed on processes.
     :class:`WorkDecomp1D`                                                       Work decomposition functions.
     :func:`alloc_mem`                       ``MPI_Alloc_mem``                   Memory allocation.
     :func:`free_mem`                        ``MPI_Free_mem``                    Memory deallocation.

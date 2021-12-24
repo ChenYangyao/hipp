@@ -110,7 +110,7 @@ by a single :func:`send <HIPP::MPI::Comm::send>` call::
         comm.send(1, tag, pack.as_sendbuf());
 
 Here, the ``comm`` argument is necessary for the :class:`Pack <HIPP::MPI::Pack>`, because 
-different commnicator may use different data representation in the commnication. Note that 
+different communicator may use different data representation in the commnication. Note that 
 the :func:`push <HIPP::MPI::Pack::push>` call can be chained to push data items one by one.
 Each data item passed into :func:`push <HIPP::MPI::Pack::push>` is converted to 
 a :class:`Datapacket <HIPP::MPI::Datapacket>` instance, like for the data buffer

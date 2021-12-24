@@ -198,7 +198,8 @@ Class Win: the RMA Window
         the size and datatype are the same as the ``origin_dpacket``.
         
         ``fetch_and_op()`` is a simplified version of ``get_accumulate()`` which assume
-        size = 1. The template version can be applied to :ref:`predefined numeric types <api-mpi-dpacket-predefined-type>`.
+        size = 1. The template version can be applied to 
+        :ref:`predefined numeric types <api-mpi-predefined-dtype>`.
         
         ``compare_and_swap()`` is a important synchronization call, which compare
         the data in ``compare`` with the data in target window. If the same, write

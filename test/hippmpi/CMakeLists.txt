@@ -24,6 +24,7 @@ addmpitest(p2p 4)
 addmpitest(pack 4)
 addmpitest(collective 4)
 addmpitest(datatype.test 4)
+addmpitest(virtual_topology.test 6)
 
 if(enable-hdf5)
     prtkeyproc("Test on hippmpi_mpprof enabled")

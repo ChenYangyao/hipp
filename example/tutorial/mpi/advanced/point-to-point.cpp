@@ -9,9 +9,9 @@ using nu::SArray;
 using nu::SVec;
 using nu::DArray;
 
-int main(int argc, char *argv[]) {
-    mpi::Env env(argc, argv);
-    auto comm = env.world();
+
+void basic_p2p() {
+    auto comm = mpi::Env::world();
     int rank = comm.rank(), n_procs = comm.size();
     
     int tag = 0, buf[5];
@@ -20,6 +20,12 @@ int main(int argc, char *argv[]) {
     }else if ( rank == 1 ) {
         comm.recv(0, tag, buf);
     }
+}
+
+void comm_buffer() {
+    auto comm = mpi::Env::world();
+    int rank = comm.rank(), n_procs = comm.size();
+    int tag = 0;
 
     double scalar;                                  // numerical scalar
     
@@ -76,6 +82,112 @@ int main(int argc, char *argv[]) {
 
     delete [] buf1;
     free(buf2);
+
+}
+
+void comm_mode() {
+    auto comm = mpi::Env::world();
+    int rank = comm.rank(), n_procs = comm.size();
+    int tag = 0;
+
+    int buf1[4];
+    vector<double> buf2(8);
+
+    if( rank == 0 ) {
+        /* Standard mode. */
+        std::fill_n(buf1, 4, 1);
+        std::fill_n(buf2.data(), 8, 1);
+        comm.send(1, tag, buf1);
+        comm.send(1, tag, buf2);
+
+        /* Buffered mode. */
+        size_t buf_size = sizeof(buf1) + sizeof(double)*buf2.size() 
+            + 2 * mpi::BSEND_OVERHEAD;
+        char *buff = new char[buf_size];
+        mpi::buffer_attach(buff, buf_size);
+        
+        std::fill_n(buf1, 4, 2);
+        std::fill_n(buf2.data(), 8, 2);
+        comm.bsend(1, tag, buf1);
+        comm.bsend(1, tag, buf2);
+
+        /* Synchronous mode. */
+        std::fill_n(buf1, 4, 3);
+        std::fill_n(buf2.data(), 8, 3);
+        comm.ssend(1, tag, buf1);
+        comm.ssend(1, tag, buf2);
+        
+        /* Ready mode. */
+        std::fill_n(buf1, 4, 4);
+        std::fill_n(buf2.data(), 8, 4);
+        comm.recv(1, tag);                          // wait for notification
+        comm.rsend(1, tag, buf1);
+        comm.rsend(1, tag, buf2);
+    } else if( rank == 1 ) {
+        comm.recv(0, tag, buf1);
+        comm.recv(0, tag, buf2);
+        pout << "buf1 ={", pout(buf1, buf1+4), "}, buf2={", buf2, "}", endl;
+
+        comm.recv(0, tag, buf1);
+        comm.recv(0, tag, buf2);
+        pout << "buf1 ={", pout(buf1, buf1+4), "}, buf2={", buf2, "}", endl;
+
+        comm.recv(0, tag, buf1);
+        comm.recv(0, tag, buf2);
+        pout << "buf1 ={", pout(buf1, buf1+4), "}, buf2={", buf2, "}", endl;
+
+        auto reqs = comm.irecv(0, tag, buf1);
+        reqs += comm.irecv(0, tag, buf2);           // issue the receive calls
+        comm.send(0, tag);                          // send an empty message for notification
+        reqs.waitall();
+        pout << "buf1 ={", pout(buf1, buf1+4), "}, buf2={", buf2, "}", endl;
+    }
+
+}
+
+void nonblocking_p2p() {
+    auto comm = mpi::Env::world();
+    int rank = comm.rank(), n_procs = comm.size();
+    int tag = 0;
+
+    int buf1[4];
+    vector<double> buf2(8);
+    float buf3;
+    
+    if( rank == 0 ) {
+        mpi::Requests req = comm.isend(1, tag, buf1);
+        req.wait();
+    }else if( rank == 1 ){
+        mpi::Requests req = comm.irecv(0, tag, buf1);
+        req.wait();
+    }
+
+    if( rank == 0 ) {
+        auto reqs = comm.isend(1, tag, buf1);
+        reqs += comm.isend(1, tag, buf2);
+        reqs += comm.isend(1, tag, buf3);
+
+        pout << reqs.size(), " sends have been issued", endl;
+
+        reqs.waitall();
+    }else if( rank == 1 ){
+        comm.recv(0, tag, buf1);
+        comm.recv(0, tag, buf2);
+        comm.recv(0, tag, buf3);
+    }
+}
+
+int main(int argc, char *argv[]) {
+    mpi::Env env(argc, argv);
+    auto comm = env.world();
+
+    basic_p2p();
+    comm_buffer();
+    comm_mode();
+
+    comm.barrier();
+
+    nonblocking_p2p();
 
     return 0;
 }

@@ -7,7 +7,7 @@ Point-to-Point Communications
 
 .. _tutor-mpi-p2p:
 
-Standard Point-to-Point Communications
+Basic Point-to-Point Communications
 -----------------------------------------
 
 The methods :expr:`Comm::send()` and :expr:`Comm::recv()` are the two ends 
@@ -34,7 +34,7 @@ and a buffer object that stores the outgoing/in-coming data.
 
 .. _tutor-mpi-p2p-buffer:
 
-The Communication Buffer
+Communication Buffer
 """"""""""""""""""""""""""
 
 HIPP supports various types of buffer object. The supported types and examples 
@@ -117,3 +117,185 @@ use ``buffer, count, datatype`` triplet to specify the buffer. For example::
 
     HIPP never resizes the receiving buffer. User must ensure it is non-const 
     and large enough to hold the message.
+
+
+.. _tutor-mpi-p2p-modes:
+
+Communication Modes
+"""""""""""""""""""""
+
+MPI does not specify how the standard send and receive calls are implemented. 
+They may or may not buffer the data, may block or may not block the caller. 
+On return, the message may or may not be delivered.
+
+To satisfy different application scenarios, MPI defines four variants of 
+send (called four different point-to-point communication modes):
+
+.. table::
+    :class: tight-table
+
+    =================================== =================================================================================================================================================
+    Communication Mode                  Semantics
+    =================================== =================================================================================================================================================
+    :func:`~Comm::send`                 Standard send.
+    :func:`~Comm::bsend`                Buffered send. User must provide a buffer by :func:`buffer_attach` before sending and optionally detach it by :func:`buffer_detach` after using.
+    :func:`~Comm::ssend`                Synchronous mode. It never buffers the data. Return only when a receive call is posted and matched, and the actual receiving begins.
+    :func:`~Comm::rsend`                Ready mode. On entry, a receive call that matches this send call must have been posted.
+    =================================== =================================================================================================================================================
+
+The standard mode is introduced above in :ref:`tutor-mpi-p2p`. 
+
+The buffered mode allows the user to provide a buffer that holds the message.
+The message is copied to that buffer so that the sending call never blocks
+the calling process.
+The buffer must be large enough to hold all on-going buffered send calls. 
+To use :func:`~Comm::bsend`, first attaches a buffer, then sends data, and 
+finally detaches the buffer if the buffered send is no longer needed.
+
+For example, to send the following two data objects::
+
+    int buf1[4];
+    vector<double> buf2(8);
+
+One has to provide a buffer to the MPI library by :func:`buffer_attach`::
+
+    size_t buf_size = sizeof(buf1) + sizeof(double)*buf2.size() 
+        + 2 * mpi::BSEND_OVERHEAD;
+    char *buff = new char[buf_size];
+    mpi::buffer_attach(buff, buf_size);
+
+The buffer size is at least the sum of the data size in the two objects, plus
+two :var:`BSEND_OVERHEAD` which may be used by the library to store meta-info 
+of the two messages. Then, call the buffered send just like the standard mode::
+
+    comm.bsend(1, tag, buf1);
+    comm.bsend(1, tag, buf2);
+
+The synchronous mode :func:`~Comm::ssend` ensures that the message data is never buffered, so that
+the consumed system resources for such a communication is as small as possible.
+This can be used when the number messages are huge while the system resources 
+are limited. The calling signature is similar to that of the standard mode::
+
+    comm.ssend(1, tag, buf1);
+    comm.ssend(1, tag, buf2);
+
+The ready mode :func:`~Comm::rsend` should only be used when the sender knows that 
+the corresponding receive call is already posted. Such information may be 
+provided by other events, or by direct notification from the receiver. 
+A common scenario is that, the receiver issues the receive call and notifies 
+the sender, while the sender waits for the notification and then sends data 
+in ready mode. For example::
+
+    if( rank == 0 ) {    
+        comm.recv(1, tag);                          // wait for notification
+        comm.rsend(1, tag, buf1);
+        comm.rsend(1, tag, buf2);
+    } else if( rank == 1 ) {
+        auto reqs = comm.irecv(0, tag, buf1);
+        reqs += comm.irecv(0, tag, buf2);           // issue the receive calls
+        comm.send(0, tag);                          // send an empty message for notification
+        reqs.waitall();
+    }
+
+The non-blocking receive :func:`~Comm::irecv` will be introduced below.
+
+.. _tutor-mpi-nonblocking-p2p:
+
+Nonblocking Point-to-Point Communications
+--------------------------------------------
+
+All the point-to-point methods we described above block the caller thread 
+until some predefined conditions satisfied. 
+For example, implementation 
+must ensure that the data buffer can be reused by the user on the return 
+of any such blocking call.
+
+In contrast, a "nonblocking" point-to-point call only issues the communication.
+On return, the communication may be, or may not be finished; the data buffer is not 
+permitted to be reused. The nonblocking call returns a "request" handler from which 
+the process can be monitored. 
+A "completion" method must be called later on the handler 
+to ensure the completion of the communication.
+
+Suppose we have the following buffer objects::
+
+    int buf1[4];
+    vector<double> buf2(8);
+    float buf3;
+
+For example, to send ``buf1`` from process 0 to 1 by a nonblocking point-to-point 
+call, write::
+
+    if( rank == 0 ) {
+        mpi::Requests req = comm.isend(1, tag, buf1);
+        req.wait();
+    }else if( rank == 1 ){
+        mpi::Requests req = comm.irecv(0, tag, buf1);
+        req.wait();
+    }
+
+The methods :func:`~Comm::isend` and :func:`~Comm::irecv` issue the nonblocking 
+send and receive, respectively. Both return a :class:`Requests` handler for 
+further monitoring and completion. The call :func:`~Requests::wait` on the 
+request handler blocks until the completion of send or receive.
+
+One prominent feature of nonblocking communications is that they never block.
+Therefore, multiple nonblocking communications can be issued on one thread 
+without deadlock, and then get finished by one "multiple completion" call 
+applied to an array of the request handlers.
+
+To send out all the three buffers ``buf1``, ``buf2`` and ``buf3``, call 
+:func:`~Comm::isend` three times and join the returned request handlers by 
+:func:`~Requests::operator+=`::
+
+    auto reqs = comm.isend(1, tag, buf1);
+    reqs += comm.isend(1, tag, buf2);
+    reqs += comm.isend(1, tag, buf3);
+
+    pout << reqs.size(), " sends have been issued", endl;
+
+Now, the :class:`Requests` object has three active request handlers 
+attached to it. The printed output is:
+
+.. code-block:: text
+
+    3 sends have been issued
+
+The multiple completion call :func:`~Requests::waitall` on a :class:`Requests`
+objects blocks until all its active communications finished::
+
+    reqs.waitall();
+
+As introduced in :ref:`tutor-mpi-p2p-modes`, the nonblocking point-to-point 
+communications also have four different sending modes, issued by :func:`~Comm::isend`, 
+:func:`~Comm::ibsend`, :func:`~Comm::issend`, and :func:`~Comm::irsend`, respectively.
+
+The blocking semantics in the sender and receiver
+needs not to be identical. For example, a blocking, buffered send can match 
+a nonblocking receive.
+
+MPI defines a rich set of (multiple) completion methods for nonblocking communications. 
+They are all supported by HIPP and are listed below. For their detail semantics, refer 
+to the MPI standard.
+
+.. table:: 
+    :class: tight-table
+
+    ================================ ==================================================================================
+    Completion Method                                                                           Description                               
+    ================================ ==================================================================================
+    :func:`~Requests::wait()`        block until a active communication is finished
+    :func:`~Requests::test()`        test whether a communication is finished
+    :func:`~Requests::status()`      test whether a communication is finished but do not inactivate it or mark it null
+    :func:`~Requests::waitany()`     block until any one active communication in an array is finished
+    :func:`~Requests::testany()`     test whether any one active communication in an array is finished
+    :func:`~Requests::waitall()`     block until all active communications in an array are finished
+    :func:`~Requests::testall()`     test whether all active communications in an array are finished
+    :func:`~Requests::waitsome()`    block until one or more communications in an array are finished
+    :func:`~Requests::testsome()`    test whether one or more communications in an array are finished
+    ================================ ==================================================================================
+ 
+
+
+
+

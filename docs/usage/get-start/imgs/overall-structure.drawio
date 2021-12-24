@@ -1,0 +1,49 @@
+<mxfile host="65bd71144e">
+    <diagram id="9JM-ObwgvSv6bRc_mmI7" name="Page-1">
+        <mxGraphModel dx="466" dy="812" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="750" pageHeight="400" background="#ffffff" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="3" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=2;strokeColor=#66B2FF;fontColor=#121212;" parent="1" vertex="1">
+                    <mxGeometry x="27" y="24" width="680" height="346" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="&lt;b&gt;&lt;br&gt;&amp;lt;hippmpi.h&amp;gt; libhippmpi.so&lt;/b&gt;&lt;br&gt;class Comm, Group, Datatype, ErrMPI, ..." style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;fontSize=15;strokeWidth=2;strokeColor=#66B2FF;fontColor=#121212;" parent="1" vertex="1">
+                    <mxGeometry x="367" y="34" width="330" height="56" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="&lt;b&gt;&lt;br&gt;&amp;lt;hippio.h&amp;gt; libhippio.so&lt;/b&gt;&lt;br&gt;class File, Group, Dataset, ErrH5..." style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;fontSize=15;strokeWidth=2;strokeColor=#66B2FF;fontColor=#121212;" parent="1" vertex="1">
+                    <mxGeometry x="367" y="95" width="330" height="56" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="&lt;b&gt;&lt;br&gt;&amp;lt;hippnumerical.h&amp;gt; libhippnumerical.so&lt;/b&gt;&lt;br&gt;class&amp;nbsp;GaussianDist, GaussianRandomNumber, FMinimizer, SArray, DArray, ..." style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;fontSize=15;strokeWidth=2;strokeColor=#66B2FF;fontColor=#121212;" parent="1" vertex="1">
+                    <mxGeometry x="367" y="156" width="330" height="76" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="&lt;b&gt;&lt;br&gt;&amp;lt;hippalgorithm.h&amp;gt; pure-header&lt;/b&gt;&lt;br&gt;class&amp;nbsp;LinSpaced, OuterProduct, KDTree, ..." style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;fontSize=15;strokeWidth=2;strokeColor=#66B2FF;fontColor=#121212;" parent="1" vertex="1">
+                    <mxGeometry x="367" y="237" width="330" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="&lt;b&gt;&lt;br&gt;&amp;lt;hippsimd.h&amp;gt; pure-header&lt;/b&gt;&lt;br&gt;class&amp;nbsp;Packed, Vec, ..." style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;fontSize=15;strokeWidth=2;strokeColor=#66B2FF;fontColor=#121212;" parent="1" vertex="1">
+                    <mxGeometry x="367" y="306" width="330" height="54" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" value="&lt;b&gt;&amp;lt;hippcntl.h&amp;gt; libhippcntl.so&lt;/b&gt;&lt;br&gt;&lt;br&gt;stream pout, perr, plog, ...&lt;br&gt;function str, str_f, prt, prt_f, ...&lt;br&gt;class ErrLogic, ErrRuntime, RawArrayTraits, ContiguousBufferTraits, ..." style="rounded=0;whiteSpace=wrap;html=1;fontSize=15;fillColor=none;strokeColor=none;fontColor=#121212;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="100" width="300" height="220" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="namespace HIPP" style="rounded=0;whiteSpace=wrap;html=1;fontSize=13;strokeWidth=2;fillColor=none;strokeColor=none;fontFamily=Lucida Console;fontColor=#66B2FF;" parent="1" vertex="1">
+                    <mxGeometry x="20" y="18" width="150" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" value="namespace MPI" style="rounded=0;whiteSpace=wrap;html=1;fontSize=13;strokeWidth=2;fillColor=none;strokeColor=none;fontFamily=Lucida Console;fontColor=#66B2FF;" parent="1" vertex="1">
+                    <mxGeometry x="352" y="28" width="150" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="16" value="namespace NUMERICAL" style="rounded=0;whiteSpace=wrap;html=1;fontSize=13;strokeWidth=2;fillColor=none;strokeColor=none;fontFamily=Lucida Console;fontColor=#66B2FF;" parent="1" vertex="1">
+                    <mxGeometry x="350" y="154" width="200" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="17" value="namespace IO::H5" style="rounded=0;whiteSpace=wrap;html=1;fontSize=13;strokeWidth=2;fillColor=none;strokeColor=none;fontFamily=Lucida Console;fontColor=#66B2FF;" parent="1" vertex="1">
+                    <mxGeometry x="362" y="92" width="150" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="18" value="namespace ALGORITHM" style="rounded=0;whiteSpace=wrap;html=1;fontSize=13;strokeWidth=2;fillColor=none;strokeColor=none;fontFamily=Lucida Console;fontColor=#66B2FF;" parent="1" vertex="1">
+                    <mxGeometry x="355" y="234" width="190" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="19" value="namespace SIMD" style="rounded=0;whiteSpace=wrap;html=1;fontSize=13;strokeWidth=2;fillColor=none;strokeColor=none;fontFamily=Lucida Console;fontColor=#66B2FF;" parent="1" vertex="1">
+                    <mxGeometry x="356" y="302" width="150" height="30" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

@@ -12,5 +12,10 @@ MPILDLIBS = -lhippmpi
 %.mp.out: %.cpp
 	$(MPICXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $< $(MPILDLIBS) $(LDLIBS)
 
-EXECS := $(patsubst %.cpp,%.out,$(wildcard *.cpp))
+EXECS := $(patsubst %.cpp,%.out,$(wildcard *.cpp)) 
 $(EXECS): Makefile
+
+.PHONY: clean
+
+clean:
+	rm *.out *.mp.out *.h5

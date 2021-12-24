@@ -43,10 +43,10 @@ The MPI environment inquiry and management class.
 class Env{
 public:
     enum: int {
-        THREAD_SINGLE = MPI_THREAD_SINGLE, 
-        THREAD_FUNNELED = MPI_THREAD_FUNNELED,
-        THREAD_SERIALIZED = MPI_THREAD_SERIALIZED,
-        THREAD_MULTIPLE = MPI_THREAD_MULTIPLE };
+        THREAD_SINGLE       = MPI_THREAD_SINGLE, 
+        THREAD_FUNNELED     = MPI_THREAD_FUNNELED,
+        THREAD_SERIALIZED   = MPI_THREAD_SERIALIZED,
+        THREAD_MULTIPLE     = MPI_THREAD_MULTIPLE };
 
     Env();
     Env(int &argc, char **&argv );
@@ -58,34 +58,52 @@ public:
     ~Env() noexcept;
 
     /**
-    info() - print MPI environment details
-    @fmt_cntl: 0/1 for inline/block info, 2 for block library version.
+    info(): print MPI environment details into ``os``. ``os`` is returned.
+    @fmt_cntl: control the output format. 
+        - 0: a short inline message.
+        - 1: a long, block message.
+        - 2: similar to 1, but print the library version information in 
+             addition.
     
-    operator(os, env) is equivalent to env.info(os).
+    ``operator<<`` is equivalent to ``info()`` with default ``fmt_cntl``.
     */
-    ostream & info( ostream &os = cout, int fmt_cntl = 1 ) const;
+    ostream & info( ostream &os = cout, int fmt_cntl = 1) const;
     friend ostream & operator<<( ostream &os, const Env &);
     
     /**
-    Can be called when MPI is inactive, that is, before MPI_Init() or after 
-    MPI_Finalize(). Must be thread-safe.
+    version(): return the standard version and subversion which the 
+    implementation is compliant to. 
+    
+    library_version(): return a string that represents the library version 
+    (i.e., the implementation version).
+
+    These two can be called when MPI is inactive, that is, before the 
+    initialization of after finalization of MPI environment. They must be 
+    thread-safe.
     */
     static void version( int &version, int &subversion );
     static string library_version();
 
     /**
-    Inquire runtime environment
+    Query information about the library implementation: 
+    
+    - the upper bound of tag value; 
+    - the rank of the host process (if none, returns ``PROC_NULL``);
+    - the rank of process that has I/O facilities (possibly my rank; if none, 
+      returns ``PROC_NULL``; if any, return ``ANY_SOURCE``);
+    - a Boolean value indicating whether the clocks are synchronized; 
+    - the name of the host machine.
     */
     int tag_ub() const;
     int host() const;
     int io() const;
     int wtime_is_global() const;
-
-    /**
-    Inquire processor information
-    */
     static string processor_name();
 
+    /**
+    Get the global "WORLD" communicator predefined by MPI. New communicators 
+    can be created, if necessary, from the predefined ones.
+    */
     static Comm world() noexcept { return Comm::world(); }
 protected:
     friend class SeqBlock;

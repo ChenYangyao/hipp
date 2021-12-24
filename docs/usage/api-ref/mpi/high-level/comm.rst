@@ -1521,16 +1521,18 @@ Class Requests: the Non-blocking Handler
 
 .. class:: Requests : public MPIObj<_Requests>
 
-    The high-level MPI requests interface. 
-    
-    A request is returned by a non-blocking communication call.
-    A ``Requests`` object host an array of requests (internally, an array of ``MPI_Requests``). 
-    The reason of allowing one object hosting an array of requests, not just a single request ,
-    is that the later may cause overhaed in the multiple-completion call on requests.
+    The high-level MPI requests interface.
 
-    The ``Requests`` object can be **copy-constructed**, **copy-assigned**, **move-constructed**
-    and **move-assigned**. The copy operation gives a object that refers to the same 
-    array of requests. The copy operations, move operations and destructor are ``noexcept``.
+    A request is returned by a non-blocking communication call. A requests object 
+    host an array of requests (internally, an array of ``MPI_Requests``). The reason 
+    of allowing one object hosting an array of requests, 
+    not just a single one , is that the later may cause overhead in the 
+    multiple-completion calls.
+
+    The requests object can be copy/move-constructed/assigned. The copy-to 
+    object refers to the same array of requests. The copy operations, 
+    move operations and destructor are ``noexcept``.
+
 
     .. function::       Requests()
 
@@ -1540,32 +1542,26 @@ Class Requests: the Non-blocking Handler
     .. function::       void free()
                         void clear()
 
-        ``free()`` frees all requests in this instance, and set the current instance 
-        to a null value as returned by :func:`Requests::nullval()`. 
-        For persistent requests in the array of requests, ``free()`` frees them (so, make sure 
-        that they are completed by completion calls). For other types of requests, ``free()``
-        requires that they are already completed as become null values.
-
-        ``clear()`` is similar to ``free()``, but it sets the current instance to an empty 
-        request array. The difference is that the null value is a length-1 request array, 
-        but an empty array is length-0.
+        ``free()``: free all requests in this instance, and set the current instance to 
+        a null value as returned by ``nullval()``. For persistent requests in the 
+        array, ``free()`` frees them (so, make sure that they are completed by 
+        completion calls). For other types of requests, ``free()`` requires that 
+        they are already completed as become null values.
+        
+        ``clear()``: similar to ``free()``, but sets the current instance to an empty 
+        request array (length is 0).
     
     .. function::       ostream &info( ostream &os = cout, int fmt_cntl = 1 ) const
                         friend ostream & operator<<( ostream &os, const Requests &rqs )
         
 
-        ``info()`` displays some basic information of the requests instance to ``os``.
+        ``info()``: display some basic information about the requests into ``os``. 
+        ``os`` itself is returned.
 
-        :arg fmt_cntl:  Control the display format. 0 for inline information and 1 for a verbose, multiple-line information.
-        :return: The argument ``os`` is returned.
+        ``fmt_cntl`` controls the display format. 0 for inline information. 1 for a 
+        verbose, multiple-line information.
 
-        The overloaded ``<<`` operator is equivalent to ``info()`` with default 
-        ``fmt_cntl``.
-
-        The returned reference of ``os`` allows you to chain the outputs, such as 
-        ``requests.info(cout) << " continue printing " << std::endl``.
-
-    
+        ``operator<<`` is equivalent to ``info()`` with default ``fmt_cntl``.
     
     .. function::       mpi_t raw(int i)const
                         bool is_null() const
@@ -1573,20 +1569,24 @@ Class Requests: the Non-blocking Handler
                         int size() const
                         bool empty() const
 
-        Inquery the information of the current request array.
-        ``is_null(i)`` tests whether the i-th request in the array is a null value,
-        ``is_null()`` without an argument is equivalent to ``is_null(0)``.
-        ``size()`` returns the number of requests in the array.
-        ``empty()`` tests whether the array is empty.
-
-    
+        Inquire the information of the current request array.
+        
+        ``raw()``: return the internal ``MPI_Request`` value.
+        
+        ``is_null()``: test whether the request is a null value.
+        
+        Both have two overloads. The no-argument version is equivalent to call the 
+        indexed version with ``i=0``.
+        
+        ``size()``: return the size of the array.
+        
+        ``empty()``: test whether the array is empty.
     
     .. function::       static Requests nullval() noexcept
 
-        Return a null value, which is a length-1 request array with the only 
-        element to be a null value (Internally ``MPI_REQUEST_NULL``).
+        Return a null value, which is a length-1 request array whose only element 
+        is a null request (internally ``MPI_REQUEST_NULL``).
 
-    
     
     .. function::   void put( Requests & rqs)
                     void put( Requests && rqs)
@@ -1595,42 +1595,64 @@ Class Requests: the Non-blocking Handler
                     Requests get( int i )
                     Requests get( int b, int e )
 
-        ``put()`` transfers the requests in ``rqs`` into the calling instance 
-        (appended at the tail of the; order is kept). `rqs` becomes empty.
+        ``put()``: transfer the requests from ``rqs`` into the current instance 
+        (appended at the tail). ``rqs`` is set empty.
         
-        Overloaded operator ``+=`` is equivalent to put().
+        ``operator+=()``: equivalent to ``put()``.
         
-        ``get()`` does the opposite thing, extracting the request(s) in the current
-        instance and return them. 
-        ``get(i)`` returns the i-th request, and get(b, e) returns a range of 
-        requests indexed in the range [b, e).
-        After the return of ``get()``, the returned requests are removed from the 
-        caller instance, the hole is filled by the tail elements remaining in 
-        the caller instance (the order may change). 
+        ``get()``: does the opposite thing - extracting the request(s) from the current
+        instance and return them.
+        ``get(i)`` returns the i-th request. ``get(b, e)`` returns requests
+        indexed in the range ``[b, e)``.
+        After ``get()``, the returned requests are removed from the caller
+        instance, the hole is filled by the remaining requests in the instance 
+        where the order may change.
 
-    .. function::   Status wait()
-                    Status wait(int i)
-                    Status test(int &flag)
-                    Status test(int i, int &flag)
-                    Status status(int &flag) const
-                    Status status(int i, int &flag) const
-                    Status waitany(int &index)
-                    Status testany(int &index, int &flag)
-                    void waitall(vector<Status> &statuses)
-                    void testall(int &flag, vector<Status> &statuses)
-                    void waitsome( int &count, vector<int> &indices, vector<Status> &statuses)
-                    void testsome( int &count, vector<int> &indices, vector<Status> &statuses)
+    .. function::   
+        Status wait()
+        Status wait(int i)
+        Status test(int &flag)
+        Status test(int i, int &flag)
+        Status status(int &flag) const
+        Status status(int i, int &flag) const
+        Status waitany(int &index)
+        Status testany(int &index, int &flag)
+        void waitall(ContiguousBuffer<Status> statuses)
+        void waitall(vector<Status> &statuses)
+        void waitall()
+        void testall(int &flag, ContiguousBuffer<Status> statuses)
+        void testall(int &flag, vector<Status> &statuses)
+        void testall(int &flag)
+        void waitsome(int &count, ContiguousBuffer<int> indices, \
+            ContiguousBuffer<Status> statuses)
+        void waitsome(int &count, vector<int> &indices, \
+            vector<Status> &statuses)
+        void waitsome(int &count, ContiguousBuffer<int> indices)
+        void waitsome(int &count, vector<int> &indices)
+        void testsome(int &count, ContiguousBuffer<int> indices, \
+            ContiguousBuffer<Status> statuses)
+        void testsome(int &count, vector<int> &indices, \
+            vector<Status> &statuses)
+        void testsome(int &count, ContiguousBuffer<int> indices)
+        void testsome(int &count, vector<int> &indices)
 
-        Completion calls of the request(s). Please refer to the MPI **Standard** for detailed 
-        semantics.
+        Completion calls of the request(s). Please refer to the MPI Standard for 
+        detailed semantics.
 
-        ``wait()`` without argument is equivalent to ``wait(0)``. 
-        ``test(flag)`` is equivalent to ``test(0, flag)``.
+        ``wait()`` without argument is equivalent to ``wait(0)``. ``test(flag)`` is 
+        equivalent to ``test(0, flag)``.
 
-        ``status(flag)`` is equivalent to ``status(0, flag)``. The status call returns ``flag=true`` 
-        if the communication is complete, and returns the a :class:`Status` object that describes the status
-        of such. Otherwise it sets ``flag=false``. The status call differs from the test/wait call in that it 
-        does not deallocate or inactivate the request. 
+        ``status(flag)`` is equivalent to ``status(0, flag)``. The status call 
+        returns flag=true if the communication is complete, and returns the a Status 
+        object that describes the status of such. Otherwise it sets flag=false. 
+        The status call differs from the test/wait call in that it does not 
+        deallocate or inactivate the request.
+
+        ``{test|wait}{all|some}`` without a ``statuses`` argument ignores the 
+        statuses information.
+
+        The ``vector`` version auto-resizes the vector to fit the number of 
+        requests handled by this object. 
 
     .. function::   void cancel()
                     void cancel(int i)

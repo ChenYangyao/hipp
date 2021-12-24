@@ -578,7 +578,7 @@ public:
     
     ``recv()``: blocking receiving.
     
-    Methods with prefix "i" are the corresponding non-blocking calls. They 
+    Methods with prefix "i" are the corresponding nonblocking calls. They 
     return a ``Requests`` object for later test, cancellation, or completion.
 
     ``recv()`` returns a ``Status`` object containing the meta-infomation of 
@@ -602,26 +602,26 @@ public:
         calls.
     */
     template<typename ...Args>
-    void send( int dest, int tag, Args && ...args ) const;
+    void send(int dest, int tag, Args && ...args) const;
     template<typename ...Args>
-    void bsend( int dest, int tag, Args && ...args ) const;
+    void bsend(int dest, int tag, Args && ...args) const;
     template<typename ...Args>
-    void ssend( int dest, int tag, Args && ...args ) const;
+    void ssend(int dest, int tag, Args && ...args) const;
     template<typename ...Args>
-    void rsend( int dest, int tag, Args && ...args ) const;
+    void rsend(int dest, int tag, Args && ...args) const;
     template<typename ...Args>
-    Status recv( int src, int tag, Args && ...args ) const;
+    Status recv(int src, int tag, Args && ...args) const;
 
     template<typename ...Args>
-    Requests isend( int dest, int tag, Args && ...args ) const;
+    Requests isend(int dest, int tag, Args && ...args) const;
     template<typename ...Args>
-    Requests ibsend( int dest, int tag, Args && ...args ) const;
+    Requests ibsend(int dest, int tag, Args && ...args) const;
     template<typename ...Args>
-    Requests issend( int dest, int tag, Args && ...args ) const;
+    Requests issend(int dest, int tag, Args && ...args) const;
     template<typename ...Args>
-    Requests irsend( int dest, int tag, Args && ...args ) const;
+    Requests irsend(int dest, int tag, Args && ...args) const;
     template<typename ...Args>
-    Requests irecv( int src, int tag, Args && ...args ) const;
+    Requests irecv(int src, int tag, Args && ...args) const;
 
     /** 
     Perform one send and one receive in a single call.

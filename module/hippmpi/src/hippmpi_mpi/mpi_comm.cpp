@@ -579,7 +579,7 @@ Requests Comm::ineighbor_allgather(const void* sendbuf, int sendcount,
     auto req = obj_raw().ineighbor_allgather(
         sendbuf, sendcount, sendtype.raw(), recvbuf, 
         recvcount, recvtype.raw());
-    return Requests::_from_raw(req, 0);
+    return Requests::_from_raw_bare(req);
 }
 
 Requests Comm::ineighbor_allgather(
@@ -607,7 +607,7 @@ Requests Comm::ineighbor_allgatherv(const void* sendbuf, int sendcount,
 {
     auto req = obj_raw().ineighbor_allgatherv(sendbuf, sendcount, 
         sendtype.raw(), recvbuf, recvcounts, displs, recvtype.raw());
-    return Requests::_from_raw(req, 0);
+    return Requests::_from_raw_bare(req);
 }
 
 Requests Comm::ineighbor_allgatherv(
@@ -643,7 +643,7 @@ Requests Comm::ineighbor_alltoall(const void* sendbuf, int sendcount,
 {
     auto req = obj_raw().ineighbor_alltoall(sendbuf, sendcount, sendtype.raw(), 
         recvbuf, recvcount, recvtype.raw());
-    return Requests::_from_raw(req, 0);
+    return Requests::_from_raw_bare(req);
 }
 
 Requests Comm::ineighbor_alltoall(const void *sendbuf, void *recvbuf, int count, 
@@ -661,7 +661,7 @@ Requests Comm::ineighbor_alltoallv(const void* sendbuf, const int sendcounts[],
     auto req = obj_raw().ineighbor_alltoallv(sendbuf, sendcounts, sdispls, 
         sendtype.raw(),
         recvbuf, recvcounts, rdispls, recvtype.raw());
-    return Requests::_from_raw(req, 0);
+    return Requests::_from_raw_bare(req);
 }
 
 Requests Comm::ineighbor_alltoallw(const void* sendbuf, const int sendcounts[],
@@ -671,7 +671,7 @@ Requests Comm::ineighbor_alltoallw(const void* sendbuf, const int sendcounts[],
 {
     auto req = obj_raw().ineighbor_alltoallw(sendbuf, sendcounts, sdispls, 
         sendtypes, recvbuf, recvcounts, rdispls, recvtypes);
-    return Requests::_from_raw(req, 0);
+    return Requests::_from_raw_bare(req);
 }
 
 

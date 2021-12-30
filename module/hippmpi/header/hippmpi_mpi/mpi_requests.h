@@ -110,6 +110,18 @@ public:
     Requests get(int b, int e);
 
     /**
+    start(i): start the i-th communication in the array. The request must be 
+    returned from a persistent communication call. On exit, it becomes active.
+
+    ``start()`` is equivalent to ``start(0)``.
+    ``startall()`` is equivalent to starting each of the communications with 
+    arbitrary order.
+    */
+    void start();
+    void start(int i);
+    void startall();
+
+    /**
     Completion calls of the request(s). Please refer to the MPI Standard for 
     detailed semantics.
 
@@ -169,6 +181,8 @@ public:
     void cancel(int i);
 protected:
     static Requests _from_raw(mpi_t rq, int state);
+    static Requests _from_raw_bare(mpi_t rq);
+    static Requests _from_raw_free(mpi_t rq);
     friend class Comm;
     friend class File;
     friend class Win;
@@ -182,6 +196,13 @@ inline ostream & operator<<( ostream &os, const Requests &rqs ){
 inline Requests Requests::_from_raw(mpi_t rq, int state){
     auto ptr = std::make_shared<_obj_raw_t>( rq, state );
     return Requests(ptr);
+}
+
+inline Requests Requests::_from_raw_bare(mpi_t rq) {
+    return _from_raw(rq, 0);
+}
+inline Requests Requests::_from_raw_free(mpi_t rq) {
+    return _from_raw(rq, _Requests::stFREE);
 }
 
 } // namespace MPI

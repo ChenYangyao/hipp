@@ -63,7 +63,9 @@ int main(int argc, char *argv[])
     Env env(argc, argv);
     auto comm = env.world();
 
-    EnvTest(comm, env)();
+    for(int i=0; i<1000; ++i){
+        EnvTest(comm, env)();
+    }
 
     return 0;
 }

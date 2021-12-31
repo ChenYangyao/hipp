@@ -744,7 +744,7 @@ std::pair<Status, Message> Comm::mprobe(int src, int tag) const{
 }
 
 std::pair<Status, Message> Comm::improbe(int src, int tag, int &flag) const{
-    Message::mpi_t msg;
+    Message::mpi_t msg = MPI_MESSAGE_NULL;
     Status st = _obj_ptr->improbe(src, tag, flag, msg);
     return {st, Message(msg)};
 }
@@ -774,7 +774,7 @@ void Comm::gather(const void *sendbuf, void *recvbuf,
 }
 
 void Comm::gather(const ConstDatapacket &send_dpacket, void *recvbuf, 
-int root) const 
+    int root) const 
 {
     auto & [p,n,dt] = send_dpacket;
     gather(p, recvbuf, n, dt, root);

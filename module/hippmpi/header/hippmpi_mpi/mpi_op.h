@@ -1,12 +1,8 @@
 /**
- * creat: Yangyao CHEN, 2020/01/21
- *      [write   ] Op - the high-level interface class for MPI collective
- *                      computation operator.
- *          ...
- *      [modify  ]
- *      [debug   ]
- *      [comment ]
- */ 
+create: Yangyao CHEN, 2020/01/21
+    [write   ] Op - the high-level interface class for MPI collective
+        computation operator.
+*/ 
 
 #ifndef _HIPPMPI_MPI_OP_H_
 #define _HIPPMPI_MPI_OP_H_
@@ -16,56 +12,55 @@ namespace HIPP{
 namespace MPI{
     
 /**
- * the high-level interface class for MPI collective computation operator.
- * 
- * Op is the counterpart of MPI_Op, which is used in collective computation,
- * e.g. MPI_Reduce(). This class provide the life-time anto-management of an
- * MPI_Op. 
+The high-level MPI operator type.
+
+``Op`` is the counterpart of ``MPI_Op``, which is used in collective 
+computation, e.g. ``MPI_Reduce()``. 
+This class provides the life-time auto-management for an underlying MPI object.
  */
 class Op: public MPIObj<_Op>{
 public:
     typedef MPIObj<_Op> _obj_base_t;
+    
     typedef _obj_raw_t::user_fn_t user_fn_t;
-
+    
     using _obj_base_t::_obj_base_t;
     
     /**
-     * constructor
-     * Construct the Op instance by an user defined function.
-     * @user_fn:    user-defined function.
-     * @commute:    bool. Whether the operator is commutative.
-     */
+    Construct the Op instance by an user defined function.
+    @user_fn: user-defined function.
+    @commute: bool. Whether the operator is commutative.
+    */
     Op( user_fn_t user_fn, int commute );
 
     /**
-     * print some information about this instance into `os`. 
-     * @fmt_cntl:   control the amount of information to be printed. 0 for a
-     *              inline, short information, and 1 for a verbose version.
-     */
+    Print some information about this instance into `os`. 
+    @fmt_cntl: control the amount of information to be printed. 0 for a
+        inline, short information, and 1 for a verbose version.
+    */
     ostream & info( ostream &os = cout, int fmt_cntl=1 ) const;
     friend ostream & operator<<( ostream &os, const Op &op );
 
     /**
-     * free the operator in advance, an set it to null value as returned by
-     * nullval().
+    Free the operator in advance, an set it to null value as returned by
+    ``nullval()``.
      */
     void free() noexcept;
 
     /**
-     * test the properties of Op.
-     * is_null() -  whether the instance of Op is a null value.
-     * commutative() -
-     *              whether the instance of Op is commutative.
-     */
+    Test the properties of Op.
+    is_null(): whether the instance of Op is a null value.
+    commutative(): whether the instance of Op is commutative.
+    */
     bool is_null() const;
     bool commutative() const;
 
     /**
-     * create a new operator
-     * nullval() -  returns a null value.
-     * create()  -  create a user-defined operator. The argument is the same as 
-     *              the constructor of Op.
-     */
+    Create a new operator
+    nullval(): returns a null value.
+    create(): create a user-defined operator. The argument is the same as 
+        the constructor of Op.
+    */
     static Op nullval() noexcept;
     static Op create( user_fn_t user_fn, int commute );
 protected:

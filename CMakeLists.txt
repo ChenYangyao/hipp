@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.9 FATAL_ERROR)
-project(hipp LANGUAGES C CXX)
+project(hipp LANGUAGES C CXX VERSION 0.1)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -34,6 +34,13 @@ if(enable-all-module)
     set(enable-gsl ON)
 endif()
 
+set(HIPPCNTL_OFF OFF)
+set(HIPPALGORITHM_OFF OFF)
+set(HIPPNUMERICAL_OFF ON)
+set(HIPPIO_OFF ON)
+set(HIPPMPI_OFF ON)
+set(HIPPSIMD_OFF ON)
+
 # Make GSL interface target, if enabled.
 # gsl-interface target is defined.
 if(enable-gsl)
@@ -49,6 +56,9 @@ if(enable-gsl)
             INTERFACE "-lgsl" "-lgslcblas")
         prtkeyproc("GSL root not set. Environmental settings will be used.")
     endif()
+
+    set(HIPPNUMERICAL_OFF OFF)
+
 endif()
 
 # Make HDF5 interface target, if enabled.
@@ -61,6 +71,8 @@ if(enable-hdf5)
         INTERFACE ${HDF5_LIBRARIES})
     target_include_directories(hdf5-interface 
         INTERFACE ${HDF5_INCLUDE_DIRS})
+
+    set(HIPPIO_OFF OFF)
 endif()
 
 # Make MPI interface target, if enabled.
@@ -71,7 +83,14 @@ if(enable-mpi)
     find_package(MPI REQUIRED)
     target_link_libraries(mpi-interface
         INTERFACE MPI::MPI_CXX)
+
+    set(HIPPMPI_OFF OFF)
 endif(enable-mpi)
+
+if(enable-simd)
+    set(HIPPSIMD_OFF OFF)
+endif()
+
 
 add_subdirectory(module)
 

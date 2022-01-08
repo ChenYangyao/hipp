@@ -27,7 +27,7 @@ addmpitest(pack 4)
 addmpitest(datatype.test 4)
 addmpitest(virtual_topology.test 6)
 
-if(enable-hdf5)
+if(NOT HIPPIO_OFF)
     prtkeyproc("Test on hippmpi_mpprof enabled")
     addmpitest(mpprof 4)
 endif()

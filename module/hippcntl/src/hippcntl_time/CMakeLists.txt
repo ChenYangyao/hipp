@@ -18,3 +18,7 @@ target_include_directories(${_libname}
         "${_headerdir}/${_libname}"
         "${_headerdir}"
 )
+target_link_libraries(${_libname}
+PRIVATE
+    hipp-config
+)

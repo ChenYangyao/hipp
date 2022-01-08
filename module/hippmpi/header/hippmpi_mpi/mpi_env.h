@@ -5,8 +5,7 @@ create: Yangyao CHEN, 2020/01/21
 
 #ifndef _HIPPMPI_MPI_ENV_H_
 #define _HIPPMPI_MPI_ENV_H_
-#include "mpi_base.h"
-#include "mpi_error.h"
+
 #include "mpi_comm.h"
 
 #define HIPPMPI_STD_VERSION MPI_VERSION

@@ -1,12 +1,10 @@
 /**
 create: Yangyao CHEN, 2020/10/11
-    [write   ] Win - the high-level RMA window interface for MPI system
+    [write   ] Win - the high-level RMA window interface for MPI system.
 */ 
 
 #ifndef _HIPPMPI_MPI_WIN_H_
 #define _HIPPMPI_MPI_WIN_H_
-#include "mpi_raw_win.h"
-#include "mpi_obj_base.h"
 #include "mpi_datapacket.h"
 #include "mpi_op.h"
 #include "mpi_info.h"

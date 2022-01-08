@@ -6,7 +6,6 @@ create: Yangyao CHEN, 2020/01/18
 #define _HIPPMPI_MPI_COMM_H_
 
 #include "mpi_obj_base.h"
-#include "mpi_raw_comm.h"
 #include "mpi_group.h"
 #include "mpi_datapacket.h"
 #include "mpi_op.h"

@@ -6,7 +6,6 @@ create: Yangyao CHEN, 2020/01/21
 #ifndef _HIPPMPI_MPI_DATATYPE_H_
 #define _HIPPMPI_MPI_DATATYPE_H_
 #include "mpi_obj_base.h"
-#include "mpi_raw_datatype.h"
 #include <cstdint>
 #include <complex>
 namespace HIPP::MPI {

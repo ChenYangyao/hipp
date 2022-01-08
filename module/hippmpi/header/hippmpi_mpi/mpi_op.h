@@ -6,7 +6,6 @@ create: Yangyao CHEN, 2020/01/21
 
 #ifndef _HIPPMPI_MPI_OP_H_
 #define _HIPPMPI_MPI_OP_H_
-#include "mpi_raw_op.h"
 #include "mpi_obj_base.h"
 namespace HIPP{
 namespace MPI{

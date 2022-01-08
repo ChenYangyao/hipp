@@ -1,7 +1,7 @@
 /**
- * creat: Yangyao CHEN, 2020/01/15
- *      [write   ] ErrMPI - the high-level exception for MPI module
- */ 
+create: Yangyao CHEN, 2020/01/15
+    [write   ] ErrMPI - the high-level exception for MPI module
+*/ 
 
 #ifndef _HIPPMPI_MPI_ERROR_H_
 #define _HIPPMPI_MPI_ERROR_H_
@@ -10,12 +10,12 @@ namespace HIPP{
 namespace MPI{
 
 /**
- * the MPI high-level interface exception class.
- * 
- * By default, the high-level interface turns off the MPI's default error
- * handler and check the error after each MPI call returned.
- * This type of exception is thrown if a call to MPI original function returns
- * an error, and the error number is recored in the intance of this class.
+The MPI high-level interface exception class.
+
+By default, the high-level interface turns off the MPI's default error
+handler and check the error after each MPI call returned.
+This type of exception is thrown if a call to MPI original function returns
+an error, and the error number is recored in the intance of this class.
  */
 class ErrMPI: public ErrType<ErrAppMPI, ErrClassDefault>{
 public:
@@ -24,11 +24,11 @@ public:
 
 
     /**
-     * report the detail exception
-     * what():  only roughly indicating the error at application level.
-     * whats(): return the detail information, including the info associated 
-     *          witherror no.
-     */
+    Report the detail exception
+    what():  only roughly indicating the error at application level.
+    whats(): return the detail information, including the info associated 
+             witherror no.
+    */
     virtual const char *what() const noexcept override
         { return "MPI internal error"; }
     virtual string whats() const override{ 
@@ -41,14 +41,14 @@ public:
     }
 
     /**
-     * followings are defined by MPI standard, the max length an original 
-     * MPI error string (including the space for '\0'), the implementation-
-     * defined last error number (inclusive), and the last error number if
-     * user-defined error class/number is added.
-     *
-     * The MPI standard does not require the error number to be dense. That is,
-     * not all error number below last_usederrorno() is valid.
-     */
+    Followings are defined by MPI standard, the max length an original 
+    MPI error string (including the space for '\0'), the implementation-
+    defined last error number (inclusive), and the last error number if
+    user-defined error class/number is added.
+    
+    The MPI standard does not require the error number to be dense. That is,
+    not all error number below last_usederrorno() is valid.
+    */
     static size_t errmsg_maxsize() noexcept
         { return static_cast<size_t>(MPI_MAX_ERROR_STRING); }
     static errno_t last_errno() noexcept
@@ -62,8 +62,8 @@ public:
     }
 
     /**
-     * check whether an MPI original call's return is an error. If it is, call
-     * throw_().
+    Check whether an MPI original call's return is an error. If it is, call
+    ``throw_()``.
      */
     template<typename ...Args>
     static void check( errno_t e, Args &&... args ){
@@ -71,13 +71,13 @@ public:
             throw_( e, std::forward<Args>(args)... );
     }
     /**
-     * Print info `args` to std::cerr, and directly throw an error with error 
-     * number `e`.
-     * The priting can be turned off by calling err_cntl_flag(0), or turned on 
-     * by calling err_cntl_flag(1).
-     * 
-     * print_err() - just print, do not throw.
-     */ 
+    Print info `args` to std::cerr, and directly throw an error with error 
+    number `e`.
+    The priting can be turned off by calling err_cntl_flag(0), or turned on 
+    by calling err_cntl_flag(1).
+    
+    print_err(): just print, do not throw.
+    */ 
     template<typename ...Args>
     static void throw_( errno_t e, Args &&... args ){
         print_err(std::forward<Args>(args)...);
@@ -89,11 +89,11 @@ public:
             prints(std::forward<Args>(args)... );
     }
     /**
-     * directly abort the program.
-     * By default, only the un-recoverable error calls abort() in the high-level
-     * interfalce. Typically an error when deconstructing a MPI internal object
-     * is un-recoverable, and causes the high-level interface abort the program.
-     */
+    Directly abort the program.
+    By default, only the un-recoverable error calls abort() in the high-level
+    interfalce. Typically an error when deconstructing a MPI internal object
+    is un-recoverable, and causes the high-level interface abort the program.
+    */
     template<typename ...Args>
     static void abort( errno_t e, Args &&... args ){
         prints(std::forward<Args>(args)... );

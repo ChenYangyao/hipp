@@ -1,7 +1,6 @@
 #ifndef _HIPPMPI_MPI_FILE_H_
 #define _HIPPMPI_MPI_FILE_H_
 #include "mpi_obj_base.h"
-#include "mpi_raw_file.h"
 #include "mpi_comm.h"
 #include "mpi_info.h"
 namespace HIPP{

@@ -5,8 +5,9 @@ create: Yangyao CHEN, 2020/01/22
 
 #ifndef _HIPPMPI_MPI_REQUESTS_H_
 #define _HIPPMPI_MPI_REQUESTS_H_
-#include "mpi_obj_base.h"
-#include "mpi_raw_requests.h"
+
+#include "mpi_status.h"
+
 namespace HIPP{
 namespace MPI{
     

@@ -6,7 +6,6 @@ create: Yangyao CHEN, 2020/01/21
 #define _HIPPMPI_MPI_RAW_REQUESTS_H_
 #include "mpi_base.h"
 #include "mpi_error.h"
-#include "mpi_status.h"
 
 namespace HIPP::MPI {
 
@@ -43,18 +42,18 @@ public:
     void start(int i);
     void startall();
 
-    Status::mpi_t wait();
-    Status::mpi_t wait(int i);
-    Status::mpi_t test(int &flag);
-    Status::mpi_t test(int i, int &flag);
-    Status::mpi_t status(int &flag) const;
-    Status::mpi_t status(int i, int &flag) const;
-    Status::mpi_t waitany(int &index);
-    Status::mpi_t testany(int &index, int &flag);
-    void waitall(Status::mpi_t *statuses);
-    void testall(int &flag, Status::mpi_t *statuses);
-    void waitsome(int &count, int *indices, Status::mpi_t *statuses);
-    void testsome(int &count, int *indices, Status::mpi_t *statuses);
+    MPI_Status wait();
+    MPI_Status wait(int i);
+    MPI_Status test(int &flag);
+    MPI_Status test(int i, int &flag);
+    MPI_Status status(int &flag) const;
+    MPI_Status status(int i, int &flag) const;
+    MPI_Status waitany(int &index);
+    MPI_Status testany(int &index, int &flag);
+    void waitall(MPI_Status *statuses);
+    void testall(int &flag, MPI_Status *statuses);
+    void waitsome(int &count, int *indices, MPI_Status *statuses);
+    void testsome(int &count, int *indices, MPI_Status *statuses);
     void cancel();
     void cancel(int i);
 protected:
@@ -162,66 +161,66 @@ inline void _Requests::startall() {
         emFLPFB, "  ... try to start ", n_rqs, " requests\n");
 }
 
-inline Status::mpi_t _Requests::wait() { 
+inline MPI_Status _Requests::wait() { 
     return wait(0); 
 }
 
-inline Status::mpi_t _Requests::wait(int i) {
-    Status::mpi_t st;
+inline MPI_Status _Requests::wait(int i) {
+    MPI_Status st;
     ErrMPI::check( MPI_Wait(&_vals[i], &st), emFLPFB );
     return st;
 }
 
-inline Status::mpi_t _Requests::test(int &flag) { 
+inline MPI_Status _Requests::test(int &flag) { 
     return test(0, flag); 
 }
 
-inline Status::mpi_t _Requests::test(int i, int &flag) {
-    Status::mpi_t st;
+inline MPI_Status _Requests::test(int i, int &flag) {
+    MPI_Status st;
     ErrMPI::check( MPI_Test(&_vals[i], &flag, &st), emFLPFB );
     return st;
 }
 
-inline Status::mpi_t _Requests::status(int &flag) const { 
+inline MPI_Status _Requests::status(int &flag) const { 
     return status(0, flag); 
 }
 
-inline Status::mpi_t _Requests::status(int i, int &flag) const {
-    Status::mpi_t st;
+inline MPI_Status _Requests::status(int i, int &flag) const {
+    MPI_Status st;
     ErrMPI::check( MPI_Request_get_status(
         _vals[i], &flag, &st), emFLPFB );
     return st;
 }
 
-inline Status::mpi_t _Requests::waitany(int &index) {
-    Status::mpi_t st;
+inline MPI_Status _Requests::waitany(int &index) {
+    MPI_Status st;
     ErrMPI::check( 
         MPI_Waitany(_vals.size(), _vals.data(), &index, &st), emFLPFB );
     return st;
 }
 
-inline Status::mpi_t _Requests::testany(int &index, int &flag) {
-    Status::mpi_t st;
+inline MPI_Status _Requests::testany(int &index, int &flag) {
+    MPI_Status st;
     ErrMPI::check(
         MPI_Testany(_vals.size(), _vals.data(), &index, &flag, &st), 
         emFLPFB );
     return st;
 }
 
-inline void _Requests::waitall( Status::mpi_t *statuses ) {
+inline void _Requests::waitall( MPI_Status *statuses ) {
     ErrMPI::check(
         MPI_Waitall(_vals.size(), _vals.data(), statuses), 
         emFLPFB );
 }
 
-inline void _Requests::testall( int &flag, Status::mpi_t *statuses ) {
+inline void _Requests::testall( int &flag, MPI_Status *statuses ) {
     ErrMPI::check(
         MPI_Testall(_vals.size(), _vals.data(), &flag, statuses), 
         emFLPFB );
 }
 
 inline void _Requests::waitsome( int &count, int *indices, 
-    Status::mpi_t *statuses )
+    MPI_Status *statuses )
 {
     ErrMPI::check(
         MPI_Waitsome(_vals.size(), _vals.data(), &count, indices, statuses),
@@ -229,7 +228,7 @@ inline void _Requests::waitsome( int &count, int *indices,
 }
 
 inline void _Requests::testsome( int &count, int *indices, 
-    Status::mpi_t *statuses )
+    MPI_Status *statuses )
 {
     ErrMPI::check(
         MPI_Testsome(_vals.size(), _vals.data(), &count, indices, statuses),

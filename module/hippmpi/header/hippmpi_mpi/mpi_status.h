@@ -5,7 +5,6 @@ create: Yangyao CHEN, 2020/01/18
 
 #ifndef _HIPPMPI_MPI_STATUS_H_
 #define _HIPPMPI_MPI_STATUS_H_
-#include "mpi_obj_base.h"
 #include "mpi_datapacket.h"
 namespace HIPP{
 namespace MPI{

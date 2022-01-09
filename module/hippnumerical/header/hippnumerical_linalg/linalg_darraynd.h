@@ -487,7 +487,8 @@ protected:
     bool _is_null() const noexcept { return ! _not_null(); }
 
     template<typename ...SizeTs>
-    size_t _indices_to_pos(size_t prev, size_t id0, SizeTs ...ids) noexcept;
+    size_t _indices_to_pos(size_t prev, size_t id0, 
+        SizeTs ...ids) const noexcept;
     
     /* Copy b, e to _data, without any checking. */
     template<typename It>
@@ -1174,7 +1175,7 @@ _HIPP_TEMPRET _dealloc() noexcept -> void {
 _HIPP_TEMPHD
 template<typename ...SizeTs>
 size_t _HIPP_TEMPCLS::_indices_to_pos(size_t prev, 
-    size_t id0, SizeTs ...ids) noexcept 
+    size_t id0, SizeTs ...ids) const noexcept 
 {
     constexpr size_t rem_rank = sizeof...(SizeTs);
     if constexpr ( rem_rank == 0 ) {

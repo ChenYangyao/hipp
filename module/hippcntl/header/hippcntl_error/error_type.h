@@ -10,6 +10,7 @@
 #define _HIPPCNTL_ERROR_TYPE_H_
 #include "error_application.h"
 #include "error_class.h"
+#include "../hippcntl_stream/stream_pretty.h"
 namespace HIPP{
 
 /**
@@ -58,10 +59,10 @@ protected:
 
     template<typename Arg, typename ...Args>
     static void prints( Arg &&arg, Args && ...args ) noexcept
-        { cerr << std::forward<Arg>(arg); prints( std::forward<Args>(args)... ); }
+        { perr << std::forward<Arg>(arg); prints( std::forward<Args>(args)... ); }
     template<typename Arg>
     static void prints( Arg &&arg ) noexcept
-        { cerr << std::forward<Arg>(arg) << endl; }
+        { perr << std::forward<Arg>(arg), endl; }
     static void prints() noexcept {}
 };
 

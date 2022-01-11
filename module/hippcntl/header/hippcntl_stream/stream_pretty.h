@@ -5,8 +5,9 @@ create: Yangyao CHEN, 2021/06/01
 
 #ifndef _HIPPCNTL_STREAM_PRETTY_H_
 #define _HIPPCNTL_STREAM_PRETTY_H_
-#include "stream_base.h"
-#include "stream_fmt_io.h"
+
+#include "../hippcntl_incl/incl.h"
+
 namespace HIPP {
 
 namespace _hippcntl_stream_pretty_helper {
@@ -23,6 +24,13 @@ public:
         /* The type matching for a pair of iterators. */
         It b, e;
         it_pair_t(It _b, It _e): b(_b), e(_e) {} 
+    };
+
+    template<typename CB>
+    struct call_back_t {
+        /* The type matching for a callable on ostream. */
+        CB cb;
+        call_back_t(CB _cb) : cb(_cb) {}
     };
 
     explicit StreamOperand(ostream &os) noexcept;
@@ -80,6 +88,8 @@ public:
     StreamOperand & operator,(const std::tuple<Ts...> &tpl);
     template<typename It>
     StreamOperand & operator,(const it_pair_t<It> &it_pair);
+    template<typename CB>
+    StreamOperand & operator,(call_back_t<CB> cb);
 
 
     /**
@@ -154,7 +164,12 @@ public:
     int *a = new int [N];
     */
     template<typename It>
-    stream_op_t::it_pair_t<It> operator()(It b, It e){ return {b, e}; }
+    stream_op_t::it_pair_t<It> operator()(It b, It e)
+        { return {b, e}; }
+
+    template<typename CB>
+    stream_op_t::call_back_t<CB> operator()(CB &&cb) 
+        { return {std::forward<CB>(cb)}; }
     
     /* Return a reference to the internal std::ostream object. */
     ostream & get_stream() const noexcept { return _op.get_stream(); }
@@ -280,6 +295,12 @@ _HIPP_TEMPRET operator,(const it_pair_t<It> &it_pair) -> StreamOperand & {
     return _prt_range(it_pair.b, it_pair.e);
 }
 
+template<typename CB>
+_HIPP_TEMPRET operator,(call_back_t<CB> cb) -> StreamOperand & {
+    cb.cb(_os);
+    return *this;
+}
+
 template<typename T>
 _HIPP_TEMPRET operator,(const T &x) -> StreamOperand & { 
     return _prt_any(x);
@@ -325,7 +346,8 @@ _HIPP_TEMPRET _prt_any(const T &x) -> StreamOperand & {
 
 template<typename T, typename ...Args>
 _HIPP_TEMPRET _prt_any(const T &x, const Args & ...args) -> StreamOperand & {
-    _os << "<" << typeid(x).name() << " instance at " << (void *)&x << ">";
+    _os << "<" << typeid(x).name() << "> {" 
+        << (void *)&x << ", size=" << sizeof(T) << "}";
     return *this;
 }
 

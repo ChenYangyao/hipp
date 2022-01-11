@@ -59,7 +59,8 @@ TEST_F(CntlStreamPStreamTest, AnyType) {
     B b;
     ps << "B: ", b, '\n';
     string expected_s = str("A: A instance\n", 
-        "B: <", typeid(b).name()," instance at ", (void *)&b, ">\n");
+        "B: <", typeid(b).name(),"> {", (void *)&b, 
+        ", size=", sizeof(B), "}\n");
     ASSERT_EQ(os.str(), expected_s);
 }
 

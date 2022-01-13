@@ -23,8 +23,18 @@ public:
     File( const Comm &comm, const string &name, 
         const string &amode, const Info &info = Info::nullval() );
 
-    ostream &info( ostream &os = cout, int fmt_cntl = 1 ) const;
-    friend ostream & operator<<( ostream &os, const File &file );
+    /**
+    ``info()`` prints a short (``fmt_cntl=0``) or a verbose (``fmt_cntl=1``) 
+    description of the current instance to the stream ``os``.
+    Larger ``level`` produces more indents.
+
+    Operator ``<<`` is equivalent to ``info()`` with default ``fmt_cntl`` and
+    ``level``.
+
+    The passed stream ``os`` is returned.
+    */
+    ostream &info(ostream &os = cout, int fmt_cntl = 0, int level = 0) const;
+    friend ostream & operator<<(ostream &os, const File &file);
 
     void close() noexcept;
     static void del(const string &name, const Info &info = Info::nullval());
@@ -135,7 +145,7 @@ protected:
     static int _from_whencestr( const string &whence );
 };
 
-inline ostream & operator<<( ostream &os, const File &file ){
+inline ostream & operator<<(ostream &os, const File &file){
     return file.info(os);
 }
 

@@ -5,19 +5,20 @@ namespace HIPP::MPI {
 Requests::Requests()
 : _obj_base_t( std::make_shared<_obj_raw_t>() ) {}
 
-ostream & Requests::info( ostream &os, int fmt_cntl ) const {
-    if(fmt_cntl == 0 ){
-        prt( os, 
-            HIPPCNTL_CLASS_INFO_INLINE(HIPP::MPI::Requests),
-            "no. of requests: ", size() );
+ostream & Requests::info(ostream &os, int fmt_cntl, int level) const {
+    PStream ps {os};
+    int sz = size();
+    if(fmt_cntl == 0){
+        ps << HIPPCNTL_CLASS_INFO_INLINE(Requests), "{no. requests=", sz, '}';
+        return os;
     }
-    if(fmt_cntl >= 1){
-        prt( os, HIPPCNTL_CLASS_INFO(HIPP::MPI::Requests) );
-        int cntnull = 0;
-        for(int i=0; i<size(); ++i) cntnull += is_null(i);
-        prt( os, "  Requests (no.=", size(), ", no. null=", cntnull, ")") 
-            << endl;
-    }
+    
+    auto ind = HIPPCNTL_CLASS_INFO_INDENT_STR(level);
+    int cnt_null = 0;
+    for(int i=0; i<sz; ++i) cnt_null += is_null(i);
+    
+    ps << HIPPCNTL_CLASS_INFO(Requests), 
+        ind, "No. requests=", sz, ", ", cnt_null, " NULLs\n";
     return os;
 }
 

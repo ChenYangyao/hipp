@@ -33,12 +33,17 @@ public:
     Op( user_fn_t user_fn, int commute );
 
     /**
-    Print some information about this instance into `os`. 
-    @fmt_cntl: control the amount of information to be printed. 0 for a
-        inline, short information, and 1 for a verbose version.
+    ``info()`` prints a short (``fmt_cntl=0``) or a verbose (``fmt_cntl=1``) 
+    description of the current instance to the stream ``os``.
+    Larger ``level`` produces more indents.
+
+    Operator ``<<`` is equivalent to ``info()`` with default ``fmt_cntl`` and
+    ``level``.
+
+    The passed stream ``os`` is returned.
     */
-    ostream & info( ostream &os = cout, int fmt_cntl=1 ) const;
-    friend ostream & operator<<( ostream &os, const Op &op );
+    ostream &info(ostream &os = cout, int fmt_cntl = 0, int level = 0) const;
+    friend ostream & operator<<(ostream &os, const Op &op);
 
     /**
     Free the operator in advance, an set it to null value as returned by
@@ -66,7 +71,7 @@ protected:
     static Op _from_raw( mpi_t op, int state ) noexcept;
 };
 
-inline ostream & operator<<( ostream &os, const Op &op ){
+inline ostream & operator<<(ostream &os, const Op &op){
     return op.info(os);
 }
 inline Op Op::_from_raw( mpi_t op, int state ) noexcept{

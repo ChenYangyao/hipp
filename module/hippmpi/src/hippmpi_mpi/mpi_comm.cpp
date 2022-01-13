@@ -10,14 +10,17 @@ const Comm::del_attr_fn_t Comm::NULL_DEL_FN = Comm::_null_del_fn;
 
 std::unordered_map<int, Comm::_attr_extra_state_t *> Comm::_attr_extra_state; 
 
-ostream & Comm::info( ostream &os, int fmt_cntl ) const{
+ostream & Comm::info(ostream &os, int fmt_cntl, int level) const {
     PStream ps {os};
     bool null_comm = is_null();
+    
     if( null_comm ) {
-        if( fmt_cntl == 0 )
-            ps << "Comm{Null}";
-        else
-            ps << HIPPCNTL_CLASS_INFO(HIPP::MPI::Comm), "  Null\n"; 
+        if( fmt_cntl == 0 ) {
+            ps << HIPPCNTL_CLASS_INFO_INLINE(Comm), " {NULL}";
+        } else {
+            auto ind = HIPPCNTL_CLASS_INFO_INDENT_STR(level);
+            ps << HIPPCNTL_CLASS_INFO(Comm), ind, "NULL\n"; 
+        }
         return os;
     }
 
@@ -26,24 +29,33 @@ ostream & Comm::info( ostream &os, int fmt_cntl ) const{
     const int topo = topo_test();
     auto topos = _topostr(topo);
     if(fmt_cntl == 0) {
-        ps << "Comm{size=", _size, ", rank=", _rank, ", topology=", topos;
+        ps << HIPPCNTL_CLASS_INFO_INLINE(Comm), 
+            "{group size=", _size, ", rank=", _rank, ", topology=", topos;
         if( inter_comm )
-            ps << ", remote size=", remote_size();
+            ps << ", remote group size=", remote_size();
         ps << "}";
         return os;
     }
 
-    ps << HIPPCNTL_CLASS_INFO(HIPP::MPI::Comm),
-        "  Process group{size=", _size, ", rank=", _rank;
+    auto ind = HIPPCNTL_CLASS_INFO_INDENT_STR(level);
+    ps << HIPPCNTL_CLASS_INFO(Comm),
+        ind, "Process group {group size=", _size, ", rank=", _rank;
     if( inter_comm )
-        ps << ", remote size=", remote_size();
+        ps << ", remote group size=", remote_size();
     ps << "}\n",
-        "  Topology{", topos;
+        ind, "Topology {", topos;
     if( topo == CART ) {
         vector<int> dims, periods, coords;
         cart_get(dims, periods, coords);
         ps << ", ndims=", dims.size(), ", dims={", dims, 
             "}, periods={", periods, "}, coords={", coords, "}";
+    } else if( topo == GRAPH ) {
+        int n_ngbs = graph_neighbors_count(_rank);
+        ps << ", neighbors count=", n_ngbs;
+    } else if( topo == DIST_GRAPH ) {
+        auto [in_deg, out_deg, wgt] = dist_graph_neighbors_count();
+        ps << ", in degree=", in_deg, ", out degree=", out_deg, ", weighted=",
+            wgt;
     }
     ps << "}\n";
     return os;

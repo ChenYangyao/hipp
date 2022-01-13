@@ -41,16 +41,17 @@ public:
     Requests();
     
     /**
-    info(): display some basic information about the requests into ``os``. 
-    ``os`` itself is returned.
+    ``info()`` prints a short (``fmt_cntl=0``) or a verbose (``fmt_cntl=1``) 
+    description of the current instance to the stream ``os``.
+    Larger ``level`` produces more indents.
 
-    @fmt_cntl: Control the display format. 0 for inline information. 1 for a 
-    verbose, multiple-line information.
+    Operator ``<<`` is equivalent to ``info()`` with default ``fmt_cntl`` and
+    ``level``.
 
-    ``operator<<`` is equivalent to ``info()`` with default ``fmt_cntl``.
+    The passed stream ``os`` is returned.
     */
-    ostream &info( ostream &os = cout, int fmt_cntl = 1 ) const;
-    friend ostream & operator<<( ostream &os, const Requests &rqs );
+    ostream &info(ostream &os = cout, int fmt_cntl = 0, int level = 0) const;
+    friend ostream & operator<<(ostream &os, const Requests &rqs);
 
     /**
     free(): free all requests in this instance, and set the current instance to 
@@ -190,7 +191,7 @@ protected:
     friend class Message;
 };
 
-inline ostream & operator<<( ostream &os, const Requests &rqs ){
+inline ostream & operator<<(ostream &os, const Requests &rqs){
     return rqs.info(os);
 }
 

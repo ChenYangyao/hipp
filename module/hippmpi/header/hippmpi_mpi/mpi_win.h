@@ -58,7 +58,17 @@ public:
         FLAVOR_SHARED=MPI_WIN_FLAVOR_SHARED
     };
 
-    ostream &info(ostream &os = cout, int fmt_cntl = 1)const;
+    /**
+    ``info()`` prints a short (``fmt_cntl=0``) or a verbose (``fmt_cntl=1``) 
+    description of the current instance to the stream ``os``.
+    Larger ``level`` produces more indents.
+
+    Operator ``<<`` is equivalent to ``info()`` with default ``fmt_cntl`` and
+    ``level``.
+
+    The passed stream ``os`` is returned.
+    */
+    ostream &info(ostream &os = cout, int fmt_cntl = 0, int level = 0) const;
     friend ostream & operator<<(ostream &os, const Win &win);
 
     /**

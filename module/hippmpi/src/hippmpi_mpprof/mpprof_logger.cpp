@@ -4,9 +4,15 @@
 namespace HIPP::MPI {
 namespace _mpprof_logger_helper {
 
-ostream & msg_t::info(ostream &os, int fmt_cntl) const {
-    os << "<msg_t> (msg=\"" << _msg << "\")";
-    if( fmt_cntl ) os << '\n';
+ostream & msg_t::info(ostream &os, int fmt_cntl, int level) const {
+    PStream ps {os};
+    if( fmt_cntl == 0 ) {
+        ps << HIPPCNTL_CLASS_INFO_INLINE(Logger::msg_t), "{msg=", _msg, '}';
+    } else {
+        auto ind = HIPPCNTL_CLASS_INFO_INDENT_STR(level);  
+        ps << HIPPCNTL_CLASS_INFO(Logger::msg_t),
+            ind, "Msg=", _msg, '\n';
+    }
     return os;
 }
 
@@ -31,11 +37,17 @@ msg(_msg.as_str())
     }
 }
 
-ostream & group_t::info(ostream &os, int fmt_cntl) const {
-    PStream p(os);
-    p << "<group_t> (id=", id, ", msg=\"", msg, 
-        "\", ranks=[", ranks_in_global, "])"; 
-    if( fmt_cntl ) p << '\n';
+ostream & group_t::info(ostream &os, int fmt_cntl, int level) const {
+    PStream ps {os};
+    if( fmt_cntl == 0 ) {
+        ps << HIPPCNTL_CLASS_INFO_INLINE(Logger::group_t), 
+            "{id=", id, ", msg=", msg, ", ranks={", ranks_in_global, "}}";
+    } else {
+        auto ind = HIPPCNTL_CLASS_INFO_INDENT_STR(level);  
+        ps << HIPPCNTL_CLASS_INFO(Logger::group_t),
+            ind, "Id=", id, ", msg=", msg, '\n',
+            ind, "Ranks in global={", ranks_in_global, "}\n";
+    }
     return os;
 }
 
@@ -69,12 +81,20 @@ p2p_match_id(_p2p_match_id), access(USER_CALL), msg(_msg.as_str())
             ", ", p2p_match_id, ")\n");
     }
 }
-ostream & state_t::info(ostream &os, int fmt_cntl) const {
-    PStream p(os);
-    p << "<state_t> (id=", id, ", type=", type, ", group_id=", group_id, 
-        ", p2p_port=", p2p_port, ", p2p_match_id=", p2p_match_id,
-        ", access=", access, ", msg=\"", msg, "\")";
-    if( fmt_cntl ) p << '\n';
+ostream & state_t::info(ostream &os, int fmt_cntl, int level) const {
+    PStream ps {os};
+    if( fmt_cntl == 0 ) {
+        ps << HIPPCNTL_CLASS_INFO_INLINE(Logger::state_t), 
+            "{id=", id, ", type=", type, ", group_id=", group_id, 
+            ", P2P port=", p2p_port, ", P2P match_id=", p2p_match_id,
+            ", access=", access, ", msg=\"", msg, "\"}";
+    } else {
+        auto ind = HIPPCNTL_CLASS_INFO_INDENT_STR(level);  
+        ps << HIPPCNTL_CLASS_INFO(Logger::state_t),
+            ind, "Id=", id, ", type=", type, ", group_id=", group_id, '\n',
+            ind, "P2P port=", p2p_port, ", P2P match id=", p2p_match_id, '\n',
+            ind, "Access=", access, ", msg=\"", msg, "\"\n";
+    }
     return os;
 }
 IO::H5::XTable<state_t> state_t::_tbl_manip {
@@ -85,12 +105,21 @@ IO::H5::XTable<state_t> state_t::_tbl_manip {
     "p2p_match_id", &state_t::p2p_match_id,
     "access", &state_t::access
 };
-ostream & event_t::info(ostream &os, int fmt_cntl) const {
-    PStream p(os);
-    p << "<event_t> (id=", id, ", msg_bpos=", msg_bpos, ", state_id=", state_id, 
-        ", p2p_dest=", p2p_dest, ", p2p_tag=", p2p_tag, 
-        "epoch=[", epoch_begin, ", ", epoch_end, "])";
-    if( fmt_cntl ) p << '\n';
+ostream & event_t::info(ostream &os, int fmt_cntl, int level) const {
+    PStream ps {os};
+    if( fmt_cntl == 0 ) {
+        ps << HIPPCNTL_CLASS_INFO_INLINE(Logger::event_t), 
+            "{id=", id, ", msg_bpos=", msg_bpos, ", state_id=", state_id, 
+            ", P2P dest=", p2p_dest, ", P2P tag=", p2p_tag, 
+            ", epoch=(", epoch_begin, ", ", epoch_end, ")}";
+    } else {
+        auto ind = HIPPCNTL_CLASS_INFO_INDENT_STR(level);  
+        ps << HIPPCNTL_CLASS_INFO(Logger::event_t),
+            ind, "Id=", id, ", msg_bpos=", msg_bpos, 
+                ", state_id=", state_id, '\n', 
+            ind, "P2P dest=", p2p_dest, ", P2P tag=", p2p_tag, '\n',
+            ind, "Epoch=(", epoch_begin, ", ", epoch_end, ")}\n";
+    }
     return os;
 }
 IO::H5::XTable<event_t> event_t::_tbl_manip {
@@ -102,21 +131,36 @@ IO::H5::XTable<event_t> event_t::_tbl_manip {
     "epoch_begin", &event_t::epoch_begin,
     "epoch_end", &event_t::epoch_end
 };
-ostream & stored_event_t::info(ostream &os, int fmt_cntl) const {
-    PStream p(os);
-    p << "<stored_event_t> (stored_id=", stored_id, 
-        ", stored_epoch_end=", stored_epoch_end, ")";
-    if( fmt_cntl ) p << '\n';
+ostream & stored_event_t::info(ostream &os, int fmt_cntl, int level) const {
+    PStream ps {os};
+    if( fmt_cntl == 0 ) {
+        ps << HIPPCNTL_CLASS_INFO_INLINE(Logger::stored_event_t), 
+            "{stored_id=", stored_id, 
+            ", stored_epoch_end=", stored_epoch_end, "}";
+    } else {
+        auto ind = HIPPCNTL_CLASS_INFO_INDENT_STR(level);  
+        ps << HIPPCNTL_CLASS_INFO(Logger::stored_event_t),
+            ind, "Stored id=", stored_id, 
+                ", stored epoch end=", stored_epoch_end, '\n';
+            
+    }
     return os;
 }
 IO::H5::XTable<stored_event_t> stored_event_t::_tbl_manip {
     "stored_id", &stored_event_t::stored_id,
     "stored_epoch_end", &stored_event_t::stored_epoch_end
 };
-ostream & guard_t::info(ostream &os, int fmt_cntl) const {
-    PStream p(os);
-    p << "<guard_t> (event_id=", _event_id, ")";
-    if( fmt_cntl ) p << '\n';
+ostream & guard_t::info(ostream &os, int fmt_cntl, int level) const {
+    PStream ps {os};
+    if( fmt_cntl == 0 ) {
+        ps << HIPPCNTL_CLASS_INFO_INLINE(Logger::guard_t), 
+            "{event_id=", _event_id, "}";
+    } else {
+        auto ind = HIPPCNTL_CLASS_INFO_INDENT_STR(level);  
+        ps << HIPPCNTL_CLASS_INFO(Logger::guard_t),
+            ind, "Event id=", _event_id, '\n';
+            
+    }
     return os;
 }
 state_manager_t::state_manager_t(Comm global_comm) 
@@ -132,22 +176,36 @@ _global_mtx(_global_comm)
     state(se).mark_as_reserve();
 }
 state_manager_t::~state_manager_t(){}
-ostream & state_manager_t::info(ostream &os, int fmt_cntl) const {
-    PStream p(os);
-    p << "<state_manager_t> (global group size=", n_groups(), 
-        ", no. groups=", _groups.size(), ", no. states=", n_states(), ")";
-    if( fmt_cntl ) p << '\n';
-    if( fmt_cntl >= 2 ) {
-        if( n_groups() > 0 ){
-            p << "  |- groups:\n";
-            for(auto &g: _groups)
-                p << "     ", g;
+ostream & state_manager_t::info(ostream &os, int fmt_cntl, int level) const {
+    PStream ps {os};
+    auto n_grps = n_groups(), n_st = n_states();
+    if( fmt_cntl == 0 ) {
+        ps << HIPPCNTL_CLASS_INFO_INLINE(Logger::state_manager_t), 
+            "{no. groups=", n_grps, ", no. states=", n_st, "}";
+    } else {
+        auto ind = HIPPCNTL_CLASS_INFO_INDENT_STR(level);  
+        string ind_less(' ', ind.size()),
+            ind_more(' ', ind.size()+HIPPCNTL_CLASS_INFO_INDENT);
+        ps << HIPPCNTL_CLASS_INFO(Logger::state_manager_t),
+            ind, n_grps, " groups";
+        if( n_grps > 0 ) {
+            ps << " {\n", ind_more, _groups[0];
+            for(size_t i=1; i<n_grps; ++i){
+                ps << ",\n", ind_more, _groups[i];
+            }
+            ps << '\n', ind_less, '}';
         }
-        if( n_states() > 0 ){
-            p << "  |- states:\n";
-            for(auto &s: _states)
-                p << "     ", s;
+        ps << '\n';
+        ps << ind, n_st, " states";
+        if( n_st > 0 ) {
+            ps << "{\n", ind_more, _states[0];
+            for(size_t i=1; i<n_st; ++i){
+                ps << ",\n", ind_more, _states[i];
+            }
+            ps << '\n', ind_less, '}';
         }
+        ps << '\n';
+            
     }
     return os;
 }
@@ -245,20 +303,23 @@ Logger::~Logger() {
     }
 }
 
-ostream & Logger::info(ostream &os, int fmt_cntl) const {
-    PStream p(os);
-    if( fmt_cntl <= 0 ) {
-        p <<HIPPCNTL_CLASS_INFO_INLINE(HIPP::MPI::Logger);
+ostream & Logger::info(ostream &os, int fmt_cntl, int level) const {
+    PStream ps(os);
+    if( fmt_cntl == 0 ) {
+        ps << HIPPCNTL_CLASS_INFO_INLINE(Logger), "{state manager=", *_sm, 
+            "log file name=", _logfilename, ", no, stores=", _n_stores,
+            ", no. events=", _events.size(), '}';
         return os;
     }
-    p <<HIPPCNTL_CLASS_INFO(HIPP::MPI::Logger), 
-        "  |- "; _sm->info(os, std::max(fmt_cntl, 1)); 
-    p <<"  |- logfilename=", _logfilename, "\n"
-        "  |- no. stores=", _n_stores, 
-            ", first_event_id=", _first_event_id, "\n"
-        "  |- no. events=", _events.size(), 
-            ", no, stored_events=", _stored_events.size(), "\n"
-        "  |- buff size=", buff_size(), "\n";
+    auto ind = HIPPCNTL_CLASS_INFO_INDENT_STR(level);  
+    ps <<HIPPCNTL_CLASS_INFO(Logger), 
+        ind, "State manager="; _sm->info(os, fmt_cntl, level+1); 
+    ps << ind, "Log file name=", _logfilename, '\n',
+         ind, "No. stores=", _n_stores, 
+            ", first event id=", _first_event_id, '\n',
+         ind, "No. events=", _events.size(), 
+            ", no, stored_events=", _stored_events.size(), '\n',
+         ind, "Buff size=", buff_size(), '\n';
     return os;
 }
 

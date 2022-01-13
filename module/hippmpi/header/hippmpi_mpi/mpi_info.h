@@ -36,17 +36,18 @@ public:
     Info();
 
     /**
-    Display some basic information of the info instance to `os`
-    @fmt_cntl:   control the display format. 0 for inline information and 1
-                 for a verbose, multiple-line information including all 
-                 key-value pairs.
-    The `os` object is returned.
-    
-    The overloaded ``<<`` operator is equivalent to info() with the default 
-    ``fmt_cntl``.
-     */
-    ostream & info( ostream &os = cout, int fmt_cntl = 1 ) const;
-    friend ostream & operator<<( ostream &os, const Info &info );
+    ``info()`` prints a short (``fmt_cntl=0``) or a verbose (``fmt_cntl=1``) 
+    description of the current instance to the stream ``os``.
+    The verbose version prints all key-value pairs.
+    Larger ``level`` produces more indents.
+
+    Operator ``<<`` is equivalent to ``info()`` with default ``fmt_cntl`` and
+    ``level``.
+
+    The passed stream ``os`` is returned.
+    */
+    ostream &info(ostream &os = cout, int fmt_cntl = 0, int level = 0) const;
+    friend ostream & operator<<(ostream &os, const Info &info);
 
     /**
     Free the current info object and set it to null value as returned by
@@ -92,16 +93,16 @@ public:
     get_nkeys(): get number of keys.
     get_nthkey(): return the n-th key.
     */
-    bool get( const string &key, string &val ) const;
-    string get( const string &key ) const;
-    item_t get( int n ) const; 
+    bool get(const string &key, string &val) const;
+    string get(const string &key) const;
+    item_t get(int n) const; 
     vector<item_t> get() const;
-    string operator[]( const string &key ) const;
-    item_t operator[]( int n ) const;
+    string operator[](const string &key) const;
+    item_t operator[](int n) const;
 
-    bool get_valuelen( const string &key, int &len ) const;
+    bool get_valuelen(const string &key, int &len) const;
     int get_nkeys() const;
-    string get_nthkey( int n ) const;
+    string get_nthkey(int n) const;
 
     /**
     Duplicate the info object, create a new empty info object, or get a 
@@ -121,8 +122,8 @@ inline Info Info::_from_raw( mpi_t info, int state ) noexcept{
     return Info( std::make_shared<_obj_raw_t>(info, state) );
 }
 
-inline ostream & operator<<( ostream &os, const Info &info ){
-    return info.info( os );
+inline ostream & operator<<(ostream &os, const Info &info){
+    return info.info(os);
 }
 
 }

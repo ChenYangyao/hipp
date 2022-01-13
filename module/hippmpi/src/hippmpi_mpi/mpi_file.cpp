@@ -8,50 +8,45 @@ File::File( const Comm &comm, const string &name,
         _from_modestr(amode), info.raw()), 1 ) )
 {}
 
-ostream &File::info( ostream &os, int fmt_cntl ) const{
+ostream &File::info(ostream &os, int fmt_cntl, int level) const {
+    PStream ps(os);
+    bool _is_null = is_null();
     if( fmt_cntl == 0 ){
-        prt(os, HIPPCNTL_CLASS_INFO_INLINE(HIPP::MPI::File));
-        if( is_null() ) prt(os, "Null");
+        ps << HIPPCNTL_CLASS_INFO_INLINE(File), "{";
+        if( _is_null ) ps << "NULL";
         else{
             auto size = get_size();
             auto group = get_group();
             auto amode = get_amode();
-            prt(os, "size: ", size, " no. of participant processes: ", 
-                group.size(), " access mode: ", amode);
+            ps << "size=", size, ", group=", group, ", access mode=", amode;
         }
+        ps << "}";
+        return os;
     }
-    if( fmt_cntl >= 1 ){
-        prt(os, HIPPCNTL_CLASS_INFO(HIPP::MPI::File));
-        if( is_null() ) prt(os, " Null");
-        else{
-            auto size = get_size();
-            auto group = get_group();
-            auto amode = get_amode();
-            auto _info = get_info();
-            offset_t disp;
-            Datatype et, ft;
-            string datarep;
-            get_view(disp, et, ft, datarep);
-            int atom = get_atomicity();
-            prt(os, "  File info" 
-                "\n    size:                         ", size,
-                "\n  Access info",
-                "\n    no. of participant processes: ", group.size(), 
-                "\n    access mode:                  ", amode, 
-                "\n    info object:                  "); _info.info(os, 0);
-            prt(os, 
-                "\n    atomicity:                    ", ( atom ? "true" : "false" ), 
-                "\n    indivisual pointer:           ", get_position(), 
-                "\n    shared pointer:               ", get_position_shared(), '\n');
-            prt(os, "  View",
-                "\n    displacement:                 ", disp,
-                "\n    element datatype:             "); et.info(os, 0);
-            prt(os, 
-                "\n    file datatype:                ");  ft.info(os, 0);
-            prt(os, 
-                "\n    data representation:          ", datarep) << endl;
-        }
+    auto ind = HIPPCNTL_CLASS_INFO_INDENT_STR(level);
+    ps << HIPPCNTL_CLASS_INFO(File);
+    if( _is_null ) {
+        ps << ind, "NULL\n";
+        return os;
     }
+    auto size = get_size();
+    auto group = get_group();
+    auto amode = get_amode();
+    auto _info = get_info();
+    offset_t disp;
+    Datatype et, ft;
+    string datarep;
+    get_view(disp, et, ft, datarep);
+    int atom = get_atomicity();
+    ps << ind, "File size=", size, '\n',
+        ind, "Group="; group.info(os, fmt_cntl, level+1);
+    ps << ind, "Access mode=", amode, '\n',
+        ind, "Info="; _info.info(os, fmt_cntl, level+1);
+    ps << ind, "Atomicity=", atom, '\n',
+        ind, "File pointer {individual=", get_position(), 
+            ", shared=", get_position_shared(), "}\n",
+        ind, "View {disp=", disp, ", element datatype=", et, 
+            ", file datatype=", ft, ", data rep=", datarep, "}\n";
     return os;
 }
 

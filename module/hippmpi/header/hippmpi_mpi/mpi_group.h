@@ -33,14 +33,17 @@ public:
     using _obj_base_t::_obj_base_t;
 
     /**
-    Print the information of the current instance to `os`.
-    @fmt_cntl:   control the amount of information to be printed, 0 for a 
-                 short and inline priting, 1 for a verbose version.
-    
-    The operator<< is equivalent to info() with default `fmt_cntl`.
+    ``info()`` prints a short (``fmt_cntl=0``) or a verbose (``fmt_cntl=1``) 
+    description of the current instance to the stream ``os``.
+    Larger ``level`` produces more indents.
+
+    Operator ``<<`` is equivalent to ``info()`` with default ``fmt_cntl`` and
+    ``level``.
+
+    The passed stream ``os`` is returned.
     */
-    ostream &info( ostream &os = cout, int fmt_cntl = 1 ) const;
-    friend ostream & operator<<( ostream &os, const Group &group );
+    ostream &info(ostream &os = cout, int fmt_cntl = 0, int level = 0) const;
+    friend ostream & operator<<(ostream &os, const Group &group);
 
     /**
     Free the group instance and set it to null value as returned by 
@@ -92,7 +95,7 @@ protected:
     static Group _from_raw( mpi_t obj, int state );
 };
 
-inline ostream & operator<<( ostream &os, const Group &group ){
+inline ostream & operator<<(ostream &os, const Group &group){
     return group.info(os);
 }
 inline Group Group::_from_raw( mpi_t obj, int state ){

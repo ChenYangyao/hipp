@@ -30,14 +30,16 @@ public:
     static const del_attr_fn_t NULL_DEL_FN;
 
     /**
-    ``info()`` prints a short (``fmt_cntl=1``) or verbose (``fmt_cntl=1``)
-    description about the instance to the stream ``os``.
+    ``info()`` prints a short (``fmt_cntl=0``) or a verbose (``fmt_cntl=1``) 
+    description of the current instance to the stream ``os``.
+    Larger ``level`` produces more indents.
 
-    Operator ``<<`` is equivalent to ``info()`` with ``fmt_cntl=0``.
+    Operator ``<<`` is equivalent to ``info()`` with default ``fmt_cntl`` and
+    ``level``.
 
-    The stream ``os`` itself is returned.
+    The passed stream ``os`` is returned.
     */
-    ostream &info( ostream &os = cout, int fmt_cntl = 1) const;
+    ostream &info(ostream &os = cout, int fmt_cntl = 0, int level = 0) const;
     friend ostream & operator<< (ostream &os, const Comm &comm);
 
     /** 
@@ -1019,7 +1021,7 @@ protected:
 };
 
 inline ostream & operator<< (ostream &os, const Comm &comm) { 
-    return comm.info(os, 0); 
+    return comm.info(os); 
 }
 
 inline Comm Comm::_from_raw(mpi_t obj, int state) noexcept {

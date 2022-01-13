@@ -135,11 +135,16 @@ public:
     ~Datapacket() noexcept {}
 
     /**
-    info() prints short (``fmt_cntl=0``) or verbose (``fmt_cntl=1``) information 
-    to the stream ``os``. 
-    The ``<<`` operator is equivalent to ``info()`` with ``fmt_cntl=0``.
+    ``info()`` prints a short (``fmt_cntl=0``) or a verbose (``fmt_cntl=1``) 
+    description of the current instance to the stream ``os``.
+    Larger ``level`` produces more indents.
+
+    Operator ``<<`` is equivalent to ``info()`` with default ``fmt_cntl`` and
+    ``level``.
+
+    The passed stream ``os`` is returned.
     */
-    ostream &info(ostream &os = cout, int fmt_cntl = 1) const;
+    ostream &info(ostream &os = cout, int fmt_cntl = 0, int level = 0) const;
     friend ostream & operator<<(ostream &os, const Datapacket &dpacket);
 
     /**
@@ -194,7 +199,7 @@ public:
     ConstDatapacket & operator=(ConstDatapacket &&p) noexcept;
     ~ConstDatapacket() noexcept {}
 
-    ostream &info(ostream &os = cout, int fmt_cntl = 1) const;
+    ostream &info(ostream &os = cout, int fmt_cntl = 0, int level = 0) const;
     friend ostream & operator<<(ostream &os, const ConstDatapacket &dpacket);
 
     const void * const & get_buff() const noexcept;
@@ -327,7 +332,7 @@ inline Datapacket & Datapacket::operator=(Datapacket &&p) noexcept{
 }
 
 inline ostream & operator<<(ostream &os, const Datapacket &dpacket) {
-    return dpacket.info(os, 0);
+    return dpacket.info(os);
 }
 
 inline void * const & Datapacket::get_buff() const noexcept { 
@@ -430,7 +435,7 @@ inline ConstDatapacket & ConstDatapacket::operator=(
 }
 
 inline ostream & operator<<(ostream &os, const ConstDatapacket &dpacket) {
-    return dpacket.info(os, 0);
+    return dpacket.info(os);
 }
 
 inline const void * const & ConstDatapacket::get_buff() const noexcept  { 

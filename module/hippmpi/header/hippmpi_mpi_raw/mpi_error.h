@@ -6,8 +6,8 @@ create: Yangyao CHEN, 2020/01/15
 #ifndef _HIPPMPI_MPI_ERROR_H_
 #define _HIPPMPI_MPI_ERROR_H_
 #include "mpi_base.h"
-namespace HIPP{
-namespace MPI{
+
+namespace HIPP::MPI {
 
 /**
 The MPI high-level interface exception class.
@@ -102,6 +102,6 @@ public:
 };
 
     
-} // namespace MPI
-} // namespace HIPP
+} // namespace HIPP::MPI
+
 #endif	//_HIPPMPI_MPI_ERROR_H_

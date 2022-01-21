@@ -103,8 +103,16 @@ public:
     /**
     Get the global "WORLD" communicator predefined by MPI. New communicators 
     can be created, if necessary, from the predefined ones.
+
+    ``world_detail()`` returns the "WORLD" communicatior, the rank of the 
+    current process in it, and the size of it, as a tuple.
+
+    Example
+    ----------
+    auto [comm, rank, size] = Env::world_detail();
     */
-    static Comm world() noexcept { return Comm::world(); }
+    static Comm world() noexcept;
+    static std::tuple<Comm, int, int> world_detail() noexcept;
 protected:
     friend class SeqBlock;
 
@@ -121,6 +129,16 @@ protected:
 
 inline ostream & operator<<(ostream &os, const Env &env){ 
     return env.info(os);
+}
+
+inline Comm Env::world() noexcept { 
+    return Comm::world(); 
+}
+
+inline std::tuple<Comm, int, int> Env::world_detail() noexcept {
+    auto comm = world();
+    int rank = comm.rank(), size = comm.size();
+    return {comm, rank, size};
 }
 
 

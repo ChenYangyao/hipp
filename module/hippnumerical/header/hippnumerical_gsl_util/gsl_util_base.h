@@ -15,10 +15,4 @@
     classname & operator=( const classname & ) = delete;\
     classname & operator=( classname && ) = delete;
 
-namespace HIPP::NUMERICAL {
-
-typedef std::size_t size_t;
-
-} // namespace HIPP
-
 #endif	//_HIPPNUMERICAL_GSL_UTIL_BASE_H_

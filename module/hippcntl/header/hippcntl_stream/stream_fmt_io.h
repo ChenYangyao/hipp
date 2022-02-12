@@ -13,7 +13,7 @@ create: Yangyao CHEN, 2019/12/28
     "<" #class_name "> {", (void *)this, ", size=", sizeof(class_name), "}\n"
 #define HIPPCNTL_CLASS_INFO_INLINE(class_name) \
     "<" #class_name "> "
-#define HIPPCNTL_CLASS_INFO_INDENT 3
+#define HIPPCNTL_CLASS_INFO_INDENT 2
 #define HIPPCNTL_CLASS_INFO_SUBHEAD "   |- "
 #define HIPPCNTL_CLASS_INFO_INDENT_STR(level) \
     string(level*HIPPCNTL_CLASS_INFO_INDENT, ' ') + HIPPCNTL_CLASS_INFO_SUBHEAD

@@ -89,7 +89,7 @@ public:
     template<typename It>
     StreamOperand & operator,(const it_pair_t<It> &it_pair);
     template<typename CB>
-    StreamOperand & operator,(call_back_t<CB> cb);
+    StreamOperand & operator,(const call_back_t<CB> &cb);
 
 
     /**
@@ -164,13 +164,35 @@ public:
     int *a = new int [N];
     */
     template<typename It>
-    stream_op_t::it_pair_t<It> operator()(It b, It e)
-        { return {b, e}; }
+    stream_op_t::it_pair_t<It> operator()(It b, It e) { 
+        return {b, e}; 
+    }
 
+    /**
+    Object ``cb`` that is callable on (ostream &) can be printed by, e.g., 
+    pout << "Object: ", pout(cb), endl;
+    Internally ``cb( get_stream() )`` is called.
+    */
     template<typename CB>
-    stream_op_t::call_back_t<CB> operator()(CB &&cb) 
-        { return {std::forward<CB>(cb)}; }
-    
+    auto operator()(CB &&cb) { 
+        using _CB = std::remove_cv_t<std::remove_reference_t<CB> >;
+        return stream_op_t::call_back_t<_CB>(std::forward<CB>(cb)); 
+    }
+
+    /**
+    Object ``x`` with HIPP-compatible info() method defined can be printed by, 
+    e.g., 
+    pout << "Object: ", pout.info_of(x), endl;
+    Internally ``x.info( get_stream(), fmt_cntl, level )`` is called.
+    */
+    template<typename T>
+    auto info_of(T &&x, int fmt_cntl = 0, int level = 0) {
+        auto cb = [&x, this, fmt_cntl, level](ostream &os) {
+            std::forward<T>(x).info(os, fmt_cntl, level);
+        };
+        return (*this)(cb);
+    }
+
     /* Return a reference to the internal std::ostream object. */
     ostream & get_stream() const noexcept { return _op.get_stream(); }
 protected:
@@ -296,7 +318,7 @@ _HIPP_TEMPRET operator,(const it_pair_t<It> &it_pair) -> StreamOperand & {
 }
 
 template<typename CB>
-_HIPP_TEMPRET operator,(call_back_t<CB> cb) -> StreamOperand & {
+_HIPP_TEMPRET operator,(const call_back_t<CB> &cb) -> StreamOperand & {
     cb.cb(_os);
     return *this;
 }

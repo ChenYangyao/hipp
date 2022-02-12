@@ -15,8 +15,11 @@ or change the handler by set_err_handler(new_handler).
 class ErrGSL: public ErrType<ErrAppGSL, ErrClassDefault>{
 public:
     enum : int { 
-        SUCCESS_ = GSL_SUCCESS, EDOM_ = GSL_EDOM,     ERANGE_ = GSL_ERANGE, 
-        ENOMEM_ = GSL_ENOMEM,   EINVAL_ = GSL_EINVAL
+        SUCCESS_ = GSL_SUCCESS, 
+        EDOM_ = GSL_EDOM,       
+        ERANGE_ = GSL_ERANGE, 
+        ENOMEM_ = GSL_ENOMEM,   
+        EINVAL_ = GSL_EINVAL
     };
 
     typedef ErrType<ErrAppGSL, ErrClassDefault> err_type_t;

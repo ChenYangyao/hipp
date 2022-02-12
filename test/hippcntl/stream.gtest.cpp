@@ -9,6 +9,28 @@ protected:
     CntlStreamPStreamTest(): ps(os){}
     ostringstream os;
     PStream ps;
+
+    struct printable_t {
+        friend ostream & operator<<(ostream &os, const printable_t &a) {
+            return os << "Printable";
+        }
+    };    
+
+    struct any_t {};
+
+    struct callable_t {
+        void operator()(ostream &os) const {
+            os << "Callable";
+        }
+    };
+
+    struct obj_with_info_t {
+        ostream & info(ostream &os = cout, int  fmt_cntl = 0, 
+            int level = 0) const 
+        {
+            return os << "fmt_cntl=" << fmt_cntl << ", level=" << level;
+        }
+    };
 };
 
 TEST_F(CntlStreamPStreamTest, UnaryType){
@@ -48,19 +70,39 @@ TEST_F(CntlStreamPStreamTest, TupleType){
     ASSERT_EQ(os.str(), "Tpl=1:2:3s, pr=4:5s, comp=0:1:2:3s:4:5s:6,7,8\n");
 }
 
-struct A {
-    friend ostream & operator<<(ostream &os, const A &a) {
-        return os << "A instance";
-    }
-};    
+
+TEST_F(CntlStreamPStreamTest, PrintableType) {
+    ps << "printable_t: ", printable_t(), '\n';
+    string expected_s = str("printable_t: Printable\n");
+    ASSERT_EQ(os.str(), expected_s);
+}
+
 TEST_F(CntlStreamPStreamTest, AnyType) {
-    ps << "A: ", A(), '\n';
-    struct B {};
-    B b;
-    ps << "B: ", b, '\n';
-    string expected_s = str("A: A instance\n", 
-        "B: <", typeid(b).name(),"> {", (void *)&b, 
-        ", size=", sizeof(B), "}\n");
+    any_t any_obj;
+    ps << "any_t: ", any_obj, '\n';
+    string expected_s = str("any_t: <", typeid(any_obj).name(),"> {", 
+        (void *)&any_obj, ", size=", sizeof(any_obj), "}\n");
+    ASSERT_EQ(os.str(), expected_s);
+}
+
+TEST_F(CntlStreamPStreamTest, CallableType) {
+    callable_t cb;
+    ps << "callable_t: ", ps(cb), '\n';
+    string expected_s = str("callable_t: Callable\n");
+    ASSERT_EQ(os.str(), expected_s);
+}
+
+TEST_F(CntlStreamPStreamTest, ObjectWithInfoType) {
+    obj_with_info_t o;
+    ps << "obj_with_info_t: ", ps.info_of(o), '\n',
+        ps.info_of(o, 0, 1), '\n',
+        ps.info_of(o, 1, 0), '\n',
+        ps.info_of(o, 1, 1), endl;
+    string expected_s = str(
+        "obj_with_info_t: fmt_cntl=0, level=0\n"
+        "fmt_cntl=0, level=1\n",
+        "fmt_cntl=1, level=0\n",
+        "fmt_cntl=1, level=1\n");
     ASSERT_EQ(os.str(), expected_s);
 }
 

@@ -883,7 +883,7 @@ int main(int argc, char const *argv[]){
     std::vector<char> buf(buf_size);
     buffer_attach(buf.data(), buf_size);
 
-    for(int i=0; i<100; ++i){
+    for(int i=0; i<3; ++i){
         PointToPointTest<float>(comm, "float")();
         PointToPointTest<double>(comm, "double")();
         PointToPointTest<short>(comm, "short")();

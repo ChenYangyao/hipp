@@ -627,7 +627,7 @@ int main(int argc, char const *argv[]){
     Env env;
     auto comm = env.world();
 
-    for(int i=0; i<100; ++i){
+    for(int i=0; i<5; ++i){
         CollectiveTest<float>{comm, "float"}();
         CollectiveTest<double>{comm, "double"}();
         CollectiveTest<short>{comm, "short"}();

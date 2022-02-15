@@ -6,7 +6,6 @@ create: Yangyao CHEN, 2020/01/18
 #define _HIPPMPI_MPI_COMM_H_
 
 #include "mpi_obj_base.h"
-#include "mpi_raw_comm.h"
 #include "mpi_group.h"
 #include "mpi_datapacket.h"
 #include "mpi_op.h"
@@ -31,14 +30,16 @@ public:
     static const del_attr_fn_t NULL_DEL_FN;
 
     /**
-    ``info()`` prints a short (``fmt_cntl=1``) or verbose (``fmt_cntl=1``)
-    description about the instance to the stream ``os``.
+    ``info()`` prints a short (``fmt_cntl=0``) or a verbose (``fmt_cntl=1``) 
+    description of the current instance to the stream ``os``.
+    Larger ``level`` produces more indents.
 
-    Operator ``<<`` is equivalent to ``info()`` with ``fmt_cntl=0``.
+    Operator ``<<`` is equivalent to ``info()`` with default ``fmt_cntl`` and
+    ``level``.
 
-    The stream ``os`` itself is returned.
+    The passed stream ``os`` is returned.
     */
-    ostream &info( ostream &os = cout, int fmt_cntl = 1) const;
+    ostream &info(ostream &os = cout, int fmt_cntl = 0, int level = 0) const;
     friend ostream & operator<< (ostream &os, const Comm &comm);
 
     /** 
@@ -92,7 +93,7 @@ public:
     static Comm selfval() noexcept;
     static Comm nullval() noexcept;
     Comm create_inter( int local_leader, const Comm &peer_comm, 
-        int remote_leader, int tag );
+        int remote_leader, int tag);
     Comm merge_inter( int high );
 
     /**
@@ -576,13 +577,15 @@ public:
     Refer to the MPI standard for their semantics. The standard mode is usually 
     the first choice.
     
-    ``recv()``: blocking receiving.
+    ``recv()``: blocking receiving. It returns a ``Status`` object containing 
+    the meta-infomation of the received message. 
     
     Methods with prefix "i" are the corresponding nonblocking calls. They 
     return a ``Requests`` object for later test, cancellation, or completion.
 
-    ``recv()`` returns a ``Status`` object containing the meta-infomation of 
-    the received message. 
+    Methods with suffix "_init" are the corresponding persistent calls. They 
+    return a ``Requests`` object (inactive) for later start. Persistent calls
+    can match non-persistent ones. Persistent calls are local.
 
     Any data buffer passed to these calls must not be pr-value - its life time 
     must last at least to the return of blocking calls or the finish of 
@@ -622,6 +625,17 @@ public:
     Requests irsend(int dest, int tag, Args && ...args) const;
     template<typename ...Args>
     Requests irecv(int src, int tag, Args && ...args) const;
+
+    template<typename ...Args>
+    Requests send_init(int dest, int tag, Args && ...args) const;
+    template<typename ...Args>
+    Requests bsend_init(int dest, int tag, Args && ...args) const;
+    template<typename ...Args>
+    Requests ssend_init(int dest, int tag, Args && ...args) const;
+    template<typename ...Args>
+    Requests rsend_init(int dest, int tag, Args && ...args) const;
+    template<typename ...Args>
+    Requests recv_init(int src, int tag, Args && ...args) const;
 
     /** 
     Perform one send and one receive in a single call.
@@ -1007,7 +1021,7 @@ protected:
 };
 
 inline ostream & operator<< (ostream &os, const Comm &comm) { 
-    return comm.info(os, 0); 
+    return comm.info(os); 
 }
 
 inline Comm Comm::_from_raw(mpi_t obj, int state) noexcept {
@@ -1065,66 +1079,101 @@ std::pair<Win, T*> Comm::win_allocate_shared(size_t n, int disp_unit,
 template<typename ...Args>
 void Comm::send( int dest, int tag, Args && ...args ) const{
     auto [p, n, dt] = ConstDatapacket{ std::forward<Args>(args)... };
-    _obj_ptr->send(p, n, dt.raw(), dest, tag );
+    _obj_ptr->send(p, n, dt.raw(), dest, tag);
 }
 
 template<typename ...Args>
 void Comm::bsend( int dest, int tag, Args && ...args ) const{
     auto [p, n, dt] = ConstDatapacket{ std::forward<Args>(args)... };
-    _obj_ptr->bsend( p, n, dt.raw(), dest, tag );
+    _obj_ptr->bsend(p, n, dt.raw(), dest, tag);
 }
 
 template<typename ...Args>
 void Comm::ssend( int dest, int tag, Args && ...args ) const{
     auto [p, n, dt] = ConstDatapacket{ std::forward<Args>(args)... };
-    _obj_ptr->ssend( p, n, dt.raw(), dest, tag );
+    _obj_ptr->ssend(p, n, dt.raw(), dest, tag);
 }
 
 template<typename ...Args>
 void Comm::rsend( int dest, int tag, Args && ...args ) const{
     auto [p, n, dt] = ConstDatapacket{ std::forward<Args>(args)... };
-    _obj_ptr->rsend( p, n, dt.raw(), dest, tag );
+    _obj_ptr->rsend(p, n, dt.raw(), dest, tag);
 }
 
 template<typename ...Args>
 Status Comm::recv( int src, int tag, Args && ...args ) const{
     auto [p, n, dt] = Datapacket{ std::forward<Args>(args)... };
-    return _obj_ptr->recv( p, n, dt.raw(), src, tag );
+    return _obj_ptr->recv(p, n, dt.raw(), src, tag);
 }
 
 template<typename ...Args>
 Requests Comm::isend( int dest, int tag, Args && ...args ) const{
     auto [p, n, dt] = ConstDatapacket{ std::forward<Args>(args)... };
-    auto rq = _obj_ptr->isend( p, n, dt.raw(), dest, tag );
-    return Requests::_from_raw( rq, 0 );
+    auto rq = _obj_ptr->isend(p, n, dt.raw(), dest, tag);
+    return Requests::_from_raw_bare(rq);
 }
 
 template<typename ...Args>
 Requests Comm::ibsend( int dest, int tag, Args && ...args ) const{
     auto [p, n, dt] = ConstDatapacket{ std::forward<Args>(args)... };
-    auto rq = _obj_ptr->ibsend( p, n, dt.raw(), dest, tag );
-    return Requests::_from_raw( rq, 0 );
+    auto rq = _obj_ptr->ibsend(p, n, dt.raw(), dest, tag);
+    return Requests::_from_raw_bare(rq);
 }
 
 template<typename ...Args>
 Requests Comm::issend( int dest, int tag, Args && ...args ) const{
     auto [p, n, dt] = ConstDatapacket{ std::forward<Args>(args)... };
-    auto rq = _obj_ptr->issend( p, n, dt.raw(), dest, tag );
-    return Requests::_from_raw( rq, 0 );
+    auto rq = _obj_ptr->issend(p, n, dt.raw(), dest, tag);
+    return Requests::_from_raw_bare(rq);
 }
 
 template<typename ...Args>
 Requests Comm::irsend( int dest, int tag, Args && ...args ) const{
     auto [p, n, dt] = ConstDatapacket{ std::forward<Args>(args)... };
-    auto rq = _obj_ptr->irsend( p, n, dt.raw(), dest, tag );
-    return Requests::_from_raw( rq, 0 );
+    auto rq = _obj_ptr->irsend(p, n, dt.raw(), dest, tag);
+    return Requests::_from_raw_bare(rq);
 }
 
 template<typename ...Args>
 Requests Comm::irecv( int src, int tag, Args && ...args ) const{
     auto [p, n, dt] = Datapacket{ std::forward<Args>(args)... };
-    auto rq = _obj_ptr->irecv( p, n, dt.raw(), src, tag );
-    return Requests::_from_raw( rq, 0 );
+    auto rq = _obj_ptr->irecv(p, n, dt.raw(), src, tag);
+    return Requests::_from_raw_bare(rq);
+}
+
+template<typename ...Args>
+Requests Comm::send_init(int dest, int tag, Args && ...args) const {
+    auto [p, n, dt] = ConstDatapacket{ std::forward<Args>(args)... };
+    auto rq = _obj_ptr->send_init(p, n, dt.raw(), dest, tag);
+    return Requests::_from_raw_free(rq);
+}
+
+template<typename ...Args>
+Requests Comm::bsend_init(int dest, int tag, Args && ...args) const {
+    auto [p, n, dt] = ConstDatapacket{ std::forward<Args>(args)... };
+    auto rq = _obj_ptr->bsend_init(p, n, dt.raw(), dest, tag);
+    return Requests::_from_raw_free(rq);
+}
+
+template<typename ...Args>
+Requests Comm::ssend_init(int dest, int tag, Args && ...args) const {
+    auto [p, n, dt] = ConstDatapacket{ std::forward<Args>(args)... };
+    auto rq = _obj_ptr->ssend_init(p, n, dt.raw(), dest, tag);
+    return Requests::_from_raw_free(rq);
+}
+
+template<typename ...Args>
+Requests Comm::rsend_init(int dest, int tag, Args && ...args) const {
+    auto [p, n, dt] = ConstDatapacket{ std::forward<Args>(args)... };
+    auto rq = _obj_ptr->rsend_init(p, n, dt.raw(), dest, tag);
+    return Requests::_from_raw_free(rq);
+}
+
+template<typename ...Args>
+Requests Comm::recv_init(int src, int tag, Args && ...args) const {
+    auto [p, n, dt] = Datapacket{ std::forward<Args>(args)... };
+    auto rq = _obj_ptr->recv_init(p, n, dt.raw(), src, tag);
+    return Requests::_from_raw_free(rq);
 }
 
 } // namespace HIPP::MPI

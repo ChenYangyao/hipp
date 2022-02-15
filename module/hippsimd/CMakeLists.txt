@@ -11,6 +11,10 @@ target_include_directories(${_libname}
     INTERFACE 
         "${_headerdir}"
 )
+target_link_libraries(${_libname}
+    INTERFACE
+    hipp-config
+)
 install(DIRECTORY 
     "${_headerdir}/${_libname}_simdopcode"
     "${_headerdir}/${_libname}_simdpacked"

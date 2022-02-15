@@ -29,13 +29,13 @@ const char * ErrSystem::_errmsgs[] = {
     /* 115 */ "EINPROGRESS", "ESTALE", "EUCLEAN", "ENOTNAM", "ENAVAIL",
     /* 120 */ "EISNAM", "EREMOTEIO", "EDQUOT", "ENOMEDIUM", "EMEDIUMTYPE",
     /* 125 */ "ECANCELED", "ENOKEY", "EKEYEXPIRED", "EKEYREVOKED",
-    /* 129 */ "EKEYREJECTED", "EOWNERDEAD", "ENOTRECOVERABLE", "ERFKILL"
+    /* 129 */ "EKEYREJECTED", "EOWNERDEAD", "ENOTRECOVERABLE", "ERFKILL",
     /* 133 */ "invalid errer no"
 };
 
 const char *ErrRuntime::_errmsgs[] = {
     /* 0 */ "",
-    /* 1 */ "eDEFAULT", "eOVERFLOW", "eUNDERFLOW", "eRANGE", "eSTRCONSTRUCT"
+    /* 1 */ "eDEFAULT", "eOVERFLOW", "eUNDERFLOW", "eRANGE", "eSTRCONSTRUCT",
     /* 6 */ "invalid error no"
 };
 

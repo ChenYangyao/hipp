@@ -67,7 +67,7 @@ Env::~Env() noexcept{
     if( MPI_Finalize() != MPI_SUCCESS )
         ErrMPI::abort(1, emFLPFB);
 }
-ostream & Env::info( ostream &os, int fmt_cntl ) const{
+ostream & Env::info(ostream &os, int fmt_cntl, int level) const {
     int rank, ver, subver, _tagub, _host, _io, _wt;
     ErrMPI::check( MPI_Comm_rank(_comm, &rank), emFLPFB );
     version(ver, subver);
@@ -76,28 +76,29 @@ ostream & Env::info( ostream &os, int fmt_cntl ) const{
     _io = io(); 
     _wt = wtime_is_global(); 
     
+    PStream ps(os);
     if( fmt_cntl == 0 ){
-        prt(os, HIPPCNTL_CLASS_INFO_INLINE(HIPP::MPI::Env));
-        prt_f(os, "Standard: %d.%d", ver, subver);
+        ps << HIPPCNTL_CLASS_INFO_INLINE(Env), 
+            "{standard=", ver, ".", subver, "}";
+        return os;
     }
-    if( fmt_cntl >= 1 ){
-        string procname = processor_name();
-        prt(os, HIPPCNTL_CLASS_INFO(HIPP::MPI::Env));
-        prt_f(os, "  Standard: %d.%d", ver, subver) << endl;
-        prt_f(os, "  Runtime Environment (TAG UB=%d, HOST=", _tagub);
-        if( _host == MPI_PROC_NULL ) prt(os, "None");
-        else prt(os, _host);
-        prt(os, ", IO RANK=");
-        if( _io == MPI_ANY_SOURCE ) prt(os, "Any");
-        else if( _io == MPI_PROC_NULL ) prt(os, "None");
-        else if( _io == rank ) prt(os, "Self");
-        else prt(os, _io);
-        prt(os, ", WTIME GLOBAL=", ( bool(_wt)?"Yes":"No" )) << ")\n";
-        prt(os, "  Processor name: ", procname) << endl;
-    }
-    if( fmt_cntl >= 2 ){
+    string procname = processor_name();
+    auto ind = HIPPCNTL_CLASS_INFO_INDENT_STR(level);
+    ps << HIPPCNTL_CLASS_INFO(Env),
+        ind, "Standard=", ver, ".", subver, '\n',
+        ind, "Runtime Environment {tag upper bound=", _tagub, ", host=";
+    if(_host == PROC_NULL) ps << "NULL";
+    else ps << _host;
+    ps << ", IO rank=";
+    if( _io == ANY_SOURCE ) ps << "ANY";
+    else if( _io == PROC_NULL ) ps << "NULL";
+    else if( _io == rank ) ps << "SELF";
+    else ps << _io;
+    ps << ", wtime is global=", bool(_wt)?"Yes":"No", "}\n",
+        ind, " Processor name=", procname, '\n';
+    if( fmt_cntl >= 2 ) {
         string libver = library_version();
-        prt(os, "Library Version\n----------\n", libver) << endl;
+        ps << "Library version -- \n", libver, '\n';
     }
     return os;
 }

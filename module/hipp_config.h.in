@@ -1,0 +1,39 @@
+#ifndef _HIPP_CONFIG_H_
+#define _HIPP_CONFIG_H_
+
+#define HIPP_VERSION_MAJOR @hipp_VERSION_MAJOR@
+#define HIPP_VERSION_MINOR @hipp_VERSION_MINOR@
+#define HIPP_VERSION ( HIPP_VERSION_MAJOR*100 + HIPP_VERSION_MINOR )
+
+#cmakedefine HIPPCNTL_OFF
+#cmakedefine HIPPALGORITHM_OFF
+#cmakedefine HIPPNUMERICAL_OFF
+#cmakedefine HIPPIO_OFF
+#cmakedefine HIPPMPI_OFF
+#cmakedefine HIPPSIMD_OFF
+
+#ifndef HIPPCNTL_OFF
+#define HIPPCNTL_ON
+#endif
+
+#ifndef HIPPALGORITHM_OFF
+#define HIPPALGORITHM_ON
+#endif
+
+#ifndef HIPPNUMERICAL_OFF
+#define HIPPNUMERICAL_ON
+#endif
+
+#ifndef HIPPIO_OFF
+#define HIPPIO_ON
+#endif
+
+#ifndef HIPPMPI_OFF
+#define HIPPMPI_ON
+#endif
+
+#ifndef HIPPSIMD_OFF
+#define HIPPSIMD_ON
+#endif
+
+#endif	//_HIPP_CONFIG_H_

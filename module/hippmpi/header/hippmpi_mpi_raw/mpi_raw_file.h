@@ -10,21 +10,23 @@ public:
 
     typedef MPI_Datarep_extent_function datarep_extent_fn_t;
     typedef MPI_Datarep_conversion_function datarep_conversion_fn_t;
-    static const datarep_conversion_fn_t * const CONVERSION_FN_NULL;
+    inline static const datarep_conversion_fn_t 
+        * const CONVERSION_FN_NULL = MPI_CONVERSION_FN_NULL;
 
     typedef MPI_File_errhandler_function errhandler_fn_t;
     enum : size_t{ MAX_DATAREP_STRING=MPI_MAX_DATAREP_STRING };
     enum : int { 
-        MODE_RDONLY=MPI_MODE_RDONLY, MODE_RDWR=MPI_MODE_RDWR,
-        MODE_WRONLY=MPI_MODE_WRONLY, 
+        MODE_RDONLY =    MPI_MODE_RDONLY, 
+        MODE_RDWR =      MPI_MODE_RDWR,
+        MODE_WRONLY =    MPI_MODE_WRONLY, 
         
-        MODE_CREATE=MPI_MODE_CREATE,
-        MODE_EXCL=MPI_MODE_EXCL,
+        MODE_CREATE =    MPI_MODE_CREATE,
+        MODE_EXCL =      MPI_MODE_EXCL,
         
-        MODE_DELETE_ON_CLOSE=MPI_MODE_DELETE_ON_CLOSE,
-        MODE_UNIQUE_OPEN=MPI_MODE_UNIQUE_OPEN,
-        MODE_SEQUENTIAL=MPI_MODE_SEQUENTIAL,
-        MODE_APPEND=MPI_MODE_APPEND };
+        MODE_DELETE_ON_CLOSE =   MPI_MODE_DELETE_ON_CLOSE,
+        MODE_UNIQUE_OPEN =       MPI_MODE_UNIQUE_OPEN,
+        MODE_SEQUENTIAL =        MPI_MODE_SEQUENTIAL,
+        MODE_APPEND =            MPI_MODE_APPEND };
     
     _File( mpi_t val, int state ): _val(val), _state(state){ }
     ~_File() noexcept {

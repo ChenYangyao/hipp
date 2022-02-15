@@ -5,8 +5,7 @@ create: Yangyao CHEN, 2020/01/21
 
 #ifndef _HIPPMPI_MPI_ENV_H_
 #define _HIPPMPI_MPI_ENV_H_
-#include "mpi_base.h"
-#include "mpi_error.h"
+
 #include "mpi_comm.h"
 
 #define HIPPMPI_STD_VERSION MPI_VERSION
@@ -58,17 +57,18 @@ public:
     ~Env() noexcept;
 
     /**
-    info(): print MPI environment details into ``os``. ``os`` is returned.
-    @fmt_cntl: control the output format. 
-        - 0: a short inline message.
-        - 1: a long, block message.
-        - 2: similar to 1, but print the library version information in 
-             addition.
-    
-    ``operator<<`` is equivalent to ``info()`` with default ``fmt_cntl``.
+    ``info()`` prints a short (``fmt_cntl=0``) or a verbose (``fmt_cntl=1``) or
+    a more verbose (``fmt_cntl = 2``) description of the MPI environment to the 
+    stream ``os``.
+    Larger ``level`` produces more indents.
+
+    Operator ``<<`` is equivalent to ``info()`` with default ``fmt_cntl`` and
+    ``level``.
+
+    The passed stream ``os`` is returned.
     */
-    ostream & info( ostream &os = cout, int fmt_cntl = 1) const;
-    friend ostream & operator<<( ostream &os, const Env &);
+    ostream &info(ostream &os = cout, int fmt_cntl = 0, int level = 0) const;
+    friend ostream & operator<<(ostream &os, const Env &);
     
     /**
     version(): return the standard version and subversion which the 
@@ -103,8 +103,16 @@ public:
     /**
     Get the global "WORLD" communicator predefined by MPI. New communicators 
     can be created, if necessary, from the predefined ones.
+
+    ``world_detail()`` returns the "WORLD" communicatior, the rank of the 
+    current process in it, and the size of it, as a tuple.
+
+    Example
+    ----------
+    auto [comm, rank, size] = Env::world_detail();
     */
-    static Comm world() noexcept { return Comm::world(); }
+    static Comm world() noexcept;
+    static std::tuple<Comm, int, int> world_detail() noexcept;
 protected:
     friend class SeqBlock;
 
@@ -119,8 +127,18 @@ protected:
     void _free_predefined_objects();
 };
 
-inline ostream & operator<<( ostream &os, const Env &env){ 
-    return env.info( os );
+inline ostream & operator<<(ostream &os, const Env &env){ 
+    return env.info(os);
+}
+
+inline Comm Env::world() noexcept { 
+    return Comm::world(); 
+}
+
+inline std::tuple<Comm, int, int> Env::world_detail() noexcept {
+    auto comm = world();
+    int rank = comm.rank(), size = comm.size();
+    return {comm, rank, size};
 }
 
 

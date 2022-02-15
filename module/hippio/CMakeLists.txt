@@ -17,6 +17,7 @@ set_target_properties(${_libname}
 )
 target_link_libraries(${_libname}
     PUBLIC 
+        hipp-config
         "${_projectid}cntl"
         hdf5-interface
 )

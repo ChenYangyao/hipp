@@ -5,14 +5,14 @@
 namespace HIPP::MPI {
 
 /**
- * Intermediate functions of MPI pack and unpack operations.
- */
+Intermediate functions of MPI pack and unpack operations.
+*/
 class _Pack {
 public:
     /**
-     * Data pack/unpack functions. The ways of packing depend on the machine
-     * and the communicator. The packing unit may have extra header. 
-     */
+    Data pack/unpack functions. The ways of packing depend on the machine
+    and the communicator. The packing unit may have extra header. 
+    */
     static void pack(const void *inbuf, int incount, MPI_Datatype dtype, 
         void *outbuf, int outsize, int &position, MPI_Comm comm);
     static void unpack(const void *inbuf, int insize, int &position, 
@@ -20,10 +20,10 @@ public:
     static int size(int incount, MPI_Datatype dtype, MPI_Comm comm);
     
     /** 
-     * Data pack/unpack functions using standard, machine independent, no-header 
-     * format. 
-     * In MPI-3, datarep = "external32" is the only option.
-     */
+    Data pack/unpack functions using standard, machine independent, no-header 
+    format. 
+    In MPI-3, datarep = "external32" is the only option.
+    */
     static void pack_external(const char *datarep,  
         const void *inbuf, int incount, MPI_Datatype dtype, 
         void *outbuf, aint_t outsize, aint_t &position);

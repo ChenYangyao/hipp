@@ -1,12 +1,11 @@
 /**
- * creat: Yangyao CHEN, 2020/10/23
- *      [write   ] Message - 
- */ 
+create: Yangyao CHEN, 2020/10/23
+    [write   ] Message - 
+*/ 
 
 #ifndef _HIPPMPI_MPI_MESSAGE_H_
 #define _HIPPMPI_MPI_MESSAGE_H_
 #include "mpi_obj_base.h"
-#include "mpi_raw_comm.h"
 #include "mpi_status.h"
 #include "mpi_requests.h"
 namespace HIPP {
@@ -15,8 +14,8 @@ namespace MPI{
 class Comm;
 
 /**
- * the message object for probe.
- */
+The message object for probe.
+*/
 class Message {
 public:
     typedef MPI_Message mpi_t;

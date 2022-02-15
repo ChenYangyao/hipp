@@ -9,6 +9,9 @@ set(_src
     "linalg_svec"
     "linalg_sarray"
     "linalg_darray"
+    "geometry"
+    "kdsearch_kdmesh"
+    "kdsearch_kdtree"
 )
 
 set(_exebase "${_projectid}${_modid}")
@@ -20,7 +23,7 @@ function(addhippnumerical_test src)
     
     add_executable( "${_exename}" "${src}.gtest.cpp")
     target_link_libraries( "${_exename}" 
-        PRIVATE "${_exebase}" gtest_main
+        PRIVATE "${_exebase}" gmock_main
     )
     add_test(NAME "${_exename}" COMMAND "${_exename}")
     set_property(TEST "${_exename}" 

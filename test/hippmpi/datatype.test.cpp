@@ -354,7 +354,9 @@ int main(int argc, char *argv[])
     Env env(argc, argv);
     auto comm = env.world();
 
-    DatatypeTest{comm}();
+    for(int i=0; i<1000; ++i){
+        DatatypeTest{comm}();        
+    }
 
     return 0;
 }

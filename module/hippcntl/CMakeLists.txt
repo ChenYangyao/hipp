@@ -21,6 +21,10 @@ target_include_directories(${_libname}
     INTERFACE 
         "${_headerdir}"
 )
+target_link_libraries(${_libname}
+    PUBLIC
+        hipp-config
+)
 install(TARGETS ${_libname}
     DESTINATION lib
 )

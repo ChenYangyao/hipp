@@ -835,6 +835,8 @@ Class Comm: the Communication Context
         void rsend( int dest, int tag, Args && ...args ) const
         template<typename ...Args>\
         Status recv( int src, int tag, Args && ...args ) const
+    
+    .. function:: \
         template<typename ...Args>\
         Requests isend( int dest, int tag, Args && ...args ) const
         template<typename ...Args>\
@@ -845,6 +847,18 @@ Class Comm: the Communication Context
         Requests irsend( int dest, int tag, Args && ...args ) const
         template<typename ...Args>\
         Requests irecv( int src, int tag, Args && ...args ) const
+    
+    .. function:: \
+        template<typename ...Args>\
+        Requests send_init(int dest, int tag, Args && ...args) const
+        template<typename ...Args>\
+        Requests bsend_init(int dest, int tag, Args && ...args) const
+        template<typename ...Args>\
+        Requests ssend_init(int dest, int tag, Args && ...args) const
+        template<typename ...Args>\
+        Requests rsend_init(int dest, int tag, Args && ...args) const
+        template<typename ...Args>\
+        Requests recv_init(int src, int tag, Args && ...args) const
         
         Point-to-point communication calls - the core functions of MPI.
 
@@ -853,14 +867,15 @@ Class Comm: the Communication Context
         Refer to the MPI standard for their semantics. The standard mode is usually 
         the first choice.
         
-        ``recv()``: blocking receiving.
+        ``recv()``: blocking receiving. It returns a ``Status`` object containing 
+        the meta-infomation of the received message. 
         
-        Methods with prefix "i" are the corresponding non-blocking calls. They 
-        return a :class:`~HIPP::MPI::Requests` object for later test, 
-        cancellation, or completion.
+        Methods with prefix "i" are the corresponding nonblocking calls. They 
+        return a ``Requests`` object for later test, cancellation, or completion.
 
-        ``recv()`` returns a :class:`Status` object containing the meta-infomation of 
-        the received message. 
+        Methods with suffix "_init" are the corresponding persistent calls. They 
+        return a ``Requests`` object (inactive) for later start. Persistent calls
+        can match non-persistent ones. Persistent calls are local.
 
         Any data buffer passed to these calls must not be pr-value - its life time 
         must last at least to the return of blocking calls or the finish of 
@@ -1607,6 +1622,18 @@ Class Requests: the Non-blocking Handler
         After ``get()``, the returned requests are removed from the caller
         instance, the hole is filled by the remaining requests in the instance 
         where the order may change.
+
+    .. function:: \
+        void start()
+        void start(int i)
+        void startall()
+
+        ``start(i)``: start the i-th communication in the array. The request must be 
+        returned from a persistent communication call. On exit, it becomes active.
+
+        ``start()`` is equivalent to ``start(0)``.
+        ``startall()`` is equivalent to starting each of the communications with 
+        arbitrary order.
 
     .. function::   
         Status wait()

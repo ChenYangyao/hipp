@@ -1,7 +1,7 @@
 /**
- * creat: Yangyao CHEN, 2019/12/28
- *      [write   ] ErrApp - parent class for error-number based exceptions.
- */ 
+create: Yangyao CHEN, 2019/12/28
+    [write   ] ErrApp - parent class for error-number based exceptions.
+*/ 
 
 #ifndef _HIPPCNTL_ERROR_APPLICATION_H_
 #define _HIPPCNTL_ERROR_APPLICATION_H_
@@ -9,13 +9,13 @@
 namespace HIPP{
 
 /**
- * parent class for error-number based exceptions.
- * Should not be used directly.
- * 
- * Application-level exceptions: a 16-bit short integer type numbers the
- * error. The first bit reserved for future usage, while the remaining 15
- * bits are used for error coding.
- */
+Parent class for error-number based exceptions.
+Should not be used directly.
+
+Application-level exceptions: a 16-bit short integer type numbers the
+error. The first bit reserved for future usage, while the remaining 15
+bits are used for error coding.
+*/
 class ErrApp: virtual public std::exception {
 public:
     typedef std::uint16_t errno_t;

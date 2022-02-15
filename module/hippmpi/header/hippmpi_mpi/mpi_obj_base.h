@@ -5,8 +5,7 @@ create: Yangyao CHEN, 2021/09/27
 
 #ifndef _HIPPMPI_MPI_OBJ_BASE_H_
 #define _HIPPMPI_MPI_OBJ_BASE_H_
-#include "mpi_base.h"
-#include "mpi_error.h"
+#include "../hippmpi_mpi_raw/mpi_raw.h"
 namespace HIPP::MPI {
 
 /**

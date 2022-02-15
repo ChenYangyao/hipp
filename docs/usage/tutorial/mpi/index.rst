@@ -609,6 +609,7 @@ Advanced Topics
 
     advanced/mpi-env
     advanced/point-to-point
+    advanced/collective
     advanced/inter
 
 Example Codes Gallery

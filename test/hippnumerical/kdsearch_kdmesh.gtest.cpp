@@ -205,7 +205,7 @@ TEST_F(KDMeshTest, VisitRectCompleteCheck) {
         kdm.visit_nodes_rect(
             {new_p-100.0f, new_p+100.0f}, 
             [&pads, &mesh](const kdm_t::node_t &n){ 
-                pads.emplace(n.pad<const int>()); 
+                pads.emplace(n.pad<int>()); 
             }
         );
 
@@ -309,30 +309,32 @@ TEST_F(KDMeshTest, VisitRectNodes) {
     kdm_t kdm(_kdpts1);
     int n_dst = 1000;
 
-    /* Check node count. */
-    for(int i=0; i<n_dst; ++i){
-        auto &p_dst = _kdpts2[i];
-        kdm_t::rect_t r(p_dst-5.5, p_dst+5.5);
-        index_t cnt1 = kdm.count_nodes_rect(r),
-            cnt2 = std::count_if(_kdpts1.begin(), _kdpts1.end(), 
-                [&r](auto &p){ return r.contains(p); });
-        EXPECT_EQ(cnt1, cnt2);
+    for(auto dx: {1.0f, 2.0f, 3.0f, 5.0f, 7.5f}){
+        /* Check node count. */
+        for(int i=0; i<n_dst; ++i){
+            auto &p_dst = _kdpts2[i];
+            kdm_t::rect_t r(p_dst-dx, p_dst+dx);
+            index_t cnt1 = kdm.count_nodes_rect(r),
+                cnt2 = std::count_if(_kdpts1.begin(), _kdpts1.end(), 
+                    [&r](auto &p){ return r.contains(p); });
+            EXPECT_EQ(cnt1, cnt2);
+        }
+        /* Check padding of each node. */
+        for(int i=0; i<n_dst; ++i){
+            auto &p_dst = _kdpts2[i];
+            vector<index_t> pad_src, pad_dst;
+            kdm_t::rect_t r(p_dst-dx, p_dst+dx);
+            kdm.visit_nodes_rect(r, 
+                [&pad_src](const kdm_t::node_t& n){ 
+                    pad_src.push_back( n.pad<int>() ); });
+            for(auto &p_src: _kdpts1)
+                if( r.contains(p_src) ) 
+                    pad_dst.push_back( p_src.pad<int>() );
+            EXPECT_THAT(pad_src, 
+                gt::UnorderedElementsAreArray(pad_dst));
+        }
     }
 
-    /* Check padding of each node. */
-    for(int i=0; i<n_dst; ++i){
-        auto &p_dst = _kdpts2[i];
-        vector<index_t> pad_src, pad_dst;
-        kdm_t::rect_t r(p_dst-5.5, p_dst+5.5);
-        kdm.visit_nodes_rect(r, 
-            [&pad_src](const kdp_t & n){ 
-                pad_src.push_back( n.pad<const int>() ); });
-        for(auto &p_src: _kdpts1)
-            if( r.contains(p_src) ) 
-                pad_dst.push_back( p_src.pad<const int>() );
-        EXPECT_THAT(pad_src, 
-            gt::UnorderedElementsAreArray(pad_dst));
-    }
 }
 
 TEST_F(KDMeshTest, VisitSphereCompleteCheck) {
@@ -422,6 +424,38 @@ TEST_F(KDMeshTest, VisitSphereCells) {
    
 }
 
+TEST_F(KDMeshTest, VisitSphereNodes) {
+    kdm_t kdm(_kdpts1);
+    int n_dst = 1000;
+
+    for(auto r: {1.0f, 2.0f, 3.0f, 5.0f, 7.5f}){
+        /* Check node count. */
+        for(int i=0; i<n_dst; ++i){
+            auto &p_dst = _kdpts2[i];
+            kdm_t::sphere_t s(p_dst, r);
+            index_t cnt1 = kdm.count_nodes_sphere(s),
+                cnt2 = std::count_if(_kdpts1.begin(), _kdpts1.end(), 
+                    [&s](auto &p){ return s.contains(p); });
+            EXPECT_EQ(cnt1, cnt2);
+        }
+
+        /* Check padding of each node. */
+        for(int i=0; i<n_dst; ++i){
+            auto &p_dst = _kdpts2[i];
+            vector<index_t> pad_src, pad_dst;
+            kdm_t::sphere_t s(p_dst, r);
+            kdm.visit_nodes_sphere(s, 
+                [&pad_src](const kdm_t::node_t& n){ 
+                    pad_src.push_back( n.pad<int>() ); });
+            for(auto &p_src: _kdpts1)
+                if( s.contains(p_src) ) 
+                    pad_dst.push_back( p_src.pad<int>() );
+            EXPECT_THAT(pad_src, 
+                gt::UnorderedElementsAreArray(pad_dst));
+        }
+        
+    }
+}
 
 } // namespace
 

@@ -3,7 +3,7 @@ set(_modid mpi)
 set(_exebase "${_projectid}${_modid}")
 
 function(addmpitest src nproc)
-    set(testname "mpitest-${src}")
+    set(testname "${_exebase}_${src}.out")
 
     add_executable("${testname}" "${src}.cpp")
     target_link_libraries("${testname}" 

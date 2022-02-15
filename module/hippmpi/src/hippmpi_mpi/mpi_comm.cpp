@@ -10,14 +10,17 @@ const Comm::del_attr_fn_t Comm::NULL_DEL_FN = Comm::_null_del_fn;
 
 std::unordered_map<int, Comm::_attr_extra_state_t *> Comm::_attr_extra_state; 
 
-ostream & Comm::info( ostream &os, int fmt_cntl ) const{
+ostream & Comm::info(ostream &os, int fmt_cntl, int level) const {
     PStream ps {os};
     bool null_comm = is_null();
+    
     if( null_comm ) {
-        if( fmt_cntl == 0 )
-            ps << "Comm{Null}";
-        else
-            ps << HIPPCNTL_CLASS_INFO(HIPP::MPI::Comm), "  Null\n"; 
+        if( fmt_cntl == 0 ) {
+            ps << HIPPCNTL_CLASS_INFO_INLINE(Comm), " {NULL}";
+        } else {
+            auto ind = HIPPCNTL_CLASS_INFO_INDENT_STR(level);
+            ps << HIPPCNTL_CLASS_INFO(Comm), ind, "NULL\n"; 
+        }
         return os;
     }
 
@@ -26,24 +29,33 @@ ostream & Comm::info( ostream &os, int fmt_cntl ) const{
     const int topo = topo_test();
     auto topos = _topostr(topo);
     if(fmt_cntl == 0) {
-        ps << "Comm{size=", _size, ", rank=", _rank, ", topology=", topos;
+        ps << HIPPCNTL_CLASS_INFO_INLINE(Comm), 
+            "{group size=", _size, ", rank=", _rank, ", topology=", topos;
         if( inter_comm )
-            ps << ", remote size=", remote_size();
+            ps << ", remote group size=", remote_size();
         ps << "}";
         return os;
     }
 
-    ps << HIPPCNTL_CLASS_INFO(HIPP::MPI::Comm),
-        "  Process group{size=", _size, ", rank=", _rank;
+    auto ind = HIPPCNTL_CLASS_INFO_INDENT_STR(level);
+    ps << HIPPCNTL_CLASS_INFO(Comm),
+        ind, "Process group {group size=", _size, ", rank=", _rank;
     if( inter_comm )
-        ps << ", remote size=", remote_size();
+        ps << ", remote group size=", remote_size();
     ps << "}\n",
-        "  Topology{", topos;
+        ind, "Topology {", topos;
     if( topo == CART ) {
         vector<int> dims, periods, coords;
         cart_get(dims, periods, coords);
         ps << ", ndims=", dims.size(), ", dims={", dims, 
             "}, periods={", periods, "}, coords={", coords, "}";
+    } else if( topo == GRAPH ) {
+        int n_ngbs = graph_neighbors_count(_rank);
+        ps << ", neighbors count=", n_ngbs;
+    } else if( topo == DIST_GRAPH ) {
+        auto [in_deg, out_deg, wgt] = dist_graph_neighbors_count();
+        ps << ", in degree=", in_deg, ", out degree=", out_deg, ", weighted=",
+            wgt;
     }
     ps << "}\n";
     return os;
@@ -579,7 +591,7 @@ Requests Comm::ineighbor_allgather(const void* sendbuf, int sendcount,
     auto req = obj_raw().ineighbor_allgather(
         sendbuf, sendcount, sendtype.raw(), recvbuf, 
         recvcount, recvtype.raw());
-    return Requests::_from_raw(req, 0);
+    return Requests::_from_raw_bare(req);
 }
 
 Requests Comm::ineighbor_allgather(
@@ -607,7 +619,7 @@ Requests Comm::ineighbor_allgatherv(const void* sendbuf, int sendcount,
 {
     auto req = obj_raw().ineighbor_allgatherv(sendbuf, sendcount, 
         sendtype.raw(), recvbuf, recvcounts, displs, recvtype.raw());
-    return Requests::_from_raw(req, 0);
+    return Requests::_from_raw_bare(req);
 }
 
 Requests Comm::ineighbor_allgatherv(
@@ -643,7 +655,7 @@ Requests Comm::ineighbor_alltoall(const void* sendbuf, int sendcount,
 {
     auto req = obj_raw().ineighbor_alltoall(sendbuf, sendcount, sendtype.raw(), 
         recvbuf, recvcount, recvtype.raw());
-    return Requests::_from_raw(req, 0);
+    return Requests::_from_raw_bare(req);
 }
 
 Requests Comm::ineighbor_alltoall(const void *sendbuf, void *recvbuf, int count, 
@@ -661,7 +673,7 @@ Requests Comm::ineighbor_alltoallv(const void* sendbuf, const int sendcounts[],
     auto req = obj_raw().ineighbor_alltoallv(sendbuf, sendcounts, sdispls, 
         sendtype.raw(),
         recvbuf, recvcounts, rdispls, recvtype.raw());
-    return Requests::_from_raw(req, 0);
+    return Requests::_from_raw_bare(req);
 }
 
 Requests Comm::ineighbor_alltoallw(const void* sendbuf, const int sendcounts[],
@@ -671,7 +683,7 @@ Requests Comm::ineighbor_alltoallw(const void* sendbuf, const int sendcounts[],
 {
     auto req = obj_raw().ineighbor_alltoallw(sendbuf, sendcounts, sdispls, 
         sendtypes, recvbuf, recvcounts, rdispls, recvtypes);
-    return Requests::_from_raw(req, 0);
+    return Requests::_from_raw_bare(req);
 }
 
 
@@ -744,7 +756,7 @@ std::pair<Status, Message> Comm::mprobe(int src, int tag) const{
 }
 
 std::pair<Status, Message> Comm::improbe(int src, int tag, int &flag) const{
-    Message::mpi_t msg;
+    Message::mpi_t msg = MPI_MESSAGE_NULL;
     Status st = _obj_ptr->improbe(src, tag, flag, msg);
     return {st, Message(msg)};
 }
@@ -774,7 +786,7 @@ void Comm::gather(const void *sendbuf, void *recvbuf,
 }
 
 void Comm::gather(const ConstDatapacket &send_dpacket, void *recvbuf, 
-int root) const 
+    int root) const 
 {
     auto & [p,n,dt] = send_dpacket;
     gather(p, recvbuf, n, dt, root);

@@ -9,8 +9,6 @@ set(_src
     mpi_info.cpp
     mpi_op.cpp 
     mpi_win.cpp
-    mpi_raw_comm.cpp 
-    mpi_raw_file.cpp
     mpi_requests.cpp
     mpi_pack.cpp
 )
@@ -31,6 +29,7 @@ target_include_directories(${_libname}
 )
 target_link_libraries(${_libname}
     PRIVATE
+        hipp-config
         "${_projectid}cntl"
         mpi-interface
 )

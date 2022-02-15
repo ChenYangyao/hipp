@@ -1,3 +1,11 @@
+set(_bindir "${CMAKE_CURRENT_BINARY_DIR}") 
+set(_srcdir "${CMAKE_CURRENT_SOURCE_DIR}")
+configure_file("${_srcdir}/hipp_config.h.in" "${_bindir}/hipp_config.h")
+
+add_library(hipp-config INTERFACE)
+target_include_directories(hipp-config INTERFACE "${_bindir}")
+install(FILES "${_bindir}/hipp_config.h" DESTINATION include)
+
 add_subdirectory("${_projectid}cntl")
 
 add_subdirectory("${_projectid}algorithm")

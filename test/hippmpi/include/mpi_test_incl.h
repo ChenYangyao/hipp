@@ -84,6 +84,12 @@ public:
     void assert_eq_range(const T1 &x1, const T2 &x2, Args &&...args);
 
     template<typename T1, typename T2, typename ...Args>
+    bool expect_eq_buff(const T1 *p1, const T2 *p2, size_t n, Args &&...args);
+
+    template<typename T1, typename T2, typename ...Args>
+    void assert_eq_buff(const T1 *p1, const T2 *p2, size_t n, Args &&...args);
+
+    template<typename T1, typename T2, typename ...Args>
     bool expect_eq_type(Args &&...args);
 
     template<typename T1, typename T2, typename ...Args>
@@ -359,7 +365,7 @@ bool MPITestFixture::expect_eq_range(const T1 &x1, const T2 &x2,
 
     bool suc = true;
     for(ptrdiff_t i=0; i<n1; ++i){
-        suc = expect_eq(*b1, *b2, std::forward<Args>(args)..., 
+        suc = suc && expect_eq(*b1, *b2, std::forward<Args>(args)..., 
             ", at index ", i);
         ++b1; ++b2;   
     }
@@ -384,6 +390,28 @@ void MPITestFixture::assert_eq_range(const T1 &x1, const T2 &x2,
 }
 
 template<typename T1, typename T2, typename ...Args>
+bool MPITestFixture::expect_eq_buff(const T1 *p1, const T2 *p2, size_t n, 
+    Args &&...args) 
+{
+    bool suc = true;
+    for(size_t i=0; i<n; ++i){
+        suc = suc && expect_eq(p1[i], p2[i], std::forward<Args>(args)..., 
+            ", at index ", i);
+    }
+    return suc;
+}
+
+template<typename T1, typename T2, typename ...Args>
+void MPITestFixture::assert_eq_buff(const T1 *p1, const T2 *p2, size_t n, 
+    Args &&...args) 
+{
+    for(size_t i=0; i<n; ++i){
+        assert_eq(p1[i], p2[i], std::forward<Args>(args)..., 
+            ", at index ", i);
+    }
+}
+
+template<typename T1, typename T2, typename ...Args>
 bool MPITestFixture::expect_eq_type(Args &&...args) {
     if( std::is_same_v<T1, T2> ) return true;
     ( (perr << "[ERROR]") , ... , std::forward<Args>(args) );
@@ -397,10 +425,6 @@ void MPITestFixture::assert_eq_type(Args &&...args) {
     if( !expect_eq_type<T1, T2>(std::forward<Args>(args)...) )
         throw ErrLogic(ErrLogic::eDEFAULT);
 }
-
-
-
-
 
     
 } // namespace HIPP::MPI

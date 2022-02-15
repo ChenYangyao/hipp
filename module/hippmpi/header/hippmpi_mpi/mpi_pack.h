@@ -5,9 +5,6 @@ create: Yangyao CHEN, 2021/09/28
 
 #ifndef _HIPPMPI_MPI_PACK_H_
 #define _HIPPMPI_MPI_PACK_H_
-#include "mpi_base.h"
-#include "mpi_error.h"
-#include "mpi_raw_pack.h"
 #include "mpi_comm.h"
 #include "mpi_datapacket.h"
 namespace HIPP::MPI {

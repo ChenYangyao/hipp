@@ -1,12 +1,10 @@
 /**
 create: Yangyao CHEN, 2020/10/11
-    [write   ] Win - the high-level RMA window interface for MPI system
+    [write   ] Win - the high-level RMA window interface for MPI system.
 */ 
 
 #ifndef _HIPPMPI_MPI_WIN_H_
 #define _HIPPMPI_MPI_WIN_H_
-#include "mpi_raw_win.h"
-#include "mpi_obj_base.h"
 #include "mpi_datapacket.h"
 #include "mpi_op.h"
 #include "mpi_info.h"
@@ -60,7 +58,17 @@ public:
         FLAVOR_SHARED=MPI_WIN_FLAVOR_SHARED
     };
 
-    ostream &info(ostream &os = cout, int fmt_cntl = 1)const;
+    /**
+    ``info()`` prints a short (``fmt_cntl=0``) or a verbose (``fmt_cntl=1``) 
+    description of the current instance to the stream ``os``.
+    Larger ``level`` produces more indents.
+
+    Operator ``<<`` is equivalent to ``info()`` with default ``fmt_cntl`` and
+    ``level``.
+
+    The passed stream ``os`` is returned.
+    */
+    ostream &info(ostream &os = cout, int fmt_cntl = 0, int level = 0) const;
     friend ostream & operator<<(ostream &os, const Win &win);
 
     /**

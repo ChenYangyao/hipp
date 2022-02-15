@@ -2,17 +2,19 @@
 namespace HIPP{
 namespace MPI{
 
-Datatype::Datatype() noexcept: 
-    _obj_base_t( std::make_shared<_obj_raw_t>(_obj_raw_t::nullval(), 0) ){ }
+Datatype::Datatype() noexcept
+: _obj_base_t( std::make_shared<_obj_raw_t>(_obj_raw_t::nullval(), 0) ){ }
 
-ostream & Datatype::info( ostream &os, int fmt_cntl ) const{
+ostream & Datatype::info(ostream &os, int fmt_cntl, int level) const {
     PStream ps(os);
     bool null_dtype = is_null();
     if( null_dtype ) {
         if( fmt_cntl == 0 ) 
-            ps << "Datatype{Null}";
-        else
-            ps << HIPPCNTL_CLASS_INFO(HIPP::MPI::Datatype), " Null\n";
+            ps << HIPPCNTL_CLASS_INFO_INLINE(Datatype), "{NULL}";
+        else {
+            auto ind = HIPPCNTL_CLASS_INFO_INDENT_STR(level);
+            ps << HIPPCNTL_CLASS_INFO(Datatype), ind, "NULL\n";
+        }
         return os;
     }
     int _size = size();
@@ -20,13 +22,15 @@ ostream & Datatype::info( ostream &os, int fmt_cntl ) const{
     extent( lb, ext ); 
     true_extent(tlb, text);
     if(fmt_cntl == 0){
-        ps << "Datatype{size=", _size, ", lower bound=", lb, ", extent=", ext, 
+        ps << HIPPCNTL_CLASS_INFO_INLINE(Datatype), 
+            "{size=", _size, ", lower bound=", lb, ", extent=", ext, 
             ", true lower bound=", tlb, ", true extent=", text, "}";
     } else {
-        ps << HIPPCNTL_CLASS_INFO(HIPP::MPI::Datatype),
-            "  Size{", _size, "}\n",
-            "  Lower bound{", lb, ", true=", tlb, "}\n",
-            "  Extent{", ext, ", true=", text, "}\n";
+        auto ind = HIPPCNTL_CLASS_INFO_INDENT_STR(level);
+        ps << HIPPCNTL_CLASS_INFO(Datatype),
+            ind, "Size {", _size, "}\n",
+            ind, "Lower bound {", lb, ", true=", tlb, "}\n",
+            ind, "Extent {", ext, ", true=", text, "}\n";
     }
     return os;
 }

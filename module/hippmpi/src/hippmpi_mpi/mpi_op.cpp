@@ -7,39 +7,48 @@ Op::Op( user_fn_t user_fn, int commute )
 : _obj_base_t( 
     std::make_shared<_obj_raw_t>(
         _obj_raw_t::create(user_fn, commute), _obj_raw_t::stFREE )) {  }
-ostream & Op::info( ostream &os, int fmt_cntl ) const{
-    if(fmt_cntl == 0 ){
-        prt( os, HIPPCNTL_CLASS_INFO_INLINE(HIPP::MPI::Op) );
-        if( is_null() ) prt(os, "Null");
-        else{
-            const char *optype = ( _obj_ptr->_state & _obj_ptr->stFREE )?
-                "User-defined operation":"Pre-defined operation";
-            prt( os, optype );
-        }
+        
+ostream & Op::info(ostream &os, int fmt_cntl, int level) const {
+    PStream ps{os};
+    bool _is_null = is_null(), 
+        _is_custom = _obj_ptr->_state & _obj_ptr->stFREE;
+    const char *op_type = _is_custom ? 
+        "user-defined operation" : "pre-defined operation";
+
+    if(fmt_cntl == 0){
+        ps << HIPPCNTL_CLASS_INFO_INLINE(Op), '{';
+        if( _is_null ) ps << "NULL";
+        else ps << op_type;
+        ps << '}';
+        return os;
     }
-    if(fmt_cntl >= 1){
-        prt( os, HIPPCNTL_CLASS_INFO(HIPP::MPI::Op) );
-        if( is_null() ) prt(os, "  Null") << endl;
-        else{
-            const char *optype = ( _obj_ptr->_state & _obj_ptr->stFREE )?
-                "User-defined operation":"Pre-defined operation";
-            prt( os, "  ", optype ) << endl;
-        }
+
+    auto ind = HIPPCNTL_CLASS_INFO_INDENT_STR(level);
+    ps << HIPPCNTL_CLASS_INFO(Op);
+    if( _is_null ) {
+        ps << ind, "NULL\n"; return os;
     }
+    ps << ind, op_type, '\n';
+        
     return os;
 }
+
 void Op::free() noexcept{
     *this = nullval();
 }
+
 bool Op::is_null() const{
     return _obj_ptr->is_null();
 }
+
 bool Op::commutative() const{
     return _obj_ptr->commutative();
 }
+
 Op Op::nullval() noexcept{
     return _from_raw( _obj_raw_t::nullval(), 0 );
 }
+
 Op Op::create( user_fn_t user_fn, int commute ){
     return _from_raw( _obj_raw_t::create( user_fn, commute ), 
         _obj_raw_t::stFREE );
@@ -69,17 +78,17 @@ _HIPPMPI_MPI_PREOP(NO_OP, MPI_NO_OP)
 std::unordered_map<string, const Op *> _opcvt = {
     {"max", &MAX},
     {"min", &MIN},
-    {"sum", &SUM}, {"+", &SUM},
-    {"prod", &PROD}, {"*", &PROD},
-    {"land", &LAND}, {"&&", &LAND},
-    {"band", &BAND}, {"&", &BAND},
-    {"lor", &LOR}, {"||", &LOR},
-    {"bor", &BOR}, {"|", &BOR},
+    {"sum", &SUM},          {"+", &SUM},
+    {"prod", &PROD},        {"*", &PROD},
+    {"land", &LAND},        {"&&", &LAND},
+    {"band", &BAND},        {"&", &BAND},
+    {"lor", &LOR},          {"||", &LOR},
+    {"bor", &BOR},          {"|", &BOR},
     {"lxor", &LXOR},
-    {"bxor", &BXOR}, {"^", &BXOR},
+    {"bxor", &BXOR},        {"^", &BXOR},
     {"maxloc", &MAXLOC},
     {"minloc", &MINLOC},
-    {"replace", &REPLACE}, {"=", &REPLACE},
+    {"replace", &REPLACE},  {"=", &REPLACE},
     {"no_op", &NO_OP}
 };
 

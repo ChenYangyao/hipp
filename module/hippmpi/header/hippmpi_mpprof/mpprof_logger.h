@@ -43,7 +43,17 @@ public:
         return msg_t(SIZE_KEY, size, MSG_KEY, msg);
     }
 
-    ostream & info(ostream &os=cout, int fmt_cntl=1) const;
+    /**
+    ``info()`` prints a short (``fmt_cntl=0``) or a verbose (``fmt_cntl=1``) 
+    description of the current instance to the stream ``os``.
+    Larger ``level`` produces more indents.
+
+    Operator ``<<`` is equivalent to ``info()`` with default ``fmt_cntl`` and
+    ``level``.
+
+    The passed stream ``os`` is returned.
+    */
+    ostream &info(ostream &os = cout, int fmt_cntl = 0, int level = 0) const;
     friend ostream & operator<<(ostream &os, const msg_t &msg);
 
     /** 
@@ -75,7 +85,17 @@ struct group_t {
     group_t(int _id, const Group &global, 
         const Group &local, const msg_t &_msg=msg_t::empty_msg);
 
-    ostream & info(ostream &os=cout, int fmt_cntl=1) const;
+    /**
+    ``info()`` prints a short (``fmt_cntl=0``) or a verbose (``fmt_cntl=1``) 
+    description of the current instance to the stream ``os``.
+    Larger ``level`` produces more indents.
+
+    Operator ``<<`` is equivalent to ``info()`` with default ``fmt_cntl`` and
+    ``level``.
+
+    The passed stream ``os`` is returned.
+    */
+    ostream &info(ostream &os = cout, int fmt_cntl = 0, int level = 0) const;
     friend ostream & operator<<(ostream &os, const group_t &g);
 
     static IO::H5::XTable<group_t> _tbl_manip;  
@@ -116,7 +136,17 @@ struct state_t {
         int _p2p_match_id, const msg_t &_msg=msg_t::empty_msg);
     void mark_as_reserve() { access = SYSTEM_RESERVED_CALL; }
 
-    ostream & info(ostream &os=cout, int fmt_cntl=1) const;
+    /**
+    ``info()`` prints a short (``fmt_cntl=0``) or a verbose (``fmt_cntl=1``) 
+    description of the current instance to the stream ``os``.
+    Larger ``level`` produces more indents.
+
+    Operator ``<<`` is equivalent to ``info()`` with default ``fmt_cntl`` and
+    ``level``.
+
+    The passed stream ``os`` is returned.
+    */
+    ostream &info(ostream &os = cout, int fmt_cntl = 0, int level = 0) const;
     friend ostream & operator<<(ostream &os, const state_t &s);
 
     bool is_time_point() const noexcept { return (type & 0xf) == TIME_POINT; }
@@ -143,7 +173,17 @@ struct event_t {
         double _p2p_tag, double _epoch_begin);
     void set_epoch_end(double _epoch_end) noexcept { epoch_end = _epoch_end; }
 
-    ostream & info(ostream &os=cout, int fmt_cntl=1) const;
+    /**
+    ``info()`` prints a short (``fmt_cntl=0``) or a verbose (``fmt_cntl=1``) 
+    description of the current instance to the stream ``os``.
+    Larger ``level`` produces more indents.
+
+    Operator ``<<`` is equivalent to ``info()`` with default ``fmt_cntl`` and
+    ``level``.
+
+    The passed stream ``os`` is returned.
+    */
+    ostream &info(ostream &os = cout, int fmt_cntl = 0, int level = 0) const;
     friend ostream & operator<<(ostream &os, const event_t &e);
 
     static IO::H5::XTable<event_t> _tbl_manip;
@@ -157,7 +197,17 @@ struct stored_event_t {
     stored_event_t(long long id, double epoch_end) noexcept
         : stored_id(id), stored_epoch_end(epoch_end) {}
 
-    ostream & info(ostream &os=cout, int fmt_cntl=1) const;
+    /**
+    ``info()`` prints a short (``fmt_cntl=0``) or a verbose (``fmt_cntl=1``) 
+    description of the current instance to the stream ``os``.
+    Larger ``level`` produces more indents.
+
+    Operator ``<<`` is equivalent to ``info()`` with default ``fmt_cntl`` and
+    ``level``.
+
+    The passed stream ``os`` is returned.
+    */
+    ostream &info(ostream &os = cout, int fmt_cntl = 0, int level = 0) const;
     friend ostream & operator<<(ostream &os, const stored_event_t &e);
 
     static IO::H5::XTable<stored_event_t> _tbl_manip;
@@ -176,7 +226,17 @@ public:
     guard_t & operator=(guard_t &&) = delete;
     void end_push();
 
-    ostream & info(ostream &os=cout, int fmt_cntl=1) const;
+    /**
+    ``info()`` prints a short (``fmt_cntl=0``) or a verbose (``fmt_cntl=1``) 
+    description of the current instance to the stream ``os``.
+    Larger ``level`` produces more indents.
+
+    Operator ``<<`` is equivalent to ``info()`` with default ``fmt_cntl`` and
+    ``level``.
+
+    The passed stream ``os`` is returned.
+    */
+    ostream &info(ostream &os = cout, int fmt_cntl = 0, int level = 0) const;
     friend ostream & operator<<(ostream &os, const guard_t &gd);
 private:
     Logger &_logger;
@@ -196,7 +256,17 @@ public:
     state_manager_t & operator=(const state_manager_t &) = delete;
     state_manager_t & operator=(state_manager_t &&) = delete;
 
-    ostream & info(ostream &os=cout, int fmt_cntl=1) const;
+    /**
+    ``info()`` prints a short (``fmt_cntl=0``) or a verbose (``fmt_cntl=1``) 
+    description of the current instance to the stream ``os``.
+    Larger ``level`` produces more indents.
+
+    Operator ``<<`` is equivalent to ``info()`` with default ``fmt_cntl`` and
+    ``level``.
+
+    The passed stream ``os`` is returned.
+    */
+    ostream &info(ostream &os = cout, int fmt_cntl = 0, int level = 0) const;
     friend ostream & operator<<(ostream &os, const state_manager_t &sm);
 
     int add_group(const Group &g, const msg_t &msg);
@@ -293,13 +363,16 @@ public:
     Logger & operator=(Logger &&) = delete;
 
     /**
-    Print some information os this logger to the stream `os`.
-    @fmt_cntl: 0 for a short and inline information. 1 for a verbose and block 
-        version.
+    ``info()`` prints a short (``fmt_cntl=0``) or a verbose (``fmt_cntl=1``) 
+    description of the current instance to the stream ``os``.
+    Larger ``level`` produces more indents.
 
-    The operator<< is equivalent to `info()` with `fmt_cntl = 1`.
+    Operator ``<<`` is equivalent to ``info()`` with default ``fmt_cntl`` and
+    ``level``.
+
+    The passed stream ``os`` is returned.
     */
-    ostream & info(ostream &os=cout, int fmt_cntl=1) const;
+    ostream &info(ostream &os = cout, int fmt_cntl = 0, int level = 0) const;
     friend ostream & operator<<(ostream &os, const Logger &lg);
 
     /**

@@ -11,6 +11,7 @@ message("   Source at: ${_moddir}")
 add_library(${_libname} INTERFACE)
 target_link_libraries(${_libname}
     INTERFACE
+        hipp-config
         "${_projectid}cntl"
 )
 target_include_directories(${_libname}

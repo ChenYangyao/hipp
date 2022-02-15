@@ -30,6 +30,7 @@ target_include_directories(${_libname}
 )
 target_link_libraries(${_libname}
     PRIVATE
+        hipp-config
         "${_projectid}cntl"
         hdf5-interface
 )

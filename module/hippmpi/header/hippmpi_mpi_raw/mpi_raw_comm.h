@@ -21,8 +21,12 @@ public:
     typedef MPI_Comm mpi_t;
     typedef MPI_Comm_copy_attr_function copy_attr_fn_t;
     typedef MPI_Comm_delete_attr_function del_attr_fn_t;
-    static const copy_attr_fn_t *const NULL_COPY_FN, * const DUP_FN;
-    static const del_attr_fn_t *const NULL_DEL_FN;
+
+    inline static const copy_attr_fn_t 
+        *const NULL_COPY_FN = MPI_NULL_COPY_FN, 
+        *const DUP_FN = MPI_COMM_DUP_FN;
+    inline static const del_attr_fn_t 
+        *const NULL_DEL_FN = MPI_NULL_DELETE_FN;
 
     /**
     Intermediate-level communicator constructors.
@@ -328,6 +332,7 @@ public:
         int dest, int tag ) const;
     MPI_Status recv( void *buff, int count, MPI_Datatype dtype, 
         int src, int tag ) const;
+    
     MPI_Request isend( const void *buff, int count, MPI_Datatype dtype, 
         int dest, int tag ) const;
     MPI_Request ibsend( const void *buff, int count, MPI_Datatype dtype, 
@@ -338,6 +343,17 @@ public:
         int dest, int tag ) const;
     MPI_Request irecv( void *buff, int count, MPI_Datatype dtype, 
         int src, int tag ) const;
+
+    MPI_Request send_init(const void *buff, int count, MPI_Datatype dtype, 
+        int dest, int tag) const;
+    MPI_Request bsend_init(const void *buff, int count, MPI_Datatype dtype, 
+        int dest, int tag) const;
+    MPI_Request ssend_init(const void *buff, int count, MPI_Datatype dtype, 
+        int dest, int tag) const;
+    MPI_Request rsend_init(const void *buff, int count, MPI_Datatype dtype, 
+        int dest, int tag) const;
+    MPI_Request recv_init(void *buff, int count, MPI_Datatype dtype, 
+        int src, int tag) const;
 
     MPI_Status sendrecv(const void *sendbuff, int sendcount, 
         MPI_Datatype sendtype, int dest, int sendtag, void *recvbuff, 
@@ -898,29 +914,34 @@ MPI_Request _Comm::ineighbor_alltoallw(const void* sendbuf,
 inline 
 void _Comm::send( const void *buff, int count, MPI_Datatype dtype, 
     int dest, int tag ) const{
-    ErrMPI::check( MPI_Send(buff, count, dtype, dest, tag, _val), 
-        emFLPFB );
+    ErrMPI::check( 
+        MPI_Send(buff, count, dtype, dest, tag, _val), 
+        emFLPFB, "  ... buff=", buff, ", count=", count, 
+        ", dst=", dest, ", tag=", tag, "\n");
 }
 
 inline 
 void _Comm::bsend(const void *buff, int count, MPI_Datatype dtype, 
     int dest, int tag ) const {
     ErrMPI::check( MPI_Bsend(buff, count, dtype, dest, tag, _val),
-        emFLPFB );
+        emFLPFB, "  ... buff=", buff, ", count=", count, 
+        ", dst=", dest, ", tag=", tag, "\n");
 }
 
 inline 
 void _Comm::ssend(const void *buff, int count, MPI_Datatype dtype, 
     int dest, int tag ) const {
     ErrMPI::check( MPI_Ssend(buff, count, dtype, dest, tag, _val),
-        emFLPFB );
+        emFLPFB, "  ... buff=", buff, ", count=", count, 
+        ", dst=", dest, ", tag=", tag, "\n");
 }
 
 inline 
 void _Comm::rsend(const void *buff, int count, MPI_Datatype dtype, 
     int dest, int tag ) const {
     ErrMPI::check( MPI_Rsend(buff, count, dtype, dest, tag, _val),
-        emFLPFB );
+        emFLPFB, "  ... buff=", buff, ", count=", count, 
+        ", dst=", dest, ", tag=", tag, "\n");
 }
 
 inline 
@@ -928,7 +949,8 @@ MPI_Status _Comm::recv( void *buff, int count, MPI_Datatype dtype,
     int src, int tag ) const{
     MPI_Status st;
     ErrMPI::check( MPI_Recv(buff, count, dtype, src, tag, _val, &st), 
-        emFLPFB );
+        emFLPFB, "  ... buff=", buff, ", count=", count, 
+        ", src=", src, ", tag=", tag, "\n");
     return st;
 }
 
@@ -937,7 +959,8 @@ MPI_Request _Comm::isend( const void *buff, int count, MPI_Datatype dtype,
     int dest, int tag ) const{
     MPI_Request rq;
     ErrMPI::check( MPI_Isend(buff, count, dtype, dest, tag, _val, &rq), 
-        emFLPFB );
+        emFLPFB, "  ... buff=", buff, ", count=", count, 
+        ", dst=", dest, ", tag=", tag, "\n");
     return rq;
 }
 
@@ -946,7 +969,8 @@ MPI_Request _Comm::ibsend( const void *buff, int count, MPI_Datatype dtype,
     int dest, int tag ) const{
     MPI_Request rq;
     ErrMPI::check( MPI_Ibsend(buff, count, dtype, dest, tag, _val, &rq), 
-        emFLPFB );
+        emFLPFB, "  ... buff=", buff, ", count=", count, 
+        ", dst=", dest, ", tag=", tag, "\n");
     return rq;
 }
 
@@ -955,7 +979,8 @@ MPI_Request _Comm::issend( const void *buff, int count, MPI_Datatype dtype,
     int dest, int tag ) const{
     MPI_Request rq;
     ErrMPI::check( MPI_Issend(buff, count, dtype, dest, tag, _val, &rq), 
-        emFLPFB );
+        emFLPFB, "  ... buff=", buff, ", count=", count, 
+        ", dst=", dest, ", tag=", tag, "\n");
     return rq;
 }
 
@@ -964,7 +989,8 @@ MPI_Request _Comm::irsend( const void *buff, int count, MPI_Datatype dtype,
     int dest, int tag ) const{
     MPI_Request rq;
     ErrMPI::check( MPI_Irsend(buff, count, dtype, dest, tag, _val, &rq), 
-        emFLPFB );
+        emFLPFB, "  ... buff=", buff, ", count=", count, 
+        ", dst=", dest, ", tag=", tag, "\n");
     return rq;
 }
 
@@ -973,7 +999,69 @@ MPI_Request _Comm::irecv( void *buff, int count, MPI_Datatype dtype,
     int src, int tag ) const
 {
     MPI_Request rq;
-    ErrMPI::check( MPI_Irecv(buff, count, dtype, src, tag, _val, &rq) );
+    ErrMPI::check(MPI_Irecv(buff, count, dtype, src, tag, _val, &rq),
+        emFLPFB, "  ... buff=", buff, ", count=", count, 
+        ", src=", src, ", tag=", tag, "\n");
+    return rq;
+}
+
+inline
+MPI_Request _Comm::send_init(const void *buff, int count, MPI_Datatype dtype, 
+    int dest, int tag) const
+{
+    MPI_Request rq;
+    ErrMPI::check(
+        MPI_Send_init(buff, count, dtype, dest, tag, _val, &rq), 
+        emFLPFB, "  ... buff=", buff, ", count=", count, 
+        ", dst=", dest, ", tag=", tag, "\n");
+    return rq;
+}
+
+inline
+MPI_Request _Comm::bsend_init(const void *buff, int count, MPI_Datatype dtype, 
+    int dest, int tag) const
+{
+    MPI_Request rq;
+    ErrMPI::check(
+        MPI_Bsend_init(buff, count, dtype, dest, tag, _val, &rq), 
+        emFLPFB, "  ... buff=", buff, ", count=", count, 
+        ", dst=", dest, ", tag=", tag, "\n");
+    return rq;
+}
+
+inline
+MPI_Request _Comm::ssend_init(const void *buff, int count, MPI_Datatype dtype, 
+    int dest, int tag) const
+{
+    MPI_Request rq;
+    ErrMPI::check(
+        MPI_Ssend_init(buff, count, dtype, dest, tag, _val, &rq), 
+        emFLPFB, "  ... buff=", buff, ", count=", count, 
+        ", dst=", dest, ", tag=", tag, "\n");
+    return rq;
+}
+
+inline
+MPI_Request _Comm::rsend_init(const void *buff, int count, MPI_Datatype dtype, 
+    int dest, int tag) const
+{
+    MPI_Request rq;
+    ErrMPI::check(
+        MPI_Rsend_init(buff, count, dtype, dest, tag, _val, &rq), 
+        emFLPFB, "  ... buff=", buff, ", count=", count, 
+        ", dst=", dest, ", tag=", tag, "\n");
+    return rq;
+}
+
+inline
+MPI_Request _Comm::recv_init(void *buff, int count, MPI_Datatype dtype, 
+    int src, int tag) const
+{
+    MPI_Request rq;
+    ErrMPI::check(
+        MPI_Recv_init(buff, count, dtype, src, tag, _val, &rq), 
+        emFLPFB, "  ... buff=", buff, ", count=", count, 
+        ", src=", src, ", tag=", tag, "\n");
     return rq;
 }
 

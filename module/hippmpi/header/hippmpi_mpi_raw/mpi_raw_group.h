@@ -1,7 +1,7 @@
 /**
- * creat: Yangyao CHEN, 2020/01/21
- *      [write   ] _Group - the intermediate-level MPI process group interface.
- */
+create: Yangyao CHEN, 2020/01/21
+    [write   ] _Group - the intermediate-level MPI process group interface.
+*/
 
 #ifndef _HIPPMPI_MPI_RAW_GROUP_H_
 #define _HIPPMPI_MPI_RAW_GROUP_H_
@@ -11,10 +11,10 @@ namespace HIPP{
 namespace MPI{
 
 /**
- * the intermediate-level MPI process group interface.
- * 
- * _Group should not be constructed by users directly. The life time of it is 
- * handled by the high-level interfaces.
+The intermediate-level MPI process group interface.
+
+``_Group`` should not be constructed by users directly. The life time of it is 
+handled by the high-level interfaces.
  */
 class _Group{
 public:

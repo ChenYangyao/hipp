@@ -6,7 +6,6 @@ create: Yangyao CHEN, 2020/01/21
 #ifndef _HIPPMPI_MPI_DATATYPE_H_
 #define _HIPPMPI_MPI_DATATYPE_H_
 #include "mpi_obj_base.h"
-#include "mpi_raw_datatype.h"
 #include <cstdint>
 #include <complex>
 namespace HIPP::MPI {
@@ -46,13 +45,15 @@ public:
     /**
     ``info()`` prints a short (``fmt_cntl=0``) or a verbose (``fmt_cntl=1``) 
     description of the current instance to the stream ``os``.
+    Larger ``level`` produces more indents.
 
-    Operator ``<<`` is equivalent to ``info()`` with ``fmt_cntl=0``.
+    Operator ``<<`` is equivalent to ``info()`` with default ``fmt_cntl`` and
+    ``level``.
 
     The passed stream ``os`` is returned.
     */
-    ostream &info( ostream &os = cout, int fmt_cntl = 1 ) const;
-    friend ostream & operator<<( ostream &os, const Datatype &dtype );
+    ostream &info(ostream &os = cout, int fmt_cntl = 0, int level = 0) const;
+    friend ostream & operator<<(ostream &os, const Datatype &dtype);
 
     /**
     Free the object and set it to nullval as returned by nullval().
@@ -508,8 +509,8 @@ struct TypeCvt<NativeT,
 };
 
 
-inline ostream & operator<<( ostream &os, const Datatype &dtype ){
-    return dtype.info(os, 0);
+inline ostream & operator<<(ostream &os, const Datatype &dtype){
+    return dtype.info(os);
 }
 
 inline Datatype Datatype::_from_raw( mpi_t dtype, int state ) noexcept{

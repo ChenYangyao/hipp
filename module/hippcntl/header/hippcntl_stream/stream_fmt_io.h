@@ -10,10 +10,13 @@ create: Yangyao CHEN, 2019/12/28
 #include "stream_array.h"
 
 #define HIPPCNTL_CLASS_INFO(class_name) \
-    #class_name " instance [loc=", (void *)this, ", size=", sizeof(class_name),\
-    ", align=", alignof(class_name), "]\n----------\n"
+    "<" #class_name "> {", (void *)this, ", size=", sizeof(class_name), "}\n"
 #define HIPPCNTL_CLASS_INFO_INLINE(class_name) \
-    #class_name " instance [", (void *)this, "] "
+    "<" #class_name "> "
+#define HIPPCNTL_CLASS_INFO_INDENT 2
+#define HIPPCNTL_CLASS_INFO_SUBHEAD "   |- "
+#define HIPPCNTL_CLASS_INFO_INDENT_STR(level) \
+    string(level*HIPPCNTL_CLASS_INFO_INDENT, ' ') + HIPPCNTL_CLASS_INFO_SUBHEAD
 
 namespace HIPP{
 

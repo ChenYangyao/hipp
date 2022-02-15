@@ -8,18 +8,20 @@ create: Yangyao CHEN, 2019/12/28
 /**
 Expand to comma separated constexpr strings as debug functions arguments.
 Here prefix `em` means error macro. Postfix is one of the following:
-     F：     function name.
-     FF:     file and function name.
-     FLF:    file name, line number and function name.
-
-     PF:     'pretty' version of function name.
-     FPF:    file and 'pretty' version of function name.
-     FLPF:   file name, line number and 'pretty' version of function name.
-     FLPFB:  same as FLPF, but print a end-line character after each name
-             so the information printed looks more coarse.
+    F：     function name.
+    FF:     file and function name.
+    FLF:    file name, line number and function name.
+    FLFB:   same as FLF, but print a end-line character after each item
+            so that they are coarser.
+    
+    PF:     'pretty' version of function name.
+    FPF:    file and 'pretty' version of function name.
+    FLPF:   file name, line number and 'pretty' version of function name.
+    FLPFB:  same as FLPF, but print a end-line character after each item
+            so that they are coarser.
 
 The prefix `ems` means a short version of `em`. The suffix can be
-    F, FF, FLF, PF, FPF, FLPF
+F, FF, FLF, PF, FPF, FLPF
 
 Examples
 ----------
@@ -48,6 +50,10 @@ main.cpp, main begins execution
     "[file] ", __FILE__, \
     ", [line] ", __LINE__, \
     ", [func] ", __func__, ' '
+#define emFLFB \
+    "[file] ", __FILE__, \
+    "\n[line] ", __LINE__, \
+    "\n[func] ", __func__, '\n'
 
 #define emPF "[func] ", __PRETTY_FUNCTION__, ' '
 #define emFPF \

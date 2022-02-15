@@ -1,6 +1,6 @@
 add_subdirectory("${_libname}_mpi")
 add_subdirectory("${_libname}_mpe")
 
-if(enable-hdf5)
+if(NOT HIPPIO_OFF)
     add_subdirectory("${_libname}_mpprof")
 endif()

@@ -134,7 +134,135 @@ TEST_F(KDTreeTest, TreeConstructPolicy) {
     }
 }
 
-TEST_F(KDTreeTest, TreeConstructPolicyOrdered) {
+TEST_F(KDTreeTest, TreeConstructPolicySplitAxisMaxExtreme) {
+    vector<kdp_t> kd_pts {
+        {{-3.03f, -2.01f, -1.0f}, 0}, {{-3.02f, -2.00f, 1.0f}, 1},
+        {{-3.01f, 2.00f, -1.0f}, 2}, {{-3.00f, 2.01f, 1.0f}, 3},
+        {{3.00f, -2.01f, -1.0f}, 4}, {{3.01f, -2.00f, 1.0f}, 5},
+        {{3.02f, 2.01f, -1.0f}, 6}, {{3.03f, 2.01f, 1.0f}, 7}
+    };
+    kdtree_t::construct_policy_t pl;
+    pl.set_split_axis(kdtree_t::construct_policy_t::split_axis_t::MAX_EXTREME);
+    kdtree_t kdt(kd_pts, pl);
+    
+    auto &nds = kdt.nodes();
+    index_t n_nds = nds.size();
+    ASSERT_EQ(n_nds, kd_pts.size());
+
+    auto *nd = &nds[0];
+    EXPECT_EQ(nd->axis(), 0);
+    EXPECT_EQ(nd->pad<int>(), 4);
+    EXPECT_EQ(nd->size(), 8);
+    EXPECT_TRUE( (nd->pos() == kd_pts[4].pos()).all() );
+
+    nd = &nds[1];
+    EXPECT_EQ(nd->axis(), 1);
+    EXPECT_EQ(nd->pad<int>(), 2);
+    EXPECT_EQ(nd->size(), 4);
+    EXPECT_TRUE( (nd->pos() == kd_pts[2].pos()).all() );
+
+    nd = &nds[2];
+    EXPECT_EQ(nd->axis(), 2);
+    EXPECT_EQ(nd->pad<int>(), 1);
+    EXPECT_EQ(nd->size(), 2);
+    EXPECT_TRUE( (nd->pos() == kd_pts[1].pos()).all() );
+
+    nd = &nds[3];
+    // EXPECT_EQ(nd->axis(), 1);
+    EXPECT_EQ(nd->pad<int>(), 0);
+    EXPECT_EQ(nd->size(), 1);
+    EXPECT_TRUE( (nd->pos() == kd_pts[0].pos()).all() );
+
+    nd = &nds[4];
+    // EXPECT_EQ(nd->axis(), 1);
+    EXPECT_EQ(nd->pad<int>(), 3);
+    EXPECT_EQ(nd->size(), 1);
+    EXPECT_TRUE( (nd->pos() == kd_pts[3].pos()).all() );
+
+    nd = &nds[5];
+    EXPECT_EQ(nd->axis(), 1);
+    EXPECT_EQ(nd->pad<int>(), 6);
+    EXPECT_EQ(nd->size(), 3);
+    EXPECT_TRUE( (nd->pos() == kd_pts[6].pos()).all() );
+
+    nd = &nds[6];
+    // EXPECT_EQ(nd->axis(), 1);
+    EXPECT_EQ(nd->pad<int>(), 5);
+    EXPECT_EQ(nd->size(), 1);
+    EXPECT_TRUE( (nd->pos() == kd_pts[5].pos()).all() );
+
+    nd = &nds[7];
+    // EXPECT_EQ(nd->axis(), 1);
+    EXPECT_EQ(nd->pad<int>(), 7);
+    EXPECT_EQ(nd->size(), 1);
+    EXPECT_TRUE( (nd->pos() == kd_pts[7].pos()).all() );
+}
+
+TEST_F(KDTreeTest, TreeConstructPolicySplitAxisMaxVariance) {
+    vector<kdp_t> kd_pts {
+        {{-3.03f, -2.01f, -1.0f}, 0}, {{-3.02f, -2.00f, 1.0f}, 1},
+        {{-3.01f, 2.00f, -1.0f}, 2}, {{-3.00f, 2.01f, 1.0f}, 3},
+        {{3.00f, -2.01f, -1.0f}, 4}, {{3.01f, -2.00f, 1.0f}, 5},
+        {{3.02f, 2.01f, -1.0f}, 6}, {{3.03f, 2.01f, 1.0f}, 7}
+    };
+    kdtree_t::construct_policy_t pl;
+    pl.set_split_axis(kdtree_t::construct_policy_t::split_axis_t::MAX_VARIANCE);
+    kdtree_t kdt(kd_pts, pl);
+    
+    auto &nds = kdt.nodes();
+    index_t n_nds = nds.size();
+    ASSERT_EQ(n_nds, kd_pts.size());
+
+    auto *nd = &nds[0];
+    EXPECT_EQ(nd->axis(), 0);
+    EXPECT_EQ(nd->pad<int>(), 4);
+    EXPECT_EQ(nd->size(), 8);
+    EXPECT_TRUE( (nd->pos() == kd_pts[4].pos()).all() );
+
+    nd = &nds[1];
+    EXPECT_EQ(nd->axis(), 1);
+    EXPECT_EQ(nd->pad<int>(), 2);
+    EXPECT_EQ(nd->size(), 4);
+    EXPECT_TRUE( (nd->pos() == kd_pts[2].pos()).all() );
+
+    nd = &nds[2];
+    EXPECT_EQ(nd->axis(), 2);
+    EXPECT_EQ(nd->pad<int>(), 1);
+    EXPECT_EQ(nd->size(), 2);
+    EXPECT_TRUE( (nd->pos() == kd_pts[1].pos()).all() );
+
+    nd = &nds[3];
+    // EXPECT_EQ(nd->axis(), 1);
+    EXPECT_EQ(nd->pad<int>(), 0);
+    EXPECT_EQ(nd->size(), 1);
+    EXPECT_TRUE( (nd->pos() == kd_pts[0].pos()).all() );
+
+    nd = &nds[4];
+    // EXPECT_EQ(nd->axis(), 1);
+    EXPECT_EQ(nd->pad<int>(), 3);
+    EXPECT_EQ(nd->size(), 1);
+    EXPECT_TRUE( (nd->pos() == kd_pts[3].pos()).all() );
+
+    nd = &nds[5];
+    EXPECT_EQ(nd->axis(), 1);
+    EXPECT_EQ(nd->pad<int>(), 6);
+    EXPECT_EQ(nd->size(), 3);
+    EXPECT_TRUE( (nd->pos() == kd_pts[6].pos()).all() );
+
+    nd = &nds[6];
+    // EXPECT_EQ(nd->axis(), 1);
+    EXPECT_EQ(nd->pad<int>(), 5);
+    EXPECT_EQ(nd->size(), 1);
+    EXPECT_TRUE( (nd->pos() == kd_pts[5].pos()).all() );
+
+    nd = &nds[7];
+    // EXPECT_EQ(nd->axis(), 1);
+    EXPECT_EQ(nd->pad<int>(), 7);
+    EXPECT_EQ(nd->size(), 1);
+    EXPECT_TRUE( (nd->pos() == kd_pts[7].pos()).all() );
+}
+
+TEST_F(KDTreeTest, TreeConstructPolicySplitAxisOrdered) {
     using pl_t = kdtree_t::construct_policy_t;
     kdtree_t kdt;
     pl_t pl;
@@ -232,7 +360,7 @@ TEST_F(KDTreeTest, VisitRectCompleteCheck) {
     kdp_t::point_t p = {50.0f, 50.0f, 50.0f};
     
     /* Visit nodes. */
-    for(auto off: {0.0f, 1.0f, 2.0f, 3.0f, 10.0f}){
+    for(auto off: {0.0f, 1.0f, 2.0f, 3.0f, 7.5f}){
         auto new_p = p + off;
 
         std::unordered_set<index_t> pads;
@@ -250,7 +378,7 @@ TEST_F(KDTreeTest, VisitRectCompleteCheck) {
     }
 
     /* Count nodes. */
-    for(auto off: {0.0f, 1.0f, 2.0f, 3.0f, 10.0f}){
+    for(auto off: {0.0f, 1.0f, 2.0f, 3.0f, 7.5f}){
         auto new_p = p + off;
         EXPECT_EQ(kdt.count_nodes_rect({new_p-100.0f, new_p+100.0f}), 
             _kdpts1.size());
@@ -261,30 +389,33 @@ TEST_F(KDTreeTest, VisitRectNodes) {
     kdtree_t kdt(_kdpts1);
     int n_dst = 1000;
 
-    /* Check node count. */
-    for(int i=0; i<n_dst; ++i){
-        auto &p_dst = _kdpts2[i];
-        kdtree_t::rect_t r(p_dst-5.5, p_dst+5.5);
-        index_t cnt1 = kdt.count_nodes_rect(r),
-            cnt2 = std::count_if(_kdpts1.begin(), _kdpts1.end(), 
-                [&r](auto &p){ return r.contains(p); });
-        EXPECT_EQ(cnt1, cnt2);
+    for(auto dx: {1.0f, 2.0f, 3.0f, 5.0f, 7.5f}) {
+        /* Check node count. */
+        for(int i=0; i<n_dst; ++i){
+            auto &p_dst = _kdpts2[i];
+            kdtree_t::rect_t r(p_dst-dx, p_dst+dx);
+            index_t cnt1 = kdt.count_nodes_rect(r),
+                cnt2 = std::count_if(_kdpts1.begin(), _kdpts1.end(), 
+                    [&r](auto &p){ return r.contains(p); });
+            EXPECT_EQ(cnt1, cnt2);
+        }
+
+        /* Check padding of each node. */
+        for(int i=0; i<n_dst; ++i){
+            auto &p_dst = _kdpts2[i];
+            vector<index_t> pad_src, pad_dst;
+            kdtree_t::rect_t r(p_dst-dx, p_dst+dx);
+            kdt.visit_nodes_rect(r, 
+                [&pad_src](const kdtree_t::node_t & n){ 
+                    pad_src.push_back( n.pad<const int>() ); });
+            for(auto &p_src: _kdpts1)
+                if( r.contains(p_src) ) 
+                    pad_dst.push_back( p_src.pad<const int>() );
+            EXPECT_THAT(pad_src, 
+                gt::UnorderedElementsAreArray(pad_dst));
+        }
     }
 
-    /* Check padding of each node. */
-    for(int i=0; i<n_dst; ++i){
-        auto &p_dst = _kdpts2[i];
-        vector<index_t> pad_src, pad_dst;
-        kdtree_t::rect_t r(p_dst-5.5, p_dst+5.5);
-        kdt.visit_nodes_rect(r, 
-            [&pad_src](const kdtree_t::node_t & n){ 
-                pad_src.push_back( n.pad<const int>() ); });
-        for(auto &p_src: _kdpts1)
-            if( r.contains(p_src) ) 
-                pad_dst.push_back( p_src.pad<const int>() );
-        EXPECT_THAT(pad_src, 
-            gt::UnorderedElementsAreArray(pad_dst));
-    }
 }
 
 TEST_F(KDTreeTest, VisitSphereCompleteCheck) {
@@ -292,7 +423,7 @@ TEST_F(KDTreeTest, VisitSphereCompleteCheck) {
     kdp_t::point_t p = {50.0f, 50.0f, 50.0f};
     
     /* Visit nodes. */
-    for(auto off: {0.0f, 1.0f, 2.0f, 3.0f, 10.0f}){
+    for(auto off: {0.0f, 1.0f, 2.0f, 3.0f, 7.5f}){
         auto new_p = p + off;
 
         std::unordered_set<index_t> pads;
@@ -310,10 +441,43 @@ TEST_F(KDTreeTest, VisitSphereCompleteCheck) {
     }
 
     /* Count nodes. */
-    for(auto off: {0.0f, 1.0f, 2.0f, 3.0f, 10.0f}){
+    for(auto off: {0.0f, 1.0f, 2.0f, 3.0f, 7.5f}){
         auto new_p = p + off;
         EXPECT_EQ(kdt.count_nodes_sphere({new_p, 500.0f}), 
             _kdpts1.size());
+    }
+}
+
+TEST_F(KDTreeTest, VisitSphereNodes) {
+    kdtree_t kdt(_kdpts1);
+    int n_dst = 1000;
+
+    for(auto r: {1.0f, 2.0f, 3.0f, 5.0f, 7.5f}){
+        /* Check node count. */
+        for(int i=0; i<n_dst; ++i){
+            auto &p_dst = _kdpts2[i];
+            kdtree_t::sphere_t s(p_dst, r);
+            index_t cnt1 = kdt.count_nodes_sphere(s),
+                cnt2 = std::count_if(_kdpts1.begin(), _kdpts1.end(), 
+                    [&s](auto &p){ return s.contains(p); });
+            EXPECT_EQ(cnt1, cnt2);
+        }
+
+        /* Check padding of each node. */
+        for(int i=0; i<n_dst; ++i){
+            auto &p_dst = _kdpts2[i];
+            vector<index_t> pad_src, pad_dst;
+            kdtree_t::sphere_t s(p_dst, r);
+            kdt.visit_nodes_sphere(s, 
+                [&pad_src](const kdtree_t::node_t& n){ 
+                    pad_src.push_back( n.pad<int>() ); });
+            for(auto &p_src: _kdpts1)
+                if( s.contains(p_src) ) 
+                    pad_dst.push_back( p_src.pad<int>() );
+            EXPECT_THAT(pad_src, 
+                gt::UnorderedElementsAreArray(pad_dst));
+        }
+        
     }
 }
 

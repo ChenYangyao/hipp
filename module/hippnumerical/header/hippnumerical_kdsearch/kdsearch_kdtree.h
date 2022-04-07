@@ -184,6 +184,7 @@ public:
     nearest(): find the tree node nearest to a given point ``p``. 
     A :type:`ngb_t` instance is returned, whose ``node_idx`` and ``r_sq`` fields
     are the result node and the squared distance to it.
+    If tree is empty, returns {0, max_of_float_t}.
 
     nearest_k(): the same, but find the tree nodes that are the first k nearest 
     to ``p``. ``ngbs`` are an in-out argument. On entry, its size specifies 

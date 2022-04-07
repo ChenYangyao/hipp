@@ -462,7 +462,7 @@ void push_stack(stack_item_t item) noexcept {
     *stk_e++ = item;
 }
 
-const stack_item_t &pop_stack() noexcept {
+const stack_item_t & pop_stack() noexcept {
     return *--stk_e;
 }
 
@@ -474,8 +474,7 @@ template<typename CrossSplitPlane, typename ContainNode, typename Op>
 void walk_down(index_t idx, CrossSplitPlane &&cross,  
     ContainNode &&contain, Op &&op) noexcept
 {
-    while( idx >= 0 || this->stack_not_empty() ) {
-        
+    do {
         if( idx < 0 ) idx = this->pop_stack();
 
         const node_t &n = this->nodes[idx];
@@ -494,7 +493,7 @@ void walk_down(index_t idx, CrossSplitPlane &&cross,
                 idx = sz > 2 ? this->kdt.right_sibling_idx(l_child) : -1;
             }
         }
-    }
+    } while( idx >= 0 || this->stack_not_empty() );
 }
 
 };
@@ -515,7 +514,11 @@ stk_b(reinterpret_cast<stack_item_t *>(
 ), stk_e(stk_b)
 {}
 
-const stack_item_t &pop_stack() noexcept {
+void push_stack(const stack_item_t &item) noexcept {
+    *stk_e++ = item;
+}
+
+const stack_item_t & pop_stack() noexcept {
     return *--stk_e;
 }
 
@@ -532,12 +535,12 @@ stack_item_t walk_down(index_t root) noexcept {
         const index_t l_child = this->kdt.left_child_idx(root);
         
         if( this->on_left_of(n) ) {
-            *stk_e++ = stack_item_t{root, 
-                (sz == 2)?(-1):this->kdt.right_sibling_idx(l_child)};
+            push_stack({ root, 
+                (sz == 2)?(-1):this->kdt.right_sibling_idx(l_child) });
             root = l_child;
         } else {
             if(sz == 2) return {root, l_child};
-            *stk_e++ = stack_item_t{root, l_child};
+            push_stack({root, l_child});
             root = this->kdt.right_sibling_idx(l_child);
         }
     } while(true);

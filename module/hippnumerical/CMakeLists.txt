@@ -26,6 +26,9 @@ target_include_directories(${_libname}
     INTERFACE 
         "${_headerdir}"
 )
+
+
+
 install(TARGETS ${_libname}
     DESTINATION lib
 )
@@ -34,8 +37,11 @@ install(DIRECTORY
         "${_headerdir}/${_libname}_function"
         "${_headerdir}/${_libname}_random_number"
         "${_headerdir}/${_libname}_linalg"
+        "${_headerdir}/${_libname}_geometry"
+        "${_headerdir}/${_libname}_kdsearch"
     DESTINATION include
 )
+
 install(FILES
         "${_headerdir}/${_libname}.h"
     DESTINATION include

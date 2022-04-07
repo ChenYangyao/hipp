@@ -10,7 +10,6 @@ create: Yangyao CHEN, 2019/12/28
 #define _HIPPCNTL_ERROR_TYPE_H_
 #include "error_application.h"
 #include "error_class.h"
-#include "../hippcntl_stream/stream_pretty.h"
 
 namespace HIPP{
 
@@ -27,6 +26,11 @@ public:
     typedef ErrClassT err_class_t;
 
     ErrType(errno_t new_errno) noexcept;
+
+    ostream & info(ostream &os = cout, int  fmt_cntl = 0, int level = 0) const;
+    friend ostream & operator<<(ostream &os, const ErrType &e) {
+        return e.info(os);
+    }
 
     virtual const char *what() const noexcept override;
     virtual string whats() const override;
@@ -218,6 +222,23 @@ _HIPP_TEMPNORET
 ErrType(errno_t new_errno) noexcept
 : _errno( new_errno ) 
 {}
+
+_HIPP_TEMPRET
+info(ostream &os, int  fmt_cntl, int level) const -> ostream & {
+    PStream ps(os);
+    if( fmt_cntl < 1 ) {
+        ps << HIPPCNTL_CLASS_INFO_INLINE(ErrType),
+        "{application=", this->err_app_t::_what(), 
+            ", class=", this->err_class_t::_what(), ", type=", what(), "}";
+        return os;
+    }
+    auto ind = HIPPCNTL_CLASS_INFO_INDENT_STR(level);
+    ps << HIPPCNTL_CLASS_INFO(ErrType),
+    ind, "Application = ", this->err_app_t::_what(), 
+         ", class = ", this->err_class_t::_what(), '\n',
+    ind, "Type = ", what(), '\n';
+    return os;
+}
 
 _HIPP_TEMPRET
 what() const noexcept -> const char * { 

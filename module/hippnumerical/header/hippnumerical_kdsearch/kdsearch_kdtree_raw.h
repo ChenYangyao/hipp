@@ -17,13 +17,13 @@ public:
     inline static constexpr int DIM = _DIM;    
     inline static constexpr size_t PADDING = _PADDING;    
 
-    using point_t = typename GEOMETRY::Point<_FloatT, _DIM>;
+    using point_t    = GEOMETRY::Point<_FloatT, _DIM>;
     using kd_point_t = KDPoint<_FloatT, _DIM, _PADDING>;
 
-    using float_t = typename kd_point_t::float_t;
-    using pos_t = typename kd_point_t::pos_t;
-    using offset_t = typename kd_point_t::offset_t;
-    using index_t = _IndexT;
+    using float_t    = typename kd_point_t::float_t;
+    using pos_t      = typename kd_point_t::pos_t;
+    using offset_t   = typename kd_point_t::offset_t;
+    using index_t    = _IndexT;
 
     _KDTreeNode() noexcept;
 
@@ -73,15 +73,16 @@ public:
 
     using float_t = typename kd_point_t::float_t;
     using index_t = IndexT;
-    static constexpr int DIM = kd_point_t::DIM;
+    
+    static constexpr int DIM        = kd_point_t::DIM;
     static constexpr size_t PADDING = kd_point_t::PADDING;
 
-    using node_t = _KDTreeNode<float_t, DIM, PADDING, index_t>;
-    using point_t = typename node_t::point_t;
+    using node_t   = _KDTreeNode<float_t, DIM, PADDING, index_t>;
+    using point_t  = typename node_t::point_t;
     
-    using pos_t = typename node_t::pos_t;
-    using rect_t    = GEOMETRY::Rect<float_t, DIM>;
-    using sphere_t  = GEOMETRY::Sphere<float_t, DIM>;
+    using pos_t    = typename node_t::pos_t;
+    using rect_t   = GEOMETRY::Rect<float_t, DIM>;
+    using sphere_t = GEOMETRY::Sphere<float_t, DIM>;
 
     struct tree_info_t;
     struct idx_pair_t;
@@ -166,12 +167,13 @@ public:
     template<typename Op>
     void walk_down(const point_t &p, Op op, index_t &node_idx) const;
 
+    /**
+    nearest(): if tree is empty, returns {0, max_of_float_t}.
+    */
     template<typename Policy = nearest_query_policy_t>
-    ngb_t nearest(const point_t &p,
-        Policy &&policy = Policy()) const;
+    ngb_t nearest(const point_t &p, Policy &&policy = Policy()) const;
     template<typename Policy = nearest_k_query_policy_t>
-    index_t nearest_k(const point_t &p, 
-        ContiguousBuffer<ngb_t> ngbs,
+    index_t nearest_k(const point_t &p, ContiguousBuffer<ngb_t> ngbs,
         Policy &&policy = Policy()) const;
 
     /**

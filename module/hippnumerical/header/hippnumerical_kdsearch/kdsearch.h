@@ -8,5 +8,6 @@ The header of the space searching algorithms of NUMERICAL module.
 
 #include "kdsearch_kdmesh.h"
 #include "kdsearch_kdtree.h"
+#include "kdsearch_balltree.h"
 
 #endif	//_HIPPNUMERICAL_KDSEARCH_H_

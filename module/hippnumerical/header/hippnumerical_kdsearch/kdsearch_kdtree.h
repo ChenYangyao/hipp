@@ -6,7 +6,7 @@ create: Yangyao CHEN, 2022/02/14
 #ifndef _HIPPNUMERICAL_KDSEARCH_KDTREE_H_
 #define _HIPPNUMERICAL_KDSEARCH_KDTREE_H_
 
-#include "kdsearch_kdtree_raw impl.h"
+#include "kdsearch_kdtree_raw_impl.h"
 
 namespace HIPP::NUMERICAL {
 

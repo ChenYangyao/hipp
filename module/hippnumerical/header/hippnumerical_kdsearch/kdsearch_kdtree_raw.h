@@ -27,13 +27,13 @@ public:
 
     _KDTreeNode() noexcept;
 
-    _KDTreeNode(const pos_t &pos) noexcept;
+    explicit _KDTreeNode(const point_t &p) noexcept;
 
     template<typename PadT>
-    _KDTreeNode(const pos_t &pos, const PadT &pad) noexcept;
+    _KDTreeNode(const point_t &p, const PadT &pad) noexcept;
 
     template<typename PadT>
-    _KDTreeNode(const pos_t &pos, index_t size, int axis, 
+    _KDTreeNode(const point_t &p, index_t size, int axis, 
         const PadT &pad) noexcept;
 
     ostream & info(ostream &os = cout, int fmt_cntl = 0, int level = 0) const;
@@ -226,7 +226,8 @@ class _KDTree<KDPointT, IndexT>::construct_policy_t {
 public:
     enum class split_axis_t { MAX_EXTREME, MAX_VARIANCE, ORDERED, RANDOM };
 
-    static constexpr split_axis_t DFLT_SPLIT_AXIS = split_axis_t::MAX_EXTREME;
+    static constexpr split_axis_t 
+        DFLT_SPLIT_AXIS = split_axis_t::MAX_EXTREME;
 
     using rng_t = UniformIntRandomNumber<int>;
     using random_seed_t = rng_t::seed_t;
@@ -258,6 +259,8 @@ private:
 template<typename KDPointT, typename IndexT>
 class _KDTree<KDPointT, IndexT>::tree_info_t {
 public:
+    tree_info_t() noexcept;
+
     index_t max_depth() const noexcept { return _max_depth; }
 
     ostream & info(ostream &os = cout, int fmt_cntl = 0, int level = 0) const;
@@ -290,11 +293,14 @@ struct _KDTree<KDPointT, IndexT>::ngb_t {
 template<typename KDPointT, typename IndexT>
 class _KDTree<KDPointT, IndexT>::query_buff_policy_t {
 public:
-    using buff_t = vector<index_t>;
+    using container_t = vector<index_t>;
     
     index_t * get_buff(index_t n);
+    
+    container_t & container() noexcept;
+    const container_t & container() const noexcept;
 protected:
-    buff_t _buff;
+    container_t _container;
 };
 
 template<typename KDPointT, typename IndexT>

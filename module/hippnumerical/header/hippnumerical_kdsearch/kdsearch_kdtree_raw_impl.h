@@ -355,6 +355,7 @@ shrink_buffer() -> void {
 _HIPP_TEMPRET
 clear() -> void {
     _nodes.clear();
+    _tree_info = tree_info_t{};
 }
 
 _HIPP_TEMPRET
@@ -583,7 +584,7 @@ struct _HIPP_TEMPCLS::_Impl_nearest : _Impl_query_in_order<Policy> {
 _Impl_nearest(const _KDTree &kdt, Policy &pl, const pos_t &dst_pos) 
 : base_t(kdt, dst_pos, pl),
 dst_r_sq(std::numeric_limits<float_t>::max()),
-dst_idx(0) {}
+dst_idx(node_t::idxNULL) {}
 
 void operator()() noexcept {
     if( this->nodes.size() == 0 ) return;
@@ -650,17 +651,19 @@ void operator()() noexcept {
         std::sort_heap(max_queue_b, max_queue_b+used_k);
 };
 
-void push_queue(index_t idx, float_t r_sq) noexcept {
-    if( r_sq >= max_r_sq ) return;
-        
+void push_queue(index_t idx, float_t r_sq) noexcept {    
     if( used_k < dst_k ) {              // queue is not full
         max_queue_b[used_k++] = ngb_t{idx, r_sq};
-    } else {                            // queue is full
+        if( used_k == dst_k ) {
+            std::make_heap(max_queue_b, max_queue_b+dst_k);
+            max_r_sq = max_queue_b->r_sq;
+        }
+    } else if( r_sq < max_r_sq ) {     // queue is full
         std::pop_heap(max_queue_b, max_queue_b+dst_k);
         max_queue_b[dst_k-1] = ngb_t{idx, r_sq};
+        std::push_heap(max_queue_b, max_queue_b+used_k);
+        max_r_sq = max_queue_b->r_sq;
     }
-    std::push_heap(max_queue_b, max_queue_b+used_k);
-    max_r_sq = max_queue_b->r_sq;
 }
 
 };
@@ -709,7 +712,8 @@ template<typename Op, typename Policy>
 void _HIPP_TEMPCLS::visit_rect(const rect_t &rect, Op op, 
     Policy &&policy) const
 {
-    _Impl_visit_rect {*this, policy, rect, op} ();
+    _Impl_visit_rect<Op, std::remove_reference_t<Policy> > 
+        {*this, policy, rect, op} ();
 }
 
 _HIPP_TEMPHD
@@ -752,7 +756,8 @@ template<typename Op, typename Policy>
 void _HIPP_TEMPCLS::visit_sphere(const sphere_t &sphere, Op op, 
     Policy &&policy) const
 {
-    _Impl_visit_sphere {*this, policy, sphere, op} ();
+    _Impl_visit_sphere<Op, std::remove_reference_t<Policy> > 
+        {*this, policy, sphere, op} ();
 }
 
 _HIPP_TEMPHD

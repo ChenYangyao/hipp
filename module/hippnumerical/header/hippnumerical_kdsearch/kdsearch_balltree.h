@@ -1,25 +1,24 @@
 /**
-create: Yangyao CHEN, 2022/02/14
-    [write   ] KDTree - K-dimensional tree algorithm for neighbor-based search.
+create: Yangyao CHEN, 2022/04/15
+    [write   ] BallTree - Ball tree algorithm for neighbor-based search.
 */
+#ifndef _HIPPNUMERICAL_KDSEARCH_BALLTREE_H_
+#define _HIPPNUMERICAL_KDSEARCH_BALLTREE_H_
 
-#ifndef _HIPPNUMERICAL_KDSEARCH_KDTREE_H_
-#define _HIPPNUMERICAL_KDSEARCH_KDTREE_H_
-
-#include "kdsearch_kdtree_raw_impl.h"
+#include "kdsearch_balltree_raw_impl.h"
 
 namespace HIPP::NUMERICAL {
 
 /**
-K-dimensional tree algorithm for neighbor-based search.
+Ball tree algorithm for neighbor-based search.
 */
 template<typename KDPointT = KDPoint<>, typename IndexT = int>
-class KDTree {
+class BallTree {
 public:
     /**
     Implementation detail.
     */
-    using impl_t = _KDSEARCH::_KDTree<KDPointT, IndexT>;
+    using impl_t = _KDSEARCH::_BallTree<KDPointT, IndexT>;
 
     /**
     DIM: dimension of the space. 
@@ -34,7 +33,7 @@ public:
     ``point_t`` contains only the position of a point. 
     `kd_point_t`` is derived from ``point_t``, with padding to store 
     user-defined extra information. 
-    ``node_t`` is derived from ``point_t``, with padding to store user-defined
+    ``node_t`` is derived from ``sphere_t``, with padding to store user-defined
     extra information and fields for tree implementation.
     */
     using point_t    = typename impl_t::point_t;
@@ -77,12 +76,12 @@ public:
     (2): Construct the tree by a series of points ``pts`` and the algorithm 
     ``policy``. For details, see :func:`construct`.
     */
-    KDTree();
-    KDTree(ContiguousBuffer<const kd_point_t> pts, 
+    BallTree();
+    BallTree(ContiguousBuffer<const kd_point_t> pts, 
         const construct_policy_t &policy = construct_policy_t());
 
     /**
-    ``KDTree`` is copable and movable. The moved-from object is left in a 
+    ``BallTree`` is copable and movable. The moved-from object is left in a 
     valid state but no other method, except copy, move, and destructor, shall
     be called on it.
 
@@ -90,15 +89,15 @@ public:
     Queries can be made on them independently and thread-safely. Methods that 
     modify the tree may result in race condition.
     */
-    KDTree(const KDTree &o);
-    KDTree(KDTree &&o);
-    KDTree & operator=(const KDTree &o) noexcept;
-    KDTree & operator=(KDTree &&o) noexcept;
-    ~KDTree() noexcept;
+    BallTree(const BallTree &o);
+    BallTree(BallTree &&o);
+    BallTree & operator=(const BallTree &o) noexcept;
+    BallTree & operator=(BallTree &&o) noexcept;
+    ~BallTree() noexcept;
 
     ostream & info(ostream &os = cout, int  fmt_cntl = 0, int level = 0) const;
-    friend ostream & operator<<(ostream &os, const KDTree &kdt) {
-        return kdt.info(os);
+    friend ostream & operator<<(ostream &os, const BallTree &ballt) {
+        return ballt.info(os);
     }
 
     /**
@@ -113,8 +112,8 @@ public:
 
     /**
     Find the indices into points ``pts`` so that they are sorted according 
-    to the rank of NN candidate node. The order of points belonging to the same 
-    node is undefined.
+    to the rank of NN candidate leaf node. The order of points belonging to the 
+    same node is undefined.
     
     ``PointT`` must be a derived type of ``point_t``.
     
@@ -161,13 +160,13 @@ public:
     index_t left_child_idx(index_t node_idx) const noexcept;
     index_t right_child_idx(index_t node_idx) const noexcept;
     index_t right_sibling_idx(index_t node_idx) const noexcept;
+    std::pair<index_t, index_t> children_ids(index_t node_idx) const noexcept;
 
     /**
     Walk down from a node indexed ``node_idx`` to a leaf node. 
     
-    For a node ``n`` on the walk path, if 
-    ``p.pos()[n.axis()] <= n.pos()[n.axis()]``, the left child of it is the 
-    next node to visit, otherwise the right. If no such child exists, the walk
+    For a node ``n`` on the walk path, the child whose center has smaller 
+    minimal distance to ``p`` is visited next. If ``n`` has no child, the walk
     is stopped.
 
     ``op(i)`` is called successively on each node on the path where ``i`` is the
@@ -180,15 +179,15 @@ public:
     void walk_down(const point_t &p, Op op, index_t &node_idx) const;
 
     /**
-    nearest(): find the tree node nearest to a given point ``p``. 
+    nearest(): find the leaf node nearest to a given point ``p``. 
     A :type:`ngb_t` instance is returned, whose ``node_idx`` and ``r_sq`` fields
     are the result node and the squared distance to it.
     If tree is empty, returns {node_t::idxNULL, max_of_float_t}.
 
-    nearest_k(): the same, but find the tree nodes that are the first k nearest 
+    nearest_k(): the same, but find the leaf nodes that are the first k nearest 
     to ``p``. ``ngbs`` are an in-out argument. On entry, its size specifies 
     ``k``. On exit, the first ``k_used`` elements stores the information of 
-    result neighbors. If the tree has less number of nodes than ``k``, 
+    result neighbors. If the tree has less number of leaf nodes than ``k``, 
     ``k_used`` is that number. Otherwise ``k_used = k``. ``k_used`` is returned.
     The order of the result nodes are undefined unless explicitly required by 
     the policy.
@@ -207,10 +206,10 @@ public:
         Policy &&policy = Policy()) const;
 
     /**
-    visit_nodes_rect(): visit all nodes within ``rect``.
+    visit_nodes_rect(): visit all leaf nodes within ``rect``.
     ``op(const node_t &node)`` is called on each node visited.
 
-    count_nodes_rect(): count the exact number of nodes within ``rect``.
+    count_nodes_rect(): count the exact number of leaf nodes within ``rect``.
 
     See the API-ref of :type:`rect_query_policy_t` for the details on query 
     policy.
@@ -225,10 +224,10 @@ public:
         Policy &&policy = Policy()) const;
 
     /**
-    visit_nodes_sphere(): visit all nodes within ``sphere``. 
+    visit_nodes_sphere(): visit all leaf nodes within ``sphere``. 
     ``op(const node_t &node)`` is called on each node visited.
 
-    count_sphere(): count the exact number of nodes within ``sphere``.
+    count_sphere(): count the exact number of leaf nodes within ``sphere``.
     
     See the API-ref of :type:`sphere_query_policy_t` for the details on query 
     policy.
@@ -247,47 +246,47 @@ protected:
 
 #define _HIPP_TEMPHD template<typename KDPointT, typename IndexT>
 #define _HIPP_TEMPARG <KDPointT, IndexT>
-#define _HIPP_TEMPCLS KDTree _HIPP_TEMPARG
+#define _HIPP_TEMPCLS BallTree _HIPP_TEMPARG
 #define _HIPP_TEMPRET _HIPP_TEMPHD inline auto _HIPP_TEMPCLS::
 #define _HIPP_TEMPNORET _HIPP_TEMPHD inline _HIPP_TEMPCLS::
 
 _HIPP_TEMPNORET
-KDTree() : _impl( std::make_shared<impl_t>() ) {}
+BallTree() : _impl( std::make_shared<impl_t>() ) {}
 
 _HIPP_TEMPNORET
-KDTree(ContiguousBuffer<const kd_point_t> pts, 
+BallTree(ContiguousBuffer<const kd_point_t> pts, 
     const construct_policy_t &policy)
-: KDTree()
+: BallTree()
 {
     construct(pts, policy);
 }
 
 _HIPP_TEMPNORET
-KDTree(const KDTree &o) = default;
+BallTree(const BallTree &o) = default;
 
 _HIPP_TEMPNORET
-KDTree(KDTree &&o) = default;
+BallTree(BallTree &&o) = default;
 
 _HIPP_TEMPRET
-operator=(const KDTree &o) noexcept -> KDTree & = default;
+operator=(const BallTree &o) noexcept -> BallTree & = default;
 
 _HIPP_TEMPRET
-operator=(KDTree &&o) noexcept -> KDTree & = default;
+operator=(BallTree &&o) noexcept -> BallTree & = default;
 
 _HIPP_TEMPNORET
-~KDTree() noexcept = default;
+~BallTree() noexcept = default;
 
 
 _HIPP_TEMPRET
 info(ostream &os, int  fmt_cntl, int level) const -> ostream & {
     PStream ps(os);
     if( fmt_cntl < 1 ) {
-        ps << HIPPCNTL_CLASS_INFO_INLINE(KDTree),
+        ps << HIPPCNTL_CLASS_INFO_INLINE(BallTree),
         "{impl=", *_impl, "}";
         return os;
     }
     auto ind = HIPPCNTL_CLASS_INFO_INDENT_STR(level);
-    ps << HIPPCNTL_CLASS_INFO(KDTree),
+    ps << HIPPCNTL_CLASS_INFO(BallTree),
     ind, ps.info_of(*_impl, fmt_cntl, level+1);
     return os;
 }
@@ -367,6 +366,11 @@ right_sibling_idx(index_t node_idx) const noexcept -> index_t {
     return _impl->right_sibling_idx(node_idx);
 }
 
+_HIPP_TEMPRET
+children_ids(index_t node_idx) const noexcept -> std::pair<index_t, index_t> {
+    return _impl->children_ids(node_idx);
+}
+
 _HIPP_TEMPHD
 template<typename Op>
 void _HIPP_TEMPCLS::walk_down(const point_t &p, Op op, index_t &node_idx) const
@@ -395,6 +399,7 @@ void _HIPP_TEMPCLS::visit_nodes_rect(const rect_t &rect, Op op,
 {
     const auto &nds = nodes();
     _impl->visit_rect(rect, 
+        [](index_t i) {},
         [&op, &nds](index_t i){ op( nds[i] ); },
         std::forward<Policy>(policy));
 }
@@ -414,6 +419,7 @@ void _HIPP_TEMPCLS::visit_nodes_sphere(const sphere_t &sphere, Op op,
 {
     const auto &nds = nodes();
     _impl->visit_sphere(sphere, 
+        [](index_t i) {},
         [&op, &nds](index_t i){ op( nds[i] ); },
         std::forward<Policy>(policy));
 }
@@ -434,5 +440,4 @@ auto _HIPP_TEMPCLS::count_nodes_sphere(const sphere_t &sphere,
 
 } // namespace HIPP::NUMERICAL
 
-
-#endif	//_HIPPNUMERICAL_KDSEARCH_KDTREE_H_
+#endif	//_HIPPNUMERICAL_KDSEARCH_BALLTREE_H_

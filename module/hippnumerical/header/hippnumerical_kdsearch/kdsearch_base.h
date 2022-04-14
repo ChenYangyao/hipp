@@ -41,6 +41,8 @@ public:
 
     KDPoint(const pos_t &pos) noexcept;
     
+    KDPoint(std::initializer_list<float_t> pos) noexcept;
+    
     template<typename PadT>
     KDPoint(const pos_t &pos, const PadT &pad) noexcept;
 
@@ -79,6 +81,9 @@ KDPoint() noexcept {}
 
 _HIPP_TEMPNORET
 KDPoint(const pos_t &pos) noexcept : point_t(pos) {}
+
+_HIPP_TEMPNORET
+KDPoint(std::initializer_list<float_t> pos) noexcept : point_t(pos) {}
 
 _HIPP_TEMPHD
 template<typename PadT>

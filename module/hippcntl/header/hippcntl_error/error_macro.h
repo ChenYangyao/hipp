@@ -76,4 +76,16 @@ main.cpp, main begins execution
 #define emsFPF __FILE__, ", ", __PRETTY_FUNCTION__
 #define emsFLPF __FILE__, ", ", __LINE__, ", ", __PRETTY_FUNCTION__
 
+/**
+Formatted IO helpers for ``info()`` of classes.
+*/
+#define HIPPCNTL_CLASS_INFO(class_name) \
+    "<" #class_name "> {", (void *)this, ", size=", sizeof(class_name), "}\n"
+#define HIPPCNTL_CLASS_INFO_INLINE(class_name) \
+    "<" #class_name "> "
+#define HIPPCNTL_CLASS_INFO_INDENT 2
+#define HIPPCNTL_CLASS_INFO_SUBHEAD "   |- "
+#define HIPPCNTL_CLASS_INFO_INDENT_STR(level) \
+    string(level*HIPPCNTL_CLASS_INFO_INDENT, ' ') + HIPPCNTL_CLASS_INFO_SUBHEAD
+
 #endif	//_HIPPCNTL_ERROR_MACRO_H_

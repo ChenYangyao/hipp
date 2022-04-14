@@ -100,8 +100,8 @@ public:
     2. Directly pushing back into container ``c`` (``clear()`` is not called).
     3. Write into a range specified by a pair of iterator.
     */
-    template<template<typename> typename Container = std::vector>
-    Container<result_t> operator()(std::size_t n);
+    template<typename Container = std::vector<result_t> >
+    Container operator()(std::size_t n);
 
     template<typename Container> 
     void operator()(Container &c, std::size_t n);
@@ -243,12 +243,13 @@ _HIPP_TEMPRET get(result_t a, result_t b) -> result_t {
 }
 
 _HIPP_TEMPHD
-template<template<typename> typename Container>
-auto _HIPP_TEMPCLS::operator()(std::size_t n) -> Container<result_t> {
-    Container<result_t> c;
+template<typename Container>
+auto _HIPP_TEMPCLS::operator()(std::size_t n) -> Container {
+    Container c;
     (*this)(c, n);
     return c;
 }
+
 _HIPP_TEMPHD
 template<typename Container> 
 void _HIPP_TEMPCLS::operator()(Container &c, std::size_t n) {

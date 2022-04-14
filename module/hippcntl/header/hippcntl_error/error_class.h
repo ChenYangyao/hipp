@@ -5,6 +5,8 @@ create: Yangyao CHEN, 2019/12/28
 #ifndef _HIPPCNTL_ERROR_CLASS_H_
 #define _HIPPCNTL_ERROR_CLASS_H_
 #include "../hippcntl_incl/incl.h"
+#include "../hippcntl_stream/stream_pretty.h"
+#include "error_macro.h"
 namespace HIPP{
 
 /**
@@ -20,6 +22,12 @@ public:
         eCAST=6, eIO=7 };
 
     ErrClass( errno_t new_errno = 1 ) noexcept;
+
+    ostream & info(ostream &os = cout, int  fmt_cntl = 0, int level = 0) const;
+    friend ostream & operator<<(ostream &os, const ErrClass &e) {
+        return e.info(os);
+    }
+
     virtual const char *what()const noexcept override;
     virtual string whats() const;
     static size_t errmsg_maxsize() noexcept;
@@ -39,24 +47,46 @@ protected:
 
 inline ErrClass::ErrClass( errno_t new_errno ) noexcept
 : _errno(new_errno){ }
+
+inline auto ErrClass::info(ostream &os, int  fmt_cntl, int level) const 
+-> ostream & 
+{
+    PStream ps(os);
+    if( fmt_cntl < 1 ) {
+        ps << HIPPCNTL_CLASS_INFO_INLINE(ErrClass),
+        "{class=", _what(), "}";
+        return os;
+    }
+    auto ind = HIPPCNTL_CLASS_INFO_INDENT_STR(level);
+    ps << HIPPCNTL_CLASS_INFO(ErrClass),
+    ind, "Class = ", _what(), '\n';
+    return os;
+}
+
 inline const char * ErrClass::what()const noexcept { 
     return _what(); 
 }
+
 inline string ErrClass::whats() const { 
     return string("Class: ")  + _what(); 
 }
+
 inline size_t ErrClass::errmsg_maxsize() noexcept { 
     return _errmsg_maxsize; 
 }
+
 inline auto ErrClass::errmsg_maxno() noexcept -> errno_t { 
     return _errmsg_maxno; 
 }    
+
 inline auto ErrClass::get_errno() const noexcept -> errno_t { 
     return _errno; 
 }
+
 inline void ErrClass::set_errno( errno_t new_errno ) noexcept { 
     _errno = new_errno; 
 }  
+
 inline const char * ErrClass::_what()const noexcept { 
     return _errno > _errmsg_maxno ? 
             _errmsgs[_errmsg_maxno+1] : _errmsgs[_errno]; 

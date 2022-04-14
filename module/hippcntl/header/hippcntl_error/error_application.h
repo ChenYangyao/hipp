@@ -6,6 +6,8 @@ create: Yangyao CHEN, 2019/12/28
 #ifndef _HIPPCNTL_ERROR_APPLICATION_H_
 #define _HIPPCNTL_ERROR_APPLICATION_H_
 #include "../hippcntl_incl/incl.h"
+#include "../hippcntl_stream/stream_pretty.h"
+#include "error_macro.h"
 namespace HIPP{
 
 /**
@@ -25,6 +27,12 @@ public:
         eH5=6, eGSL=7, ePY=8 };
 
     ErrApp( errno_t new_errno = 1 ) noexcept;
+
+    ostream & info(ostream &os = cout, int  fmt_cntl = 0, int level = 0) const;
+    friend ostream & operator<<(ostream &os, const ErrApp &e) {
+        return e.info(os);
+    }
+
     virtual const char *what() const noexcept override;
     virtual string whats() const;
 
@@ -46,24 +54,46 @@ protected:
 
 inline ErrApp::ErrApp( errno_t new_errno ) noexcept
 : _errno(new_errno){}
+
+inline auto ErrApp::info(ostream &os, int  fmt_cntl, int level) const 
+-> ostream & 
+{
+    PStream ps(os);
+    if( fmt_cntl < 1 ) {
+        ps << HIPPCNTL_CLASS_INFO_INLINE(ErrApp),
+        "{application=", _what(), "}";
+        return os;
+    }
+    auto ind = HIPPCNTL_CLASS_INFO_INDENT_STR(level);
+    ps << HIPPCNTL_CLASS_INFO(ErrApp),
+    ind, "Application = ", _what(), '\n';
+    return os;
+}
+
 inline const char * ErrApp::what() const noexcept { 
     return _what(); 
 }
+
 inline string ErrApp::whats() const { 
     return string("Application: ")  + _what(); 
 }
+
 inline size_t ErrApp::errmsg_maxsize() noexcept { 
     return _errmsg_maxsize; 
 }
+
 inline auto ErrApp::errmsg_maxno() noexcept -> errno_t { 
     return _errmsg_maxno; 
-    }
+}
+
 inline auto ErrApp::get_errno() const noexcept -> errno_t { 
     return _errno; 
 }
+
 inline void ErrApp::set_errno( errno_t new_errno ) noexcept { 
     _errno = new_errno; 
 }
+
 inline const char * ErrApp::_what() const noexcept { 
     return _errno > _errmsg_maxno ? 
         _errmsgs[_errmsg_maxno+1] : _errmsgs[_errno]; 

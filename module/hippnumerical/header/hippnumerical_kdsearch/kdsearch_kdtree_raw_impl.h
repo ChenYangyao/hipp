@@ -23,21 +23,21 @@ _HIPP_TEMPNORET
 _KDTreeNode() noexcept {}
 
 _HIPP_TEMPNORET 
-_KDTreeNode(const pos_t &pos) noexcept : point_t(pos) {}
+_KDTreeNode(const point_t &p) noexcept : point_t(p) {}
 
 _HIPP_TEMPHD 
 template<typename PadT>
-_HIPP_TEMPCLS::_KDTreeNode(const pos_t &pos, const PadT &pad) noexcept 
-: point_t(pos)
+_HIPP_TEMPCLS::_KDTreeNode(const point_t &p, const PadT &pad) noexcept 
+: point_t(p)
 {
     fill_pad(pad);
 }
 
 _HIPP_TEMPHD
 template<typename PadT>
-_HIPP_TEMPCLS::_KDTreeNode(const pos_t &pos, index_t size, int axis, 
+_HIPP_TEMPCLS::_KDTreeNode(const point_t &p, index_t size, int axis, 
     const PadT &pad) noexcept 
-: point_t(pos), _size(size), _axis(axis)
+: point_t(p), _size(size), _axis(axis)
 {
     fill_pad(pad);
 }
@@ -159,14 +159,14 @@ info(ostream &os, int fmt_cntl, int level) const -> ostream &  {
     size_t buf_sz = _nodes.capacity() * sizeof(node_t);
     if( fmt_cntl < 1 ) {
         ps << HIPPCNTL_CLASS_INFO_INLINE(_KDTree), "{", 
-            "no. nodes=", n_nodes, ", buf size=", 
-            buf_sz, ", ", _construct_policy, "}";
+        "no. nodes=", n_nodes, ", buf size=", 
+        buf_sz, ", ", _tree_info, ", ", _construct_policy, "}";
     } else {
         auto ind = HIPPCNTL_CLASS_INFO_INDENT_STR(level);
         ps << HIPPCNTL_CLASS_INFO(_KDTree),
-            ind, "No. nodes = ", n_nodes, ", buf size = ", buf_sz, '\n',
-            ind; _tree_info.info(os, fmt_cntl, level+1);
-        ps << ind; _construct_policy.info(os, fmt_cntl, level+1);
+        ind, "No. nodes = ", n_nodes, ", buf size = ", buf_sz, '\n',
+        ind, ps.info_of(_tree_info, 0, level+1), '\n',
+        ind, ps.info_of(_construct_policy, 0, level+1), '\n';
     }
     return os;
 }
@@ -195,19 +195,23 @@ cur_split_axis(0), sorted_ids(n_pts)
     dst._construct_policy = _pl;
 }
 
-void operator()() {
+void operator()() 
+{
     for(index_t i=0; i<n_pts; ++i) 
         sorted_ids[i] = i;
 
     std::stack<std::pair<index_t, index_t> > idx_ranges;
-    index_t b = 0, e = n_pts, n_found = 0;
+    index_t b = 0, e = n_pts, n_cur = 0;
     while( b != e ) {
+        
         // Update cur_split_axis.
-        const int direc = find_best_direc(b, e);            
+        const int axis = find_best_axis(b, e);            
+
         // Update sorted_ids.
-        const index_t pivot = sort_by_pivot(b, e, direc);
-        auto &pt = get_pt(pivot);
-        nodes[n_found++] = node_t(pt.pos(), e-b, direc, pt.pad());
+        const index_t pivot = pivot_at(b, e, axis);
+
+        auto &pt = get_point(pivot);
+        nodes[n_cur++] = node_t{pt, e-b, axis, pt.pad()};
         if( b != pivot ) {
             if( pivot+1 != e ) idx_ranges.emplace(pivot+1, e);
             e = pivot;
@@ -218,37 +222,37 @@ void operator()() {
             e = b;
         }
     }
-    assert(n_found == n_pts);
+    assert(n_cur == n_pts);
 
     // Update tree_info. Use sorted_ids as buffer.
     find_info();
 }
 
-const kd_point_t & get_pt(int i) const noexcept { 
+const kd_point_t & get_point(int i) const noexcept { 
     return p_pts[ sorted_ids[i] ]; 
 }
 
-int find_best_direc(index_t b, index_t e) {   
-    int direc = -1;
-    using ax_t = typename construct_policy_t::split_axis_t;
+int find_best_axis(index_t b, index_t e) {   
+    int axis = -1;
+    using spl_ax_t = typename construct_policy_t::split_axis_t;
     switch (pl._split_axis) {
-        case ax_t::MAX_EXTREME :
-            direc = max_extreme_direc(b, e); break;
-        case ax_t::MAX_VARIANCE : 
-            direc = max_variance_direc(b, e); break;
-        case ax_t::ORDERED : 
-            direc = cur_split_axis++ % DIM; break;
+        case spl_ax_t::MAX_EXTREME :
+            axis = max_extreme_axis(b, e); break;
+        case spl_ax_t::MAX_VARIANCE : 
+            axis = max_variance_axis(b, e); break;
+        case spl_ax_t::ORDERED : 
+            axis = cur_split_axis++ % DIM; break;
         default : 
-            direc = pl._rng(); break;
+            axis = pl._rng(); break;
     }
-    return direc;
+    return axis;
 }
 
-int max_extreme_direc(index_t b, index_t e) {
+int max_extreme_axis(index_t b, index_t e) {
     using lim = std::numeric_limits<float_t>;
     pos_t min_pos(lim::max()), max_pos(lim::lowest());
-    for(auto i=b; i!=e; ++i){
-        const auto &pos = get_pt(i).pos();
+    for(auto i=b; i<e; ++i){
+        const auto &pos = get_point(i).pos();
         min_pos[ pos < min_pos ] = pos;
         max_pos[ pos > max_pos ] = pos;
     }
@@ -256,19 +260,19 @@ int max_extreme_direc(index_t b, index_t e) {
     return static_cast<int>(ret);
 }
 
-int max_variance_direc(index_t b, index_t e) {
+int max_variance_axis(index_t b, index_t e) {
     using dvec_t = SVec<double, DIM>;
     
     dvec_t mean_pos(0.0);
-    for(int i=b; i!=e; ++i){
-        auto &pos = get_pt(i).pos();
+    for(int i=b; i<e; ++i){
+        auto &pos = get_point(i).pos();
         mean_pos += dvec_t(pos);
     }
     mean_pos /= static_cast<double>(e-b);
 
     dvec_t pos_var(0.0);
-    for(int i=b; i!=e; ++i){
-        auto &pos = get_pt(i).pos();
+    for(int i=b; i<e; ++i){
+        auto &pos = get_point(i).pos();
         auto dpos = dvec_t(pos) - mean_pos;
         pos_var += dpos*dpos;
     }
@@ -276,12 +280,12 @@ int max_variance_direc(index_t b, index_t e) {
     return static_cast<int>(pos_var.max_index());
 }
 
-index_t sort_by_pivot(index_t b, index_t e, const int direc) {
+index_t pivot_at(index_t b, index_t e, const int axis) {
     const index_t pivot = b + (e-b)/2;
-    auto *data = sorted_ids.data();
+    index_t * const data = sorted_ids.data();
     std::nth_element(data+b, data+pivot, data+e, 
-        [direc, this] (index_t i, index_t j)-> bool {
-            return p_pts[i].pos()[direc] < p_pts[j].pos()[direc];
+        [&] (index_t i, index_t j)-> bool {
+            return p_pts[i].pos()[axis] < p_pts[j].pos()[axis];
         });
     return pivot;
 }
@@ -351,6 +355,7 @@ shrink_buffer() -> void {
 _HIPP_TEMPRET
 clear() -> void {
     _nodes.clear();
+    _tree_info = tree_info_t{};
 }
 
 _HIPP_TEMPRET
@@ -462,7 +467,7 @@ void push_stack(stack_item_t item) noexcept {
     *stk_e++ = item;
 }
 
-const stack_item_t &pop_stack() noexcept {
+const stack_item_t & pop_stack() noexcept {
     return *--stk_e;
 }
 
@@ -474,8 +479,7 @@ template<typename CrossSplitPlane, typename ContainNode, typename Op>
 void walk_down(index_t idx, CrossSplitPlane &&cross,  
     ContainNode &&contain, Op &&op) noexcept
 {
-    while( idx >= 0 || this->stack_not_empty() ) {
-        
+    do {
         if( idx < 0 ) idx = this->pop_stack();
 
         const node_t &n = this->nodes[idx];
@@ -494,7 +498,7 @@ void walk_down(index_t idx, CrossSplitPlane &&cross,
                 idx = sz > 2 ? this->kdt.right_sibling_idx(l_child) : -1;
             }
         }
-    }
+    } while( idx >= 0 || this->stack_not_empty() );
 }
 
 };
@@ -515,7 +519,11 @@ stk_b(reinterpret_cast<stack_item_t *>(
 ), stk_e(stk_b)
 {}
 
-const stack_item_t &pop_stack() noexcept {
+void push_stack(const stack_item_t &item) noexcept {
+    *stk_e++ = item;
+}
+
+const stack_item_t & pop_stack() noexcept {
     return *--stk_e;
 }
 
@@ -532,12 +540,12 @@ stack_item_t walk_down(index_t root) noexcept {
         const index_t l_child = this->kdt.left_child_idx(root);
         
         if( this->on_left_of(n) ) {
-            *stk_e++ = stack_item_t{root, 
-                (sz == 2)?(-1):this->kdt.right_sibling_idx(l_child)};
+            push_stack({ root, 
+                (sz == 2)?(-1):this->kdt.right_sibling_idx(l_child) });
             root = l_child;
         } else {
             if(sz == 2) return {root, l_child};
-            *stk_e++ = stack_item_t{root, l_child};
+            push_stack({root, l_child});
             root = this->kdt.right_sibling_idx(l_child);
         }
     } while(true);
@@ -576,7 +584,7 @@ struct _HIPP_TEMPCLS::_Impl_nearest : _Impl_query_in_order<Policy> {
 _Impl_nearest(const _KDTree &kdt, Policy &pl, const pos_t &dst_pos) 
 : base_t(kdt, dst_pos, pl),
 dst_r_sq(std::numeric_limits<float_t>::max()),
-dst_idx(0) {}
+dst_idx(node_t::idxNULL) {}
 
 void operator()() noexcept {
     if( this->nodes.size() == 0 ) return;
@@ -643,17 +651,19 @@ void operator()() noexcept {
         std::sort_heap(max_queue_b, max_queue_b+used_k);
 };
 
-void push_queue(index_t idx, float_t r_sq) noexcept {
-    if( r_sq >= max_r_sq ) return;
-        
+void push_queue(index_t idx, float_t r_sq) noexcept {    
     if( used_k < dst_k ) {              // queue is not full
         max_queue_b[used_k++] = ngb_t{idx, r_sq};
-    } else {                            // queue is full
+        if( used_k == dst_k ) {
+            std::make_heap(max_queue_b, max_queue_b+dst_k);
+            max_r_sq = max_queue_b->r_sq;
+        }
+    } else if( r_sq < max_r_sq ) {     // queue is full
         std::pop_heap(max_queue_b, max_queue_b+dst_k);
         max_queue_b[dst_k-1] = ngb_t{idx, r_sq};
+        std::push_heap(max_queue_b, max_queue_b+used_k);
+        max_r_sq = max_queue_b->r_sq;
     }
-    std::push_heap(max_queue_b, max_queue_b+used_k);
-    max_r_sq = max_queue_b->r_sq;
 }
 
 };
@@ -702,7 +712,8 @@ template<typename Op, typename Policy>
 void _HIPP_TEMPCLS::visit_rect(const rect_t &rect, Op op, 
     Policy &&policy) const
 {
-    _Impl_visit_rect {*this, policy, rect, op} ();
+    _Impl_visit_rect<Op, std::remove_reference_t<Policy> > 
+        {*this, policy, rect, op} ();
 }
 
 _HIPP_TEMPHD
@@ -745,7 +756,8 @@ template<typename Op, typename Policy>
 void _HIPP_TEMPCLS::visit_sphere(const sphere_t &sphere, Op op, 
     Policy &&policy) const
 {
-    _Impl_visit_sphere {*this, policy, sphere, op} ();
+    _Impl_visit_sphere<Op, std::remove_reference_t<Policy> > 
+        {*this, policy, sphere, op} ();
 }
 
 _HIPP_TEMPHD
@@ -846,6 +858,9 @@ set_random_seed(random_seed_t seed) -> construct_policy_t & {
 #define _HIPP_TEMPRET _HIPP_TEMPHD inline auto _HIPP_TEMPCLS::
 #define _HIPP_TEMPNORET _HIPP_TEMPHD inline _HIPP_TEMPCLS::
 
+_HIPP_TEMPNORET
+tree_info_t() noexcept : _max_depth(0) {}
+
 _HIPP_TEMPRET
 info(ostream &os, int fmt_cntl, int level) const -> ostream & {
     PStream ps{os};
@@ -873,8 +888,21 @@ info(ostream &os, int fmt_cntl, int level) const -> ostream & {
 #define _HIPP_TEMPNORET _HIPP_TEMPHD inline _HIPP_TEMPCLS::
 
 _HIPP_TEMPRET 
-get_buff(index_t n) -> index_t * { 
-    _buff.resize(n); return _buff.data(); 
+get_buff(index_t n) -> index_t * 
+{ 
+    _container.resize(n); return _container.data(); 
+}
+
+_HIPP_TEMPRET 
+container() noexcept -> container_t & 
+{
+    return _container;
+}
+
+_HIPP_TEMPRET 
+container() const noexcept -> const container_t & 
+{
+    return _container;
 }
 
 #undef _HIPP_TEMPHD

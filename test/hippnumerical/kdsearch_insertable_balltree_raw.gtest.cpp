@@ -102,7 +102,8 @@ TEST_F(InsertableBallTreeRawEmptyPaddingTest, InsertionWithDefaultPolicy){
     ASSERT_EQ(ballt.size(), cnt); ++cnt;
 
     for(int i=0; i<50; ++i){
-        ballt.insert({{i,i,i}});
+        float_t x = i;
+        ballt.insert({{x,x,x}});
         ASSERT_EQ(ballt.size(), cnt); ++cnt;
     }
 
@@ -126,7 +127,8 @@ TEST_F(InsertableBallTreeRawEmptyPaddingTest, InsertionWithFinePolicy){
     ASSERT_EQ(ballt.size(), cnt); ++cnt;
 
     for(int i=0; i<50; ++i){
-        ballt.insert({{i,i,i}}, pl);
+        float_t x = i;
+        ballt.insert({{x,x,x}}, pl);
         ASSERT_EQ(ballt.size(), cnt); ++cnt;
         ASSERT_TRUE(pl.fringe().empty());
     }
@@ -355,7 +357,8 @@ TEST_F(InsertableBallTreeRawIntPaddingTest, InsertionWithDefaultPolicy){
     ASSERT_EQ(ballt.size(), cnt); ++cnt;
 
     for(int i=0; i<50; ++i){
-        ballt.insert({{i,i,i}});
+        float_t x = i;
+        ballt.insert({{x,x,x}});
         ASSERT_EQ(ballt.size(), cnt); ++cnt;
     }
 
@@ -379,7 +382,8 @@ TEST_F(InsertableBallTreeRawIntPaddingTest, InsertionWithFinePolicy){
     ASSERT_EQ(ballt.size(), cnt); ++cnt;
 
     for(int i=0; i<50; ++i){
-        ballt.insert({{i,i,i}}, pl);
+        float_t x = i;
+        ballt.insert({{x,x,x}}, pl);
         ASSERT_EQ(ballt.size(), cnt); ++cnt;
         ASSERT_TRUE(pl.fringe().empty());
     }
@@ -608,7 +612,8 @@ TEST_F(InsertableBallTreeLargePaddingTest, InsertionWithDefaultPolicy){
     ASSERT_EQ(ballt.size(), cnt); ++cnt;
 
     for(int i=0; i<50; ++i){
-        ballt.insert({{i,i,i}});
+        float_t x = i;
+        ballt.insert({{x,x,x}});
         ASSERT_EQ(ballt.size(), cnt); ++cnt;
     }
 
@@ -632,7 +637,8 @@ TEST_F(InsertableBallTreeLargePaddingTest, InsertionWithFinePolicy){
     ASSERT_EQ(ballt.size(), cnt); ++cnt;
 
     for(int i=0; i<50; ++i){
-        ballt.insert({{i,i,i}}, pl);
+        float_t x = i;
+        ballt.insert({{x,x,x}}, pl);
         ASSERT_EQ(ballt.size(), cnt); ++cnt;
         ASSERT_TRUE(pl.fringe().empty());
     }
@@ -861,7 +867,8 @@ TEST_F(InsertableBallTreeNonAlignedPaddingTest, InsertionWithDefaultPolicy){
     ASSERT_EQ(ballt.size(), cnt); ++cnt;
 
     for(int i=0; i<50; ++i){
-        ballt.insert({{i,i,i}});
+        float_t x = i;
+        ballt.insert({{x,x,x}});
         ASSERT_EQ(ballt.size(), cnt); ++cnt;
     }
 
@@ -885,7 +892,8 @@ TEST_F(InsertableBallTreeNonAlignedPaddingTest, InsertionWithFinePolicy){
     ASSERT_EQ(ballt.size(), cnt); ++cnt;
 
     for(int i=0; i<50; ++i){
-        ballt.insert({{i,i,i}}, pl);
+        float_t x = i;
+        ballt.insert({{x,x,x}}, pl);
         ASSERT_EQ(ballt.size(), cnt); ++cnt;
         ASSERT_TRUE(pl.fringe().empty());
     }

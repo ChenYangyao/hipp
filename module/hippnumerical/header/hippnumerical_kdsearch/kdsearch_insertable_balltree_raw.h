@@ -1,3 +1,9 @@
+/**
+create: Yangyao CHEN, 2022/04/15
+    [write   ] _InsertableBallTreeNode, _InsertableBallTree - Implementation
+        of insertion-based ball tree construction algorithms.
+*/
+
 #ifndef _HIPPNUMERICAL_KDSEARCH_INSERTABLE_BALLTREE_RAW_H_
 #define _HIPPNUMERICAL_KDSEARCH_INSERTABLE_BALLTREE_RAW_H_
 

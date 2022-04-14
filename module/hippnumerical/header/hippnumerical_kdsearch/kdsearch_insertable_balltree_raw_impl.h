@@ -1,3 +1,9 @@
+/**
+create: Yangyao CHEN, 2022/04/15
+Implementation of kdsearch_insertable_balltree_raw.h
+*/
+
+
 #ifndef _HIPPNUMERICAL_KDSEARCH_INSERTABLE_BALLTREE_RAW_IMPL_H_
 #define _HIPPNUMERICAL_KDSEARCH_INSERTABLE_BALLTREE_RAW_IMPL_H_
 
@@ -45,11 +51,7 @@ info(ostream &os, int  fmt_cntl, int level) const -> ostream &
 {
     PStream ps(os);
 
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
     auto v_info = _node_info;
-    #pragma GCC diagnostic pop
-
     const char *s_info = "UNKNOWN";
     if( v_info == tNULL )
         s_info = "NULL";
@@ -601,7 +603,9 @@ auto _HIPP_TEMPCLS::_find_best_insert_loc(const point_t &p,
     auto f_vol = [&p](const node_t &n) {
         return n._pow(n.bounding_d(p));
     };
-    return _Impl_find_best_insert_loc {policy, f_vol, *this}();
+    return _Impl_find_best_insert_loc<
+        std::remove_reference_t<Policy>,
+        decltype(f_vol) > {policy, f_vol, *this}();
 }
 
 _HIPP_TEMPHD
@@ -612,8 +616,9 @@ auto _HIPP_TEMPCLS::_find_best_insert_loc(const sphere_t &s,
     auto f_vol = [&s](const node_t &n) {
         return n._pow(n.bounding_d(s));
     };
-    return _Impl_find_best_insert_loc{
-        policy, f_vol, *this}();
+    return _Impl_find_best_insert_loc<
+        std::remove_reference_t<Policy>,
+        decltype(f_vol) > {policy, f_vol, *this}();
 }
 
 

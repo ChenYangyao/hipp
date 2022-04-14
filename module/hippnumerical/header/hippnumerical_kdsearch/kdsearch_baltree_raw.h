@@ -1,3 +1,8 @@
+/**
+create: Yangyao CHEN, 2022/04/15
+    [write   ] _BallTreeNode, _BallTree - Implementation classes of BallTree.
+*/
+
 #ifndef _HIPPNUMERICAL_KDSEARCH_BALTREE_RAW_H_
 #define _HIPPNUMERICAL_KDSEARCH_BALTREE_RAW_H_
 
@@ -11,8 +16,9 @@ template<typename KDPointT, typename IndexT> class _BallTree;
 template<typename _FloatT, int _DIM, size_t _PADDING, typename _IndexT>
 class _BallTreeNode : public GEOMETRY::Sphere<_FloatT, _DIM> {
 public:
-    inline static constexpr int DIM = _DIM;    
-    inline static constexpr size_t PADDING = _PADDING;    
+    static constexpr int DIM         = _DIM;    
+    static constexpr size_t PADDING  = _PADDING;    
+    static constexpr _IndexT idxNULL = -1;
     
     using point_t    = GEOMETRY::Point<_FloatT, _DIM>;
     using sphere_t   = GEOMETRY::Sphere<_FloatT, _DIM>;
@@ -87,16 +93,16 @@ public:
 
     using insertable_tree_t = _InsertableBallTree<kd_point_t, index_t>;
 
-    struct tree_info_t;
+    class tree_info_t;
     struct idx_pair_t;
     struct ngb_t;
     
-    struct construct_policy_t;
-    struct query_buff_policy_t;
-    struct nearest_query_policy_t;
-    struct nearest_k_query_policy_t;
-    struct rect_query_policy_t;
-    struct sphere_query_policy_t;
+    class construct_policy_t;
+    class query_buff_policy_t;
+    class nearest_query_policy_t;
+    class nearest_k_query_policy_t;
+    class rect_query_policy_t;
+    class sphere_query_policy_t;
 
     _BallTree() noexcept;
 
@@ -171,7 +177,7 @@ public:
     void walk_down(const point_t &p, Op op, index_t &node_idx) const;
     
     /**
-    nearest(): if tree is empty, returns {0, max_of_float_t}.
+    nearest(): if tree is empty, returns {node_t::idxNULL, max_of_float_t}.
     */
     template<typename Policy = nearest_query_policy_t>
     ngb_t nearest(const point_t &p, Policy &&policy = Policy()) const;
@@ -181,7 +187,10 @@ public:
 
     /**
     ``op_n(i)`` is called on each internal node indexed ``i`` that is fully 
-    contained in ``rect``. ``op_l(i)`` is called on each visited leaf node.
+    contained in the query region ``rect``. ``op_l(i)`` is called on each 
+    visited leaf node.
+
+    ``count_rect()`` returns the number of leaves in the query region.
     */
     template<typename OpNode, typename OpLeaf, 
         typename Policy = rect_query_policy_t>

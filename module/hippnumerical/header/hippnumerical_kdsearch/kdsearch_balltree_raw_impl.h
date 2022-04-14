@@ -1,3 +1,8 @@
+/**
+create: Yangyao CHEN, 2022/04/15
+Implementation of kdsearch_balltree_raw.h
+*/
+
 #ifndef _HIPPNUMERICAL_KDSEARCH_BALLTREE_RAW_IMPL_H_
 #define _HIPPNUMERICAL_KDSEARCH_BALLTREE_RAW_IMPL_H_
 
@@ -508,6 +513,7 @@ _HIPP_TEMPRET
 clear() -> void 
 {
     _nodes.clear();
+    _tree_info = tree_info_t {};
 }
 
 _HIPP_TEMPRET
@@ -776,7 +782,7 @@ struct _HIPP_TEMPCLS::_Impl_nearest : _Impl_query_in_order<Policy>
 _Impl_nearest(const _BallTree &ballt, Policy &pl, const pos_t &dst_pos) 
 : base_t(ballt, dst_pos, pl),
 dst_r_sq(std::numeric_limits<float_t>::max()), dst_r(dst_r_sq),
-dst_idx(0) {}
+dst_idx(node_t::idxNULL) {}
 
 void operator()() noexcept {
     if( this->nodes.size() == 0 ) return;
@@ -839,17 +845,20 @@ void operator()() noexcept {
 };
 
 void push_queue(index_t idx, float_t r_sq) noexcept {
-    if( r_sq >= max_r_sq ) return;
-        
     if( used_k < dst_k ) {              // queue is not full
         max_queue_b[used_k++] = ngb_t{idx, r_sq};
-    } else {                            // queue is full
+        if( used_k == dst_k ) {
+            std::make_heap(max_queue_b, max_queue_b+dst_k);
+            max_r_sq = max_queue_b->r_sq;
+            max_r = std::sqrt(max_r_sq);
+        }
+    } else if ( r_sq < max_r_sq ) {    // queue is full
         std::pop_heap(max_queue_b, max_queue_b+dst_k);
         max_queue_b[dst_k-1] = ngb_t{idx, r_sq};
+        std::push_heap(max_queue_b, max_queue_b+dst_k);
+        max_r_sq = max_queue_b->r_sq;
+        max_r = std::sqrt(max_r_sq);
     }
-    std::push_heap(max_queue_b, max_queue_b+used_k);
-    max_r_sq = max_queue_b->r_sq;
-    max_r = std::sqrt(max_r_sq);
 }
 
 };
@@ -908,8 +917,8 @@ template<typename OpNode, typename OpLeaf,
 void _HIPP_TEMPCLS::visit_rect(const rect_t &rect, OpNode op_n, OpLeaf op_l,
     Policy &&policy) const
 {
-    _Impl_visit_rect {*this, policy, rect, op_n, op_l} ();
-
+    _Impl_visit_rect<OpNode, OpLeaf, std::remove_reference_t<Policy> > 
+        {*this, policy, rect, op_n, op_l} ();
 }
 
 _HIPP_TEMPHD
@@ -917,14 +926,15 @@ template<typename Policy>
 auto _HIPP_TEMPCLS::count_rect(const rect_t &rect,
     Policy &&policy) const -> index_t 
 {
-    index_t cnt = 0;
+    index_t cnt_intern = 0, cnt_leaf = 0, n_intern = 0;
     visit_rect(rect, 
-        [&cnt, this](index_t node_idx) { 
-            cnt += this->nodes[node_idx].size(); 
+        [&](index_t node_idx) { 
+            cnt_intern += this->_nodes[node_idx].size();
+            ++n_intern;
         }, 
-        [&cnt](index_t node_idx) { ++cnt; },
+        [&](index_t node_idx) { ++cnt_leaf; },
         policy);
-    return cnt;
+    return (cnt_intern + n_intern)/2 + cnt_leaf;
 }
 
 _HIPP_TEMPHD
@@ -964,7 +974,8 @@ template<typename OpNode, typename OpLeaf, typename Policy>
 void _HIPP_TEMPCLS::visit_sphere(const sphere_t &sphere, OpNode op_n, 
     OpLeaf op_l, Policy &&policy) const
 {
-    _Impl_visit_sphere {*this, policy, sphere, op_n, op_l} ();
+    _Impl_visit_sphere<OpNode, OpLeaf, std::remove_reference_t<Policy> > 
+        {*this, policy, sphere, op_n, op_l} ();
 }
 
 _HIPP_TEMPHD
@@ -972,14 +983,15 @@ template<typename Policy>
 auto _HIPP_TEMPCLS::count_sphere(const sphere_t &sphere,
     Policy &&policy) const -> index_t
 {
-    index_t cnt = 0;
+    index_t cnt_intern = 0, cnt_leaf = 0, n_intern = 0;
     visit_sphere(sphere, 
-        [&cnt, this](index_t node_idx) { 
-            cnt += this->nodes[node_idx].size(); 
+        [&](index_t node_idx) { 
+            cnt_intern += this->_nodes[node_idx].size(); 
+            ++n_intern;
         },
-        [&cnt](index_t node_idx) { ++cnt; },
+        [&](index_t node_idx) { ++cnt_leaf; },
         policy);
-    return cnt;
+    return (cnt_intern + n_intern)/2 + cnt_leaf;
 }
 
 #undef _HIPP_TEMPHD

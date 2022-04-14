@@ -26,8 +26,8 @@ public:
     PADDING: size of the user-defined extra information attached to each 
     ``kd_point_t`` instance and tree node.
     */
-    static constexpr int DIM = impl_t::DIM;
-    static constexpr size_t PADDING = impl_t::PADDING;
+    static constexpr int DIM         = impl_t::DIM;
+    static constexpr size_t PADDING  = impl_t::PADDING;
 
     /**
     Point types. 
@@ -71,9 +71,8 @@ public:
     /**
     Constructors.
 
-    (1): Default construnction - no actual tree structure is constructed. 
-    No query shall be made on the instance. Use ``construct()`` to construct 
-    the tree.
+    (1): Default construnction - an empty tree (i.e., the number of nodes is 
+    0) is constructed. All queries can be safely made.
 
     (2): Construct the tree by a series of points ``pts`` and the algorithm 
     ``policy``. For details, see :func:`construct`.
@@ -91,11 +90,11 @@ public:
     Queries can be made on them independently and thread-safely. Methods that 
     modify the tree may result in race condition.
     */
-    KDTree(const KDTree &o) = default;
-    KDTree(KDTree &&o) = default;
-    KDTree & operator=(const KDTree &o) noexcept = default;
-    KDTree & operator=(KDTree &&o) noexcept = default;
-    ~KDTree() noexcept = default;
+    KDTree(const KDTree &o);
+    KDTree(KDTree &&o);
+    KDTree & operator=(const KDTree &o) noexcept;
+    KDTree & operator=(KDTree &&o) noexcept;
+    ~KDTree() noexcept;
 
     ostream & info(ostream &os = cout, int  fmt_cntl = 0, int level = 0) const;
     friend ostream & operator<<(ostream &os, const KDTree &kdt) {
@@ -134,7 +133,7 @@ public:
     shrink_buffer(): shrink the internal buffer to fit the used storage. 
     The tree structure is not affected.
 
-    clear(): Destroy the tree structure. 
+    clear(): Destroy the tree structure, i.e., give an empty tree.
     The internal buffer becomes unused, but it may not be recycled - use 
     ``shrink_buffer()`` to free the storage. 
     The tree may be reconstructed again by ``construct()`` after clearance.
@@ -184,7 +183,7 @@ public:
     nearest(): find the tree node nearest to a given point ``p``. 
     A :type:`ngb_t` instance is returned, whose ``node_idx`` and ``r_sq`` fields
     are the result node and the squared distance to it.
-    If tree is empty, returns {0, max_of_float_t}.
+    If tree is empty, returns {node_t::idxNULL, max_of_float_t}.
 
     nearest_k(): the same, but find the tree nodes that are the first k nearest 
     to ``p``. ``ngbs`` are an in-out argument. On entry, its size specifies 
@@ -208,7 +207,6 @@ public:
         Policy &&policy = Policy()) const;
 
     /**
-
     visit_nodes_rect(): visit all nodes within ``rect``.
     ``op(const node_t &node)`` is called on each node visited.
 
@@ -264,6 +262,22 @@ KDTree(ContiguousBuffer<const kd_point_t> pts,
     construct(pts, policy);
 }
 
+_HIPP_TEMPNORET
+KDTree(const KDTree &o) = default;
+
+_HIPP_TEMPNORET
+KDTree(KDTree &&o) = default;
+
+_HIPP_TEMPRET
+operator=(const KDTree &o) noexcept -> KDTree & = default;
+
+_HIPP_TEMPRET
+operator=(KDTree &&o) noexcept -> KDTree & = default;
+
+_HIPP_TEMPNORET
+~KDTree() noexcept = default;
+
+
 _HIPP_TEMPRET
 info(ostream &os, int  fmt_cntl, int level) const -> ostream & {
     PStream ps(os);
@@ -274,7 +288,7 @@ info(ostream &os, int  fmt_cntl, int level) const -> ostream & {
     }
     auto ind = HIPPCNTL_CLASS_INFO_INDENT_STR(level);
     ps << HIPPCNTL_CLASS_INFO(KDTree),
-    ind, ps.info_of(*impl, fmt_cntl, level+1);
+    ind, ps.info_of(*_impl, fmt_cntl, level+1);
     return os;
 }
 

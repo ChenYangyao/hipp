@@ -1,6 +1,6 @@
 /**
 create: Yangyao CHEN, 2022/02/14
-    [write   ] _KDTreeNode, _KDTree - implementation classes of KDTree.
+    [write   ] _KDTreeNode, _KDTree - Implementation classes of KDTree.
 */
 
 
@@ -14,8 +14,9 @@ namespace HIPP::NUMERICAL::_KDSEARCH {
 template<typename _FloatT, int _DIM, size_t _PADDING, typename _IndexT> 
 class _KDTreeNode : public GEOMETRY::Point<_FloatT, _DIM> {
 public:
-    inline static constexpr int DIM = _DIM;    
-    inline static constexpr size_t PADDING = _PADDING;    
+    static constexpr int DIM         = _DIM;    
+    static constexpr size_t PADDING  = _PADDING;    
+    static constexpr _IndexT idxNULL = -1;
 
     using point_t    = GEOMETRY::Point<_FloatT, _DIM>;
     using kd_point_t = KDPoint<_FloatT, _DIM, _PADDING>;
@@ -24,6 +25,7 @@ public:
     using pos_t      = typename kd_point_t::pos_t;
     using offset_t   = typename kd_point_t::offset_t;
     using index_t    = _IndexT;
+
 
     _KDTreeNode() noexcept;
 
@@ -74,8 +76,8 @@ public:
     using float_t = typename kd_point_t::float_t;
     using index_t = IndexT;
     
-    static constexpr int DIM        = kd_point_t::DIM;
-    static constexpr size_t PADDING = kd_point_t::PADDING;
+    static constexpr int DIM         = kd_point_t::DIM;
+    static constexpr size_t PADDING  = kd_point_t::PADDING;
 
     using node_t   = _KDTreeNode<float_t, DIM, PADDING, index_t>;
     using point_t  = typename node_t::point_t;
@@ -84,16 +86,16 @@ public:
     using rect_t   = GEOMETRY::Rect<float_t, DIM>;
     using sphere_t = GEOMETRY::Sphere<float_t, DIM>;
 
-    struct tree_info_t;
+    class tree_info_t;
     struct idx_pair_t;
     struct ngb_t;
     
-    struct construct_policy_t;
-    struct query_buff_policy_t;
-    struct nearest_query_policy_t;
-    struct nearest_k_query_policy_t;
-    struct rect_query_policy_t;
-    struct sphere_query_policy_t;
+    class construct_policy_t;
+    class query_buff_policy_t;
+    class nearest_query_policy_t;
+    class nearest_k_query_policy_t;
+    class rect_query_policy_t;
+    class sphere_query_policy_t;
 
     _KDTree() noexcept;
 
@@ -132,7 +134,7 @@ public:
     shrink_buffer(): shrink the internal buffer to fit the used storage. 
     The tree structure is not affected.
 
-    clear(): Destroy the tree structure. 
+    clear(): Destroy the tree structure, i.e., give an empty tree. 
     The internal buffer becomes unused, but it may not be recycled - use 
     ``shrink_buffer()`` to free the storage. 
     The tree may be reconstructed again by ``construct()`` after clearance.
@@ -168,7 +170,7 @@ public:
     void walk_down(const point_t &p, Op op, index_t &node_idx) const;
 
     /**
-    nearest(): if tree is empty, returns {0, max_of_float_t}.
+    nearest(): if tree is empty, returns {node_t::idxNULL, max_of_float_t}.
     */
     template<typename Policy = nearest_query_policy_t>
     ngb_t nearest(const point_t &p, Policy &&policy = Policy()) const;

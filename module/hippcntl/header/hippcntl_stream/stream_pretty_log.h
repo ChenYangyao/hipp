@@ -84,8 +84,8 @@ public:
 
     StreamOperand(const StreamOperand &) noexcept = default;
     StreamOperand(StreamOperand &&) noexcept = default;
-    StreamOperand & operator=(const StreamOperand &) noexcept = default;
-    StreamOperand & operator=(StreamOperand &&) noexcept = default;
+    StreamOperand & operator=(const StreamOperand &) noexcept = delete;
+    StreamOperand & operator=(StreamOperand &&) noexcept = delete;
     ~StreamOperand() noexcept {}
 
     /**

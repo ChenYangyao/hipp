@@ -52,6 +52,22 @@ public:
 
     float_t r() const noexcept;
     float_t r_sq() const noexcept;
+
+    Offset operator+(const Offset &off) const noexcept;
+    Offset operator-(const Offset &off) const noexcept;
+    Offset operator+(float_t off) const noexcept;
+    Offset operator-(float_t off) const noexcept;
+    Offset operator+() const noexcept;
+    Offset operator-() const noexcept;
+    Offset operator*(float_t scale) const noexcept;
+    Offset operator/(float_t scale) const noexcept;
+
+    Offset & operator+=(const Offset &off) noexcept;
+    Offset & operator-=(const Offset &off) noexcept;
+    Offset & operator+=(float_t off) noexcept;
+    Offset & operator-=(float_t off) noexcept;
+    Offset & operator*=(float_t scale) noexcept;
+    Offset & operator/=(float_t scale) noexcept;
 protected:
     value_t _value;
 };
@@ -135,30 +151,139 @@ Offset(std::initializer_list<float_t> value) noexcept
 : _value(value)
 {}
 
-_HIPP_TEMPRET value() noexcept -> value_t & {
+_HIPP_TEMPRET value() noexcept -> value_t &
+{
     return _value;
 }
 
-_HIPP_TEMPRET value() const noexcept -> const value_t & {
+_HIPP_TEMPRET value() const noexcept -> const value_t &
+{
     return _value;
 }
 
-_HIPP_TEMPRET operator[](size_t i) noexcept -> float_t & {
+_HIPP_TEMPRET operator[](size_t i) noexcept -> float_t &
+{
     return _value[i];
 };
 
-_HIPP_TEMPRET operator[](size_t i) const noexcept -> const float_t & {
+_HIPP_TEMPRET operator[](size_t i) const noexcept -> const float_t &
+{
     return _value[i];
 };
 
-_HIPP_TEMPRET r() const noexcept -> float_t {
+_HIPP_TEMPRET r() const noexcept -> float_t 
+{
     return _value.norm();
 }
 
-_HIPP_TEMPRET r_sq() const noexcept -> float_t {
+_HIPP_TEMPRET r_sq() const noexcept -> float_t 
+{
     return _value.squared_norm();
 }
 
+_HIPP_TEMPRET operator+(const Offset &off) const noexcept -> Offset 
+{
+    return Offset(_value + off._value);
+}
+
+_HIPP_TEMPRET operator-(const Offset &off) const noexcept -> Offset 
+{
+    return Offset(_value - off._value);
+}
+
+_HIPP_TEMPRET operator+(float_t off) const noexcept -> Offset 
+{
+    return Offset(_value + off);
+}
+
+_HIPP_TEMPRET operator-(float_t off) const noexcept -> Offset 
+{
+    return Offset(_value - off);
+}
+
+_HIPP_TEMPRET operator+() const noexcept -> Offset 
+{
+    return _value;
+}
+
+_HIPP_TEMPRET operator-() const noexcept -> Offset 
+{
+    return -_value;
+}
+
+_HIPP_TEMPRET operator*(float_t scale) const noexcept -> Offset 
+{
+    return Offset(_value * scale);
+}
+
+_HIPP_TEMPRET operator/(float_t scale) const noexcept -> Offset 
+{
+    return Offset(_value / scale);
+}
+
+_HIPP_TEMPHD
+_HIPP_TEMPCLS operator+(typename _HIPP_TEMPCLS::float_t off, 
+    const _HIPP_TEMPCLS &that) noexcept
+{
+    return _HIPP_TEMPCLS(off + that.value());
+}
+
+_HIPP_TEMPHD
+_HIPP_TEMPCLS operator-(typename _HIPP_TEMPCLS::float_t off, 
+    const _HIPP_TEMPCLS &that) noexcept
+{
+    return _HIPP_TEMPCLS(off - that.value());
+}
+
+_HIPP_TEMPHD
+_HIPP_TEMPCLS operator*(typename _HIPP_TEMPCLS::float_t off, 
+    const _HIPP_TEMPCLS &that) noexcept
+{
+    return _HIPP_TEMPCLS(off * that.value());
+}
+
+_HIPP_TEMPHD
+_HIPP_TEMPCLS operator/(typename _HIPP_TEMPCLS::float_t off, 
+    const _HIPP_TEMPCLS &that) noexcept
+{
+    return _HIPP_TEMPCLS(off / that.value());
+}
+
+_HIPP_TEMPRET operator+=(const Offset &off) noexcept -> Offset & 
+{
+    _value += off._value;
+    return *this;
+}
+
+_HIPP_TEMPRET operator-=(const Offset &off) noexcept -> Offset & 
+{
+    _value -= off._value;
+    return *this;
+}
+
+_HIPP_TEMPRET operator+=(float_t off) noexcept -> Offset & 
+{
+    _value += off;
+    return *this;
+}
+
+_HIPP_TEMPRET operator-=(float_t off) noexcept -> Offset & 
+{
+    _value -= off;
+    return *this;
+}
+
+_HIPP_TEMPRET operator*=(float_t scale) noexcept -> Offset & 
+{
+    _value *= scale;
+    return *this;
+}
+
+_HIPP_TEMPRET operator/=(float_t scale) noexcept -> Offset & 
+{
+    _value /= scale;
+    return *this;
+}
 
 #undef _HIPP_TEMPHD
 #undef _HIPP_TEMPARG
@@ -198,59 +323,86 @@ info(ostream &os, int fmt_cntl, int level) const -> ostream & {
     return os;
 }
 
-_HIPP_TEMPRET pos() noexcept -> pos_t & {
+_HIPP_TEMPRET pos() noexcept -> pos_t &
+{
     return _pos;
 }
 
-_HIPP_TEMPRET pos() const noexcept -> const pos_t & {
+_HIPP_TEMPRET pos() const noexcept -> const pos_t &
+{
     return _pos;
 }
 
-_HIPP_TEMPRET operator-(const Point &p) const noexcept -> offset_t {
+_HIPP_TEMPRET operator-(const Point &p) const noexcept -> offset_t
+{
     auto dx = pos() - p.pos();
     return offset_t(dx);
 }
 
-_HIPP_TEMPRET operator+(const offset_t &off) const noexcept -> Point {
+_HIPP_TEMPRET operator+(const offset_t &off) const noexcept -> Point
+{
     auto x = pos() + off.value();
     return Point(x);
 }
 
-_HIPP_TEMPRET operator-(const offset_t &off) const noexcept -> Point {
+_HIPP_TEMPRET operator-(const offset_t &off) const noexcept -> Point
+{
     auto x = pos() - off.value();
     return Point(x);
 }
 
-_HIPP_TEMPRET operator+(float_t off) const noexcept -> Point {
+_HIPP_TEMPRET operator+(float_t off) const noexcept -> Point
+{
     auto x = pos() + off;
     return Point(x);
 }
 
-_HIPP_TEMPRET operator-(float_t off) const noexcept -> Point {
+_HIPP_TEMPRET operator-(float_t off) const noexcept -> Point
+{
     auto x = pos() - off;
     return Point(x);
 }
 
+_HIPP_TEMPHD
+_HIPP_TEMPCLS operator+(const typename _HIPP_TEMPCLS::offset_t &off,
+    const _HIPP_TEMPCLS &that) noexcept
+{
+    auto x =  off.value() + that.pos();
+    return _HIPP_TEMPCLS(x);
+}
+
+_HIPP_TEMPHD
+_HIPP_TEMPCLS operator+(typename _HIPP_TEMPCLS::float_t off,
+    const _HIPP_TEMPCLS &that) noexcept
+{
+    auto x =  off + that.pos();
+    return _HIPP_TEMPCLS(x);
+}
+
 _HIPP_TEMPRET 
-operator+=(const offset_t &off) noexcept -> Point & {
+operator+=(const offset_t &off) noexcept -> Point & 
+{
     pos() += off.value();
     return *this;
 }
 
 _HIPP_TEMPRET 
-operator-=(const offset_t &off) noexcept -> Point & {
+operator-=(const offset_t &off) noexcept -> Point & 
+{
     pos() -= off.value();
     return *this;
 }
 
 _HIPP_TEMPRET 
-operator+=(float_t off) noexcept -> Point & {
+operator+=(float_t off) noexcept -> Point & 
+{
     pos() += off;
     return *this;
 }
 
 _HIPP_TEMPRET 
-operator-=(float_t off) noexcept -> Point & {
+operator-=(float_t off) noexcept -> Point & 
+{
     pos() -= off;
     return *this;
 }

@@ -4,6 +4,19 @@ configure_file("${_srcdir}/hipp_config.h.in" "${_bindir}/hipp_config.h")
 
 add_library(hipp-config INTERFACE)
 target_include_directories(hipp-config INTERFACE "${_bindir}")
+
+# Some old version of GCC for C++17 required link to the stdc++fs
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    include(CheckCXXCompilerFlag)
+    check_cxx_compiler_flag("-lstdc++fs" STDCXXFS_LIBRARY_NEEDED)
+    if(STDCXXFS_LIBRARY_NEEDED)
+        target_link_libraries(hipp-config INTERFACE "stdc++fs")
+        message(STATUS "stdc++fs detected and linked")
+    else()
+        message(STATUS "stdc++fs not required")
+    endif()
+endif()
+
 install(FILES "${_bindir}/hipp_config.h" DESTINATION include)
 
 add_subdirectory("${_projectid}cntl")
@@ -16,7 +29,6 @@ if(enable-mpi)
 else()
     message(STATUS "${BoldRed}MPI disabled${ColourReset}. Module ${_projectid}mpi will not be built")
 endif()
-
 
 if(enable-hdf5)
     message(STATUS "${BoldGreen}HDF5 enabled${ColourReset}")

@@ -35,11 +35,15 @@ public:
 
     explicit StreamOperand(ostream &os) noexcept;
 
-    StreamOperand(const StreamOperand &) noexcept = default;
-    StreamOperand(StreamOperand &&) noexcept = default;
-    StreamOperand & operator=(const StreamOperand &) noexcept = default;
-    StreamOperand & operator=(StreamOperand &&) noexcept = default;
-    ~StreamOperand() noexcept {}
+    /** 
+    The copy/move constructor results in object referring to the same 
+    stream.
+    */
+    StreamOperand(const StreamOperand &) noexcept;
+    StreamOperand(StreamOperand &&) noexcept;
+    StreamOperand & operator=(const StreamOperand &) noexcept = delete;
+    StreamOperand & operator=(StreamOperand &&) noexcept = delete;
+    ~StreamOperand() noexcept;
 
     /**
     Stream operators.
@@ -187,7 +191,7 @@ public:
     */
     template<typename T>
     auto info_of(T &&x, int fmt_cntl = 0, int level = 0) {
-        auto cb = [&x, this, fmt_cntl, level](ostream &os) {
+        auto cb = [&x, fmt_cntl, level](ostream &os) {
             std::forward<T>(x).info(os, fmt_cntl, level);
         };
         return (*this)(cb);
@@ -209,6 +213,15 @@ namespace _hippcntl_stream_pretty_helper {
 #define _HIPP_TEMPNORET inline StreamOperand::
 
 _HIPP_TEMPNORET StreamOperand(ostream &os) noexcept : _os(os) {}
+
+_HIPP_TEMPNORET 
+StreamOperand(const StreamOperand &op) noexcept : _os(op._os) {}
+
+_HIPP_TEMPNORET 
+StreamOperand(StreamOperand &&op) noexcept : _os(op._os) {}
+
+_HIPP_TEMPNORET 
+~StreamOperand() noexcept {}
 
 _HIPP_TEMPRET operator, (ostream& (*pf)(ostream&)) -> StreamOperand & { 
     _os << pf; return *this; 

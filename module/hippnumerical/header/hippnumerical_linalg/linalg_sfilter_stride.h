@@ -80,7 +80,7 @@ protected:
     void _init_strides(size_t D, Stride1D &&s1, Stride1Ds &&...s);
 
     template<typename T>
-    constexpr static stride_1d_t _select_to_stride_1d(size_t D, 
+    static stride_1d_t _select_to_stride_1d(size_t D, 
         T &&x) noexcept;
 };
 
@@ -148,7 +148,7 @@ void _HIPP_TEMPCLS::_init_strides(size_t D, Stride1D &&s1, Stride1Ds &&...s) {
 
 _HIPP_TEMPHD
 template<typename T>
-constexpr auto _HIPP_TEMPCLS::_select_to_stride_1d(size_t D, T &&x) noexcept 
+auto _HIPP_TEMPCLS::_select_to_stride_1d(size_t D, T &&x) noexcept 
 -> stride_1d_t 
 {
     typedef std::remove_cv_t<std::remove_reference_t<T>> _T;

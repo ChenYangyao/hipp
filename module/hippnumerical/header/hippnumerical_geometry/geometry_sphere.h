@@ -54,6 +54,12 @@ public:
     sphere, i.e., the distance from ``p`` to the sphere is smaller than ``r``.
     */
     bool contains(const point_t &p) const noexcept;
+
+    Sphere bounding_sphere(const point_t &p) const noexcept;
+    Sphere bounding_sphere(const Sphere &s) const noexcept;
+
+    float_t bounding_d(const point_t &p) const noexcept;
+    float_t bounding_d(const Sphere &s) const noexcept;
 protected:
     point_t _center;
     float_t _r;
@@ -102,6 +108,64 @@ r() noexcept -> float_t & { return _r; }
 _HIPP_TEMPRET
 contains(const point_t &p) const noexcept -> bool {
     return (p - _center).r_sq() < _r * _r;
+}
+
+_HIPP_TEMPRET
+bounding_sphere(const point_t &p) const noexcept -> Sphere 
+{
+    const float_t d = (p - _center).r();
+    if( d <= _r ) {
+        return Sphere{_center, _r};
+    }
+
+    float_t new_r = float_t(0.5) * (d + _r), 
+        off = float_t(0.5) * (d - _r);
+    
+    return Sphere{
+        _center + (p - _center) * ( off / d ),
+        new_r};
+
+}
+
+_HIPP_TEMPRET
+bounding_sphere(const Sphere &s) const noexcept -> Sphere 
+{
+    const float_t d = (s._center - _center).r();
+    point_t c1, c2;     // the smaller and the bigger
+    float_t r1, r2;
+
+    if( s._r < _r ) {
+        c1 = s._center; r1 = s._r;
+        c2 = _center; r2 = _r;
+    } else {
+        c1 = _center; r1 = _r;
+        c2 = s._center; r2 = s._r;
+    }
+
+    if( d + r1 <= r2 ) {
+        return Sphere{ c2, r2 };
+    } 
+
+    float_t new_r = (d + r1 + r2) * float_t(0.5),
+        off = (d + r1 - r2) * float_t(0.5);
+    return Sphere {
+        c2 + (c1 - c2) * ( off / d ),
+        new_r
+    };
+}
+
+_HIPP_TEMPRET
+bounding_d(const point_t &p) const noexcept -> float_t {
+    const float_t d = (p - _center).r();
+    return std::max(_r, d) + _r;
+}
+
+_HIPP_TEMPRET
+bounding_d(const Sphere &s) const noexcept -> float_t {
+    const float_t d = (s._center - _center).r();
+    return s._r < _r ?
+        (std::max( d + s._r, _r ) + _r) : 
+        (std::max( d + _r, s._r ) + s._r);
 }
 
 #undef _HIPP_TEMPHD

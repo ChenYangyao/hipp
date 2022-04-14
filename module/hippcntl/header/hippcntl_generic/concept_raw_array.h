@@ -242,23 +242,23 @@ public:
 
     ``operator<<`` prints a inline message.
     */
-    ostream & info(ostream &os=cout, int fmt_cntl=1) const {
+    ostream & info(ostream &os = cout, int  fmt_cntl = 0, int level = 0) const {
         PStream ps(os);
-        if( fmt_cntl == 0 ) {
-            ps << "RawArrayTraits{"; _prt(ps); ps << "}";
-        }else{
-            ps << HIPPCNTL_CLASS_INFO(RawArrayTraits), "  ";
-            _prt(ps); ps << '\n';
+        if( fmt_cntl < 1 ) {
+            ps << HIPPCNTL_CLASS_INFO_INLINE(RawArrayTraits),
+            "{value size=", sizeof(value_t), ", rank=", rank, ", size=", size, 
+            ", extents={", extents, "}";
+            return os;
         }
+        auto ind = HIPPCNTL_CLASS_INFO_INDENT_STR(level);
+        ps << HIPPCNTL_CLASS_INFO(RawArrayTraits),
+        ind, "Value size = ", sizeof(value_t), '\n',
+        ind, "Array rank = ", rank, ", size = ", size, 
+            ", extents={", extents, "}\n";
         return os;
     }
-    friend ostream & operator<< (ostream &os, const RawArrayTraits &t) {
-        return t.info(os, 0);
-    }
-private:
-    void _prt(PStream &ps) const {
-        ps << "sizeof value_t=", sizeof(value_t),  
-            ", rank=", rank, ", size=", size, ", extents={", extents, "}";
+    friend ostream & operator<<(ostream &os, const RawArrayTraits &t) {
+        return t.info(os);
     }
 };
 

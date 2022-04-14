@@ -216,7 +216,7 @@ void _HIPP_TEMPCLS::argsort(ContiguousBuffer<const PointT> pts,
         std::sort(idx_pairs.begin(), idx_pairs.end());
     } else {
         const int d = pl._dim_sorted;
-        auto sort_f = [p_pts, d](const idx_pair_t &l, 
+        auto sort_f = [p_pts = p_pts, d](const idx_pair_t &l, 
             const idx_pair_t &r) -> bool 
         {
             if( l.idx_cell == r.idx_cell ) 

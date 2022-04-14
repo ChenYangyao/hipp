@@ -12,6 +12,9 @@ set(_src
     "geometry"
     "kdsearch_kdmesh"
     "kdsearch_kdtree"
+    "kdsearch_insertable_balltree_raw"
+    "kdsearch_balltree_raw"
+    "kdsearch_balltree"
 )
 
 set(_exebase "${_projectid}${_modid}")

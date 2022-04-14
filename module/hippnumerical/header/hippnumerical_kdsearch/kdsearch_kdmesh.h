@@ -239,7 +239,7 @@ info(ostream &os, int  fmt_cntl, int level) const -> ostream & {
     }
     auto ind = HIPPCNTL_CLASS_INFO_INDENT_STR(level);
     ps << HIPPCNTL_CLASS_INFO(KDMesh),
-    ind, ps.info_of(*impl, fmt_cntl, level+1);
+    ind, ps.info_of(*_impl, fmt_cntl, level+1);
     return os;
 }
 

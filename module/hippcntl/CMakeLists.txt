@@ -24,7 +24,6 @@ target_include_directories(${_libname}
 target_link_libraries(${_libname}
     PUBLIC
         hipp-config
-        stdc++fs
 )
 install(TARGETS ${_libname}
     DESTINATION lib

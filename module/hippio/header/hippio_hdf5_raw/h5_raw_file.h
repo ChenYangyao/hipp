@@ -83,7 +83,7 @@ inline _File::_File(const char *name, const char *flag, hid_t cprop,
 {
     namespace fs = std::filesystem;
     string flag_s(flag);
-    hid_t obj;
+    hid_t obj  = hidERROR;
     if( flag_s == "w" ){
         obj = create(name, accTRUNC, cprop, aprop);
     }else if( flag_s == "x" ){

@@ -419,7 +419,8 @@ private:
     friend class iter_data_t;
 };
 
-struct iter_data_t {
+class iter_data_t {
+public:
     iter_data_t(iter_op_t op, void *op_data);
     iter_op_t _op;
     iter_arg_t _arg;

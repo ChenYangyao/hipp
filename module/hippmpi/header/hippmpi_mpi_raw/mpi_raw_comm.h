@@ -22,10 +22,10 @@ public:
     typedef MPI_Comm_copy_attr_function copy_attr_fn_t;
     typedef MPI_Comm_delete_attr_function del_attr_fn_t;
 
-    inline static const copy_attr_fn_t 
+    inline static copy_attr_fn_t 
         *const NULL_COPY_FN = MPI_NULL_COPY_FN, 
         *const DUP_FN = MPI_COMM_DUP_FN;
-    inline static const del_attr_fn_t 
+    inline static del_attr_fn_t 
         *const NULL_DEL_FN = MPI_NULL_DELETE_FN;
 
     /**

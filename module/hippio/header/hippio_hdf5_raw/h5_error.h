@@ -38,8 +38,8 @@ public:
     what(): returns a short error message under this exception.
     whats(): returns a verbose error mesaage.
     */
-    virtual const char *what() const noexcept override;
-    virtual string whats() const;
+    const char *what() const noexcept override;
+    string whats() const override;
 
     errno_t get_errno() const noexcept;
     void set_errno( errno_t new_errno ) noexcept;
@@ -70,39 +70,48 @@ private:
 inline ErrH5::ErrH5( errno_t new_errno ) noexcept 
 : _errno(new_errno) { }
 
-inline const char * ErrH5::what() const noexcept { 
+inline const char * ErrH5::what() const noexcept
+{
     return "HDF5 internal error"; 
 }
 
 inline string ErrH5::whats() const
-    { return err_app_t::whats() + " | " + 
-        err_class_t::whats() + " | Type: " + what(); }
+{
+    return err_app_t::whats() + " | " + 
+        err_class_t::whats() + " | Type: " + what(); 
+}
 
-inline ErrH5::errno_t ErrH5::get_errno() const noexcept { 
+inline ErrH5::errno_t ErrH5::get_errno() const noexcept
+{
     return _errno; 
 }
 
-inline void ErrH5::set_errno( errno_t new_errno ) noexcept { 
+inline void ErrH5::set_errno( errno_t new_errno ) noexcept
+{
     _errno = new_errno; 
 }
 
 template<typename ReturnType, typename ...Args>
-void ErrH5::check( ReturnType r, Args &&... args ) {
+void ErrH5::check( ReturnType r, Args &&... args )
+{
     if( r < 0 ) throw_( r, std::forward<Args>(args)... );
 }
 
 template<typename ReturnType, typename ...Args>
-void ErrH5::throw_( ReturnType r, Args &&... args ) {
+void ErrH5::throw_( ReturnType r, Args &&... args ) 
+{
     if( _err_cntl_flag )
         prt( cerr, std::forward<Args>(args)... );
     throw ErrH5( r );
 }
 
-inline ErrH5::flag_t ErrH5::err_cntl_flag() noexcept { 
+inline ErrH5::flag_t ErrH5::err_cntl_flag() noexcept
+{
     return _err_cntl_flag; 
 }
 
-inline void ErrH5::err_cntl_flag( flag_t flag ) noexcept { 
+inline void ErrH5::err_cntl_flag( flag_t flag ) noexcept
+{
     _err_cntl_flag = flag; 
 }
 

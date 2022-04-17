@@ -73,9 +73,9 @@ TEST_F(DatasetTest, WriteAutoType) {
 
     long b[2][4] = {{1,2,3,4},{5,6,7,8}}, b_in[2][4];
     
-    arr_t c = { 1, 2, 3, 4, 5, 6 }, c_in;
+    arr_t c = { {{1, 2}, {3, 4}, {5, 6}} }, c_in;
     
-    vector<arr_t> d = { {1,2,3,4,5,6}, {10,11,12,13,14,15} },
+    vector<arr_t> d = { {{{1,2},{3,4},{5,6}}}, {{{10,11},{12,13},{14,15}}} },
         d_in;
     
     double e = 2.0, e_in;
@@ -142,7 +142,7 @@ TEST_F(DatasetTest, WriteHyperslab) {
     long b[2][4] = {{1,2,3,4},{5,6,7,8}}, b_in[2][4],
         b_hs[2][2] = {{10,11},{12,13}};
     
-    arr_t c = { 1, 2, 3, 4, 5, 6 }, c_in;
+    arr_t c = { {{1, 2}, {3, 4}, {5, 6}} }, c_in;
     int c_hs[2][2] = {{11,12},{13,14}};
     
     vector<std::array<int, 2> > d = { {1,2}, {3,4}, {5,6}, {7,8}},
@@ -203,7 +203,7 @@ TEST_F(DatasetTest, WriteHyperslab) {
 
 TEST_F(DatasetTest, WriteElements) {
     std::array<std::array<int, 4>, 5> a = {
-        1,2,3,4, 5,6,7,8, 9,10,11,12, 13,14,15,16, 17,18,19,20
+        {{1,2,3,4}, {5,6,7,8}, {9,10,11,12}, {13,14,15,16}, {17,18,19,20}}
     }, a_in;
 
     auto d = _g0.create_dataset_for("a", a);
@@ -225,7 +225,7 @@ TEST_F(DatasetTest, WriteElements) {
 
 TEST_F(DatasetTest, ReadHyperslab) {
     std::array<std::array<int, 4>, 5> a = {
-        1,2,3,4, 5,6,7,8, 9,10,11,12, 13,14,15,16, 17,18,19,20
+        {{1,2,3,4}, {5,6,7,8}, {9,10,11,12}, {13,14,15,16}, {17,18,19,20}}
     };
 
     auto d = _g0.create_dataset_for("a", a);
@@ -250,7 +250,7 @@ TEST_F(DatasetTest, ReadHyperslab) {
 
 TEST_F(DatasetTest, ReadElements) {
     std::array<std::array<int, 4>, 5> a = {
-        1,2,3,4, 5,6,7,8, 9,10,11,12, 13,14,15,16, 17,18,19,20
+        {{1,2,3,4}, {5,6,7,8}, {9,10,11,12}, {13,14,15,16}, {17,18,19,20}}
     };
 
     auto d = _g0.create_dataset_for("a", a);

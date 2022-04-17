@@ -170,7 +170,7 @@ int File::_from_modestr( const string &amode ){
     return _amode;
 }
 int File::_from_whencestr( const string &whence ){
-    int _whence;
+    int _whence {};
     if( whence == "b" || whence == "beg" 
         || whence == "begin" || whence == "set" ) 
         _whence = sSET;

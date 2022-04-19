@@ -60,6 +60,18 @@ _HIPP_TEMPCLS::XTable(const string &name,
     }
 }
 
+_HIPP_TEMPNORET
+XTable(const XTable &) = default;
+
+_HIPP_TEMPRET
+operator=(const XTable &) -> XTable &  = default;
+
+_HIPP_TEMPNORET
+XTable(XTable &&) = default;
+
+_HIPP_TEMPRET
+operator=(XTable &&) -> XTable &  = default;
+
 _HIPP_TEMPHD
 template<typename R, typename M>
 auto _HIPP_TEMPCLS::add_field(const string &name, M R::*mem_ptr) ->XTable & {
@@ -247,7 +259,7 @@ void _HIPP_TEMPCLS::read_records(Buff &buff, Group dgrp, const string &dset_name
             buff.resize(0);
     } else {
         auto [p,n] = ContiguousBufferTraits<Buff>{buff};
-        read(p, n, std::move(dgrp), dset_name);
+        read_records(p, n, std::move(dgrp), dset_name);
     }
 }
 

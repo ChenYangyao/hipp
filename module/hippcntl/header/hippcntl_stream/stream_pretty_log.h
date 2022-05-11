@@ -22,8 +22,9 @@ restored.
 class Guard {
 public:
     /**
-    Constructor. Get a guard to the current scope for a stream `pls`.
-    @hint_pop: see the attribute setter `hint_pop_on()` and `hint_pop_off()`.
+    Constructor. Get a guard to the current scope for a stream ``pls``.
+    @hint_pop: see the attribute setter ``hint_pop_on()`` and 
+        ``hint_pop_off()``.
     */
     Guard(PLogStream &pls, bool hint_pop=false);
     
@@ -38,7 +39,7 @@ public:
     /**
     Switch on/off the hint on pop.
     If on, an extra entry is output to the PLogStream at the destruction of 
-    the guard (similar to calling `PLogStream::pop(true)` ).
+    the guard (similar to calling ``PLogStream::pop(true)`` ).
     */
     void hint_pop_on() noexcept;
     void hint_pop_off() noexcept;
@@ -49,10 +50,10 @@ public:
     bool hint_pop() const noexcept;
 
     /**
-    Change the `level` of the PLogStream. 
+    Change the ``level`` of the PLogStream. 
     @scoped: if true, the guard object is responsible for restoring the old 
-        `level`. Otherwise the `level` is really changed - the guard does not
-        restore it.
+        ``level``. Otherwise the ``level`` is really changed - the guard does 
+        not restore it.
     */
     void set_level(int level, bool scoped=true) noexcept;
 private:
@@ -65,19 +66,20 @@ private:
 
 /**
 The stream operand of PLogStream. See the description of 
-`PLogStream::operator<<` for the detail usage of the stream operand.
+``PLogStream::operator<<`` for the detail usage of the stream operand.
 */
 class StreamOperand: protected PStream::stream_op_t {
 public:
     typedef PStream::stream_op_t parent_t;
     using parent_t::it_pair_t;
+    using parent_t::call_back_t;
 
     /**
     Constructor.
     @os: the operand refers to that stream and the comma operator outputs 
         conntent into it.
-    @op: the operand refers to the same stream as `op`.
-    @eanbled: if true, output will show. Otherwise no output is shown.
+    @op: the operand refers to the same stream as ``op``.
+    @enabled: if true, output will show. Otherwise no output is shown.
     */
     StreamOperand(ostream &os, bool enabled) noexcept;
     StreamOperand(const parent_t & op, bool enabled) noexcept;
@@ -111,7 +113,7 @@ PLogStream - pretty stream for producing log.
 
 Description
 -----------
-PLogStream is like PStream, has overloaded `<<` operator which can then be 
+PLogStream is like PStream, has overloaded ``<<`` operator which can then be 
 chained using the comma operator.
 e.g.,
 plog << "Begin function main, got (", vector{1,2,3}, ")", endl;
@@ -132,6 +134,9 @@ public:
         LV_EMERG=0,   LV_ALERT=1,  LV_CRIT=2, LV_ERR=3, 
         LV_WARNING=4, LV_NOTICE=5, LV_INFO=6, LV_DEBUG=7, 
         LV_MIN=-1,    LV_MAX=100};
+    enum : int {
+        INFO_OF_DFLT_LEVEL=-1
+    };
     enum : size_t {
         ENTRY_PREFIX_MAXLEN = 32
     };
@@ -148,7 +153,6 @@ public:
 
     PLogStream(const PLogStream &that) noexcept;
     PLogStream(PLogStream &&that) noexcept;
-
     PLogStream & operator=(const PLogStream &) = delete;
     PLogStream & operator=(PLogStream &&) = delete;
     ~PLogStream() noexcept {}
@@ -157,10 +161,10 @@ public:
     Attribute setters.
     set_level() - current priority level.
     set_level_used() - used priority level. Log entries with 
-        `level <= level_used` will be printed.
+        ``level <= level_used`` will be printed.
     set_indent() - number of extra spaces padded at the front of each log entry.
     set_entry_prefix() - prefix padded at the front of each log entry. The 
-        prefix should be no longer than `ENTRY_PREFIX_MAXLEN-1`. Otherwise
+        prefix should be no longer than ``ENTRY_PREFIX_MAXLEN-1``. Otherwise
         it is truncated.
     */
     PLogStream & set_level(int level=LV_NOTICE) noexcept;
@@ -171,7 +175,7 @@ public:
     /**
     Attribute getters.
     stack_height() - current stack height. If the height is non-zero,
-        `indent*stack_height` spaces and `entry prefix` are printed for each 
+        ``indent*stack_height`` spaces and ``entry_prefix`` are printed for each 
         entry. Otherwise nothing is padded.
     Other attributes are explained in the corresponding setters.
     */
@@ -183,57 +187,94 @@ public:
 
     /**
     Output an object to this stream.
-    The object can be an standard formatter `pf`, or any object `x` that is 
-    printable to PStream.
+    The object shall be an standard formatter ``pf`` or any object ``x`` that is 
+    printable to :class:`PStream`.
 
-    The returned `stream_op_t` object allows chaining the subsequent outputs
-    using comma operator, e.g., plog << "the object ", x, endl;
+    The returned ``stream_op_t`` object allows chaining the subsequent outputs
+    using comma operator, e.g., 
+    ```
+    plog << "the object ", x, endl;
+    ```
 
-    The contents output by `<<` and `,` in a single statement is viewed as 
-    a single log entry. Paddings, as controlled by `indent` and `entry_prefix`
-    is added.
+    The contents output by ``<<`` and ``,`` in a single statement is viewed as 
+    a single log entry. Paddings, as controlled by ``indent`` and 
+    ``entry_prefix`` is added.
+
+    ``+=`` is just like ``<<``, but the printed message is considered as 
+    continued from the last one, so that the prefix is replaced with 
+    white-spaces of the same length.
+
+    ``<`` prints without indent and prefix.
     */
     stream_op_t operator<< (ostream& (*pf)(ostream&));
     stream_op_t operator<< (std::ios& (*pf)(std::ios&));
     stream_op_t operator<< (std::ios_base& (*pf)(std::ios_base&));
     template<typename T>
-    stream_op_t operator<<(T &&x);
+    stream_op_t operator<< (T &&x);
+    
+    stream_op_t operator+= (ostream& (*pf)(ostream&));
+    stream_op_t operator+= (std::ios& (*pf)(std::ios&));
+    stream_op_t operator+= (std::ios_base& (*pf)(std::ios_base&));
+    template<typename T>
+    stream_op_t operator+= (T &&x);
+
+    stream_op_t operator< (ostream& (*pf)(ostream&));
+    stream_op_t operator< (std::ios& (*pf)(std::ios&));
+    stream_op_t operator< (std::ios_base& (*pf)(std::ios_base&));
+    template<typename T>
+    stream_op_t operator< (T &&x);
 
     /**
-    `push()` increases the stack height by 1, while `pop()` decreases it by 1.
-    These two operations are used to increse the indent of log entry.
+    Produce a printable object wrapper that can be streamed into this instance.
+    See their usage in :class:`PStream`.
 
-    It is always recommended to use the guarded version `push_g()` and 
-    `push_at()` instead of the direct `push()` and `pop()`. (RAII style)
+    info_of(): if ``level`` == INFO_OF_DFLT_LEVEL(-1), use 
+    ``stack_height()`` of this.
+    */
+    template<typename It> stream_op_t::it_pair_t<It> 
+    operator()(It b, It e) const;
+    
+    template<typename CB> auto operator()(CB &&cb) const;
+    
+    template<typename T> auto info_of(T &&x, int fmt_cntl = 0, 
+        int level = INFO_OF_DFLT_LEVEL) const;
 
-    For push(), if `args` are non-empty, they are ouput into the stream, with
-    `indent*stack_height` spaces padding at front. Then, stack height is 
+    /**
+    ``push()`` increases the stack height by 1, while ``pop()`` decreases it by 
+    1. These two operations are used to increse the indent of log entry.
+
+    It is always recommended to use the guarded version ``push_g()`` and 
+    ``push_at()`` instead of the direct ``push()`` and ``pop()``. (RAII style)
+
+    For push(), if ``args`` are non-empty, they are ouput into the stream, 
+    followed by an end-line character, as an entry. Then, stack height is 
     increased.
 
-    For pop(), if `hint` is true, an entry is output, and then the stack height
-    is decreased.
+    For pop(), if ``hint`` is true, an entry is output, and then the stack 
+    height is decreased.
     */
     template<typename ...Args>
     void push(Args &&...args);
     void pop(bool hint=false);
     
     /**
-    The guarded versions of `push()`.
-    push_g() - call `push()` and returns a guard.
-    push_at() - change the level to `level`, call `push()`, and returns a guard.
+    The guarded versions of ``push()``.
+    push_g(): call ``push()`` and returns a guard.
+    push_at(): change the level to ``level``, call ``push()``, and returns a 
+        guard.
 
-    The guard is responsible for restoring the `stack_height` on its destruction
-    (similar to calling `pop()`). The `level` is also restored.
+    The guard is responsible for restoring the ``stack_height`` on its 
+    destruction (similar to calling ``pop()``). The ``level`` is also restored.
     */
     template<typename ...Args>
     guard_t push_g(Args &&...args);
     template<typename ...Args>
     guard_t push_at(int level, Args &&...args);
 
-    template<typename It>
-    stream_op_t::it_pair_t<It> operator()(It b, It e);
-
     ostream & get_stream() const noexcept;
+
+    const PStream & get_pstream() const noexcept;
+    PStream & get_pstream() noexcept;
 protected:
     int _level;
     int _level_used;
@@ -243,7 +284,12 @@ protected:
     char _entry_prefix[ENTRY_PREFIX_MAXLEN] = "|- ";
 
     stream_op_t _prt_entry_prefix();
-    stream_op_t _prt_indent();
+    stream_op_t _prt_entry_blank_prefix();
+    stream_op_t _prt_entry_continue();
+
+    size_t _n_chars_indent() const noexcept;
+    size_t _n_chars_indent_prefixed() const noexcept;
+    stream_op_t _prt_indent(size_t n);
     bool _prt_is_on() const noexcept;
 };
 
@@ -354,8 +400,10 @@ _HIPP_TEMPRET get_stream() const noexcept -> ostream & {
 
 } // namespace _hippcntl_stream_pretty_log_helper
 
-#define _HIPP_TEMPRET inline auto PLogStream::
-#define _HIPP_TEMPNORET inline PLogStream::
+
+#define _HIPP_TEMPCLS PLogStream
+#define _HIPP_TEMPRET inline auto _HIPP_TEMPCLS ::
+#define _HIPP_TEMPNORET inline _HIPP_TEMPCLS :: 
 
 _HIPP_TEMPNORET PLogStream(ostream &os, int level, int level_used, 
     int stack_height) noexcept 
@@ -438,14 +486,76 @@ _HIPP_TEMPRET operator<< (std::ios_base& (*pf)(std::ios_base&)) ->
 }
 
 template<typename T>
-_HIPP_TEMPRET operator<<(T &&x) -> stream_op_t {
+_HIPP_TEMPRET operator<< (T &&x) -> stream_op_t {
     return _prt_entry_prefix(), std::forward<T>(x);
+}
+
+_HIPP_TEMPRET operator+= (ostream& (*pf)(ostream&)) -> stream_op_t {
+    return _prt_entry_blank_prefix(), pf;
+}
+
+_HIPP_TEMPRET operator+= (std::ios& (*pf)(std::ios&)) -> stream_op_t {
+    return _prt_entry_blank_prefix(), pf;
+}
+
+_HIPP_TEMPRET operator+= (std::ios_base& (*pf)(std::ios_base&)) -> 
+    stream_op_t 
+{
+    return _prt_entry_blank_prefix(), pf;
+}
+
+template<typename T>
+_HIPP_TEMPRET operator+= (T &&x) -> stream_op_t {
+    return _prt_entry_blank_prefix(), std::forward<T>(x);
+}
+
+_HIPP_TEMPRET operator< (ostream& (*pf)(ostream&)) -> stream_op_t {
+    return _prt_entry_continue(), pf;
+}
+
+_HIPP_TEMPRET operator< (std::ios& (*pf)(std::ios&)) -> stream_op_t {
+    return _prt_entry_continue(), pf;
+}
+
+_HIPP_TEMPRET operator< (std::ios_base& (*pf)(std::ios_base&)) -> 
+    stream_op_t 
+{
+    return _prt_entry_continue(), pf;
+}
+
+template<typename T>
+_HIPP_TEMPRET operator< (T &&x) -> stream_op_t {
+    return _prt_entry_continue(), std::forward<T>(x);
+}
+
+template<typename It>
+_HIPP_TEMPRET operator()(It b, It e) const -> stream_op_t::it_pair_t<It> { 
+    return {b, e}; 
+}
+
+template<typename CB>
+auto _HIPP_TEMPCLS::operator()(CB &&cb) const { 
+    using _CB = std::remove_cv_t<std::remove_reference_t<CB> >;
+    return stream_op_t::call_back_t<_CB>(std::forward<CB>(cb)); 
+}
+
+template<typename T>
+auto _HIPP_TEMPCLS::info_of(T &&x, int fmt_cntl, int level) const {
+    
+    if( level == INFO_OF_DFLT_LEVEL )
+        level = stack_height();
+
+    auto cb = [&x, fmt_cntl, level](ostream &os) {
+        std::forward<T>(x).info(os, fmt_cntl, level);
+    };
+
+    return (*this)(cb);
 }
 
 template<typename ...Args>
 _HIPP_TEMPRET push(Args &&...args) -> void {
     if constexpr(sizeof...(Args) > 0) {
-        (_prt_indent(), ..., std::forward<Args>(args)), endl;
+        (_prt_entry_prefix(), ..., std::forward<Args>(args)), endl;
     }
     ++_stack_height;
 }
@@ -470,25 +580,43 @@ _HIPP_TEMPRET push_at(int level, Args &&...args) -> guard_t {
     return guard_t {std::move(g)};
 }
 
-template<typename It>
-_HIPP_TEMPRET operator()(It b, It e) -> stream_op_t::it_pair_t<It> { 
-    return {b, e}; 
-}
-
 _HIPP_TEMPRET get_stream() const noexcept -> ostream & { 
     return this->PStream::get_stream(); 
 }
 
-_HIPP_TEMPRET _prt_entry_prefix() -> stream_op_t {
-    if( _stack_height == 0 ) return {_op, _prt_is_on()};
-    return _prt_indent(), _entry_prefix;
+_HIPP_TEMPRET get_pstream() noexcept -> PStream & { 
+    return *static_cast<PStream *>(this);
+}
+_HIPP_TEMPRET get_pstream() const noexcept -> const PStream & { 
+    return *static_cast<const PStream *>(this);
 }
 
-_HIPP_TEMPRET _prt_indent() -> stream_op_t {
-    bool is_on = _prt_is_on();
+_HIPP_TEMPRET _prt_entry_prefix() -> stream_op_t {
+    if( _stack_height == 0 ) return {_op, _prt_is_on()};
+    return _prt_indent(_n_chars_indent()), _entry_prefix;
+}
+
+_HIPP_TEMPRET _prt_entry_blank_prefix() -> stream_op_t {
+    if( _stack_height == 0 ) return {_op, _prt_is_on()};
+    return _prt_indent( _n_chars_indent_prefixed() );
+}
+
+_HIPP_TEMPRET _prt_entry_continue() -> stream_op_t {
+    return {_op, _prt_is_on()};
+}
+
+_HIPP_TEMPRET _n_chars_indent() const noexcept -> size_t {
+    return _indent * _stack_height;
+}
+
+_HIPP_TEMPRET _n_chars_indent_prefixed() const noexcept -> size_t {
+    return _indent * _stack_height + std::strlen(_entry_prefix);
+}
+
+_HIPP_TEMPRET _prt_indent(size_t n) -> stream_op_t {
+    const bool is_on = _prt_is_on();
     if( is_on ){
-        int n_prt = _indent * _stack_height;
-        for(int i=0; i<n_prt; ++i) _op, ' ';
+        for(int i=0; i<n; ++i) _op, ' ';
     }
     return {_op, is_on};
 }
@@ -499,6 +627,7 @@ _HIPP_TEMPRET _prt_is_on() const noexcept -> bool {
 
 #undef _HIPP_TEMPRET
 #undef _HIPP_TEMPNORET
+#undef _HIPP_TEMPCLS
 
 } // namespace HIPP
 #endif	//_HIPPCNTL_STREAM_PRETTY_LOG_H_

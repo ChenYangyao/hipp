@@ -67,7 +67,7 @@ protected:
     iter_t _b, _e; 
     std::ptrdiff_t _indent = 0, _width = -1, 
         _ncol = -1, _coloffset = 0;
-    string  _sep = ", ", _endline = "\n", _endlast = "";
+    string  _sep = ",", _endline = "\n", _endlast = "";
     ostream & _prt_item( ostream &os,
         iter_t it, std::ptrdiff_t count ) const;
 };

@@ -48,14 +48,30 @@ TEST_F(CntlStreamPStreamTest, MultipleType){
         "a=1, b=hello, c=no, d=2\ne=   3");
 }
 TEST_F(CntlStreamPStreamTest, ContainerType){
-    vector<int> a = {1,2,3};
-    std::array<int, 3> b = {4,5,6};
+    vector<int> a1 = {1,2,3};
+
+    std::array<int, 3> b1 = {4,5,6};
+    std::array<long long, 5> b2 = {4,5,6};
+
     std::set<int> c = {7,8,9};
     int d[3] = {10,11,12};
-    ps << a, ", ", b, ", ", c, ", ", ps(d,d+3), '\n';
-    ASSERT_EQ(os.str(), 
-        "<vector> {1, 2, 3}, <array> {4, 5, 6}, <set> {7, 8, 9}, {10, 11, 12}\n");
+    ps << a1, ",\n", 
+          b1, ",\n", 
+          b2, ",\n", 
+          c, ",\n", 
+          ps(d,d+3), "\n";
+
+    string target = 
+R"*(<vector> {1, 2, 3},
+<array> {4, 5, 6},
+<array> {4, 5, 6, 0, 0},
+<set> {7, 8, 9},
+{10, 11, 12}
+)*";
+
+    ASSERT_EQ(os.str(), target);
 }
+
 TEST_F(CntlStreamPStreamTest, MapType){
     std::map<int, string> m {{1,"foo"}, {2, "bar"}, {3, "baz"}};
     ps << "The map is ", m, endl;
@@ -67,7 +83,8 @@ TEST_F(CntlStreamPStreamTest, TupleType){
     std::tuple<int, decltype(tpl), decltype(pr), vector<int> >
         comp(0, tpl, pr, {6, 7, 8});
     ps << "Tpl=", tpl, ", pr=", pr, ", comp=", comp, endl;
-    ASSERT_EQ(os.str(), "Tpl=(1, 2, 3s), pr=4:5s, comp=(0, (1, 2, 3s), 4:5s, <vector> {6, 7, 8})\n");
+    ASSERT_EQ(os.str(), "Tpl=(1, 2, 3s), pr=4:5s, comp=(0, (1, 2, 3s), 4:5s, "
+        "<vector> {6, 7, 8})\n");
 }
 
 

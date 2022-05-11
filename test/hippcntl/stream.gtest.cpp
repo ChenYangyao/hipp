@@ -52,14 +52,14 @@ TEST_F(CntlStreamPStreamTest, ContainerType){
     std::array<int, 3> b = {4,5,6};
     std::set<int> c = {7,8,9};
     int d[3] = {10,11,12};
-    ps << a, ',', b, ',', c, ',', ps(d,d+3), '\n';
+    ps << a, ", ", b, ", ", c, ", ", ps(d,d+3), '\n';
     ASSERT_EQ(os.str(), 
-        "1,2,3,4,5,6,7,8,9,10,11,12\n");
+        "<vector> {1, 2, 3}, <array> {4, 5, 6}, <set> {7, 8, 9}, {10, 11, 12}\n");
 }
 TEST_F(CntlStreamPStreamTest, MapType){
     std::map<int, string> m {{1,"foo"}, {2, "bar"}, {3, "baz"}};
     ps << "The map is ", m, endl;
-    ASSERT_EQ(os.str(), "The map is 1:foo,2:bar,3:baz\n");
+    ASSERT_EQ(os.str(), "The map is <map> {1:foo, 2:bar, 3:baz}\n");
 }
 TEST_F(CntlStreamPStreamTest, TupleType){
     std::tuple<int, long, string> tpl(1,2,"3s");
@@ -67,7 +67,7 @@ TEST_F(CntlStreamPStreamTest, TupleType){
     std::tuple<int, decltype(tpl), decltype(pr), vector<int> >
         comp(0, tpl, pr, {6, 7, 8});
     ps << "Tpl=", tpl, ", pr=", pr, ", comp=", comp, endl;
-    ASSERT_EQ(os.str(), "Tpl=1:2:3s, pr=4:5s, comp=0:1:2:3s:4:5s:6,7,8\n");
+    ASSERT_EQ(os.str(), "Tpl=(1, 2, 3s), pr=4:5s, comp=(0, (1, 2, 3s), 4:5s, <vector> {6, 7, 8})\n");
 }
 
 
@@ -119,15 +119,15 @@ protected:
 TEST_F(CntlStreamPLogStreamTest, PlainLog) {
     int x = 1;
     vector<int> v {1,2,3};
-    pls << "x=", x, ", v={", v, "}", endl;
+    pls << "x=", x, ", v=", v, endl;
 
     string s = "foo, bar, baz";
     long arr[3] = {-1,-2,-3};
-    pls << "s=", s, ", arr={", pls(arr, arr+3), "}\n";
+    pls << "s=", s, ", arr=", pls(arr, arr+3), "\n";
 
     string target = 
-R"*(x=1, v={1,2,3}
-s=foo, bar, baz, arr={-1,-2,-3}
+R"*(x=1, v=<vector> {1, 2, 3}
+s=foo, bar, baz, arr={-1, -2, -3}
 )*";
     ASSERT_EQ(os.str(), target);
 }
@@ -140,7 +140,7 @@ TEST_F(CntlStreamPLogStreamTest, LogWithPushPop) {
         int x = 1;
         vector<int> v {1,2,3};
         pls << "Begin processing main\n";
-        pls << "x=", x, ", v={", v, "}", endl;
+        pls << "x=", x, ", v=", v, endl;
         ASSERT_EQ(pls.stack_height(), 1);
         {
             auto g = pls.push_g("Enter sub subroutine");
@@ -148,7 +148,7 @@ TEST_F(CntlStreamPLogStreamTest, LogWithPushPop) {
             string s = "foo, bar, baz";
             long arr[3] = {-1,-2,-3};
             pls << "Begin processing sub\n";
-            pls << "s=", s, ", arr={", pls(arr, arr+3), "}\n";
+            pls << "s=", s, ", arr=", pls(arr, arr+3), "\n";
             pls << "End processing sub", endl;
             ASSERT_EQ(pls.stack_height(), 2);
         }
@@ -160,10 +160,10 @@ TEST_F(CntlStreamPLogStreamTest, LogWithPushPop) {
 R"*(Outermost environment
 Enter main subroutine
   |- Begin processing main
-  |- x=1, v={1,2,3}
-  Enter sub subroutine
+  |- x=1, v=<vector> {1, 2, 3}
+  |- Enter sub subroutine
     |- Begin processing sub
-    |- s=foo, bar, baz, arr={-1,-2,-3}
+    |- s=foo, bar, baz, arr={-1, -2, -3}
     |- End processing sub
     |- Exit (stack=2)
   |- End processing main
@@ -180,7 +180,7 @@ TEST_F(CntlStreamPLogStreamTest, ChangePrefixStyle) {
         int x = 1;
         vector<int> v {1,2,3};
         pls << "Begin processing main\n";
-        pls << "x=", x, ", v={", v, "}", endl;
+        pls << "x=", x, ", v=", v, endl;
 
         {
             auto g = pls.push_g("Enter sub subroutine");
@@ -188,7 +188,7 @@ TEST_F(CntlStreamPLogStreamTest, ChangePrefixStyle) {
             string s = "foo, bar, baz";
             long arr[3] = {-1,-2,-3};
             pls << "Begin processing sub\n";
-            pls << "s=", s, ", arr={", pls(arr, arr+3), "}\n";
+            pls << "s=", s, ", arr=", pls(arr, arr+3), "\n";
             pls << "End processing sub", endl;
         }
         pls << "End processing main", endl;
@@ -199,10 +199,10 @@ TEST_F(CntlStreamPLogStreamTest, ChangePrefixStyle) {
 R"*(Outermost environment
 Enter main subroutine
     -- Begin processing main
-    -- x=1, v={1,2,3}
-    Enter sub subroutine
+    -- x=1, v=<vector> {1, 2, 3}
+    -- Enter sub subroutine
         -- Begin processing sub
-        -- s=foo, bar, baz, arr={-1,-2,-3}
+        -- s=foo, bar, baz, arr={-1, -2, -3}
         -- End processing sub
         -- Exit (stack=2)
     -- End processing main
@@ -219,7 +219,7 @@ TEST_F(CntlStreamPLogStreamTest, AddFilter) {
         int x = 1;
         vector<int> v {1,2,3};
         pls << "Begin processing main\n";
-        pls << "x=", x, ", v={", v, "}", endl;
+        pls << "x=", x, ", v=", v, endl;
 
         {
             auto g = pls.push_at(pls.LV_DEBUG, "Enter sub subroutine");
@@ -227,7 +227,7 @@ TEST_F(CntlStreamPLogStreamTest, AddFilter) {
             string s = "foo, bar, baz";
             long arr[3] = {-1,-2,-3};
             pls << "Begin processing sub\n";
-            pls << "s=", s, ", arr={", pls(arr, arr+3), "}\n";
+            pls << "s=", s, ", arr=", pls(arr, arr+3), "\n";
             pls << "End processing sub", endl;
         }
         pls << "End processing main", endl;
@@ -238,7 +238,7 @@ TEST_F(CntlStreamPLogStreamTest, AddFilter) {
 R"*(Outermost environment
 Enter main subroutine
   |- Begin processing main
-  |- x=1, v={1,2,3}
+  |- x=1, v=<vector> {1, 2, 3}
   |- End processing main
 Return to outermost environment
 )*";

@@ -165,13 +165,26 @@ TEST_F(CntlStreamPLogStreamTest, LogWithPushPop) {
             string s = "foo, bar, baz";
             long arr[3] = {-1,-2,-3};
             pls << "Begin processing sub\n";
+            
             pls << "s=", s, ", arr=", pls(arr, arr+3), "\n";
+            pls += "Continuing", endl;
+            
+            pls << "Another entry ... ";
+            pls <= "in the same line ... ";
+            pls <= "and line", endl;
+            
             pls << "End processing sub", endl;
             ASSERT_EQ(pls.stack_height(), 2);
         }
         pls << "End processing main", endl;
     }
+    
     pls << "Return to outermost environment", endl;
+    pls += "Continuing", endl;
+    
+    pls << "Another entry ... ";
+    pls <= "in the same line ... ";
+    pls <= "and line", endl;
 
     string target = 
 R"*(Outermost environment
@@ -181,10 +194,14 @@ Enter main subroutine
   |- Enter sub subroutine
     |- Begin processing sub
     |- s=foo, bar, baz, arr={-1, -2, -3}
+       Continuing
+    |- Another entry ... in the same line ... and line
     |- End processing sub
     |- Exit (stack=2)
   |- End processing main
 Return to outermost environment
+Continuing
+Another entry ... in the same line ... and line
 )*";
     ASSERT_EQ(os.str(), target);
 }

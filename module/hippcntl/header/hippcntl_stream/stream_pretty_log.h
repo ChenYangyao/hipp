@@ -205,7 +205,7 @@ public:
     continued from the last one, so that the prefix is replaced with 
     white-spaces of the same length.
 
-    ``<`` prints without indent and prefix.
+    ``<=`` prints without indent and prefix.
     */
     stream_op_t operator<< (ostream& (*pf)(ostream&));
     stream_op_t operator<< (std::ios& (*pf)(std::ios&));
@@ -219,11 +219,11 @@ public:
     template<typename T>
     stream_op_t operator+= (T &&x);
 
-    stream_op_t operator< (ostream& (*pf)(ostream&));
-    stream_op_t operator< (std::ios& (*pf)(std::ios&));
-    stream_op_t operator< (std::ios_base& (*pf)(std::ios_base&));
+    stream_op_t operator<= (ostream& (*pf)(ostream&));
+    stream_op_t operator<= (std::ios& (*pf)(std::ios&));
+    stream_op_t operator<= (std::ios_base& (*pf)(std::ios_base&));
     template<typename T>
-    stream_op_t operator< (T &&x);
+    stream_op_t operator<= (T &&x);
 
     /**
     Produce a printable object wrapper that can be streamed into this instance.
@@ -510,22 +510,22 @@ _HIPP_TEMPRET operator+= (T &&x) -> stream_op_t {
     return _prt_entry_blank_prefix(), std::forward<T>(x);
 }
 
-_HIPP_TEMPRET operator< (ostream& (*pf)(ostream&)) -> stream_op_t {
+_HIPP_TEMPRET operator<= (ostream& (*pf)(ostream&)) -> stream_op_t {
     return _prt_entry_continue(), pf;
 }
 
-_HIPP_TEMPRET operator< (std::ios& (*pf)(std::ios&)) -> stream_op_t {
+_HIPP_TEMPRET operator<= (std::ios& (*pf)(std::ios&)) -> stream_op_t {
     return _prt_entry_continue(), pf;
 }
 
-_HIPP_TEMPRET operator< (std::ios_base& (*pf)(std::ios_base&)) -> 
+_HIPP_TEMPRET operator<= (std::ios_base& (*pf)(std::ios_base&)) -> 
     stream_op_t 
 {
     return _prt_entry_continue(), pf;
 }
 
 template<typename T>
-_HIPP_TEMPRET operator< (T &&x) -> stream_op_t {
+_HIPP_TEMPRET operator<= (T &&x) -> stream_op_t {
     return _prt_entry_continue(), std::forward<T>(x);
 }
 

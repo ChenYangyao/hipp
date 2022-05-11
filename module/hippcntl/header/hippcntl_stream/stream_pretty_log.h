@@ -6,6 +6,7 @@ create: Yangyao CHEN, 2021/05/31
 #define _HIPPCNTL_STREAM_PRETTY_LOG_H_
 #include "stream_base.h"
 #include "stream_pretty.h"
+#include <cstring>
 namespace HIPP {
 
 class PLogStream;

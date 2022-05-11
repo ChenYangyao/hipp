@@ -616,7 +616,8 @@ _HIPP_TEMPRET _n_chars_indent_prefixed() const noexcept -> size_t {
 _HIPP_TEMPRET _prt_indent(size_t n) -> stream_op_t {
     const bool is_on = _prt_is_on();
     if( is_on ){
-        for(int i=0; i<n; ++i) _op, ' ';
+        while(n-- > 0) 
+            _op, ' ';
     }
     return {_op, is_on};
 }

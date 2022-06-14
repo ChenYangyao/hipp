@@ -171,7 +171,7 @@ p_pts(_pts.get_cbuff()), n_pts(_pts.get_size()), pl(dst._construct_policy),
 cur_split_axis(0)
 {
     pl = _pl;    
-    nodes.resize(std::max(n_pts + n_pts - 1, 0));
+    nodes.resize(std::max(n_pts + n_pts - 1, (index_t)0));
 }
 
 void operator()() 

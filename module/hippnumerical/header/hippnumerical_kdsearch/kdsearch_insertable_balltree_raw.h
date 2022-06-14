@@ -190,7 +190,25 @@ public:
     const node_t & root() const noexcept;
     node_t & root() noexcept;
 
-    /** Need shrink_to_fit - move unused to holes. */
+    /** 
+    TODO:
+    Need shrink_to_fit() - fill unused to holes with back nodes, 
+        shrink the buffer. 
+    reorder_canonical() - use DFS storage order. May impl with swap_nodes().
+    swap_nodes(i, j) - swap the positions of two nodes, cheaply. Should work
+        for tNULL node(s).
+    
+    insert_hint(pt, iloc) - insert at or after hinted location, i.e., find a 
+    hole at or after this location. If none found, fallback to insert(). Should 
+    return the actual inserted location (to help hint following insertions).
+    iloc could be one-pass-the-end then fallback to insert().
+
+    remove_hint(node_idx, iloc) - remove node indexed node_idx, try to fill with 
+    another non-NULL node at or before iloc but after node_idx.
+    Return the actual moved loc.
+    iloc should be < nodes.size.
+    iloc could be eq to node_idx then fallback to remove().
+    */
 
     /** 
     Insert a new node with pos and padding taken from ``pt``.
@@ -226,7 +244,8 @@ public:
     template<typename Op1, typename Op2>
     void inorder_traverse(Op1 op1, Op2 op2) const;
     
-    template<typename Op1, typename Op2, typename Policy = inorder_traverse_policy_t>
+    template<typename Op1, typename Op2, 
+        typename Policy = inorder_traverse_policy_t>
     void inorder_traverse(index_t node_idx, Op1 op1, Op2 op2,
         Policy &&policy = Policy()) const;
 protected:

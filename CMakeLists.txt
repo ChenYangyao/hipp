@@ -3,13 +3,23 @@ project(hipp LANGUAGES C CXX VERSION 0.1)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+
+set(CMAKE_SKIP_BUILD_RPATH FALSE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+	
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+if("${isSystemDir}" STREQUAL "-1")
+    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+endif()
+
+
 set(_projectid hipp)
 set(_projectdir ${CMAKE_CURRENT_SOURCE_DIR})
 
 include(cmake/colors.cmake)
 include(cmake/printings.cmake)
 define_colors()
-
 
 # Options
 if(NOT CMAKE_CXX_FLAGS)

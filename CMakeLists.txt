@@ -45,9 +45,14 @@ message("   Install: ${CMAKE_INSTALL_RPATH}")
 set(_projectid hipp)
 set(_projectdir ${CMAKE_CURRENT_SOURCE_DIR})
 
+
+
 include(cmake/colors.cmake)
-include(cmake/printings.cmake)
 define_colors()
+
+include(cmake/printings.cmake)
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # Options
 if(NOT CMAKE_CXX_FLAGS)
@@ -82,21 +87,13 @@ set(HIPPSIMD_OFF ON)
 # Make GSL interface target, if enabled.
 # gsl-interface target is defined.
 if(enable-gsl)
+    find_package(GSLMod REQUIRED)
+
     add_library(gsl-interface INTERFACE)
-    prtkeyproc("GSL feature detection ...")
-    if(GSL_ROOT_DIR OR DEFINED ENV{GSL_ROOT_DIR})
-        find_package(GSL REQUIRED)
-        target_link_libraries(gsl-interface 
-            INTERFACE GSL::gsl GSL::gslcblas)
-        prtkeyproc("GSL found.")
-    else()
-        target_link_libraries(gsl-interface
-            INTERFACE "-lgsl" "-lgslcblas")
-        prtkeyproc("GSL root not set. Environmental settings will be used.")
-    endif()
-
+    target_link_libraries(gsl-interface INTERFACE "${GSLMod_LIBRARY}")
+    target_include_directories(gsl-interface INTERFACE "${GSLMod_INCLUDE_DIR}")
+    
     set(HIPPNUMERICAL_OFF OFF)
-
 endif()
 
 # Make HDF5 interface target, if enabled.

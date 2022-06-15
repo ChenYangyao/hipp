@@ -14,6 +14,9 @@ else()
 endif()
 
 # RPATH support
+set(HIPP_ADD_RPATH "" CACHE STRING "Additional RPATH for build and install")
+set(HIPP_ADD_RPATH_ENV "" CACHE STRING "Additional RPATH for build and install interpreted as colon-separated list")
+
 set(CMAKE_SKIP_BUILD_RPATH FALSE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 	
@@ -23,8 +26,6 @@ if("${isSystemDir}" STREQUAL "-1")
     set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 endif()
 
-set(HIPP_ADD_RPATH "" CACHE STRING "Additional RPATH for build and install")
-set(HIPP_ADD_RPATH_ENV "" CACHE STRING "Additional RPATH for build and install interpreted as colon-separated list")
 if(HIPP_ADD_RPATH)
     message(STATUS "Add RPATH " "${HIPP_ADD_RPATH}")
     list(APPEND CMAKE_INSTALL_RPATH "${HIPP_ADD_RPATH}")
@@ -83,7 +84,7 @@ set(HIPPSIMD_OFF ON)
 if(enable-gsl)
     add_library(gsl-interface INTERFACE)
     prtkeyproc("GSL feature detection ...")
-    if(DEFINED GSL_ROOT_DIR OR DEFINED ENV{GSL_ROOT_DIR})
+    if(GSL_ROOT_DIR OR DEFINED ENV{GSL_ROOT_DIR})
         find_package(GSL REQUIRED)
         target_link_libraries(gsl-interface 
             INTERFACE GSL::gsl GSL::gslcblas)
@@ -108,7 +109,6 @@ if(enable-hdf5)
         INTERFACE ${HDF5_LIBRARIES})
     target_include_directories(hdf5-interface 
         INTERFACE ${HDF5_INCLUDE_DIRS})
-
     set(HIPPIO_OFF OFF)
 endif()
 

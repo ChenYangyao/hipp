@@ -37,9 +37,9 @@ set(MPIMod_FOUND "Whether or not MPI Module is found?" ${MPI_CXX_FOUND})
 
 if(MPIMod_FOUND AND NOT TARGET MPIMod::MPI)
     message(STATUS "Imported library MPIMod::MPI")
-    message("      Include dirs: ${MPI_CXX_INCLUDE_PATH}")
-    message("      Libraries: ${MPI_CXX_LIBRARIES}")
-    message("      Compile flags: ${MPI_CXX_COMPILE_FLAGS}")
+    message("   Include dirs: ${MPI_CXX_INCLUDE_PATH}")
+    message("   Libraries: ${MPI_CXX_LIBRARIES}")
+    message("   Compile flags: ${MPI_CXX_COMPILE_FLAGS}")
 
     set(MPIMod_INCLUDE_DIR "${MPI_CXX_INCLUDE_PATH}" CACHE STRING "MPI include directories")
     set(MPIMod_LIBRARY "${MPI_CXX_LIBRARIES}" CACHE STRING "MPI libraries")

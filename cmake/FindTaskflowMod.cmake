@@ -32,7 +32,7 @@ find_package_handle_standard_args(TaskflowMod
 
 if(TaskflowMod_FOUND AND NOT TARGET TaskflowMod::Taskflow)
     message(STATUS "Imported library TaskflowMod::Taskflow")
-    message("      Include dir: ${TaskflowMod_INCLUDE_DIR}")
+    message("   Include dir: ${TaskflowMod_INCLUDE_DIR}")
     
     add_library(TaskflowMod::Taskflow INTERFACE IMPORTED)
     target_include_directories(TaskflowMod::Taskflow

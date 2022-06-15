@@ -50,8 +50,8 @@ set(GSLMod_FOUND "Whether or not GSL Module is found?" ${GSL_FOUND})
 
 if(GSLMod_FOUND AND NOT TARGET GSLMod::GSL)
     message(STATUS "Imported library GSLMod::GSL")
-    message("      Include dirs: ${GSL_INCLUDE_DIRS}")
-    message("      Libraries: ${GSL_LIBRARIES}")
+    message("   Include dirs: ${GSL_INCLUDE_DIRS}")
+    message("   Libraries: ${GSL_LIBRARIES}")
 
     set(GSLMod_INCLUDE_DIR "${GSL_INCLUDE_DIRS}" CACHE STRING "GSL include directories")
     set(GSLMod_LIBRARY "${GSL_LIBRARIES}" CACHE STRING "GSL libraries")

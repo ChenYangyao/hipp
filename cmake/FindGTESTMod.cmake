@@ -50,8 +50,8 @@ find_package_handle_standard_args(GTEST DEFAULT_MSG
 
 if(GTESTMod_FOUND)
     message(STATUS "Imported library GTESTMod::GTEST")
-    message("      Library: ${GTESTMod_GTEST_LIBRARY}")
-    message("      Include dir: ${GTESTMod_INCLUDE_DIR}")
+    message("   Library: ${GTESTMod_GTEST_LIBRARY}")
+    message("   Include dir: ${GTESTMod_INCLUDE_DIR}")
 
     if(NOT TARGET GTESTMod::GTEST)
         add_library(GTESTMod::GTEST UNKNOWN IMPORTED)
@@ -63,7 +63,7 @@ if(GTESTMod_FOUND)
 
 
     message(STATUS "Imported library GTESTMod::GTEST_MAIN")
-    message("      Library: ${GTESTMod_GTEST_MAIN_LIBRARY}")
+    message("   Library: ${GTESTMod_GTEST_MAIN_LIBRARY}")
 
     if(NOT TARGET GTESTMod::GTEST_MAIN)    
         add_library(GTESTMod::GTEST_MAIN UNKNOWN IMPORTED)
@@ -74,8 +74,8 @@ if(GTESTMod_FOUND)
 
     if(GTESTMod_FIND_REQUIRED_GMOCK AND NOT TARGET GTESTMod::GMOCK)
         message(STATUS "Imported library GTESTMod::GMOCK")
-        message("      Library: ${GTESTMod_GMOCK_LIBRARY}")
-        message("      Include dir: ${GTESTMod_INCLUDE_DIR}")
+        message("   Library: ${GTESTMod_GMOCK_LIBRARY}")
+        message("   Include dir: ${GTESTMod_INCLUDE_DIR}")
         
         add_library(GTESTMod::GMOCK UNKNOWN IMPORTED)
         set_target_properties(GTESTMod::GMOCK PROPERTIES
@@ -87,7 +87,7 @@ if(GTESTMod_FOUND)
 
     if(GTESTMod_FIND_REQUIRED_GMOCK AND NOT TARGET GTESTMod::GMOCK_MAIN)
         message(STATUS "Imported library GTESTMod::GMOCK_MAIN")
-        message("      Library: ${GTESTMod_GMOCK_MAIN_LIBRARY}")
+        message("   Library: ${GTESTMod_GMOCK_MAIN_LIBRARY}")
         
         add_library(GTESTMod::GMOCK_MAIN UNKNOWN IMPORTED)
         set_target_properties(GTESTMod::GMOCK_MAIN PROPERTIES

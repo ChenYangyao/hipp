@@ -32,7 +32,7 @@ find_package_handle_standard_args(NlohmannMod
 
 if(NlohmannMod_FOUND AND NOT TARGET NlohmannMod::JSON)
     message(STATUS "Imported library NlohmannMod::JSON")
-    message("      Include dir: ${NlohmannMod_INCLUDE_DIR}")
+    message("   Include dir: ${NlohmannMod_INCLUDE_DIR}")
     
     add_library(NlohmannMod::JSON INTERFACE IMPORTED)
     target_include_directories(NlohmannMod::JSON

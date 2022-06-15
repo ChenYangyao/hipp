@@ -60,8 +60,8 @@ find_package_handle_standard_args(FFTWMod
 
 if(FFTWMod_FOUND) 
     message(STATUS "Imported library FFTWMod::FFTW")
-    message("      Library: ${FFTWMod_LIBRARY}")
-    message("      Include dir: ${FFTWMod_INCLUDE_DIR}")
+    message("   Library: ${FFTWMod_LIBRARY}")
+    message("   Include dir: ${FFTWMod_INCLUDE_DIR}")
 
     if(NOT TARGET FFTWMod::FFTW)
         add_library(FFTWMod::FFTW UNKNOWN IMPORTED)
@@ -73,7 +73,7 @@ if(FFTWMod_FOUND)
 
     if(FFTWMod_FIND_REQUIRED_OMP AND NOT TARGET FFTWMod::FFTW_OMP)
         message(STATUS "Imported library FFTWMod::FFTW_OMP")
-        message("      Library: ${FFTWMod_OMP_LIBRARY}")
+        message("   Library: ${FFTWMod_OMP_LIBRARY}")
 
         add_library(FFTWMod::FFTW_OMP UNKNOWN IMPORTED)
         set_target_properties(FFTWMod::FFTW_OMP PROPERTIES
@@ -86,7 +86,7 @@ if(FFTWMod_FOUND)
 
     if(FFTWMod_FIND_REQUIRED_THREADS AND NOT TARGET FFTWMod::FFTW_THREADS)
         message(STATUS "Imported library FFTWMod::FFTW_THREADS")
-        message("      Library: ${FFTWMod_THREADS_LIBRARY}")
+        message("   Library: ${FFTWMod_THREADS_LIBRARY}")
 
         add_library(FFTWMod::FFTW_THREADS UNKNOWN IMPORTED)
         set_target_properties(FFTWMod::FFTW_THREADS PROPERTIES

@@ -46,7 +46,6 @@ set(_projectid hipp)
 set(_projectdir ${CMAKE_CURRENT_SOURCE_DIR})
 
 
-
 include(cmake/colors.cmake)
 define_colors()
 
@@ -90,8 +89,7 @@ if(enable-gsl)
     find_package(GSLMod REQUIRED)
 
     add_library(gsl-interface INTERFACE)
-    target_link_libraries(gsl-interface INTERFACE "${GSLMod_LIBRARY}")
-    target_include_directories(gsl-interface INTERFACE "${GSLMod_INCLUDE_DIR}")
+    target_link_libraries(gsl-interface INTERFACE GSLMod::GSL)
     
     set(HIPPNUMERICAL_OFF OFF)
 endif()
@@ -99,24 +97,23 @@ endif()
 # Make HDF5 interface target, if enabled.
 # hdf5-interface target is defined.
 if(enable-hdf5)
-    prtkeyproc("HDF5 feature detection ...")
+    find_package(HDF5Mod REQUIRED)
+
     add_library(hdf5-interface INTERFACE)
-    find_package(HDF5 REQUIRED COMPONENTS C)
     target_link_libraries(hdf5-interface
-        INTERFACE ${HDF5_LIBRARIES})
-    target_include_directories(hdf5-interface 
-        INTERFACE ${HDF5_INCLUDE_DIRS})
+        INTERFACE HDF5Mode::HDF5)
+    
     set(HIPPIO_OFF OFF)
 endif()
 
 # Make MPI interface target, if enabled.
 # mpi-interface target is defined.
 if(enable-mpi)
-    prtkeyproc("MPI feature detection ...")
+    find_package(MPIMod REQUIRED)
+
     add_library(mpi-interface INTERFACE)
-    find_package(MPI REQUIRED)
     target_link_libraries(mpi-interface
-        INTERFACE MPI::MPI_CXX)
+        INTERFACE MPIMod::MPI)
 
     set(HIPPMPI_OFF OFF)
 endif(enable-mpi)

@@ -33,7 +33,7 @@ find_package_handle_standard_args(EigenMod
 
 if(EigenMod_FOUND AND NOT TARGET EigenMod::Eigen)
     message(STATUS "Imported library EigenMod::Eigen")
-    message("      Include dir: ${EigenMod_INCLUDE_DIR}")
+    message("   Include dir: ${EigenMod_INCLUDE_DIR}")
     
     add_library(EigenMod::Eigen INTERFACE IMPORTED)
     target_include_directories(EigenMod::Eigen

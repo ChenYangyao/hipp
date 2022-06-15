@@ -75,8 +75,8 @@ find_package_handle_standard_args(HIPPMod DEFAULT_MSG
 if(HIPPMod_FOUND)
     
     message(STATUS "Imported library HIPPMod::CNTL")
-    message("      Library: ${HIPPMod_CNTL_LIBRARY}")
-    message("      Include dir: ${HIPPMod_INCLUDE_DIR}")
+    message("   Library: ${HIPPMod_CNTL_LIBRARY}")
+    message("   Include dir: ${HIPPMod_INCLUDE_DIR}")
 
     if(NOT TARGET HIPPMod::CNTL)
         add_library(HIPPMod::CNTL UNKNOWN IMPORTED)
@@ -88,7 +88,7 @@ if(HIPPMod_FOUND)
 
     if(HIPPMod_FIND_REQUIRED_IO AND NOT TARGET HIPPMod::IO)
         message(STATUS "Imported library HIPPMod::IO")
-        message("      Library: ${HIPPMod_IO_LIBRARY}")
+        message("   Library: ${HIPPMod_IO_LIBRARY}")
 
         add_library(HIPPMod::IO UNKNOWN IMPORTED)
         set_target_properties(HIPPMod::IO PROPERTIES
@@ -100,7 +100,7 @@ if(HIPPMod_FOUND)
     if(HIPPMod_FIND_REQUIRED_NUMERICAL AND NOT TARGET HIPPMod::NUMERICAL)
 
         message(STATUS "Imported library HIPPMod::NUMERICAL")
-        message("      Library: ${HIPPMod_NUMERICAL_LIBRARY}")
+        message("   Library: ${HIPPMod_NUMERICAL_LIBRARY}")
 
         add_library(HIPPMod::NUMERICAL UNKNOWN IMPORTED)
         set_target_properties(HIPPMod::NUMERICAL PROPERTIES
@@ -112,7 +112,7 @@ if(HIPPMod_FOUND)
     if(HIPPMod_FIND_REQUIRED_MPI AND NOT TARGET HIPPMod::MPI)
 
         message(STATUS "Imported library HIPPMod::MPI")
-        message("      Library: ${HIPPMod_MPI_LIBRARY}")
+        message("   Library: ${HIPPMod_MPI_LIBRARY}")
 
         add_library(HIPPMod::MPI UNKNOWN IMPORTED)
         set_target_properties(HIPPMod::MPI PROPERTIES

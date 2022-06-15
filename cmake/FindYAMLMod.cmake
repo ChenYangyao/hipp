@@ -36,8 +36,8 @@ find_package_handle_standard_args(YAMLMod
 
 if( YAMLMod_FOUND AND NOT TARGET YAMLMod::YAML )
     message(STATUS "Imported library YAMLMod::YAML")
-    message("      Library: ${YAMLMod_LIBRARY}")
-    message("      Include dir: ${YAMLMod_INCLUDE_DIR}")
+    message("   Library: ${YAMLMod_LIBRARY}")
+    message("   Include dir: ${YAMLMod_INCLUDE_DIR}")
     
     add_library(YAMLMod::YAML UNKNOWN IMPORTED)
     set_target_properties(YAMLMod::YAML PROPERTIES

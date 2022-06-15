@@ -101,7 +101,7 @@ if(enable-hdf5)
 
     add_library(hdf5-interface INTERFACE)
     target_link_libraries(hdf5-interface
-        INTERFACE HDF5Mode::HDF5)
+        INTERFACE HDF5Mod::HDF5)
     
     set(HIPPIO_OFF OFF)
 endif()

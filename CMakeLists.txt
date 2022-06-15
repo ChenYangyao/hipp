@@ -83,7 +83,7 @@ set(HIPPSIMD_OFF ON)
 if(enable-gsl)
     add_library(gsl-interface INTERFACE)
     prtkeyproc("GSL feature detection ...")
-    if(GSL_ROOT_DIR OR ENV{GSL_ROOT_DIR})
+    if(DEFINED GSL_ROOT_DIR OR DEFINED ENV{GSL_ROOT_DIR})
         find_package(GSL REQUIRED)
         target_link_libraries(gsl-interface 
             INTERFACE GSL::gsl GSL::gslcblas)

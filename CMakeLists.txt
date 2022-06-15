@@ -16,7 +16,6 @@ else()
     endif()
 set(env_rpath "$ENV{LD_RUN_PATH}")
 
-
 # RPATH support
 set(CMAKE_SKIP_BUILD_RPATH FALSE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
@@ -84,7 +83,7 @@ set(HIPPSIMD_OFF ON)
 if(enable-gsl)
     add_library(gsl-interface INTERFACE)
     prtkeyproc("GSL feature detection ...")
-    if(GSL_ROOT_DIR)
+    if(GSL_ROOT_DIR OR ENV{GSL_ROOT_DIR})
         find_package(GSL REQUIRED)
         target_link_libraries(gsl-interface 
             INTERFACE GSL::gsl GSL::gslcblas)

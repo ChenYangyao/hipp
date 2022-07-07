@@ -17,10 +17,11 @@ function(addhippcntl_test src)
         PRIVATE "${_exebase}" gmock_main
     )
     add_test(NAME "${_exename}" COMMAND "${_exename}")
-    set_property(TEST "${_exename}" 
-        APPEND PROPERTY
-        ENVIRONMENT 
-            LD_LIBRARY_PATH=${CMAKE_INSTALL_PREFIX}/lib:$ENV{LD_LIBRARY_PATH})
+    #set_property(TEST "${_exename}" 
+    #    APPEND PROPERTY
+    #    ENVIRONMENT 
+    #        LD_LIBRARY_PATH=${CMAKE_INSTALL_PREFIX}/lib:$ENV{LD_LIBRARY_PATH}
+    #)
 endfunction()
 
 foreach(s IN LISTS _src)

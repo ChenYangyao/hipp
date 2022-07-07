@@ -90,13 +90,18 @@ public:
         Args &&...args);
 
     /**
-    XTable is not copyable, but it is movable. After move, the move-from object 
-    is set to a undefined but valid state.
+    XTable is copyable and movable.
+    
+    The move-from object is set to a undefined but valid state.
+    
+    The copy-to object is independent from the source object. Making calls on
+    them is thread-safe, as long as the underlying file operations are 
+    thread-safe.
     */
-    XTable(const XTable &) =delete;
-    XTable & operator=(const XTable &) =delete;
-    XTable(XTable &&) =default;
-    XTable & operator=(XTable &&) =default;
+    XTable(const XTable &);
+    XTable & operator=(const XTable &);
+    XTable(XTable &&);
+    XTable & operator=(XTable &&);
     
     ~XTable() =default;
 
@@ -194,6 +199,9 @@ public:
     0 in (4).
 
     File with 0 rows, or select 0 rows to read, is valid.
+
+    Thread-safety: internal state modified, hance not thread-safe. Make a 
+    copied XTable instead.
     */
     table_t read(Group dgrp);
     table_t read(const string &file_name);
@@ -211,6 +219,9 @@ public:
 
     If any dataset already exists in the file, it is opened and modified. In
     this case the file dataset must have consistent length.
+
+    Thread-safety: internal state modified, hance not thread-safe. Make a 
+    copied XTable instead.
     */
     template<typename Buff> void write(const Buff &buff, Group dgrp);
     template<typename Buff>
@@ -247,6 +258,9 @@ public:
     0 in (4).
 
     File with 0 rows, or select 0 rows to read, is valid.
+
+    Thread-safety: internal state modified, hance not thread-safe. Make a 
+    copied XTable instead.
     */
     table_t read_records(Group dgrp, const string &dset_name);
     table_t read_records(const string &file_name, const string &dset_name);
@@ -268,6 +282,9 @@ public:
 
     If the dataset already exists in the file, it is opened and modified. In
     this case the file dataset must have consistent length.
+
+    Thread-safety: internal state modified, hance not thread-safe. Make a 
+    copied XTable instead.
     */
     template<typename Buff>
     void write_records(const Buff &buff, Group dgrp, const string &dset_name);

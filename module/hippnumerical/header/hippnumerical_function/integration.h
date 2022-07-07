@@ -71,6 +71,12 @@ public:
     const wspace_t & wspace() const noexcept;
 
     double operator()( double a, double b );
+    
+    /**
+    Combines adaptive bisection with the Wynn epsilon-algorithm to accelerate
+    the integration of many types of integrable singularities.
+    Gauss-Kronrod 21-point integration rule is used for the adaptive procedure.
+    */
     double qags( double a, double b );
     double qagp( double *pts, size_t npts );
     double qagi();

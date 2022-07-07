@@ -31,6 +31,9 @@ inline static constexpr iter_order_t
     iterDEC        = H5_ITER_DEC,
     iterNATIVE     = H5_ITER_NATIVE;
 
+inline static constexpr hid_t
+    hidERROR       = -1;
+
 } // namespace HIPP::IO::H5
 
 #endif	//_HIPPIO_H5_BASE_H_

@@ -140,6 +140,29 @@ TEST_F(XTableTest, AddFields) {
     EXPECT_EQ(xtbl.n_fields(), 3);
 }
 
+TEST_F(XTableTest, CopyAndMove) {
+    typedef record_t R;
+    HIPPIO_H5_XTABLE_DEF(xtbl, R, i, d);
+
+    auto xtbl_copied = xtbl;
+    EXPECT_EQ(xtbl.n_fields(), xtbl_copied.n_fields());
+    EXPECT_EQ(xtbl.empty(), xtbl_copied.empty());
+
+    EXPECT_TRUE(xtbl_copied.has_field("i"));
+    EXPECT_TRUE(xtbl_copied.has_field("d"));
+    EXPECT_FALSE(xtbl_copied.has_field("d34"));
+
+    xtbl_copied.add_field("d34", &R::d34);
+    EXPECT_TRUE(xtbl_copied.has_field("d34"));
+    EXPECT_EQ(xtbl_copied.n_fields(), 3);
+
+    xtbl = std::move(xtbl_copied);
+    EXPECT_TRUE(xtbl.has_field("i"));
+    EXPECT_TRUE(xtbl.has_field("d"));
+    EXPECT_TRUE(xtbl.has_field("d34"));
+    EXPECT_EQ(xtbl.n_fields(), 3);
+}
+
 TEST_F(XTableTest, WriteAllFields) {
     typedef record_t R;
     HIPPIO_H5_XTABLE_DEF(xtbl, R, i, d, i5, d34, arr_i5, arr_d34);

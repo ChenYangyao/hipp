@@ -13,7 +13,9 @@ else()
     message(STATUS "Unsupported platform")
 endif()
 
-# RPATH support
+#[====[ 
+RPATH support
+#]====]
 set(HIPP_ADD_RPATH "" CACHE STRING "Additional RPATH for build and install")
 set(HIPP_ADD_RPATH_ENV "" CACHE STRING "Additional RPATH for build and install interpreted as colon-separated list")
 

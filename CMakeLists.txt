@@ -3,13 +3,57 @@ project(hipp LANGUAGES C CXX VERSION 0.1)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Platform Detection
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
+    message(STATUS "Apple Darwin platform")
+    set(MACOSX_RPATH ON)
+elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+    message(STATUS "Linux platform")
+else()
+    message(STATUS "Unsupported platform")
+endif()
+
+#[====[ 
+RPATH support
+#]====]
+set(HIPP_ADD_RPATH "" CACHE STRING "Additional RPATH for build and install")
+set(HIPP_ADD_RPATH_ENV "" CACHE STRING "Additional RPATH for build and install interpreted as colon-separated list")
+
+set(CMAKE_SKIP_BUILD_RPATH FALSE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+	
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+if("${isSystemDir}" STREQUAL "-1")
+    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+endif()
+
+if(HIPP_ADD_RPATH)
+    message(STATUS "Add RPATH " "${HIPP_ADD_RPATH}")
+    list(APPEND CMAKE_INSTALL_RPATH "${HIPP_ADD_RPATH}")
+    list(APPEND CMAKE_BUILD_RPATH "${HIPP_ADD_RPATH}")
+endif()
+if(HIPP_ADD_RPATH_ENV)
+    string(REPLACE ":" ";" HIPP_ADD_RPATH_ENV "${HIPP_ADD_RPATH_ENV}")
+    message(STATUS "Add RPATH " "${HIPP_ADD_RPATH_ENV}")
+    list(APPEND CMAKE_INSTALL_RPATH "${HIPP_ADD_RPATH_ENV}")
+    list(APPEND CMAKE_BUILD_RPATH "${HIPP_ADD_RPATH_ENV}")
+endif()
+
+message(STATUS "Finally adopted PRATH --")
+message("   Build: ${CMAKE_BUILD_RPATH}")
+message("   Install: ${CMAKE_INSTALL_RPATH}")
+
 set(_projectid hipp)
 set(_projectdir ${CMAKE_CURRENT_SOURCE_DIR})
 
+
 include(cmake/colors.cmake)
-include(cmake/printings.cmake)
 define_colors()
 
+include(cmake/printings.cmake)
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # Options
 if(NOT CMAKE_CXX_FLAGS)
@@ -44,45 +88,34 @@ set(HIPPSIMD_OFF ON)
 # Make GSL interface target, if enabled.
 # gsl-interface target is defined.
 if(enable-gsl)
+    find_package(GSLMod REQUIRED)
+
     add_library(gsl-interface INTERFACE)
-    prtkeyproc("GSL feature detection ...")
-    if(GSL_ROOT_DIR)
-        find_package(GSL REQUIRED)
-        target_link_libraries(gsl-interface 
-            INTERFACE GSL::gsl GSL::gslcblas)
-        prtkeyproc("GSL found.")
-    else()
-        target_link_libraries(gsl-interface
-            INTERFACE "-lgsl" "-lgslcblas")
-        prtkeyproc("GSL root not set. Environmental settings will be used.")
-    endif()
-
+    target_link_libraries(gsl-interface INTERFACE GSLMod::GSL)
+    
     set(HIPPNUMERICAL_OFF OFF)
-
 endif()
 
 # Make HDF5 interface target, if enabled.
 # hdf5-interface target is defined.
 if(enable-hdf5)
-    prtkeyproc("HDF5 feature detection ...")
-    add_library(hdf5-interface INTERFACE)
-    find_package(HDF5 REQUIRED COMPONENTS C)
-    target_link_libraries(hdf5-interface
-        INTERFACE ${HDF5_LIBRARIES})
-    target_include_directories(hdf5-interface 
-        INTERFACE ${HDF5_INCLUDE_DIRS})
+    find_package(HDF5Mod REQUIRED)
 
+    add_library(hdf5-interface INTERFACE)
+    target_link_libraries(hdf5-interface
+        INTERFACE HDF5Mod::HDF5)
+    
     set(HIPPIO_OFF OFF)
 endif()
 
 # Make MPI interface target, if enabled.
 # mpi-interface target is defined.
 if(enable-mpi)
-    prtkeyproc("MPI feature detection ...")
+    find_package(MPIMod REQUIRED)
+
     add_library(mpi-interface INTERFACE)
-    find_package(MPI REQUIRED)
     target_link_libraries(mpi-interface
-        INTERFACE MPI::MPI_CXX)
+        INTERFACE MPIMod::MPI)
 
     set(HIPPMPI_OFF OFF)
 endif(enable-mpi)

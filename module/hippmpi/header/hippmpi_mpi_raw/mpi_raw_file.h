@@ -10,7 +10,7 @@ public:
 
     typedef MPI_Datarep_extent_function datarep_extent_fn_t;
     typedef MPI_Datarep_conversion_function datarep_conversion_fn_t;
-    inline static const datarep_conversion_fn_t 
+    inline static datarep_conversion_fn_t 
         * const CONVERSION_FN_NULL = MPI_CONVERSION_FN_NULL;
 
     typedef MPI_File_errhandler_function errhandler_fn_t;

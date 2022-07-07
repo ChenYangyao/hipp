@@ -84,7 +84,7 @@ Formatted IO helpers for ``info()`` of classes.
 #define HIPPCNTL_CLASS_INFO_INLINE(class_name) \
     "<" #class_name "> "
 #define HIPPCNTL_CLASS_INFO_INDENT 2
-#define HIPPCNTL_CLASS_INFO_SUBHEAD "   |- "
+#define HIPPCNTL_CLASS_INFO_SUBHEAD "  |- "
 #define HIPPCNTL_CLASS_INFO_INDENT_STR(level) \
     string(level*HIPPCNTL_CLASS_INFO_INDENT, ' ') + HIPPCNTL_CLASS_INFO_SUBHEAD
 

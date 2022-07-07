@@ -4,7 +4,7 @@ namespace HIPP::IO::H5 {
 
 Proplist Dataset::create_proplist(const string &cls) {
     typedef Proplist pl_t;
-    hid_t cls_val;
+    hid_t cls_val = hidERROR;
     if( cls == "c" || cls == "create" )
         cls_val = pl_t::dCREATE;
     else if( cls == "a" || cls == "access" )
@@ -18,7 +18,7 @@ Proplist Dataset::create_proplist(const string &cls) {
 }
 
 Proplist Dataset::proplist(const string &cls) const{
-    hid_t plist;
+    hid_t plist  = hidERROR;
     if( cls == "c" || cls == "create" )
         plist = obj_raw().get_create_plist();
     else if( cls == "a" || cls == "access" )

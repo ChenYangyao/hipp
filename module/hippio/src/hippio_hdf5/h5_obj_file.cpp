@@ -8,7 +8,7 @@ File::File( const string &name, const string &flag,
 {}
 
 File File::open(const string &name, const string &flag, const Proplist &aprop) {
-    _obj_raw_t::acc_flag_t flag_val;
+    _obj_raw_t::acc_flag_t flag_val {};
     if( flag == "r" ) {
         flag_val = _obj_raw_t::accRDONLY;
     } else if (flag == "a"){
@@ -23,7 +23,7 @@ File File::open(const string &name, const string &flag, const Proplist &aprop) {
 File File::create(const string &name, const string &flag, const Proplist &cprop, 
     const Proplist &aprop) 
 {
-    _obj_raw_t::acc_flag_t flag_val;
+    _obj_raw_t::acc_flag_t flag_val {};
     if( flag == "w" ) {
         flag_val = _obj_raw_t::accTRUNC;
     } else if (flag == "x"){

@@ -14,10 +14,10 @@ function(addmpitest src nproc)
 
     add_test(NAME "${_exename}" 
         COMMAND mpirun -np ${nproc} "./${_exename}" ${ARGN})
-    set_property(TEST "${_exename}" 
-        APPEND PROPERTY
-        ENVIRONMENT 
-            LD_LIBRARY_PATH=${CMAKE_INSTALL_PREFIX}/lib:$ENV{LD_LIBRARY_PATH})
+    #set_property(TEST "${_exename}" 
+    #    APPEND PROPERTY
+    #    ENVIRONMENT 
+    #        LD_LIBRARY_PATH=${CMAKE_INSTALL_PREFIX}/lib:$ENV{LD_LIBRARY_PATH})
 endfunction(addmpitest)
 
 addmpitest(env 4)

@@ -236,12 +236,17 @@ struct DatatypeTest : MPITestFixture {
         }
     }
 
+    template<typename St, typename Elem>
+    constexpr aint_t _get_offset(Elem St::* ptr) {
+        return (char *)&( (St*)(NULL)->*ptr ) - (char *)(NULL);
+    }
+
     void c_struct() {
         int blklens[] = {1,1,1,4};
         Datatype dtypes[] = {INT, LONG, FLOAT, DOUBLE};
-        aint_t disps[] = { _get_offset(&st_data_t::i), 
-            _get_offset(&st_data_t::l), _get_offset(&st_data_t::f), 
-            _get_offset(&st_data_t::d) };
+        aint_t disps[] = { this->_get_offset(&st_data_t::i), 
+            this->_get_offset(&st_data_t::l), this->_get_offset(&st_data_t::f), 
+            this->_get_offset(&st_data_t::d) };
         aint_t tot_sz = sizeof(st_data_t);
 
         auto c_dt = Datatype::struct_(4, blklens, disps, 
@@ -325,11 +330,6 @@ private:
             expect_eq_range(st_data[i].d, st_data_dest[i].d,
                 std::forward<Args>(args)..., pref, "index ", i, ", elem d");
         }
-    }
-
-    template<typename St, typename Elem>
-    constexpr aint_t _get_offset(Elem St::* ptr) {
-        return (char *)&( (St*)(NULL)->*ptr ) - (char *)(NULL);
     }
 
     int arr[4][8], arr_dest[4][8];

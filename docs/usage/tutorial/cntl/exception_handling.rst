@@ -52,7 +52,7 @@ use the key-word ``catch``. The following codes throw a logic error with an erro
     }
 
 After catching the error, the codes use ``what()`` and ``whats()`` to get the detail 
-of the it. ``whats()`` is more verbose, but the overhaed may be larger. The call of 
+of the it. ``whats()`` is more verbose, but the overhead may be larger. The call of 
 ``get_errno()`` returns the error number ``eINVALIDARG``.
 
 The output is 

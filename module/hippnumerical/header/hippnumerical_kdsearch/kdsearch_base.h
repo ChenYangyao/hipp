@@ -8,6 +8,7 @@ create: Yangyao CHEN, 2022/02/14
 #define _HIPPNUMERICAL_KDSEARCH_BASE_H_
 
 #include "../hippnumerical_geometry/geometry.h"
+#include <optional>
 
 namespace HIPP::NUMERICAL {
 

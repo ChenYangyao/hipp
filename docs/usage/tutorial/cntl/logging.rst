@@ -3,9 +3,9 @@ Logging
 
 .. include:: /global.rst
 
-Logging is a critical part of a mature software. Is is used to keep human-readable 
+Logging is a critical part of any mature software. It is used to keep human-readable 
 records of the execution of the software. If something happens - e.g., a regular event 
-marking up the progress of s subroutine, a critical/erroneous event, or event
+marking up the progress of s subroutine, a critical/erroneous event, or even
 a corruption, library developers and users could read the logging records and
 make diagnosis.
 

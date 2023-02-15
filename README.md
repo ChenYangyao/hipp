@@ -1,11 +1,12 @@
 HIPP: Modern C++ Toolkit for HPC
 ======================================================================
 
-[![](https://img.shields.io/github/v/release/ChenYangyao/hipp?include_prereleases)](https://github.com/ChenYangyao/hipp/releases)
+[![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/ChenYangyao/hipp?include_prereleases)](https://github.com/ChenYangyao/hipp/releases)
 [![Documentation Status](https://readthedocs.org/projects/hipp/badge/?version=latest)](https://hipp.readthedocs.io/en/latest/?badge=latest)
-[![](https://img.shields.io/github/workflow/status/ChenYangyao/hipp/CMake)](https://github.com/ChenYangyao/hipp/actions?query=workflow%3ACMake)
-[![](https://img.shields.io/github/last-commit/ChenYangyao/hipp)](https://github.com/ChenYangyao/hipp/commits/master)
-[![](https://img.shields.io/github/license/ChenYangyao/hipp)](https://github.com/ChenYangyao/hipp/blob/master/LICENSE)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/ChenYangyao/HIPP/cmake.yml)](https://github.com/ChenYangyao/hipp/actions/workflows/cmake.yml)
+[![GitHub last commit (branch)](https://img.shields.io/github/last-commit/ChenYangyao/HIPP/master)](https://github.com/ChenYangyao/hipp)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://github.com/ChenYangyao/hipp/blob/master/LICENSE)
+[![ascl:2301.030](https://img.shields.io/badge/ascl-2301.030-blue.svg?colorB=262255)](https://ascl.net/2301.030)
 
 
 **HIPP** is a HPC toolkit written in C++. It is still under active development. 

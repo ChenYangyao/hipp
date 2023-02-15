@@ -6,27 +6,31 @@
 HIPP: Modern C++ Toolkit for HPC
 ======================================================================
 
-|badge1| |badge2| |badge3| |badge4| |badge5|
+|badge1| |badge2| |badge3| |badge4| |badge5| |badge6|
 
 .. |badge1| image:: https://img.shields.io/github/v/release/ChenYangyao/hipp?include_prereleases
    :target: https://github.com/ChenYangyao/hipp/releases
-   :alt: Release 
+   :alt: GitHub release (latest by date including pre-releases)
 
 .. |badge2| image:: https://readthedocs.org/projects/hipp/badge/?version=latest
    :target: https://hipp.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-.. |badge3| image:: https://img.shields.io/github/workflow/status/ChenYangyao/hipp/CMake
-   :target: https://github.com/ChenYangyao/hipp/actions?query=workflow%3ACMake
-   :alt: Build CMake
+.. |badge3| image:: https://img.shields.io/github/actions/workflow/status/ChenYangyao/HIPP/cmake.yml
+   :target: https://github.com/ChenYangyao/hipp/actions/workflows/cmake.yml
+   :alt: GitHub Workflow Status
 
-.. |badge4| image:: https://img.shields.io/github/last-commit/ChenYangyao/hipp
-   :target: https://github.com/ChenYangyao/hipp/commits/master
-   :alt: Commits 
+.. |badge4| image:: https://img.shields.io/github/last-commit/ChenYangyao/HIPP/master
+   :target: https://github.com/ChenYangyao/hipp
+   :alt: GitHub last commit (branch)
 
-.. |badge5| image:: https://img.shields.io/github/license/ChenYangyao/hipp
+.. |badge5| image:: https://img.shields.io/badge/License-GPLv3-blue.svg
    :target: https://github.com/ChenYangyao/hipp/blob/master/LICENSE
-   :alt: License
+   :alt: License: GPL v3
+
+.. |badge6| image:: https://img.shields.io/badge/ascl-2301.030-blue.svg?colorB=262255
+   :target: https://ascl.net/2301.030
+   :alt: ascl:2301.030
 
 
 **HIPP** is a HPC toolkit written in C++. It is still under active development. 

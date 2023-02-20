@@ -44,7 +44,7 @@ inline thread_local static
 UniformRealRandomNumber<float> randfloat;   /* uniform real dist in [0,1], using `float` */
 
 inline thread_local static 
-UniformIntRandomNumber<char> randchar;      /* uniform char in [0, max char] */
+UniformIntRandomNumber<signed char> randchar;/* uniform char in [0, max signed char] */
 
 inline thread_local static 
 UniformIntRandomNumber<short> randshort;    /* uniform short in [0, max short] */

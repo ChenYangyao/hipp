@@ -138,6 +138,12 @@ interfaces for some well-known HPC libraries. Some libraries
 are wrapped with full-OOP interfaces, and many new extensions based on those raw-interfaces are also provided.
 With HIPP, the length of your code can be significantly reduced, making your programming life more productive.
 
+Citation
+--------
+For astronomy researches, HIPP is indexed by ADS via the entry 
+[2023ascl.soft01030C](https://ui.adsabs.harvard.edu/abs/2023asclsoft01030C/abstract). 
+For others fields, click "Cite this repository" on Github page for details.
+
 Contributors
 ----------------
 
